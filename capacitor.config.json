@@ -1,0 +1,21 @@
+{
+  "appId": "com.streek.dezrektech",
+  "appName": "StreekApp",
+  "webDir": "dist",
+  "serverx": {
+    "androidScheme": "https",
+    "url": "http://10.216.12.221:3005"
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
+    },
+    "Keyboard": {
+      "resizeOnFullScreen": true
+    }
+  }
+}

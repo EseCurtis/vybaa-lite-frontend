@@ -1,0 +1,30 @@
+import type { Config } from 'tailwindcss'
+import { colors } from './src/shared/colors.shared'
+
+const config: Config = {
+  content: [
+    "./index.html",
+    "./src/**/*.{js,ts,jsx,tsx}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Spread the colors to avoid circular reference
+        ...colors
+      },
+      spacing: {
+        'mg': '24px',
+        '05-mg': '12px',
+      },
+      fontFamily: {
+        'mona': ['Mona Sans', 'sans-serif'],
+        'sans': ['Mona Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        'bbh': ['BBH Sans Bartle', 'sans-serif'],
+        'outfit': ['Outfit', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+}
+
+export default config

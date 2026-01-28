@@ -1,0 +1,65 @@
+import { TopNotch } from '@/components/common/notch.component'
+import { AppLayout } from '@/components/layout/app/app-layout.component'
+import { BottomSheetProvider } from '@/providers/bottom-sheet.provider'
+import { ModalProvider } from '@/providers/modal.provider'
+import { hapticFeedback } from '@/shared/haptic.util'
+import { createRootRoute } from '@tanstack/react-router'
+import { HomeIcon, Recycle } from 'lucide-react'
+
+import { TanStackDevtools } from '@tanstack/react-devtools'
+
+const showDevtools = false
+
+export const Route = createRootRoute({
+  component: () => {
+    return (
+      <ModalProvider>
+        <BottomSheetProvider>
+          <>
+            <AppLayout />
+
+            {showDevtools && (
+              <TanStackDevtools
+                config={{
+                  position: 'top-right',
+                  hideUntilHover: true,
+                }}
+                plugins={[
+                  {
+                    name: 'Tanstack Router',
+                    render: () => (
+                      <div className="fixed bottom-52 right-0 opacity-40 z-10  m-7 rounded-full">
+                        <TopNotch />
+                        <div className="flex">
+                          <div
+                            onClick={async () => {
+                              await hapticFeedback.light()
+                              location.reload()
+                            }}
+                            className="bg-card-50/50 p-3 rounded-full"
+                          >
+                            <Recycle size={20} color="#fff" />
+                          </div>
+
+                          <div
+                            onClick={async () => {
+                              await hapticFeedback.light()
+                              location.assign('/')
+                            }}
+                            className="bg-card-50/50 p-3 rounded-full"
+                          >
+                            <HomeIcon size={20} color="#fff" />
+                          </div>
+                        </div>
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            )}
+          </>
+        </BottomSheetProvider>
+      </ModalProvider>
+    )
+  },
+})
