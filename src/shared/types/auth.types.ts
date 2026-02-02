@@ -235,4 +235,32 @@ export interface JournalResponse {
   }
 }
 
+// Core auth state & context types used by the frontend
+export type AuthUser = User
+
+export interface AuthState {
+  user: AuthUser | null
+  isAuthenticated: boolean
+  isLoading: boolean
+  error: string | null
+}
+
+export interface AuthContextValue extends AuthState {
+  /**
+   * Perform a Google login via the native social-login plugin.
+   * The provider is responsible for updating global auth state and tokens.
+   */
+  loginWithGoogle: () => Promise<void>
+
+  /**
+   * Clear all auth state and tokens and notify the backend if needed.
+   */
+  logout: () => Promise<void>
+
+  /**
+   * Force a re-fetch of the current session from the backend.
+   */
+  refreshSession: () => Promise<void>
+}
+
 

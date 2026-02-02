@@ -6,9 +6,10 @@ import { hapticFeedback } from '@/shared/haptic.util'
 import { createRootRoute } from '@tanstack/react-router'
 import { HomeIcon, Recycle } from 'lucide-react'
 
-import { TanStackDevtools } from '@tanstack/react-devtools'
 
 const showDevtools = false
+
+
 
 export const Route = createRootRoute({
   component: () => {
@@ -18,17 +19,7 @@ export const Route = createRootRoute({
           <>
             <AppLayout />
 
-            {showDevtools && (
-              <TanStackDevtools
-                config={{
-                  position: 'top-right',
-                  hideUntilHover: true,
-                }}
-                plugins={[
-                  {
-                    name: 'Tanstack Router',
-                    render: () => (
-                      <div className="fixed bottom-52 right-0 opacity-40 z-10  m-7 rounded-full">
+              <div className="fixed top-0 right-0 opacity-100 z-[99999]  m-7 rounded-full">
                         <TopNotch />
                         <div className="flex">
                           <div
@@ -52,11 +43,8 @@ export const Route = createRootRoute({
                           </div>
                         </div>
                       </div>
-                    ),
-                  },
-                ]}
-              />
-            )}
+
+        
           </>
         </BottomSheetProvider>
       </ModalProvider>

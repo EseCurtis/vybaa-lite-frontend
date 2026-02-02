@@ -2,7 +2,10 @@ import { TopNotch } from '@/components/common/notch.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import ENV from '@/env'
+import { useAuth } from '@/providers/auth.provider'
 import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 
 /**
  * Generic landing screen for the starter template.
@@ -15,6 +18,27 @@ import { useNavigate } from '@tanstack/react-router'
  */
 export default function AppScreen() {
   const navigate = useNavigate()
+  const { isAuthenticated, isLoading, loginWithGoogle, error } = useAuth()
+  const [loginError, setLoginError] = useState<string | null>(null)
+
+  // Navigate to home when authentication succeeds
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      navigate({ to: '/app/home' })
+    }
+  }, [isAuthenticated, isLoading, navigate])
+
+  const handleGoogleLogin = async () => {
+    try {
+      setLoginError(null)
+      await loginWithGoogle()
+      // Navigation will happen automatically via useEffect when isAuthenticated becomes true
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to sign in with Google'
+      setLoginError(errorMessage)
+      console.error('Google login error:', err)
+    }
+  }
 
   return (
     <View className="flex-1 bg-black p-4">
@@ -26,7 +50,7 @@ export default function AppScreen() {
             Starter template
           </Text>
           <Text className="text-white text-4xl md:text-5xl font-bold font-bbh leading-tight">
-            Build your next product
+            Build your {ENV.GOOGLE_IOS_CLIENT_ID} next product
             <Text className="text-accent-400"> faster</Text>.
           </Text>
           <Text className="text-white/70 text-base md:text-lg font-outfit max-w-xl">
@@ -44,6 +68,22 @@ export default function AppScreen() {
               Open example app shell
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            className="rounded-full text-center w-full bg-white px-8 py-3 flex-row justify-center items-center"
+            disabled={isLoading}
+            onPress={handleGoogleLogin}
+          >
+            <Text className="text-black text-md font-outfit font-semibold">
+              {isLoading ? 'Signing in with Google…' : 'Continue with Google'}
+            </Text>
+          </TouchableOpacity>
+
+          {(loginError || error) && (
+            <Text className="text-red-400 text-sm font-outfit text-center mt-2">
+              {loginError || error}
+            </Text>
+          )}
 
           <TouchableOpacity
             className="rounded-full text-center w-full bg-card-600 px-8 py-4 flex-row justify-center items-center"

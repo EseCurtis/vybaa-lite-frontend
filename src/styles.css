@@ -4,6 +4,17 @@
 
 /* Mona Sans Font Faces */
 @font-face {
+  font-family: 'Mona Sans x';
+  src: url('/fonts/dribble-mona-sans.woff2') format('woff2');
+  font-stretch: expanded;
+  font-stretch: expanded;
+  line-height: 1.08;
+  -webkit-font-feature-settings: normal;
+  font-feature-settings: normal;
+}
+
+/* Mona Sans Font Faces */
+@font-face {
   font-family: 'Mona Sans';
   src: url('/fonts/MonaSans-Regular.woff2') format('woff2'),
        url('/fonts/MonaSans-Regular.woff') format('woff'),

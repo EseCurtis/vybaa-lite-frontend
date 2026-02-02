@@ -1,12 +1,16 @@
 import SettingsScreen from '@/app/(app)/settings.screen'
+import { ProtectedRoute } from '@/components/common/protected-route.component'
 import { createFileRoute } from '@tanstack/react-router'
 
 /**
  * Example settings route for the starter app.
  *
- * No auth is enforced here; it's a simple place to demonstrate how
- * to build a settings/preferences screen inside the app shell.
+ * This route requires authentication and is protected at the route level.
  */
 export const Route = createFileRoute('/app/settings')({
-  component: SettingsScreen,
+  component: () => (
+    <ProtectedRoute requireAuth redirectTo="/">
+      <SettingsScreen />
+    </ProtectedRoute>
+  ),
 })

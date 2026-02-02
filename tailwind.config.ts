@@ -19,8 +19,9 @@ const config: Config = {
       fontFamily: {
         'mona': ['Mona Sans', 'sans-serif'],
         'sans': ['Mona Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        'bbh': ['BBH Sans Bartle', 'sans-serif'],
+        'bbh': ['Mona Sans x', 'sans-serif'],
         'outfit': ['Outfit', 'sans-serif'],
+        'mona-sans-x': ['Mona Sans x', 'sans-serif']
       },
     },
   },

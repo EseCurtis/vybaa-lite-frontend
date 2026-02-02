@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
+import { AuthProvider } from './providers/auth.provider.tsx'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -44,8 +45,10 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <CapacitorPlugin />
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <CapacitorPlugin />
+          <RouterProvider router={router} />
+        </AuthProvider>
       </QueryClientProvider>
     </StrictMode>,
   )
