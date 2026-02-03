@@ -86,27 +86,25 @@ export function useGoogleAuth(options?: UseGoogleAuthOptions): UseGoogleAuthResu
         provider: 'google',
         options: {
          scopes: ["profile", "email"],
-        
         },
-      
       })) 
 
       const result =  response?.result as GoogleLoginResponse;
-
-      
-
-      
-
     
       const token = result?.jwt ?? (result?.accessToken as any)?.token
+
+     
 
 
       if (!token) {
         throw new Error('Google login did not return a valid tokennn'+JSON.stringify( token))
       }
 
+      
+
       await mutation.mutateAsync({ token })
     } catch (err) {
+      alert(JSON.stringify(err))
       // Re-throw the error so it can be caught by the caller
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in with Google'
       throw new Error(errorMessage)
