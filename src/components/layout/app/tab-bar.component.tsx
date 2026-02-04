@@ -42,7 +42,6 @@ export const TabBar = memo(() => {
         isSpecial: false,
         badge: null,
         matchAllRoot: true,
-       
       },
     ],
     [],
@@ -92,12 +91,7 @@ export const TabBar = memo(() => {
         locations={[0, 0.9]}
       />
       <View className="p-mg z-10 relative">
-        <Moti.div
-          className="bg-card-700 py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20"
-          style={{
-            boxShadow: `0 8px 32px ${colors.black}40, 0 0 0 1px ${colors.card[300]}20`,
-          }}
-        >
+        <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
           {tabs.map((tab) => {
             const isActive = isActiveTab(
               tab.route,
@@ -131,7 +125,7 @@ export const TabBar = memo(() => {
                     {/* Active indicator background */}
                     {isActive && (
                       <Moti.div
-                        className="absolute bordser border-white/10  bg-card-500 inset-0  rounded-full "
+                        className="absolute  inset-0   flex items-end justify-center mt-full rounded-full "
                         layoutId={shouldAnimate ? 'activeTab' : undefined}
                         initial={false}
                         animate={
@@ -150,12 +144,9 @@ export const TabBar = memo(() => {
                               }
                             : { duration: 0 }
                         }
-                        style={
-                          {
-                            // boxShadow: `0 2px 12px ${colors.white}20 inset`,
-                          }
-                        }
-                      />
+                      >
+                        <View className="w-4 text-white bg-accent-500 rounded-full h-1 shadow-lg shadow-accent-500"></View>
+                      </Moti.div>
                     )}
 
                     {/* Icon with animation */}
@@ -177,7 +168,7 @@ export const TabBar = memo(() => {
                             }
                           : { duration: 0 }
                       }
-                      className="relative"
+                      className="relative flex items-center justify-center flex-col"
                       style={
                         !shouldAnimate
                           ? {
@@ -189,65 +180,30 @@ export const TabBar = memo(() => {
                     >
                       <tab.icon
                         color={isActive ? colors.accent[400] : colors.card[100]}
-                        size={24}
+                        size={32}
                         fill={
                           isActive ? colors.accent[700] + '7a' : 'transparent'
                         }
                         className="relative z-10"
                       />
+                      <Text
+                        style={{
+                          color: isActive
+                            ? 'transparent'
+                            : colors.card[100],
+                        }}
+                        className="text-white hidden text-[0.6rem] font-bold"
+                      >
+                        {tab.label.toUpperCase()}
+                      </Text>
                     </Moti.div>
-
-                    {/* Label with animation */}
-                    {tab.label && (
-                      <View className="-translate-y-0.5">
-                        <Moti.div
-                          animate={
-                            shouldAnimate
-                              ? {
-                                  opacity: isActive ? 1 : 0.7,
-                                  scale: isActive ? 1.09 : 0,
-                                  width: isActive ? 40 : 0,
-                                }
-                              : false
-                          }
-                          transition={
-                            shouldAnimate
-                              ? {
-                                  type: 'spring',
-                                  stiffness: 300,
-                                  damping: 20,
-                                }
-                              : { duration: 0 }
-                          }
-                          //  className="hidden"
-                          className={isActive ? 'pl-2 pr-2' : ''}
-                          style={
-                            !shouldAnimate
-                              ? {
-                                  opacity: isActive ? 1 : 0.7,
-                                  scale: isActive ? 1.09 : 0,
-                                  width: isActive ? 40 : 0,
-                                }
-                              : undefined
-                          }
-                        >
-                          <Text
-                            className={`text-xs font-bold   font-bbh-mini ${
-                              isActive ? 'text-white' : 'text-card-200'
-                            }`}
-                          >
-                            {tab.label}
-                          </Text>
-                        </Moti.div>
-                      </View>
-                    )}
                   </>
                 </TouchableOpacity>
               </Moti.div>
             )
           })}
         </Moti.div>
-        
+
         <BottomNotch />
       </View>
     </Moti.div>
