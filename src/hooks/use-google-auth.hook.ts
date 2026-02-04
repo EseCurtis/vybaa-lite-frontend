@@ -81,26 +81,29 @@ export function useGoogleAuth(options?: UseGoogleAuthOptions): UseGoogleAuthResu
   const signInWithGoogle = async (): Promise<void> => {
     try {
       await ensureGoogleInitialized()
+      await SocialLogin.logout({
+        provider: "google"
+      })
 
       const response = (await SocialLogin.login({
         provider: 'google',
         options: {
-         scopes: ["profile", "email"],
+          scopes: ["profile", "email"],
         },
-      })) 
+      }))
 
-      const result =  response?.result as GoogleLoginResponse;
-    
+      const result = response?.result as GoogleLoginResponse;
+
       const token = result?.jwt ?? (result?.accessToken as any)?.token
 
-     
+
 
 
       if (!token) {
-        throw new Error('Google login did not return a valid tokennn'+JSON.stringify( token))
+        throw new Error('Google login did not return a valid tokennn' + JSON.stringify(token))
       }
 
-      
+
 
       await mutation.mutateAsync({ token })
     } catch (err) {

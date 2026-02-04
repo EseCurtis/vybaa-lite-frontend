@@ -3,6 +3,7 @@ import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
+import { RiAppleFill, RiGoogleFill } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
@@ -17,7 +18,8 @@ import { useEffect, useState } from 'react'
  */
 export default function AppScreen() {
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading, loginWithGoogle, error } = useAuth()
+  const { isAuthenticated, isLoading, loginWithGoogle, error, stale } =
+    useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
 
   // Navigate to home when authentication succeeds
@@ -40,6 +42,10 @@ export default function AppScreen() {
     }
   }
 
+  if(stale) {
+    return null
+  }
+
   return (
     <View
       className="flex-1 bg-black p-4"
@@ -56,7 +62,7 @@ export default function AppScreen() {
             <div className="size-[120px]">
               <img
                 src={'./assets/glass-icon.png'}
-                className="size-full translate-x-[6%]  object-cover"
+                className="size-full rotate-[5deg] object-cover"
               />
             </div>
             <Text className="whitespace-nowrap mt-3 leading-tight text-center text-[30px] font-black text-white">
@@ -69,35 +75,30 @@ export default function AppScreen() {
         </View>
 
         <View className="flex flex-col gap-3 text-center">
-          <View className="flex-row p-1 bg-card-light rounded-full">
+          <View className="flex-row p-1 gap-2 mx-auto bg-card-light/50 rounded-full">
             <TouchableOpacity
-              className="rounded-full text-center  bg-white px-8 py-3 flex-row justify-center items-center"
+              className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
               disabled={isLoading}
               onPress={handleGoogleLogin}
             >
-              <Text className="text-black text-md font-outfit font-semibold">
+              <Text className="text-black text-md  font-semibold">
                 Get Started
               </Text>
             </TouchableOpacity>
-    <TouchableOpacity
-              className="rounded-full text-center  bg-white px-8 py-3 flex-row justify-center items-center"
+            <TouchableOpacity
+              className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
               disabled={isLoading}
               onPress={handleGoogleLogin}
             >
-              <Text className="text-black text-md font-outfit font-semibold">
-                Get Started
-              </Text>
+              <RiGoogleFill className="text-white" />
             </TouchableOpacity>
-                <TouchableOpacity
-              className="rounded-full text-center  bg-white px-8 py-3 flex-row justify-center items-center"
+            <TouchableOpacity
+              className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
               disabled={isLoading}
               onPress={handleGoogleLogin}
             >
-              <Text className="text-black text-md font-outfit font-semibold">
-                Get Started
-              </Text>
+              <RiAppleFill className="text-white" />
             </TouchableOpacity>
-
           </View>
 
           {(loginError || error) && (
@@ -106,7 +107,7 @@ export default function AppScreen() {
             </Text>
           )}
 
-          <Text className="text-card-lighter font-outfit text-sm mt-2">
+          <Text className="text-card-lighter-3/50 text-sm mt-2">
             By Proceeding you agree to comply to our <br />
             <Text className="underline">Terms of Service</Text> and{' '}
             <Text className="underline">Privacy Policy</Text>

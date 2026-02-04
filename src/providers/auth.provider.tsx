@@ -1,6 +1,12 @@
-import { resetTimezoneTracking } from '@/shared/api/http'
+import { useGoogleAuth } from '@/hooks/use-google-auth.hook'
 import { authAPI } from '@/shared/api/auth.api'
-import type { AuthContextValue, AuthState, AuthUser, SessionResponse } from '@/shared/types/auth.types'
+import { resetTimezoneTracking } from '@/shared/api/http'
+import type {
+  AuthContextValue,
+  AuthState,
+  AuthUser,
+  SessionResponse,
+} from '@/shared/types/auth.types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
@@ -10,7 +16,6 @@ import {
   useMemo,
   useState,
 } from 'react'
-import { useGoogleAuth } from '@/hooks/use-google-auth.hook'
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
@@ -19,6 +24,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
   error: null,
+  stale: true,
 }
 
 const SESSION_QUERY_KEY = ['auth', 'session'] as const
@@ -55,6 +61,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: false,
         isLoading: false,
         error: sessionQuery.error.message,
+        stale: false,
       })
       return
     }
@@ -66,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: true,
         isLoading: false,
         error: null,
+        stale: false,
       })
     } else {
       setState({
@@ -73,26 +81,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        stale: false,
       })
     }
-  }, [sessionQuery.data, sessionQuery.error, sessionQuery.isError, sessionQuery.isLoading])
+  }, [
+    sessionQuery.data,
+    sessionQuery.error,
+    sessionQuery.isError,
+    sessionQuery.isLoading,
+  ])
 
-  const handleAuthSuccess = useCallback(
-    async () => {
-      // After tokens are stored, fetch the session immediately
-      // This ensures the auth state is updated right away
-      try {
-        await queryClient.fetchQuery({
-          queryKey: SESSION_QUERY_KEY,
-          queryFn: async () => authAPI.getSession(),
-        })
-      } catch (error) {
-        // If session fetch fails, invalidate to trigger error state
-        await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
-      }
-    },
-    [queryClient],
-  )
+  const handleAuthSuccess = useCallback(async () => {
+    // After tokens are stored, fetch the session immediately
+    // This ensures the auth state is updated right away
+    try {
+      await queryClient.fetchQuery({
+        queryKey: SESSION_QUERY_KEY,
+        queryFn: async () => authAPI.getSession(),
+      })
+    } catch (error) {
+      // If session fetch fails, invalidate to trigger error state
+      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
+    }
+  }, [queryClient])
 
   const google = useGoogleAuth({
     onSuccess: () => {
@@ -116,6 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         isAuthenticated: false,
         isLoading: false,
         error: null,
+        stale: false,
       })
     },
   })
@@ -135,13 +147,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const value: AuthContextValue = useMemo(
     () => ({
       ...state,
-      error: state.error ?? google.error ?? logoutMutation.error?.message ?? null,
-      isLoading: state.isLoading || google.isLoading || logoutMutation.isPending,
+      error:
+        state.error ?? google.error ?? logoutMutation.error?.message ?? null,
+      isLoading:
+        state.isLoading || google.isLoading || logoutMutation.isPending,
       loginWithGoogle,
       logout,
       refreshSession,
     }),
-    [google.error, google.isLoading, loginWithGoogle, logout, logoutMutation.error?.message, logoutMutation.isPending, refreshSession, state],
+    [
+      google.error,
+      google.isLoading,
+      loginWithGoogle,
+      logout,
+      logoutMutation.error?.message,
+      logoutMutation.isPending,
+      refreshSession,
+      state,
+    ],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
@@ -154,4 +177,3 @@ export const useAuth = (): AuthContextValue => {
   }
   return ctx
 }
-
