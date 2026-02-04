@@ -53,13 +53,13 @@ export function TaskCard({
           }`} />
         </View>
         <View className="flex-1 min-w-0 items-start">
-          <Text className={`text-base h-[24px] overflow-hidden overflow-ellipsis whitespace-nowrap max-w-[50vw] font-semibold font-outfit mb-1 ${
+          <Text className={`text-base h-[24px] overflow-hidden overflow-ellipsis whitespace-nowrap max-w-[50vw] font-semibold font-bbh mb-1 ${
             isCompleted ? 'line-through text-white/50' : 'text-white'
           }`}>
             {title}
           </Text>
           <View className="bg-white/5 rounded-md px-2 py-0.5 self-start">
-            <Text className="text-white/60 text-xs font-outfit font-medium">{frequency}</Text>
+            <Text className="text-white/60 text-xs font-bbh font-medium">{frequency}</Text>
           </View>
         </View>
         {onPress && (
@@ -86,7 +86,7 @@ export function TaskCard({
             }}
           >
             <Icon icon={checkMark} className="text-success-400 text-sm" />
-            <Text className="text-success-400 text-xs font-semibold font-outfit">Done</Text>
+            <Text className="text-success-400 text-xs font-semibold font-bbh">Done</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             data-action-button
@@ -99,7 +99,7 @@ export function TaskCard({
             }}
           >
             <Icon icon={crossMark} className="text-white/60 text-sm" />
-            <Text className="text-white/60 text-xs font-semibold font-outfit">Skip</Text>
+            <Text className="text-white/60 text-xs font-semibold font-bbh">Skip</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             data-action-button
@@ -119,14 +119,14 @@ export function TaskCard({
       {isCompleted && (
         <View className="bg-success-500/20 border border-success-500/30 rounded-lg px-3 py-2 flex-row items-center gap-2 justify-center mt-2">
           <Icon icon={checkMark} className="text-success-400 text-sm" />
-          <Text className="text-success-400 text-xs font-semibold font-outfit">Completed</Text>
+          <Text className="text-success-400 text-xs font-semibold font-bbh">Completed</Text>
         </View>
       )}
 
       {isSkipped && (
         <View className="bg-neutral-500/10 border border-neutral-500/20 rounded-lg px-3 py-2 flex-row items-center gap-2 justify-center mt-2">
           <Icon icon={crossMark} className="text-neutral-400 text-xs" />
-          <Text className="text-neutral-400 text-xs font-semibold font-outfit">Skipped</Text>
+          <Text className="text-neutral-400 text-xs font-semibold font-bbh">Skipped</Text>
         </View>
       )}
     </View>

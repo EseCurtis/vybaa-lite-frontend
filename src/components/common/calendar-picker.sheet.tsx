@@ -112,7 +112,7 @@ export function CalendarPickerSheet({
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
               <Text
                 key={d}
-                className="text-white/60 text-center text-xs font-outfit"
+                className="text-white/60 text-center text-xs font-bbh"
               >
                 {d}
               </Text>
@@ -138,7 +138,7 @@ export function CalendarPickerSheet({
               className="w-1/3 bg-red-500/10 justify-center flex  rounded-xl py-3 bordser border-[#2a2a2a]"
               onPress={onCancel}
             >
-              <Text className="text-red-500 text-center font-outfit">
+              <Text className="text-red-500 text-center font-bbh">
                 Cancel
               </Text>
             </TouchableOpacity>
@@ -146,7 +146,7 @@ export function CalendarPickerSheet({
               className="w-2/3 justify-center flex rounded-xl py-3 bg-white"
               onPress={() => onConfirm(selected)}
             >
-              <Text className="text-black text-center font-outfit font-semibold">
+              <Text className="text-black text-center font-bbh font-semibold">
                 Confirm
               </Text>
             </TouchableOpacity>

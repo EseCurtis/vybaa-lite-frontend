@@ -1,14 +1,16 @@
-import { useState } from 'react'
+import { Input } from '@/components/common/input.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
+import { TextArea } from '@/components/common/textarea.component'
+import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { Button } from '@/components/layout/button.component'
-import { Input } from '@/components/common/input.component'
-import { TextArea } from '@/components/common/textarea.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
+import { useToast } from '@/providers/toast.provider'
 import { cn } from '@/shared/utils/helpers.util'
+import { useState, useEffect } from 'react'
 
 export default function HomeAppScreen() {
+  const toast = useToast()
   const {
     goals,
     currentGoal,
@@ -27,16 +29,44 @@ export default function HomeAppScreen() {
     targetDays: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
+  const [loadingToastId, setLoadingToastId] = useState<string | null>(null)
+
+  // Show loading toast when creating
+  useEffect(() => {
+    if (isCreating) {
+      const toastId = toast.loading('Creating goal...')
+      setLoadingToastId(toastId)
+      return () => {
+        toast.dismiss(toastId)
+        setLoadingToastId(null)
+      }
+    } else if (loadingToastId) {
+      toast.dismiss(loadingToastId)
+      setLoadingToastId(null)
+    }
+  }, [isCreating, toast, loadingToastId])
+
+  // Show loading toast when checking in
+  useEffect(() => {
+    if (isCheckingIn) {
+      const toastId = toast.loading('Checking in...')
+      return () => toast.dismiss(toastId)
+    }
+  }, [isCheckingIn, toast])
 
   const handleCreateGoal = async () => {
     if (!formData.goalText.trim()) {
-      setFormError('Goal text is required')
+      const errorMsg = 'Goal text is required'
+      setFormError(errorMsg)
+      toast.warning(errorMsg)
       return
     }
 
     const targetDays = parseInt(formData.targetDays, 10)
     if (!targetDays || targetDays < 1 || targetDays > 365) {
-      setFormError('Target days must be between 1 and 365')
+      const errorMsg = 'Target days must be between 1 and 365'
+      setFormError(errorMsg)
+      toast.warning(errorMsg)
       return
     }
 
@@ -49,15 +79,18 @@ export default function HomeAppScreen() {
       setFormData({ goalText: '', targetDays: '' })
       setIsCreatingForm(false)
     } catch (err: any) {
-      setFormError(err.message || 'Failed to create goal')
+      const errorMsg = err.message || 'Failed to create goal'
+      setFormError(errorMsg)
+      // Error toast is already shown in the mutation hook
     }
   }
 
   const handleCheckIn = async () => {
     try {
       await checkInAsync()
+      // Success toast is already shown in the mutation hook
     } catch (err: any) {
-      console.error('Check-in failed:', err)
+      // Error toast is already shown in the mutation hook
     }
   }
 
@@ -71,7 +104,7 @@ export default function HomeAppScreen() {
       <View className="flex-1 px-5 pb-[120px] pt-4 space-y-6 max-w-4xl mx-auto">
         {/* Header */}
         <View className="space-y-2">
-          <Text className="text-white/70 text-xs font-outfit uppercase tracking-[0.2em]">
+          <Text className="text-white/70 text-xs font-bbh uppercase tracking-[0.2em]">
             Lock In
           </Text>
           <Text className="text-white text-3xl md:text-4xl font-bbh font-bold leading-tight">
@@ -85,7 +118,7 @@ export default function HomeAppScreen() {
             <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20">
               <View className="space-y-4">
                 <View className="flex flex-row items-center justify-between">
-                  <Text className="text-white/70 text-sm font-outfit uppercase tracking-wide">
+                  <Text className="text-white/70 text-sm font-bbh uppercase tracking-wide">
                     Day {currentGoal.currentDay} of {currentGoal.targetDays}
                   </Text>
                   <View className="bg-white/10 rounded-full px-3 py-1">
@@ -95,7 +128,7 @@ export default function HomeAppScreen() {
                   </View>
                 </View>
 
-                <Text className="text-white text-lg font-outfit leading-relaxed">
+                <Text className="text-white text-lg font-bbh leading-relaxed">
                   {currentGoal.goalText}
                 </Text>
 
@@ -115,11 +148,11 @@ export default function HomeAppScreen() {
         ) : (
           <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20">
             {loading ? (
-              <Text className="text-white/70 text-center font-outfit">
+              <Text className="text-white/70 text-center font-bbh">
                 Loading...
               </Text>
             ) : (
-              <Text className="text-white/70 text-center font-outfit">
+              <Text className="text-white/70 text-center font-bbh">
                 No active goal. Create one to get started.
               </Text>
             )}
@@ -138,7 +171,7 @@ export default function HomeAppScreen() {
               />
             ) : (
               <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20 space-y-4">
-                <Text className="text-white text-xl font-outfit font-semibold">
+                <Text className="text-white text-xl font-bbh font-semibold">
                   Create Your Goal
                 </Text>
 
@@ -172,7 +205,7 @@ export default function HomeAppScreen() {
                   </View>
 
                   {formError && (
-                    <Text className="text-danger-500 text-sm font-outfit">
+                    <Text className="text-danger-500 text-sm font-bbh">
                       {formError}
                     </Text>
                   )}
@@ -206,7 +239,7 @@ export default function HomeAppScreen() {
         {/* Goals List */}
         {goals.length > 0 && (
           <View className="space-y-4">
-            <Text className="text-white/70 text-sm font-outfit uppercase tracking-wide">
+            <Text className="text-white/70 text-sm font-bbh uppercase tracking-wide">
               All Goals ({goals.length})
             </Text>
 
@@ -221,15 +254,15 @@ export default function HomeAppScreen() {
                 >
                   <View className="flex flex-row items-start justify-between">
                     <View className="flex-1 space-y-2">
-                      <Text className="text-white font-outfit text-sm leading-relaxed">
+                      <Text className="text-white font-bbh text-sm leading-relaxed">
                         {goal.goalText}
                       </Text>
                       <View className="flex flex-row items-center gap-4">
-                        <Text className="text-white/60 text-xs font-outfit">
+                        <Text className="text-white/60 text-xs font-bbh">
                           Day {goal.currentDay}/{goal.targetDays}
                         </Text>
                         {goal.lastCheckInDate && (
-                          <Text className="text-white/40 text-xs font-outfit">
+                          <Text className="text-white/40 text-xs font-bbh">
                             Last: {new Date(goal.lastCheckInDate).toLocaleDateString()}
                           </Text>
                         )}
@@ -237,7 +270,7 @@ export default function HomeAppScreen() {
                     </View>
                     {goal.id === currentGoal?.id && (
                       <View className="bg-white/20 rounded-full px-2 py-1">
-                        <Text className="text-white text-xs font-outfit font-semibold">
+                        <Text className="text-white text-xs font-bbh font-semibold">
                           Active
                         </Text>
                       </View>
@@ -252,7 +285,7 @@ export default function HomeAppScreen() {
         {/* Error Display */}
         {error && (
           <View className="bg-danger-500/20 border border-danger-500 rounded-xl p-4">
-            <Text className="text-danger-500 text-sm font-outfit">
+            <Text className="text-danger-500 text-sm font-bbh">
               {error instanceof Error ? error.message : 'An error occurred'}
             </Text>
           </View>

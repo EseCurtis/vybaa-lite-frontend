@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { goalAPI, type Goal, type CreateGoalRequest } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { useToast } from '@/providers/toast.provider'
 
 /**
  * Hook to fetch all goals
@@ -35,6 +36,7 @@ export function useCurrentGoal() {
  */
 export function useCreateGoal() {
   const queryClient = useQueryClient()
+  const toast = useToast()
 
   return useMutation({
     mutationFn: (data: CreateGoalRequest) => goalAPI.createGoal(data),
@@ -45,6 +47,10 @@ export function useCreateGoal() {
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
       }
+      toast.success('Goal created successfully!')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create goal')
     },
   })
 }
@@ -54,6 +60,7 @@ export function useCreateGoal() {
  */
 export function useCheckIn() {
   const queryClient = useQueryClient()
+  const toast = useToast()
 
   return useMutation({
     mutationFn: () => goalAPI.checkIn(),
@@ -65,6 +72,10 @@ export function useCheckIn() {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
         queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
       }
+      toast.success('Check-in successful! Keep it up!')
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Check-in failed')
     },
   })
 }

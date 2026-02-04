@@ -28,7 +28,7 @@ export const SegmentedTabs: React.FC<SegmentedTabsProps> = ({
             onPress={() => onChange(t)}
           >
             <Text
-              className={`text-center text-sm md:text-base font-outfit capitalize ${value === t ? 'text-black font-semibold' : 'text-white/70'}`}
+              className={`text-center text-sm md:text-base font-bbh capitalize ${value === t ? 'text-black font-semibold' : 'text-white/70'}`}
             >
               {t.toLowerCase()}
             </Text>

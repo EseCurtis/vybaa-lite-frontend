@@ -144,7 +144,7 @@ export function JournalInsightModal({ onClose }: { onClose?: () => void }) {
                   <Icons.Info size={18} className="text-accent-400" />
                   <Text className="text-white font-bbh text-base">How we use your journals</Text>
                 </View>
-                <Text className="text-white/80 font-outfit text-sm leading-relaxed">
+                <Text className="text-white/80 font-bbh text-sm leading-relaxed">
                   We analyze your last 10 journal entries to understand your emotional patterns and automatically update your mood profile. This helps us personalize your daily insights and provide better support. Your entries are private and secure.
                 </Text>
               </View>

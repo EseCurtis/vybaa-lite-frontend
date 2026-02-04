@@ -102,7 +102,7 @@ export default function AppScreen() {
           </View>
 
           {(loginError || error) && (
-            <Text className="text-red-400 text-sm font-outfit text-center mt-2">
+            <Text className="text-red-400 text-sm font-bbh text-center mt-2">
               {loginError || error}
             </Text>
           )}

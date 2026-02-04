@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { View } from '@/components/layout/view.component'
-import { Text } from '@/components/layout/text.component'
-import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Icons, Icon as LIcon } from '@/components/layout/icon.component'
+import { TouchableOpacity } from '@/components/layout/pressables.component'
+import { Text } from '@/components/layout/text.component'
+import { View } from '@/components/layout/view.component'
+import { useState } from 'react'
 
 export function JournalInsightSheet({ onClose }: { onClose?: () => void }) {
   const [text, setText] = useState('')
@@ -12,7 +12,7 @@ export function JournalInsightSheet({ onClose }: { onClose?: () => void }) {
     <View className="gap-4">
       <View className="gap-2">
         <Text className="text-white font-bbh text-xl">Daily Check In</Text>
-        <Text className="text-white/70 font-outfit text-sm">Write a few lines about your day. You can also record a quick voice note and we’ll transcribe it.</Text>
+        <Text className="text-white/70 font-bbh text-sm">Write a few lines about your day. You can also record a quick voice note and we’ll transcribe it.</Text>
       </View>
 
       <div className="rounded-xl border border-[#2a2a2a] bg-[#0f0f0f] p-3">

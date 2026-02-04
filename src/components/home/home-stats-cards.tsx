@@ -89,7 +89,7 @@ function StatCard({
             {display}
           </Text>
           {/* Label */}
-          <Text className="text-white/90 text-xs font-semibold font-outfit text-center">
+          <Text className="text-white/90 text-xs font-semibold font-bbh text-center">
             {label}
           </Text>
         </View>

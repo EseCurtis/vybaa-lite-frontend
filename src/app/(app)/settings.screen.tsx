@@ -21,26 +21,26 @@ export default function SettingsScreen() {
           <Text className="text-white text-xl font-bold font-bbh">
             Settings
           </Text>
-          <Text className="text-white/60 text-sm font-outfit mt-1">
+          <Text className="text-white/60 text-sm font-bbh mt-1">
             Wire up your own preferences, themes, and account options here.
           </Text>
         </View>
 
         <View className="gap-4">
           <View className="bg-card-700 rounded-xl p-4 border border-card-300/20">
-            <Text className="text-white font-outfit font-semibold mb-1">
+            <Text className="text-white font-bbh font-semibold mb-1">
               Theme
             </Text>
-            <Text className="text-white/60 text-sm font-outfit">
+            <Text className="text-white/60 text-sm font-bbh">
               Example placeholder for light/dark or accent color controls.
             </Text>
           </View>
 
           <View className="bg-card-700 rounded-xl p-4 border border-card-300/20">
-            <Text className="text-white font-outfit font-semibold mb-1">
+            <Text className="text-white font-bbh font-semibold mb-1">
               Notifications
             </Text>
-            <Text className="text-white/60 text-sm font-outfit">
+            <Text className="text-white/60 text-sm font-bbh">
               Use this section to configure push, email, or in-app notifications.
             </Text>
           </View>

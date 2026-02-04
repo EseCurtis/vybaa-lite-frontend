@@ -30,7 +30,7 @@ const items: Array<{ key: string; label: string; emoji: string; icon: any; bg: s
 export const CategoryPickerSheet = ({ selected, onSelect }: CategoryPickerSheetProps) => {
   return (
     <View className="gap-4">
-      <Text className="text-white/80 text-sm font-outfit">Pick an icon</Text>
+      <Text className="text-white/80 text-sm font-bbh">Pick an icon</Text>
       <View className="grid grid-cols-4 gap-3">
         {items.map((item) => {
           const isActive = selected === item.emoji
@@ -44,7 +44,7 @@ export const CategoryPickerSheet = ({ selected, onSelect }: CategoryPickerSheetP
             >
               <View className="items-center">
                 <Icon icon={item.icon} className="text-white/90 text-xl" />
-                <Text className="text-white/80 text-[11px] mt-2 font-outfit">{item.label}</Text>
+                <Text className="text-white/80 text-[11px] mt-2 font-bbh">{item.label}</Text>
               </View>
             </TouchableOpacity>
           )

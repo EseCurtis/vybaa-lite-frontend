@@ -70,10 +70,10 @@ export function JournalCTA({ onPress, autoOpen = false }: JournalCTAProps) {
         </View>
         
         <View className="flex-1 min-w-0 text-left">
-          <Text className="text-white text-base font-semibold font-outfit">
+          <Text className="text-white text-base font-semibold font-bbh">
             {prompt.title}
           </Text>
-          <Text className="text-white/60 text-sm font-outfit mt-0.5">
+          <Text className="text-white/60 text-sm font-bbh mt-0.5">
             {prompt.subtitle}
           </Text>
         </View>

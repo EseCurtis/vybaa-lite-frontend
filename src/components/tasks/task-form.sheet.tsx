@@ -67,7 +67,7 @@ export const TaskFormSheet = ({
                   transition={shouldAnimate ? { type: 'spring', stiffness: 300, damping: 26 } : { duration: 0 }}
                 />
               )}
-              <Text className={`relative text-center font-outfit ${frequency === 'DAILY' ? 'text-black font-semibold' : 'text-white/70'}`}>Daily</Text>
+              <Text className={`relative text-center font-bbh ${frequency === 'DAILY' ? 'text-black font-semibold' : 'text-white/70'}`}>Daily</Text>
             </TouchableOpacity>
             <TouchableOpacity
               className={`relative px-3 py-1 rounded-full overflow-hidden`}
@@ -80,7 +80,7 @@ export const TaskFormSheet = ({
                   transition={shouldAnimate ? { type: 'spring', stiffness: 300, damping: 26 } : { duration: 0 }}
                 />
               )}
-              <Text className={`relative text-center font-outfit ${frequency === 'WEEKLY' ? 'text-black font-semibold' : 'text-white/70'}`}>Weekly</Text>
+              <Text className={`relative text-center font-bbh ${frequency === 'WEEKLY' ? 'text-black font-semibold' : 'text-white/70'}`}>Weekly</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -94,7 +94,7 @@ export const TaskFormSheet = ({
           value={title}
           onChange={(e) => setTitle((e.target as HTMLInputElement).value.slice(0, 80))}
           placeholder="Untitled Task"
-          inputClassName="bg-transparent !border-0 pb-0 !rounded-[0px] text-white text-2xl font-semibold font-outfit px-0"
+          inputClassName="bg-transparent !border-0 pb-0 !rounded-[0px] text-white text-2xl font-semibold font-bbh px-0"
           containerClassName="!rounded-[0px]"
           className="!rounded-[0px] !border-0 pb-5"
           onKeyDown={(e: any) => {
@@ -115,15 +115,15 @@ export const TaskFormSheet = ({
         />
         <View className="flex-row items-center justify-between mt-2">
           {error ? (
-            <Text className="text-red-400 text-xs font-outfit">{error}</Text>
+            <Text className="text-red-400 text-xs font-bbh">{error}</Text>
           ) : (
-            <Text className="text-white/40 text-xs font-outfit">{description.length}/280</Text>
+            <Text className="text-white/40 text-xs font-bbh">{description.length}/280</Text>
           )}
           <TouchableOpacity
             className="px-2 py-1 rounded-md border border-[#2a2a2a]"
             onPress={() => setDescription('')}
           >
-            <Text className="text-white/70 text-xs font-outfit">Clear</Text>
+            <Text className="text-white/70 text-xs font-bbh">Clear</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -134,7 +134,7 @@ export const TaskFormSheet = ({
           className={`w-2/3 flex justify-center rounded-xl py-3 ${canSubmit ? 'bg-white' : 'bg-[#1a1a1a] border border-[#2a2a2a]'}`}
           onPress={() => canSubmit && handleSubmit()}
         >
-          <Text className={`text-center font-outfit font-semibold ${canSubmit ? 'text-black' : 'text-white/60'}`}>
+          <Text className={`text-center font-bbh font-semibold ${canSubmit ? 'text-black' : 'text-white/60'}`}>
             {isSaving ? 'Saving…' : mode === 'add' ? 'Create task' : 'Save'}
           </Text>
         </TouchableOpacity>
@@ -142,7 +142,7 @@ export const TaskFormSheet = ({
           className="w-1/3 bg-transparent flex justify-center rounded-xl py-3 border border-[#2a2a2a]"
           onPress={onCancel}
         >
-          <Text className="text-white/80 text-center font-outfit">Cancel</Text>
+          <Text className="text-white/80 text-center font-bbh">Cancel</Text>
         </TouchableOpacity>
       </View>
 

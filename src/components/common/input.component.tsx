@@ -39,7 +39,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <View className={cn('w-full', containerClassName)}>
         {label && (
-          <Text className="text-white text-sm font-medium font-outfit mb-2">
+          <Text className="text-white text-sm font-medium font-bbh mb-2">
             {label}
           </Text>
         )}
@@ -63,7 +63,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={inputType}
             disabled={disabled}
             className={cn(
-              'w-full px-4 py-4  bg-transparent text-white font-outfit text-[17px] outline-none',
+              'w-full px-4 py-4  bg-transparent text-white font-bbh text-[17px] outline-none',
               'placeholder:text-neutral-500',
               leftIcon && 'pl-10',
               (rightIcon || isPassword) && 'pr-10',
@@ -95,13 +95,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </View>
 
         {error && (
-          <Text className="text-danger-500 text-xs font-outfit mt-1">
+          <Text className="text-danger-500 text-xs font-bbh mt-1">
             {error}
           </Text>
         )}
 
         {helperText && !error && (
-          <Text className="text-neutral-500 text-xs font-outfit mt-1">
+          <Text className="text-neutral-500 text-xs font-bbh mt-1">
             {helperText}
           </Text>
         )}

@@ -12,7 +12,7 @@ const button = tv({
   slots: {
     container:
       'flex flex-row items-center justify-center gap-2 rounded-full px-10 transition-all duration-200',
-    label: 'font-outfit text-base font-semibold',
+    label: 'font-bbh text-base font-semibold',
     indicator: 'h-6 text-white',
   },
 

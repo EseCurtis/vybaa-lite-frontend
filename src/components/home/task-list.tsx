@@ -32,7 +32,7 @@ export function TaskList({
     return (
       <View className="bg-card-600 rounded-2xl p-6 text-center">
         <Text className="text-white text-lg font-bbh mb-2"> All done!</Text>
-        <Text className="text-white/70 text-sm font-outfit">You've completed all your tasks for today. Great job!</Text>
+        <Text className="text-white/70 text-sm font-bbh">You've completed all your tasks for today. Great job!</Text>
       </View>
     )
   }

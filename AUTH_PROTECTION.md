@@ -118,7 +118,7 @@ All protected routes show appropriate loading states:
 **ProtectedRoute Loading:**
 ```tsx
 <View className="flex-1 items-center justify-center bg-black">
-  <Text className="text-white text-lg font-outfit">Loading...</Text>
+  <Text className="text-white text-lg font-bbh">Loading...</Text>
 </View>
 ```
 

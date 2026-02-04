@@ -41,7 +41,7 @@ export default function TaskRow({
             {item.title}
           </Text>
           {item.description && (
-            <Text className="text-white/70 text-xs font-outfit">
+            <Text className="text-white/70 text-xs font-bbh">
               {smartTruncate(item.description, 30)}
             </Text>
           )}

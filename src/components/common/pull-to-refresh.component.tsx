@@ -123,7 +123,7 @@ export function PullToRefresh({
             {refreshing ? (
               <>
                 <div className="animate-spin rounded-full border-2 border-white/30 border-t-white w-5 h-5" />
-                <Text className="text-white/80 text-sm font-outfit">Refreshing...</Text>
+                <Text className="text-white/80 text-sm font-bbh">Refreshing...</Text>
               </>
             ) : (
               <>
@@ -135,7 +135,7 @@ export function PullToRefresh({
                 >
                   <div className="w-2 h-2 bg-white/60 rounded-full" />
                 </div>
-                <Text className="text-white/80 text-sm font-outfit">
+                <Text className="text-white/80 text-sm font-bbh">
                   {isReadyToRefresh ? 'Release to refresh' : 'Pull to refresh'}
                 </Text>
               </>

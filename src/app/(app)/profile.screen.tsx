@@ -26,21 +26,21 @@ export default function ProfileScreen() {
             <Text className="text-white text-2xl font-bbh font-bold">
               Example User
             </Text>
-            <Text className="text-white/60 text-sm font-outfit">
+            <Text className="text-white/60 text-sm font-bbh">
               you@example.com
             </Text>
           </View>
         </View>
 
         <View className="space-y-3">
-          <Text className="text-white/70 text-xs font-outfit uppercase tracking-[0.25em]">
+          <Text className="text-white/70 text-xs font-bbh uppercase tracking-[0.25em]">
             Overview
           </Text>
           <View className="bg-card-700 rounded-2xl p-4 border border-card-300/20">
-            <Text className="text-white font-outfit font-semibold mb-1">
+            <Text className="text-white font-bbh font-semibold mb-1">
               Profile details
             </Text>
-            <Text className="text-white/60 text-sm font-outfit">
+            <Text className="text-white/60 text-sm font-bbh">
               Use this screen to edit profile information, connect accounts, or
               show simple usage stats for your users.
             </Text>

@@ -39,7 +39,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
         ref={ref}
         rows={1}
         className={cn(
-          'w-full bg-transparent text-white font-outfit text-[17px] outline-none resize-none placeholder:text-neutral-500',
+          'w-full bg-transparent text-white font-bbh text-[17px] outline-none resize-none placeholder:text-neutral-500',
           className,
         )}
         {...props}

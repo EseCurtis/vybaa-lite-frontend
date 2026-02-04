@@ -1,6 +1,6 @@
-import { useAuth } from '@/providers/auth.provider'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useAuth } from '@/providers/auth.provider'
 
 type ProtectedViewComponentProps = {
   children: React.ReactNode
@@ -16,7 +16,7 @@ export const ProtectedViewComponent = ({ children }: ProtectedViewComponentProps
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-black">
-        <Text className="text-white text-lg font-outfit">Loading...</Text>
+        <Text className="text-white text-lg font-bbh">Loading...</Text>
       </View>
     )
   }

@@ -41,7 +41,7 @@ export function HomeHeader({ firstName, mood }: { firstName?: string; mood?: str
           <Text className="text-white text-xl font-bold font-bbh mb-2">
             {getGreeting()}, {firstName} 👋
           </Text>
-          <Text className="text-white/80 text-lg font-bbh-mini font-outfit">
+          <Text className="text-white/80 text-lg font-bbh-mini font-bbh">
             {getMoodSummary(mood)}
           </Text>
         </View>
@@ -53,7 +53,7 @@ export function HomeHeader({ firstName, mood }: { firstName?: string; mood?: str
           <Icons.Bell className="text-white text-xl" />
           {unreadCount > 0 && (
             <View className="absolute -top-1 -right-1 bg-red-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-              <Text className="text-white text-[10px] font-bold font-outfit">
+              <Text className="text-white text-[10px] font-bold font-bbh">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </Text>
             </View>
