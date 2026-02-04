@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppSettingsRouteImport } from './routes/app/settings'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,6 +30,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/app/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInsightsRoute = AppInsightsRouteImport.update({
+  id: '/app/insights',
+  path: '/app/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppHomeRoute = AppHomeRouteImport.update({
   id: '/app/home',
   path: '/app/home',
@@ -38,12 +44,14 @@ const AppHomeRoute = AppHomeRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app/home': typeof AppHomeRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/settings': typeof AppSettingsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/home': typeof AppHomeRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/settings': typeof AppSettingsRoute
 }
@@ -51,20 +59,33 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app/home': typeof AppHomeRoute
+  '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/settings': typeof AppSettingsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app/home' | '/app/profile' | '/app/settings'
+  fullPaths:
+    | '/'
+    | '/app/home'
+    | '/app/insights'
+    | '/app/profile'
+    | '/app/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/home' | '/app/profile' | '/app/settings'
-  id: '__root__' | '/' | '/app/home' | '/app/profile' | '/app/settings'
+  to: '/' | '/app/home' | '/app/insights' | '/app/profile' | '/app/settings'
+  id:
+    | '__root__'
+    | '/'
+    | '/app/home'
+    | '/app/insights'
+    | '/app/profile'
+    | '/app/settings'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppHomeRoute: typeof AppHomeRoute
+  AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppSettingsRoute: typeof AppSettingsRoute
 }
@@ -92,6 +113,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/insights': {
+      id: '/app/insights'
+      path: '/app/insights'
+      fullPath: '/app/insights'
+      preLoaderRoute: typeof AppInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/home': {
       id: '/app/home'
       path: '/app/home'
@@ -105,6 +133,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppHomeRoute: AppHomeRoute,
+  AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
   AppSettingsRoute: AppSettingsRoute,
 }

@@ -27,13 +27,12 @@ export const TabBar = memo(() => {
         badge: null,
       },
       {
-        id: 'settings',
-        route: '/app/settings',
-        icon: Icons.Settings,
-        label: 'Settings',
+        id: 'insights',
+        route: '/app/insights',
+        icon: Icons.Activity,
+        label: 'Insights',
         badge: null,
       },
-
       {
         id: 'profile',
         route: '/app/profile',
