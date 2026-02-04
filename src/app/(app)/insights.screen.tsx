@@ -1,10 +1,11 @@
 import { TopNotchPadd } from '@/components/common/notch.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Icons } from '@/components/layout/icon.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
+import { cn } from '@/shared/utils/helpers.util'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
-import { Icons } from '@/components/layout/icon.component'
 
 export default function InsightsScreen() {
   const { goals, currentGoal, isLoading } = useGoalOperations()
@@ -249,6 +250,3 @@ export default function InsightsScreen() {
     </View>
   )
 }
-
-// Add missing import
-import { cn } from '@/shared/utils/helpers.util'
