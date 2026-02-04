@@ -30,6 +30,7 @@
     "@capgo/capacitor-social-login": "^8.2.16",
     "@iconify-icons/twemoji": "^1.2.8",
     "@iconify/react": "^6.0.2",
+    "@remixicon/react": "^4.9.0",
     "@revenuecat/purchases-capacitor": "^9.0.7",
     "@tanstack/react-devtools": "^0.7.0",
     "@tanstack/react-query": "^5.90.5",

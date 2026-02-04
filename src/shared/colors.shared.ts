@@ -1,61 +1,14 @@
-// Color scale type definition
-type ColorScale = {
-  50: string
-  100: string
-  200: string
-  300: string
-  400: string
-  500: string
-  600: string
-  700: string
-  800: string
-  900: string
-}
 
-// Extended color scale with custom values
-type ExtendedColorScale = ColorScale & {
-  850?: string
-  950?: string
-}
-
-// Main colors interface
-interface Colors {
-  white: string
-  black: string
-  'success-green': string
-  'warning-yellow': string
-  border: string
-  card: {
-    50: string
-    100: string
-    200: string
-    300: string
-    400: string
-    500: string
-    600: string
-    700: string
-  }
-  charcoal: ExtendedColorScale
-  neutral: ColorScale
-  accent: {
-    50: string
-    100: string
-    200: string
-    300: string
-    400: string
-    500: string
-    600: string
-    700: string
-  }
-  success: ColorScale
-  warning: ColorScale
-  danger: ColorScale
-}
 
 // Color values with full type safety
-export const colors: Colors = {
+export const colors = {
   white: '#ffffff',
   black: '#060509',
+  'card-light': '#292D3D',
+  'card-light-50': 'rgb(41 45 61 / 0.5)',
+  'card-lighter': '#494f66',
+  'card-lighter-2': '#6d7490',
+  'card-lighter-3': '#848ba6',
   'success-green': '#16BA81',
   'warning-yellow': '#fb9a24',
   border: '#242424',
@@ -68,6 +21,10 @@ export const colors: Colors = {
     500: '#1E1E1E',
     600: '#121212',
     700: '#111111',
+    800: '#383838',
+    850: '#2E2E2E',
+    900: '#1E1E1E',
+    950: '#121212',
   },
   charcoal: {
     50: '#F2F2F2',
@@ -96,14 +53,16 @@ export const colors: Colors = {
     900: '#171717',
   },
   accent: {
-    50: '#f7ffe6',                // Very light lime for subtle highlights
-    100: '#efffd1',               // Light lime for hover states
-    200: '#e6ffac',               // Soft lime for backgrounds or accents
-    300: '#dffc45',               // Base vibrant lime for primary accents
-    400: '#c9e33e',               // Slightly darker for buttons or icons
-    500: '#b3c938',               // Medium-dark for active states
-    600: '#9cb032',               // Darker lime for depth
-    700: '#86972c'                // Deep lime for contrast or borders
+    50: '#FFE5F0', // very light pink
+    100: '#FFB3CC', // light pink
+    200: '#FF80AA', // softer warm pink
+    300: '#FF4D88', // medium pink
+    400: '#FF266F', // almost there
+    500: '#FF005E', // base color
+    600: '#E60054', // slightly darker
+    700: '#CC004A', // deeper
+    800: '#B30040', // richer
+    900: '#990036', // darkest variant
   },
   success: {
     50: '#F0FDF4',
@@ -142,7 +101,4 @@ export const colors: Colors = {
     900: '#7F1D1D',
   },
 }
-
-// Export types for external use
-export type { Colors, ColorScale, ExtendedColorScale }
 

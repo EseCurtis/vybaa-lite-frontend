@@ -910,6 +910,11 @@
     "@xml-tools/parser" "^1.0.11"
     prettier ">=2.4.0"
 
+"@remixicon/react@^4.9.0":
+  version "4.9.0"
+  resolved "https://registry.npmjs.org/@remixicon/react/-/react-4.9.0.tgz"
+  integrity sha512-5/jLDD4DtKxH2B4QVXTobvV1C2uL8ab9D5yAYNtFt+w80O0Ys1xFOrspqROL3fjrZi+7ElFUWE37hBfaAl6U+Q==
+
 "@revenuecat/purchases-capacitor@^9.0.7":
   version "9.2.2"
   resolved "https://registry.npmjs.org/@revenuecat/purchases-capacitor/-/purchases-capacitor-9.2.2.tgz"

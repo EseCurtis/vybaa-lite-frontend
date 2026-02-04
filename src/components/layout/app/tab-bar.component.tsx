@@ -42,7 +42,7 @@ export const TabBar = memo(() => {
         isSpecial: false,
         badge: null,
         matchAllRoot: true,
-        matchAlso: ['/app/settings'],
+       
       },
     ],
     [],

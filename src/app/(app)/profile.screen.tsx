@@ -1,6 +1,8 @@
 import { BottomNotch, TopNotch } from '@/components/common/notch.component'
+import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useAuth } from '@/providers/auth.provider'
 
 /**
  * Generic profile screen for the starter app.
@@ -9,6 +11,7 @@ import { View } from '@/components/layout/view.component'
  * how you might lay out a profile/account area.
  */
 export default function ProfileScreen() {
+  const { logout } = useAuth()
   return (
     <View className="flex-1 bg-black">
       <TopNotch />
@@ -43,6 +46,8 @@ export default function ProfileScreen() {
             </Text>
           </View>
         </View>
+
+        <Button label={'Logout'} onClick={logout}  textClassName='text-sm'/>
       </View>
 
       <BottomNotch />
