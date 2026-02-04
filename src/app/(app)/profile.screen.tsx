@@ -298,7 +298,7 @@ export default function ProfileScreen() {
 
             {/* Error Display */}
             {formError && (
-              <View className="bg-danger-500/20 border border-danger-500 rounded-xl p-4">
+              <View className="bg-danger-500/20 rounded-xl p-4">
                 <Text className="text-danger-500 text-sm font-bbh">{formError}</Text>
               </View>
             )}
