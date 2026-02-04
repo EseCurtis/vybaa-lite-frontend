@@ -196,7 +196,7 @@ export default function HomeAppScreen() {
             transition={{ duration: 0.4, type: 'spring' }}
             className="mb-6"
           >
-            <View className="bg-gradient-to-br from-card-700 via-card-700 to-card-800 rounded-3xl p-6 border border-white/5 overflow-hidden relative">
+            <View className="bg-gradient-to-br from-card-700 via-card-700 to-card-800 rounded-3xl p-6 overflow-hidden relative">
               {/* Progress Ring Background */}
               <div className="absolute inset-0 opacity-10">
                 <svg className="w-full h-full transform -rotate-90">
@@ -293,7 +293,7 @@ export default function HomeAppScreen() {
             animate={{ opacity: 1 }}
             className="mb-6"
           >
-            <View className="bg-card-700/50 rounded-3xl p-8 border border-white/5 text-center">
+            <View className="bg-card-700/50 rounded-3xl p-8 text-center">
               <Text className="text-white/40 text-sm font-bbh">
                 No active goal
               </Text>
@@ -331,7 +331,7 @@ export default function HomeAppScreen() {
               transition={{ duration: 0.3 }}
               className="mb-6"
             >
-              <View className="bg-card-700/80 backdrop-blur-xl rounded-3xl p-6 border border-white/10 space-y-4">
+              <View className="bg-card-700/80 backdrop-blur-xl rounded-3xl p-6 space-y-4">
                 <View className="flex flex-row items-center justify-between">
                   <Text className="text-white text-xl font-bbh font-bold">
                     New Goal
@@ -430,7 +430,7 @@ export default function HomeAppScreen() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <View className="bg-card-700/30 rounded-2xl p-6 border border-white/5 text-center">
+                    <View className="bg-card-700/30 rounded-2xl p-6 text-center">
                       <Text className="text-white/40 text-sm font-bbh">
                         No matches
                       </Text>
@@ -451,10 +451,8 @@ export default function HomeAppScreen() {
                       >
                         <View
                           className={cn(
-                            'bg-card-700/60 backdrop-blur-sm rounded-2xl p-4 border transition-all',
-                            isActive
-                              ? 'border-white/30 bg-card-700/80'
-                              : 'border-white/5 hover:border-white/10'
+                            'bg-card-700/60 backdrop-blur-sm rounded-2xl p-4 transition-all',
+                            isActive && 'bg-card-700/80'
                           )}
                         >
                           <View className="space-y-3">
@@ -549,7 +547,7 @@ export default function HomeAppScreen() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-card-700 rounded-3xl p-6 border border-white/10 w-full max-w-md space-y-4"
+                className="bg-card-700 rounded-3xl p-6 w-full max-w-md space-y-4"
               >
                 <View className="flex flex-row items-center justify-between">
                   <Text className="text-white text-xl font-bbh font-bold">
