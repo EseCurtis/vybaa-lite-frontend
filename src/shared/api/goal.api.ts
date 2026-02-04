@@ -17,6 +17,11 @@ export interface CreateGoalRequest {
   targetDays: number
 }
 
+export interface UpdateGoalRequest {
+  goalText?: string
+  targetDays?: number
+}
+
 export interface GoalResponse {
   msg: string
   data: Goal | null
@@ -50,6 +55,16 @@ class GoalAPI {
 
   async resetGoal(): Promise<GoalResponse> {
     const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals/reset`, {})
+    return res
+  }
+
+  async updateGoal(goalId: string, data: UpdateGoalRequest): Promise<GoalResponse> {
+    const { data: res } = await http.put<GoalResponse>(`${API_V1}/goals/${goalId}`, data)
+    return res
+  }
+
+  async deleteGoal(goalId: string): Promise<{ msg: string }> {
+    const { data: res } = await http.delete<{ msg: string }>(`${API_V1}/goals/${goalId}`)
     return res
   }
 }
