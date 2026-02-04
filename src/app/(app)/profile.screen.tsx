@@ -189,7 +189,7 @@ export default function ProfileScreen() {
             Profile Information
           </Text>
 
-          <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20 space-y-4">
+          <View className="bg-card-700 rounded-2xl p-6 space-y-4">
             {/* First Name */}
             <View>
               <Text className="text-white/70 text-sm font-bbh mb-2">First Name</Text>
