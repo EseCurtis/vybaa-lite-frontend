@@ -10,6 +10,7 @@ import { useToast } from '@/providers/toast.provider'
 import { cn } from '@/shared/utils/helpers.util'
 import { useState, useEffect, useMemo } from 'react'
 import type { Goal } from '@/shared/api/goal.api'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function HomeAppScreen() {
   const toast = useToast()
@@ -54,6 +55,11 @@ export default function HomeAppScreen() {
         goal.targetDays.toString().includes(query)
     )
   }, [goals, searchQuery])
+
+  // Calculate progress percentage
+  const progressPercentage = currentGoal
+    ? Math.min((currentGoal.currentDay / currentGoal.targetDays) * 100, 100)
+    : 0
 
   // Show loading toast when creating
   useEffect(() => {
@@ -105,14 +111,12 @@ export default function HomeAppScreen() {
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to create goal'
       setFormError(errorMsg)
-      // Error toast is already shown in the mutation hook
     }
   }
 
   const handleCheckIn = async (goalId?: string) => {
     try {
       await checkInAsync(goalId)
-      // Success toast is already shown in the mutation hook
     } catch (err: any) {
       // Error toast is already shown in the mutation hook
     }
@@ -159,7 +163,6 @@ export default function HomeAppScreen() {
 
     try {
       await deleteGoalAsync(goalId)
-      // Success toast is already shown in the mutation hook
     } catch (err: any) {
       // Error toast is already shown in the mutation hook
     }
@@ -172,90 +175,189 @@ export default function HomeAppScreen() {
       <TopNotchPadd />
       <TopNotchPadd />
 
-      <View className="flex-1 px-5 pb-[120px] pt-4 space-y-6 max-w-4xl mx-auto">
-        {/* Header */}
-        <View className="space-y-2">
-          <Text className="text-white/70 text-xs font-bbh uppercase tracking-[0.2em]">
+      <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
+        {/* Minimal Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="mb-6"
+        >
+          <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
             Lock In
           </Text>
-          <Text className="text-white text-3xl md:text-4xl font-bbh font-bold leading-tight">
-            Your Commitment
-          </Text>
-        </View>
+        </motion.div>
 
-        {/* Current Goal Display */}
+        {/* Current Goal - Hero Card */}
         {currentGoal ? (
-          <View className="space-y-4">
-            <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20">
-              <View className="space-y-4">
-                <View className="flex flex-row items-center justify-between">
-                  <Text className="text-white/70 text-sm font-bbh uppercase tracking-wide">
-                    Day {currentGoal.currentDay} of {currentGoal.targetDays}
-                  </Text>
-                  <View className="bg-white/10 rounded-full px-3 py-1">
-                    <Text className="text-white text-2xl font-bold font-bbh">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, type: 'spring' }}
+            className="mb-6"
+          >
+            <View className="bg-gradient-to-br from-card-700 via-card-700 to-card-800 rounded-3xl p-6 border border-white/5 overflow-hidden relative">
+              {/* Progress Ring Background */}
+              <div className="absolute inset-0 opacity-10">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="50%"
+                    cy="50%"
+                    r="45%"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="text-white"
+                  />
+                  <motion.circle
+                    cx="50%"
+                    cy="50%"
+                    r="45%"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    className="text-white"
+                    strokeDasharray={`${2 * Math.PI * 45}%`}
+                    initial={{ strokeDashoffset: `${2 * Math.PI * 45}%` }}
+                    animate={{
+                      strokeDashoffset: `${2 * Math.PI * 45 * (1 - progressPercentage / 100)}%`,
+                    }}
+                    transition={{ duration: 0.8, ease: 'easeOut' }}
+                  />
+                </svg>
+              </div>
+
+              <View className="relative z-10 space-y-5">
+                {/* Day Counter - Big & Bold */}
+                <View className="flex items-center justify-center">
+                  <motion.div
+                    key={currentGoal.currentDay}
+                    initial={{ scale: 1.2, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 300 }}
+                    className="text-center"
+                  >
+                    <Text className="text-white text-7xl font-bbh font-bold leading-none">
                       {currentGoal.currentDay}
                     </Text>
-                  </View>
+                    <Text className="text-white/50 text-sm font-bbh mt-1">
+                      of {currentGoal.targetDays} days
+                    </Text>
+                  </motion.div>
                 </View>
 
-                <Text className="text-white text-lg font-bbh leading-relaxed">
-                  {currentGoal.goalText}
-                </Text>
+                {/* Goal Text */}
+                <View className="text-center">
+                  <Text className="text-white/90 text-lg font-bbh leading-relaxed">
+                    {currentGoal.goalText}
+                  </Text>
+                </View>
 
-                <View className="pt-4 border-t border-card-500/30">
+                {/* Progress Bar */}
+                <View className="space-y-2">
+                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercentage}%` }}
+                      transition={{ duration: 0.8, ease: 'easeOut' }}
+                      className="h-full bg-gradient-to-r from-white/30 to-white/50 rounded-full"
+                    />
+                  </div>
+                  <Text className="text-white/40 text-xs font-bbh text-center">
+                    {Math.round(progressPercentage)}% complete
+                  </Text>
+                </View>
+
+                {/* Quick Check-In Button */}
+                <motion.div
+                  whileTap={{ scale: 0.98 }}
+                  whileHover={{ scale: 1.02 }}
+                >
                   <Button
-                    label="I showed up today"
+                    label="✓ Check In"
                     variant="default"
                     fullWidth
                     onClick={() => handleCheckIn(currentGoal.id)}
                     disabled={isCheckingIn || loading}
                     loading={isCheckingIn}
+                    className="text-lg font-bold"
                   />
-                </View>
+                </motion.div>
               </View>
             </View>
-          </View>
+          </motion.div>
         ) : (
-          <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20">
-            {loading ? (
-              <Text className="text-white/70 text-center font-bbh">
-                Loading...
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-6"
+          >
+            <View className="bg-card-700/50 rounded-3xl p-8 border border-white/5 text-center">
+              <Text className="text-white/40 text-sm font-bbh">
+                No active goal
               </Text>
-            ) : (
-              <Text className="text-white/70 text-center font-bbh">
-                No active goal. Create one to get started.
-              </Text>
-            )}
-          </View>
+            </View>
+          </motion.div>
         )}
 
-        {/* Create Goal Section - Always available */}
-        {!loading && (
-          <View className="space-y-4">
-            {!isCreatingForm ? (
-              <Button
-                label="Create New Goal"
-                variant="secondary"
-                fullWidth
-                onClick={() => setIsCreatingForm(true)}
-              />
-            ) : (
-              <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20 space-y-4">
-                <Text className="text-white text-xl font-bbh font-semibold">
-                  Create Your Goal
-                </Text>
+        {/* Quick Actions */}
+        <AnimatePresence mode="wait">
+          {!isCreatingForm ? (
+            <motion.div
+              key="create-button"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="mb-6"
+            >
+              <motion.div whileTap={{ scale: 0.98 }}>
+                <Button
+                  label="+ New Goal"
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => setIsCreatingForm(true)}
+                  className="text-base"
+                />
+              </motion.div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="create-form"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="mb-6"
+            >
+              <View className="bg-card-700/80 backdrop-blur-xl rounded-3xl p-6 border border-white/10 space-y-4">
+                <View className="flex flex-row items-center justify-between">
+                  <Text className="text-white text-xl font-bbh font-bold">
+                    New Goal
+                  </Text>
+                  <button
+                    onClick={() => {
+                      setIsCreatingForm(false)
+                      setFormData({ goalText: '', targetDays: '' })
+                      setFormError(null)
+                    }}
+                    className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <Icons.X size="sm" color="#ffffff" />
+                  </button>
+                </View>
 
                 <View className="space-y-4">
                   <View>
                     <TextArea
-                      placeholder="For the next X days, I will..."
+                      placeholder="What's your commitment?"
                       value={formData.goalText}
                       onChange={(e) => {
                         setFormData({ ...formData, goalText: e.target.value })
                         setFormError(null)
                       }}
-                      className="min-h-[100px]"
+                      className="min-h-[80px] bg-card-600/50 border-white/10"
                       maxLength={500}
                     />
                   </View>
@@ -263,13 +365,13 @@ export default function HomeAppScreen() {
                   <View>
                     <Input
                       type="number"
-                      placeholder="Number of days (1-365)"
+                      placeholder="Days (1-365)"
                       value={formData.targetDays}
                       onChange={(e) => {
                         setFormData({ ...formData, targetDays: e.target.value })
                         setFormError(null)
                       }}
-                      className="bg-card-600 border border-card-500"
+                      className="bg-card-600/50 border-white/10"
                       min={1}
                       max={365}
                     />
@@ -281,188 +383,218 @@ export default function HomeAppScreen() {
                     </Text>
                   )}
 
-                  <View className="flex flex-row gap-3">
-                    <Button
-                      label="Cancel"
-                      variant="outline"
-                      fullWidth
-                      onClick={() => {
-                        setIsCreatingForm(false)
-                        setFormData({ goalText: '', targetDays: '' })
-                        setFormError(null)
-                      }}
-                    />
-                    <Button
-                      label="Start Goal"
-                      variant="default"
-                      fullWidth
-                      onClick={handleCreateGoal}
-                      disabled={isCreating}
-                      loading={isCreating}
-                    />
-                  </View>
+                  <Button
+                    label="Start"
+                    variant="default"
+                    fullWidth
+                    onClick={handleCreateGoal}
+                    disabled={isCreating}
+                    loading={isCreating}
+                  />
                 </View>
               </View>
-            )}
-          </View>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {/* Goals List */}
+        {/* Goals List - Compact & Slick */}
         {goals.length > 0 && (
           <View className="space-y-4">
-            <View className="flex flex-row items-center justify-between">
-              <Text className="text-white/70 text-sm font-bbh uppercase tracking-wide">
-                All Goals ({goals.length})
-              </Text>
-            </View>
+            {/* Search - Minimal */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <View className="relative">
+                <Icons.Search
+                  size="sm"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 z-10"
+                />
+                <Input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="bg-card-700/50 border-white/5 pl-10 backdrop-blur-sm"
+                />
+              </View>
+            </motion.div>
 
-            {/* Search Input */}
-            <View className="relative">
-              <Icons.Search
-                size="sm"
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40"
-              />
-              <Input
-                type="text"
-                placeholder="Search goals..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-card-600 border border-card-500 pl-10"
-              />
-            </View>
-
-            <View className="space-y-3">
-              {filteredGoals.length === 0 ? (
-                <View className="bg-card-700 rounded-xl p-6 border border-card-300/20">
-                  <Text className="text-white/70 text-center font-bbh">
-                    No goals found matching "{searchQuery}"
-                  </Text>
-                </View>
-              ) : (
-                filteredGoals.map((goal) => (
-                <View
-                  key={goal.id}
-                  className={cn(
-                    'bg-card-700 rounded-xl p-4 border border-card-300/20',
-                    goal.id === currentGoal?.id && 'border-white/40'
-                  )}
-                >
-                  <View className="space-y-3">
-                    <View className="flex flex-row items-start justify-between gap-2">
-                      <View className="flex-1 space-y-2">
-                        <Text className="text-white font-bbh text-sm leading-relaxed">
-                          {goal.goalText}
-                        </Text>
-                        <View className="flex flex-row items-center gap-4">
-                          <Text className="text-white/60 text-xs font-bbh">
-                            Day {goal.currentDay}/{goal.targetDays}
-                          </Text>
-                          {goal.lastCheckInDate && (
-                            <Text className="text-white/40 text-xs font-bbh">
-                              Last: {new Date(goal.lastCheckInDate).toLocaleDateString()}
-                            </Text>
-                          )}
-                        </View>
-                      </View>
-                      <View className="flex flex-row items-center gap-2">
-                        {goal.id === currentGoal?.id && (
-                          <View className="bg-white/20 rounded-full px-2 py-1">
-                            <Text className="text-white text-xs font-bbh font-semibold">
-                              Active
-                            </Text>
-                          </View>
-                        )}
-                        <button
-                          onClick={() => handleEditGoal(goal)}
-                          className="p-2 hover:bg-card-600 rounded-lg transition-colors"
-                          disabled={isUpdating || isDeleting}
-                        >
-                          <Icons.Edit size="sm" color="#ffffff" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteGoal(goal.id)}
-                          className="p-2 hover:bg-danger-500/20 rounded-lg transition-colors"
-                          disabled={isUpdating || isDeleting}
-                        >
-                          <Icons.Trash size="sm" color="#EF4444" />
-                        </button>
-                      </View>
+            {/* Goals Grid */}
+            <View className="space-y-2">
+              <AnimatePresence>
+                {filteredGoals.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <View className="bg-card-700/30 rounded-2xl p-6 border border-white/5 text-center">
+                      <Text className="text-white/40 text-sm font-bbh">
+                        No matches
+                      </Text>
                     </View>
-                    <Button
-                      label="Check In"
-                      variant="outline"
-                      size="sm"
-                      fullWidth
-                      onClick={() => handleCheckIn(goal.id)}
-                      disabled={isCheckingIn || isDeleting}
-                      loading={isCheckingIn}
-                    />
-                  </View>
-                </View>
-                ))
-              )}
+                  </motion.div>
+                ) : (
+                  filteredGoals.map((goal, index) => {
+                    const isActive = goal.id === currentGoal?.id
+                    const goalProgress = (goal.currentDay / goal.targetDays) * 100
+
+                    return (
+                      <motion.div
+                        key={goal.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ delay: index * 0.05 }}
+                      >
+                        <View
+                          className={cn(
+                            'bg-card-700/60 backdrop-blur-sm rounded-2xl p-4 border transition-all',
+                            isActive
+                              ? 'border-white/30 bg-card-700/80'
+                              : 'border-white/5 hover:border-white/10'
+                          )}
+                        >
+                          <View className="space-y-3">
+                            {/* Header Row */}
+                            <View className="flex flex-row items-start justify-between gap-3">
+                              <View className="flex-1 space-y-1 min-w-0">
+                                <Text className="text-white font-bbh text-sm leading-snug line-clamp-2">
+                                  {goal.goalText}
+                                </Text>
+                                <View className="flex flex-row items-center gap-3">
+                                  <Text className="text-white/50 text-xs font-bbh">
+                                    {goal.currentDay}/{goal.targetDays}
+                                  </Text>
+                                  {isActive && (
+                                    <View className="bg-white/20 rounded-full px-2 py-0.5">
+                                      <Text className="text-white text-[10px] font-bbh font-semibold uppercase tracking-wider">
+                                        Active
+                                      </Text>
+                                    </View>
+                                  )}
+                                </View>
+                              </View>
+
+                              {/* Quick Actions */}
+                              <View className="flex flex-row items-center gap-1">
+                                <button
+                                  onClick={() => handleEditGoal(goal)}
+                                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+                                  disabled={isUpdating || isDeleting}
+                                >
+                                  <Icons.Edit size="xs" color="#ffffff" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteGoal(goal.id)}
+                                  className="p-1.5 hover:bg-danger-500/20 rounded-lg transition-colors"
+                                  disabled={isUpdating || isDeleting}
+                                >
+                                  <Icons.Trash size="xs" color="#EF4444" />
+                                </button>
+                              </View>
+                            </View>
+
+                            {/* Mini Progress */}
+                            <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${goalProgress}%` }}
+                                transition={{ duration: 0.5 }}
+                                className="h-full bg-white/30 rounded-full"
+                              />
+                            </div>
+
+                            {/* Check In Button */}
+                            <motion.div whileTap={{ scale: 0.98 }}>
+                              <Button
+                                label="Check In"
+                                variant="outline"
+                                size="sm"
+                                fullWidth
+                                onClick={() => handleCheckIn(goal.id)}
+                                disabled={isCheckingIn || isDeleting}
+                                loading={isCheckingIn}
+                                className="text-xs"
+                              />
+                            </motion.div>
+                          </View>
+                        </View>
+                      </motion.div>
+                    )
+                  })
+                )}
+              </AnimatePresence>
             </View>
           </View>
         )}
 
         {/* Edit Goal Modal */}
-        {editingGoal && (
-          <View className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/70 p-4">
-            <View className="bg-card-700 rounded-2xl p-6 border border-card-300/20 w-full max-w-md space-y-4">
-              <View className="flex flex-row items-center justify-between">
-                <Text className="text-white text-xl font-bbh font-semibold">
-                  Edit Goal
-                </Text>
-                <button
-                  onClick={() => {
-                    setEditingGoal(null)
-                    setEditFormData({ goalText: '', targetDays: '' })
-                  }}
-                  className="p-2 hover:bg-card-600 rounded-lg transition-colors"
-                >
-                  <Icons.X size="sm" color="#ffffff" />
-                </button>
-              </View>
-
-              <View className="space-y-4">
-                <View>
-                  <TextArea
-                    placeholder="For the next X days, I will..."
-                    value={editFormData.goalText}
-                    onChange={(e) => {
-                      setEditFormData({ ...editFormData, goalText: e.target.value })
-                    }}
-                    className="min-h-[100px]"
-                    maxLength={500}
-                  />
-                </View>
-
-                <View>
-                  <Input
-                    type="number"
-                    placeholder="Number of days (1-365)"
-                    value={editFormData.targetDays}
-                    onChange={(e) => {
-                      setEditFormData({ ...editFormData, targetDays: e.target.value })
-                    }}
-                    className="bg-card-600 border border-card-500"
-                    min={1}
-                    max={365}
-                  />
-                </View>
-
-                <View className="flex flex-row gap-3">
-                  <Button
-                    label="Cancel"
-                    variant="outline"
-                    fullWidth
+        <AnimatePresence>
+          {editingGoal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[20000] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+              onClick={() => {
+                setEditingGoal(null)
+                setEditFormData({ goalText: '', targetDays: '' })
+              }}
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-card-700 rounded-3xl p-6 border border-white/10 w-full max-w-md space-y-4"
+              >
+                <View className="flex flex-row items-center justify-between">
+                  <Text className="text-white text-xl font-bbh font-bold">
+                    Edit Goal
+                  </Text>
+                  <button
                     onClick={() => {
                       setEditingGoal(null)
                       setEditFormData({ goalText: '', targetDays: '' })
                     }}
-                  />
+                    className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <Icons.X size="sm" color="#ffffff" />
+                  </button>
+                </View>
+
+                <View className="space-y-4">
+                  <View>
+                    <TextArea
+                      placeholder="What's your commitment?"
+                      value={editFormData.goalText}
+                      onChange={(e) => {
+                        setEditFormData({ ...editFormData, goalText: e.target.value })
+                      }}
+                      className="min-h-[80px] bg-card-600/50 border-white/10"
+                      maxLength={500}
+                    />
+                  </View>
+
+                  <View>
+                    <Input
+                      type="number"
+                      placeholder="Days (1-365)"
+                      value={editFormData.targetDays}
+                      onChange={(e) => {
+                        setEditFormData({ ...editFormData, targetDays: e.target.value })
+                      }}
+                      className="bg-card-600/50 border-white/10"
+                      min={1}
+                      max={365}
+                    />
+                  </View>
+
                   <Button
-                    label="Save Changes"
+                    label="Save"
                     variant="default"
                     fullWidth
                     onClick={handleUpdateGoal}
@@ -470,19 +602,10 @@ export default function HomeAppScreen() {
                     loading={isUpdating}
                   />
                 </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <View className="bg-danger-500/20 border border-danger-500 rounded-xl p-4">
-            <Text className="text-danger-500 text-sm font-bbh">
-              {error instanceof Error ? error.message : 'An error occurred'}
-            </Text>
-          </View>
-        )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </View>
     </View>
   )
