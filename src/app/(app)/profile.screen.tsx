@@ -1,4 +1,5 @@
 import { BottomNotch, TopNotch } from '@/components/common/notch.component'
+import { ImagePicker } from '@/components/common/image-picker.component'
 import { Input } from '@/components/common/input.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { Button } from '@/components/layout/button.component'
@@ -24,8 +25,10 @@ export default function ProfileScreen() {
     username: '',
     currentMood: '',
     lifeGoal: '',
+    profileImageId: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   // Initialize form data from user
   useEffect(() => {
@@ -36,12 +39,20 @@ export default function ProfileScreen() {
         username: user.username || '',
         currentMood: user.currentMood || '',
         lifeGoal: user.lifeGoal || '',
+        profileImageId: user.avatarUrl || '',
       })
+      setImagePreview(user.avatarUrl || null)
     }
   }, [user])
 
   const updateProfileMutation = useMutation({
-    mutationFn: (data: typeof formData) => authAPI.updateProfile(data),
+    mutationFn: (data: typeof formData) => {
+      const { profileImageId, ...rest } = data
+      return authAPI.updateProfile({
+        ...rest,
+        profileImageId: profileImageId || undefined,
+      })
+    },
     onSuccess: async (response) => {
       toast.success('Profile updated successfully!')
       setIsEditing(false)
@@ -55,6 +66,11 @@ export default function ProfileScreen() {
       setFormError(errorMsg)
     },
   })
+
+  const handleImageSelect = (imageUrl: string) => {
+    setImagePreview(imageUrl)
+    setFormData({ ...formData, profileImageId: imageUrl })
+  }
 
   const handleSave = () => {
     setFormError(null)
@@ -85,7 +101,9 @@ export default function ProfileScreen() {
         username: user.username || '',
         currentMood: user.currentMood || '',
         lifeGoal: user.lifeGoal || '',
+        profileImageId: user.avatarUrl || '',
       })
+      setImagePreview(user.avatarUrl || null)
     }
     setIsEditing(false)
     setFormError(null)
@@ -109,17 +127,26 @@ export default function ProfileScreen() {
       <View className="flex-1 px-6 pb-[120px] pt-6 max-w-3xl mx-auto space-y-8">
         {/* Profile Header */}
         <View className="items-center space-y-3">
-          <View className="rounded-full w-24 h-24 bg-card-700 border border-card-500 flex items-center justify-center">
-            {user?.avatarUrl ? (
-              <img
-                src={user.avatarUrl}
-                alt={displayName}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <Text className="text-white text-3xl font-bbh">{initials}</Text>
-            )}
-          </View>
+          {isEditing ? (
+            <ImagePicker
+              currentImageUrl={imagePreview || undefined}
+              onImageSelect={handleImageSelect}
+              size="lg"
+              initials={initials}
+            />
+          ) : (
+            <View className="rounded-full w-24 h-24 bg-card-700 flex items-center justify-center overflow-hidden">
+              {user?.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt={displayName}
+                  className="w-full h-full rounded-full object-cover"
+                />
+              ) : (
+                <Text className="text-white text-3xl font-bbh">{initials}</Text>
+              )}
+            </View>
+          )}
           <View className="items-center space-y-1">
             <Text className="text-white text-2xl font-bbh font-bold">{displayName}</Text>
             <Text className="text-white/60 text-sm font-bbh">{user?.email}</Text>
