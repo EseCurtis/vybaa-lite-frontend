@@ -63,7 +63,7 @@ export function useCheckIn() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: () => goalAPI.checkIn(),
+    mutationFn: (goalId?: string) => goalAPI.checkIn(goalId),
     onSuccess: (response) => {
       // Invalidate and refetch current goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
@@ -124,8 +124,8 @@ export function useGoalOperations() {
     createGoalAsync: createGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
     
-    checkIn: checkInMutation.mutate,
-    checkInAsync: checkInMutation.mutateAsync,
+    checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
+    checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
     isCheckingIn: checkInMutation.isPending,
     
     resetGoal: resetGoalMutation.mutate,

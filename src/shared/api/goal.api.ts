@@ -43,8 +43,8 @@ class GoalAPI {
     return res
   }
 
-  async checkIn(): Promise<GoalResponse> {
-    const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals/check-in`, {})
+  async checkIn(goalId?: string): Promise<GoalResponse> {
+    const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals/check-in`, goalId ? { goalId } : {})
     return res
   }
 

@@ -85,9 +85,9 @@ export default function HomeAppScreen() {
     }
   }
 
-  const handleCheckIn = async () => {
+  const handleCheckIn = async (goalId?: string) => {
     try {
-      await checkInAsync()
+      await checkInAsync(goalId)
       // Success toast is already shown in the mutation hook
     } catch (err: any) {
       // Error toast is already shown in the mutation hook
@@ -137,7 +137,7 @@ export default function HomeAppScreen() {
                     label="I showed up today"
                     variant="default"
                     fullWidth
-                    onClick={handleCheckIn}
+                    onClick={() => handleCheckIn(currentGoal.id)}
                     disabled={isCheckingIn || loading}
                     loading={isCheckingIn}
                   />
@@ -159,8 +159,8 @@ export default function HomeAppScreen() {
           </View>
         )}
 
-        {/* Create Goal Section */}
-        {!currentGoal && !loading && (
+        {/* Create Goal Section - Always available */}
+        {!loading && (
           <View className="space-y-4">
             {!isCreatingForm ? (
               <Button
@@ -252,29 +252,40 @@ export default function HomeAppScreen() {
                     goal.id === currentGoal?.id && 'border-white/40'
                   )}
                 >
-                  <View className="flex flex-row items-start justify-between">
-                    <View className="flex-1 space-y-2">
-                      <Text className="text-white font-bbh text-sm leading-relaxed">
-                        {goal.goalText}
-                      </Text>
-                      <View className="flex flex-row items-center gap-4">
-                        <Text className="text-white/60 text-xs font-bbh">
-                          Day {goal.currentDay}/{goal.targetDays}
+                  <View className="space-y-3">
+                    <View className="flex flex-row items-start justify-between">
+                      <View className="flex-1 space-y-2">
+                        <Text className="text-white font-bbh text-sm leading-relaxed">
+                          {goal.goalText}
                         </Text>
-                        {goal.lastCheckInDate && (
-                          <Text className="text-white/40 text-xs font-bbh">
-                            Last: {new Date(goal.lastCheckInDate).toLocaleDateString()}
+                        <View className="flex flex-row items-center gap-4">
+                          <Text className="text-white/60 text-xs font-bbh">
+                            Day {goal.currentDay}/{goal.targetDays}
                           </Text>
-                        )}
+                          {goal.lastCheckInDate && (
+                            <Text className="text-white/40 text-xs font-bbh">
+                              Last: {new Date(goal.lastCheckInDate).toLocaleDateString()}
+                            </Text>
+                          )}
+                        </View>
                       </View>
+                      {goal.id === currentGoal?.id && (
+                        <View className="bg-white/20 rounded-full px-2 py-1">
+                          <Text className="text-white text-xs font-bbh font-semibold">
+                            Active
+                          </Text>
+                        </View>
+                      )}
                     </View>
-                    {goal.id === currentGoal?.id && (
-                      <View className="bg-white/20 rounded-full px-2 py-1">
-                        <Text className="text-white text-xs font-bbh font-semibold">
-                          Active
-                        </Text>
-                      </View>
-                    )}
+                    <Button
+                      label="Check In"
+                      variant="outline"
+                      size="sm"
+                      fullWidth
+                      onClick={() => handleCheckIn(goal.id)}
+                      disabled={isCheckingIn}
+                      loading={isCheckingIn}
+                    />
                   </View>
                 </View>
               ))}

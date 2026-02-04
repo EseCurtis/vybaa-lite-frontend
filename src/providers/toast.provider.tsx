@@ -1,10 +1,10 @@
-import { shouldAnimate } from '@/shared/utils/animation.util'
-import { AnimatePresence, motion } from 'framer-motion'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import { Icon } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { Icon } from '@/components/layout/icon.component'
+import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
 import { colors } from '@/shared/colors.shared'
+import { AnimatePresence, motion } from 'framer-motion'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
@@ -125,10 +125,14 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  const { top} = useSafeAreaInsets();
+
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[30000] pointer-events-none">
+      <div style={{
+        marginTop: top
+      }} className="fixed top-4 left-1/2 -translate-x-1/2 z-[30000] pointer-events-none">
         <div className="flex flex-col gap-2 items-center">
           <AnimatePresence mode="popLayout">
             {toasts.map((toast) => {
@@ -152,7 +156,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
                       border rounded-full px-4 py-3
                       backdrop-blur-md
                       shadow-lg
-                      min-w-[200px] max-w-[90vw]
+                      min-w-[200px] max-w-[100vw]
                       flex flex-row items-center gap-2
                     `}
                   >
