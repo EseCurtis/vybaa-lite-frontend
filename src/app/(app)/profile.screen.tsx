@@ -178,8 +178,8 @@ export default function ProfileScreen() {
                   className="bg-card-600 border border-card-500"
                 />
               ) : (
-                <Text className="text-white font-bbh">
-                  {user?.firstName || <Text className="text-white/40">Not set</Text>}
+                <Text className={user?.firstName ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                  {user?.firstName || 'Not set'}
                 </Text>
               )}
             </View>
@@ -199,8 +199,8 @@ export default function ProfileScreen() {
                   className="bg-card-600 border border-card-500"
                 />
               ) : (
-                <Text className="text-white font-bbh">
-                  {user?.lastName || <Text className="text-white/40">Not set</Text>}
+                <Text className={user?.lastName ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                  {user?.lastName || 'Not set'}
                 </Text>
               )}
             </View>
@@ -220,8 +220,8 @@ export default function ProfileScreen() {
                   className="bg-card-600 border border-card-500"
                 />
               ) : (
-                <Text className="text-white font-bbh">
-                  {user?.username || <Text className="text-white/40">Not set</Text>}
+                <Text className={user?.username ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                  {user?.username || 'Not set'}
                 </Text>
               )}
             </View>
@@ -242,8 +242,8 @@ export default function ProfileScreen() {
                   maxLength={200}
                 />
               ) : (
-                <Text className="text-white font-bbh">
-                  {user?.currentMood || <Text className="text-white/40">Not set</Text>}
+                <Text className={user?.currentMood ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                  {user?.currentMood || 'Not set'}
                 </Text>
               )}
             </View>
@@ -263,8 +263,8 @@ export default function ProfileScreen() {
                   maxLength={500}
                 />
               ) : (
-                <Text className="text-white font-bbh leading-relaxed">
-                  {user?.lifeGoal || <Text className="text-white/40">Not set</Text>}
+                <Text className={user?.lifeGoal ? 'text-white font-bbh leading-relaxed' : 'text-white/40 font-bbh leading-relaxed'}>
+                  {user?.lifeGoal || 'Not set'}
                 </Text>
               )}
             </View>
