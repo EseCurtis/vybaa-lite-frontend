@@ -22,9 +22,19 @@ export interface GoalResponse {
   data: Goal | null
 }
 
+export interface GoalsListResponse {
+  msg: string
+  data: Goal[]
+}
+
 class GoalAPI {
   async createGoal(data: CreateGoalRequest): Promise<GoalResponse> {
     const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals`, data)
+    return res
+  }
+
+  async getAllGoals(): Promise<GoalsListResponse> {
+    const { data: res } = await http.get<GoalsListResponse>(`${API_V1}/goals`)
     return res
   }
 
