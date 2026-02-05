@@ -20,7 +20,7 @@ export function useGoals(page: number = 1, limit: number = 10) {
 /**
  * Hook to fetch goals with infinite scrolling
  */
-export function useInfiniteGoals(limit: number = 1) {
+export function useInfiniteGoals({ limit = 10 }: { limit?: number } = {}) {
   return useInfiniteQuery({
     queryKey: goalQueryKeys.infinite(limit),
     queryFn: async ({ pageParam = 1 }) => {
@@ -197,28 +197,28 @@ export function useGoalOperations(page: number = 1, limit: number = 10) {
     isLoading: goalsQuery.isLoading || currentGoalQuery.isLoading,
     isFetching: goalsQuery.isFetching || currentGoalQuery.isFetching,
     error: goalsQuery.error || currentGoalQuery.error,
-    
+
     // Mutations
     createGoal: createGoalMutation.mutate,
     createGoalAsync: createGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
-    
+
     checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
     checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
     isCheckingIn: checkInMutation.isPending,
-    
+
     resetGoal: resetGoalMutation.mutate,
     resetGoalAsync: resetGoalMutation.mutateAsync,
     isResetting: resetGoalMutation.isPending,
-    
+
     updateGoal: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutate({ goalId, data }),
     updateGoalAsync: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutateAsync({ goalId, data }),
     isUpdating: updateGoalMutation.isPending,
-    
+
     deleteGoal: deleteGoalMutation.mutate,
     deleteGoalAsync: deleteGoalMutation.mutateAsync,
     isDeleting: deleteGoalMutation.isPending,
-    
+
     // Refetch functions
     refetchGoals: goalsQuery.refetch,
     refetchCurrentGoal: currentGoalQuery.refetch,
@@ -253,28 +253,28 @@ export function useGoalOperationsInfinite(limit: number = 10) {
     hasNextPage: goalsQuery.hasNextPage,
     fetchNextPage: goalsQuery.fetchNextPage,
     error: goalsQuery.error || currentGoalQuery.error,
-    
+
     // Mutations
     createGoal: createGoalMutation.mutate,
     createGoalAsync: createGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
-    
+
     checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
     checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
     isCheckingIn: checkInMutation.isPending,
-    
+
     resetGoal: resetGoalMutation.mutate,
     resetGoalAsync: resetGoalMutation.mutateAsync,
     isResetting: resetGoalMutation.isPending,
-    
+
     updateGoal: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutate({ goalId, data }),
     updateGoalAsync: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutateAsync({ goalId, data }),
     isUpdating: updateGoalMutation.isPending,
-    
+
     deleteGoal: deleteGoalMutation.mutate,
     deleteGoalAsync: deleteGoalMutation.mutateAsync,
     isDeleting: deleteGoalMutation.isPending,
-    
+
     // Refetch functions
     refetchGoals: goalsQuery.refetch,
     refetchCurrentGoal: currentGoalQuery.refetch,

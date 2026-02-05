@@ -3,13 +3,13 @@ import { useRef } from 'react'
 
 export default function TaskVirtualList({
   items,
-  rowHeight = 76,
+  estimateSize = 76,
   renderItem,
   onEndReached,
   endOffset = 5,
 }: {
   items: Array<any>
-  rowHeight?: number
+  estimateSize?: number
   renderItem: (item: any, index: number) => React.JSX.Element
   onEndReached?: () => void
   endOffset?: number
@@ -18,7 +18,13 @@ export default function TaskVirtualList({
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => rowHeight,
+    estimateSize: () => estimateSize,
+    overscan: 5,
+    // Enable dynamic size measurement
+    measureElement:
+      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
   })
 
   // Trigger end reached when near the bottom
@@ -40,13 +46,14 @@ export default function TaskVirtualList({
           return (
             <div
               key={item.id}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
                 transform: `translateY(${virtualRow.start}px)`,
-                height: rowHeight,
               }}
             >
               {renderItem(item, virtualRow.index)}
