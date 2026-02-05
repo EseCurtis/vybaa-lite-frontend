@@ -88,7 +88,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [showToast, success, error, warning, info, loading, dismiss]
   )
 
-  alert(top)
+  //alert(top)
 
   return (
     <ToastContext.Provider value={value}>

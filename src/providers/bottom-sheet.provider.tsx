@@ -3,8 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
-import x from '@iconify-icons/twemoji/cross-mark'
-import { Icon } from '@iconify/react'
+import { RiCloseCircleFill } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 
@@ -64,7 +63,7 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
   const sheetContent = (
     <>
       <View className="items-center mb-4">
-        <View className="w-12 h-1.5 bg-[#2a2a2a] rounded-full" />
+        <View className="w-12 h-1.5 bg-card-light-50 rounded-full" />
       </View>
       <View className="flex-row items-center justify-between mb-3">
         {title ? (
@@ -73,7 +72,7 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
           <View />
         )}
         {title && <TouchableOpacity onPress={dismiss}>
-          <Icon icon={x} className="text-white/70 text-xl" />
+         <RiCloseCircleFill size={32} color='#ffffff'/>
         </TouchableOpacity>}
       </View>
       <View className="max-h-[70vh] overflow-y-auto pr-1">
@@ -89,7 +88,7 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="absolute inset-0"
+              className="absolute inset-0 "
               style={{ zIndex: Math.max(2, elevation) }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -103,7 +102,7 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
                 onClick={dismiss}
               />
               <motion.div
-                className="bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0 "
+                className="bg-cardd rounded-t-2xl p-5 w-full  absolute bottom-0 left-0 "
                 style={shadow}
                 initial={{ y: 40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}

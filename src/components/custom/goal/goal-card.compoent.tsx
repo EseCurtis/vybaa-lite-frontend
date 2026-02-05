@@ -8,6 +8,11 @@ import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { RiDeleteBinLine } from '@remixicon/react'
+import { GoalDurationPill } from './duration-pill.component'
+
+interface GoalCardProps extends Goal {
+  onPress?: (goal: Goal) => void
+}
 
 export function GoalCard({
   id,
@@ -15,14 +20,16 @@ export function GoalCard({
   currentDay,
   targetDays,
   canCheckIn,
-}: Goal) {
+  lastCheckInDate,
+  startedAt,
+  onPress,
+}: GoalCardProps) {
   const toast = useToast()
   const color = seededColor(goalText)
   const { mutate, isPending } = useCheckIn()
   const { mutate: deleteMutate, isPending: deleteIsPending } = useDeleteGoal()
 
   const onDelete = () => {
-   
     if (
       !confirm(
         'Are you sure you want to delete this goal? This action cannot be undone.',
@@ -38,40 +45,53 @@ export function GoalCard({
     }
   }
 
+  const handleCardClick = () => {
+    if (onPress) {
+      onPress({
+        id,
+        goalText,
+        currentDay,
+        targetDays,
+        canCheckIn,
+        lastCheckInDate,
+        startedAt,
+      })
+    }
+  }
+
   return (
     <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
-      <View
-        className="p-3  w-full shrink-0 rounded-3xl relative snap-center"
+      <Pressable
+        onPress={handleCardClick}
+        className="p-3 flex flex-col w-full shrink-0 rounded-3xl relative snap-center"
         style={{
           backgroundColor: color,
         }}
       >
         <View className="flex-col items-start">
-          <Text className="mb-3 max-w-[80vw]">
-            {goalText} cooking and eating food and biscuit for long long
-          </Text>
+          <Text className="mb-3 max-w-[80vw]">{goalText}</Text>
         </View>
         <View className="flex-row justify-between">
-          <View className="bg-black/20 p-2 w-auto  items-center justify-center rounded-full">
-            <Text className="text-black/30 font-bold text-sm">
-              Day {currentDay} of {targetDays}
-            </Text>
-          </View>
+          <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
 
           <Moti.div
             whileTap={{ scale: 0.98 }}
             whileHover={{ scale: 1.02 }}
             className="flex flex-row justify-center"
+            onClick={(e: any) => e.stopPropagation()}
           >
             {canCheckIn ? (
               <Button
                 label="✓ Check In"
                 variant="default"
                 fullWidth
-                onClick={() => mutate(id)}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  mutate(id)
+                }}
                 disabled={isPending}
                 loading={isPending}
-                className="text-sm font-bold px-4 !py-1"
+                className="text-sm font-bold px-4 !py-0"
                 textClassName="text-sm"
               />
             ) : (
@@ -81,7 +101,7 @@ export function GoalCard({
             )}
           </Moti.div>
         </View>
-      </View>
+      </Pressable>
 
       <View className="flex-row items-center justify-center snap-center">
         <View className=" w-[70px] h-full   flex-row items-center justify-center">
@@ -90,7 +110,7 @@ export function GoalCard({
             className="p-1.5 bg-pink-900/30 rounded-xl size-full flex flex-row items-center justify-center transition-colors"
             disabled={deleteIsPending || deleteIsPending}
           >
-            <RiDeleteBinLine className='text-pink-500' />
+            <RiDeleteBinLine className="text-pink-500" />
           </Pressable>
         </View>
       </View>

@@ -153,7 +153,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'cursor-pointer',
           disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
           loading ? '!pr-0' : '',
-         
+        // className
         )}
         {...props}
       >

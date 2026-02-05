@@ -1,46 +1,57 @@
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
+import type { Goal } from '@/shared/api/goal.api'
 import { normalizePages, seededColor } from '@/shared/utils/helpers.util'
 import { RiArrowRightUpLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import { GoalDurationPill } from '../goal/duration-pill.component'
+import { GoalDetailsSheet } from '../goal/goal-details-sheet.component'
 
 function HomeGoalItem({
   title,
   currentDay,
   targetDays,
+  onOpen
 }: {
   title: string
   currentDay: number
   targetDays: number
+  onOpen: () => void
 }) {
   const color = seededColor(title)
   return (
-    <View
+    <Pressable
       style={{
         backgroundColor: color,
       }}
+      onPress={onOpen}
       className=" snap-center max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
-      <View className=" bg-black/20 p-2  items-center justify-center rounded-full">
-        <Text className="text-black/30 text-sm">
-          Day {currentDay} of {targetDays}
-        </Text>
-      </View>
+      <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
       <Text className="text-black/40 leading-tight text-sm">{title}</Text>
       <View className="">
         <RiArrowRightUpLine size={27} />
       </View>
-    </View>
+    </Pressable>
   )
 }
 
 export function HomeGoals() {
+  const bottomSheet = useBottomSheet()
   const navigate = useNavigate()
   const { hasNextPage, data } = useInfiniteGoals({ canCheckIn: true })
   const goals = normalizePages(data?.pages || [])
   const noGoals = goals.length == 0
+
+  const handleGoalClick = (goal: Goal) => {
+    bottomSheet.present(
+      <GoalDetailsSheet goal={goal} onDismiss={bottomSheet.dismiss} />,
+      { title: 'Goal Details', elevation: 9999 },
+    )
+  }
 
   return (
     <View className="overflow-x-scroll snap-x snap-mandatory flex-row px-mg shrink-0 no-scrollbar ">
@@ -51,11 +62,14 @@ export function HomeGoals() {
             title={goal.goalText}
             currentDay={goal.currentDay}
             targetDays={goal.targetDays}
+            onOpen={() => {
+              handleGoalClick(goal)
+            }}
           />
         )
       })}
 
-      {hasNextPage && (
+      {!noGoals && (
         <Pressable
           onPress={() => {
             navigate({ to: '/goal' })
