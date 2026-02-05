@@ -4,6 +4,10 @@ export function BottomNotch() {
   return PLATFORM == 'ios' && <div className="h-[var(--safe-area-inset-bottom)]"></div>
 }
 
+export function BottomNotchPadd() {
+  return PLATFORM == 'ios' && <div className="pb-[var(--safe-area-inset-bottom)]"></div>
+}
+
 export function TopNotch() {
   return <div className="h-[var(--safe-area-inset-top)]"></div>
 }

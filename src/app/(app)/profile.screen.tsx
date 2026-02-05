@@ -1,23 +1,23 @@
-import { BottomNotch, TopNotch } from '@/components/common/notch.component'
 import { ImagePicker } from '@/components/common/image-picker.component'
 import { Input } from '@/components/common/input.component'
+import { BottomNotchPadd, TopNotchPadd } from '@/components/common/notch.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { Button } from '@/components/layout/button.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { Icons } from '@/components/layout/icon.component'
 import { useAuth } from '@/providers/auth.provider'
-import { authAPI } from '@/shared/api/auth.api'
 import { useToast } from '@/providers/toast.provider'
-import { useState, useEffect } from 'react'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-
-const SESSION_QUERY_KEY = ['auth', 'session'] as const
+import { authAPI } from '@/shared/api/auth.api'
+import { RiArrowRightSLine, RiBarChartBoxLine } from '@remixicon/react'
+import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
 
 export default function ProfileScreen() {
   const { user, logout, refreshSession } = useAuth()
   const toast = useToast()
-  const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     firstName: '',
@@ -53,7 +53,7 @@ export default function ProfileScreen() {
         profileImageId: profileImageId || undefined,
       })
     },
-    onSuccess: async (response) => {
+    onSuccess: async () => {
       toast.success('Profile updated successfully!')
       setIsEditing(false)
       setFormError(null)
@@ -61,7 +61,8 @@ export default function ProfileScreen() {
       await refreshSession()
     },
     onError: (error: any) => {
-      const errorMsg = error.response?.data?.msg || error.message || 'Failed to update profile'
+      const errorMsg =
+        error.response?.data?.msg || error.message || 'Failed to update profile'
       toast.error(errorMsg)
       setFormError(errorMsg)
     },
@@ -84,7 +85,8 @@ export default function ProfileScreen() {
     }
 
     if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      const errorMsg = 'Username can only contain letters, numbers, and underscores'
+      const errorMsg =
+        'Username can only contain letters, numbers, and underscores'
       setFormError(errorMsg)
       toast.warning(errorMsg)
       return
@@ -110,21 +112,25 @@ export default function ProfileScreen() {
   }
 
   const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+      user.username ||
+      user.email
     : 'User'
 
   const initials = user
-    ? [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('').toUpperCase() ||
+    ? [user.firstName?.[0], user.lastName?.[0]]
+        .filter(Boolean)
+        .join('')
+        .toUpperCase() ||
       user.username?.[0]?.toUpperCase() ||
       user.email[0].toUpperCase()
     : 'U'
 
   return (
-    <View className="flex-1 bg-black">
-      <TopNotch />
-      <TopNotch />
+    <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
+      <TopNotchPadd/>
 
-      <View className="flex-1 px-6 pb-[120px] pt-6 max-w-3xl mx-auto space-y-8">
+      <View className="flex-1 px-mg pb-[120px] pt-4 max-w-3xl mx-auto space-y-6">
         {/* Profile Header */}
         <View className="items-center space-y-3">
           {isEditing ? (
@@ -135,7 +141,7 @@ export default function ProfileScreen() {
               initials={initials}
             />
           ) : (
-            <View className="rounded-full w-24 h-24 bg-card-700 flex items-center justify-center overflow-hidden">
+            <View className="rounded-full w-20 h-20 bg-card-light/40 flex items-center justify-center overflow-hidden">
               {user?.avatarUrl ? (
                 <img
                   src={user.avatarUrl}
@@ -143,14 +149,43 @@ export default function ProfileScreen() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Text className="text-white text-3xl font-bbh">{initials}</Text>
+                <Text className="text-white text-2xl font-bbh font-bold">
+                  {initials}
+                </Text>
               )}
             </View>
           )}
           <View className="items-center space-y-1">
-            <Text className="text-white text-2xl font-bbh font-bold">{displayName}</Text>
-            <Text className="text-white/60 text-sm font-bbh">{user?.email}</Text>
+            <Text className="text-white text-xl font-bbh font-bold">
+              {displayName}
+            </Text>
+            <Text className="text-white/60 text-sm font-bbh">
+              {user?.email}
+            </Text>
           </View>
+        </View>
+
+        {/* Quick Actions */}
+        <View className="space-y-2">
+          <Pressable
+            onPress={() => navigate({ to: '/app/sub-profile/insights' })}
+            className="bg-card-light/40 rounded-2xl p-4 flex-row items-center justify-between"
+          >
+            <View className="flex-row  items-center gap-3">
+              <View className="bg-card-light/60 rounded-xl p-2">
+                <RiBarChartBoxLine size={20} className="text-white" />
+              </View>
+              <View className='text-left'>
+                <Text className="text-white text-sm font-bbh font-semibold">
+                  Insights
+                </Text>
+                <Text className="text-white/50 text-xs font-bbh">
+                  View your progress stats
+                </Text>
+              </View>
+            </View>
+            <RiArrowRightSLine size={20} className="text-white/40" />
+          </Pressable>
         </View>
 
         {/* Edit/Cancel Button */}
@@ -184,15 +219,17 @@ export default function ProfileScreen() {
         </View>
 
         {/* Profile Form */}
-        <View className="space-y-4">
-          <Text className="text-white/70 text-xs font-bbh uppercase tracking-[0.25em]">
+        <View className="space-y-3">
+          <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
             Profile Information
           </Text>
 
-          <View className="bg-card-700 rounded-2xl p-6 space-y-4">
+          <View className="bg-card-light/40 rounded-2xl p-5 space-y-4">
             {/* First Name */}
             <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">First Name</Text>
+              <Text className="text-white/70 text-sm font-bbh mb-2">
+                First Name
+              </Text>
               {isEditing ? (
                 <Input
                   type="text"
@@ -202,10 +239,16 @@ export default function ProfileScreen() {
                     setFormData({ ...formData, firstName: e.target.value })
                     setFormError(null)
                   }}
-                  className="bg-card-600 border border-card-500"
+                  className="bg-card-light/40 border-white/10 text-white"
                 />
               ) : (
-                <Text className={user?.firstName ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                <Text
+                  className={
+                    user?.firstName
+                      ? 'text-white font-bbh'
+                      : 'text-white/40 font-bbh'
+                  }
+                >
                   {user?.firstName || 'Not set'}
                 </Text>
               )}
@@ -213,7 +256,9 @@ export default function ProfileScreen() {
 
             {/* Last Name */}
             <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">Last Name</Text>
+              <Text className="text-white/70 text-sm font-bbh mb-2">
+                Last Name
+              </Text>
               {isEditing ? (
                 <Input
                   type="text"
@@ -223,10 +268,16 @@ export default function ProfileScreen() {
                     setFormData({ ...formData, lastName: e.target.value })
                     setFormError(null)
                   }}
-                  className="bg-card-600 border border-card-500"
+                  className="bg-card-light/40 border-white/10 text-white"
                 />
               ) : (
-                <Text className={user?.lastName ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                <Text
+                  className={
+                    user?.lastName
+                      ? 'text-white font-bbh'
+                      : 'text-white/40 font-bbh'
+                  }
+                >
                   {user?.lastName || 'Not set'}
                 </Text>
               )}
@@ -234,7 +285,9 @@ export default function ProfileScreen() {
 
             {/* Username */}
             <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">Username</Text>
+              <Text className="text-white/70 text-sm font-bbh mb-2">
+                Username
+              </Text>
               {isEditing ? (
                 <Input
                   type="text"
@@ -244,10 +297,16 @@ export default function ProfileScreen() {
                     setFormData({ ...formData, username: e.target.value })
                     setFormError(null)
                   }}
-                  className="bg-card-600 border border-card-500"
+                  className="bg-card-light/40 border-white/10 text-white"
                 />
               ) : (
-                <Text className={user?.username ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                <Text
+                  className={
+                    user?.username
+                      ? 'text-white font-bbh'
+                      : 'text-white/40 font-bbh'
+                  }
+                >
                   {user?.username || 'Not set'}
                 </Text>
               )}
@@ -255,7 +314,9 @@ export default function ProfileScreen() {
 
             {/* Current Mood */}
             <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">Current Mood</Text>
+              <Text className="text-white/70 text-sm font-bbh mb-2">
+                Current Mood
+              </Text>
               {isEditing ? (
                 <Input
                   type="text"
@@ -265,11 +326,17 @@ export default function ProfileScreen() {
                     setFormData({ ...formData, currentMood: e.target.value })
                     setFormError(null)
                   }}
-                  className="bg-card-600 border border-card-500"
+                  className="bg-card-light/40 border-white/10 text-white"
                   maxLength={200}
                 />
               ) : (
-                <Text className={user?.currentMood ? 'text-white font-bbh' : 'text-white/40 font-bbh'}>
+                <Text
+                  className={
+                    user?.currentMood
+                      ? 'text-white font-bbh'
+                      : 'text-white/40 font-bbh'
+                  }
+                >
                   {user?.currentMood || 'Not set'}
                 </Text>
               )}
@@ -277,7 +344,9 @@ export default function ProfileScreen() {
 
             {/* Life Goal */}
             <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">Life Goal</Text>
+              <Text className="text-white/70 text-sm font-bbh mb-2">
+                Life Goal
+              </Text>
               {isEditing ? (
                 <TextArea
                   placeholder="What is your life goal?"
@@ -286,11 +355,17 @@ export default function ProfileScreen() {
                     setFormData({ ...formData, lifeGoal: e.target.value })
                     setFormError(null)
                   }}
-                  className="min-h-[100px] bg-card-600 border border-card-500"
+                  className="min-h-[100px] bg-card-light/40 border-white/10 text-white p-1"
                   maxLength={500}
                 />
               ) : (
-                <Text className={user?.lifeGoal ? 'text-white font-bbh leading-relaxed' : 'text-white/40 font-bbh leading-relaxed'}>
+                <Text
+                  className={
+                    user?.lifeGoal
+                      ? 'text-white font-bbh leading-relaxed'
+                      : 'text-white/40 font-bbh leading-relaxed'
+                  }
+                >
                   {user?.lifeGoal || 'Not set'}
                 </Text>
               )}
@@ -299,17 +374,25 @@ export default function ProfileScreen() {
             {/* Error Display */}
             {formError && (
               <View className="bg-danger-500/20 rounded-xl p-4">
-                <Text className="text-danger-500 text-sm font-bbh">{formError}</Text>
+                <Text className="text-danger-500 text-sm font-bbh">
+                  {formError}
+                </Text>
               </View>
             )}
           </View>
         </View>
 
         {/* Logout Button */}
-        <Button label="Logout" onClick={logout} textClassName="text-sm" />
+        <Button
+          label="Logout"
+          onClick={logout}
+          variant="outline"
+          textClassName="text-sm"
+        />
       </View>
 
-      <BottomNotch />
+      <BottomNotchPadd/>
+      <BottomNotchPadd/>
     </View>
   )
 }

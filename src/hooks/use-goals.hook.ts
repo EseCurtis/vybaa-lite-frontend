@@ -1,6 +1,7 @@
 import { useToast } from '@/providers/toast.provider'
 import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 /**
@@ -69,6 +70,8 @@ export function useCreateGoal() {
     onSuccess: (response) => {
       // Invalidate all goals lists (paginated and infinite)
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
+      // Invalidate insights to refresh stats
+      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       // Update current goal if created
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -93,6 +96,8 @@ export function useCheckIn() {
     onSuccess: (response) => {
       // Invalidate and refetch current goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
+      // Invalidate insights to refresh stats
+      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -117,6 +122,8 @@ export function useResetGoal() {
     onSuccess: (response) => {
       // Invalidate and refetch current goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
+      // Invalidate insights to refresh stats
+      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -139,6 +146,8 @@ export function useUpdateGoal() {
     onSuccess: (response) => {
       // Invalidate all goals lists (paginated and infinite)
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
+      // Invalidate insights to refresh stats
+      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       // Update current goal if it was the one updated
       if (response.data) {
         queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
@@ -164,6 +173,8 @@ export function useDeleteGoal() {
     onSuccess: (_, goalId) => {
       // Invalidate and refetch goals list
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
+      // Invalidate insights to refresh stats
+      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       // Invalidate current goal if it was deleted
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Remove from cache
