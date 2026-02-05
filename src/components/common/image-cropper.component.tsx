@@ -1,9 +1,9 @@
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useState, useCallback } from 'react'
-import Cropper, { Area } from 'react-easy-crop'
 import { motion } from 'framer-motion'
+import { useCallback, useState } from 'react'
+import Cropper, { type Area } from 'react-easy-crop'
 
 interface ImageCropperProps {
   image: string

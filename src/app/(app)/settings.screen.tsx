@@ -9,6 +9,7 @@ import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
+import { uploadAPI } from '@/shared/api/upload.api'
 import { RiArrowLeftSLine } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -30,6 +31,7 @@ export default function SettingsScreen() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadedNewImage, setUploadedNewImage] = useState(false)
 
   // Initialize form data from user
   useEffect(() => {
@@ -72,6 +74,7 @@ export default function SettingsScreen() {
     // Store base64 temporarily, will upload to Cloudinary on save
     setImagePreview(imageDataUrl)
     setFormData({ ...formData, profileImageId: imageDataUrl })
+    setUploadedNewImage(true)
   }
 
   const handleSave = async () => {
@@ -93,10 +96,11 @@ export default function SettingsScreen() {
     }
 
     try {
-      let cloudinaryUrl = formData.profileImageId
+      
+      let cloudinaryUrl = formData.profileImageId;
 
       // If image is base64 (new upload), upload to Cloudinary first
-      if (formData.profileImageId && formData.profileImageId.startsWith('data:image/')) {
+      if (formData.profileImageId && formData.profileImageId.startsWith('data:image/') && uploadedNewImage) {
         toast.loading('Uploading image...')
         const uploadResponse = await uploadAPI.uploadImage({
           image: formData.profileImageId,
@@ -212,7 +216,7 @@ export default function SettingsScreen() {
         </motion.div>
 
         {/* Edit/Cancel Buttons */}
-        <View className="flex flex-row gap-3">
+        <View className="flex flex-row w-full gap-3">
           {!isEditing ? (
             <Button
               label="Edit Profile"
@@ -220,6 +224,9 @@ export default function SettingsScreen() {
               fullWidth
               onClick={() => setIsEditing(true)}
               textClassName="text-sm"
+              style={{
+                width: '100%'
+              }}
             />
           ) : (
             <>
@@ -230,6 +237,9 @@ export default function SettingsScreen() {
                 onClick={handleCancel}
                 disabled={updateProfileMutation.isPending}
                 textClassName="text-sm"
+                style={{
+                width: '100%'
+              }}
               />
               <Button
                 label="Save"
@@ -239,6 +249,9 @@ export default function SettingsScreen() {
                 disabled={updateProfileMutation.isPending}
                 loading={updateProfileMutation.isPending}
                 textClassName="text-sm"
+                style={{
+                width: '100%'
+              }}
               />
             </>
           )}
