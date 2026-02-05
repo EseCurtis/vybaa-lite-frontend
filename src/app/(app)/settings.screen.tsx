@@ -68,12 +68,13 @@ export default function SettingsScreen() {
     },
   })
 
-  const handleImageSelect = (imageUrl: string) => {
-    setImagePreview(imageUrl)
-    setFormData({ ...formData, profileImageId: imageUrl })
+  const handleImageSelect = (imageDataUrl: string) => {
+    // Store base64 temporarily, will upload to Cloudinary on save
+    setImagePreview(imageDataUrl)
+    setFormData({ ...formData, profileImageId: imageDataUrl })
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setFormError(null)
 
     if (formData.username && formData.username.length < 3) {
@@ -91,7 +92,31 @@ export default function SettingsScreen() {
       return
     }
 
-    updateProfileMutation.mutate(formData)
+    try {
+      let cloudinaryUrl = formData.profileImageId
+
+      // If image is base64 (new upload), upload to Cloudinary first
+      if (formData.profileImageId && formData.profileImageId.startsWith('data:image/')) {
+        toast.loading('Uploading image...')
+        const uploadResponse = await uploadAPI.uploadImage({
+          image: formData.profileImageId,
+          folder: 'profile-images',
+        })
+        cloudinaryUrl = uploadResponse.data.url
+        toast.dismiss()
+      }
+
+      // Update profile with Cloudinary URL
+      updateProfileMutation.mutate({
+        ...formData,
+        profileImageId: cloudinaryUrl,
+      })
+    } catch (error: any) {
+      toast.dismiss()
+      const errorMsg = error.message || 'Failed to upload image'
+      setFormError(errorMsg)
+      toast.error(errorMsg)
+    }
   }
 
   const handleCancel = () => {

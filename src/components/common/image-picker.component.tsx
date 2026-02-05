@@ -1,15 +1,15 @@
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { uploadAPI } from '@/shared/api/upload.api'
 import { useToast } from '@/providers/toast.provider'
 import { cn } from '@/shared/utils/helpers.util'
 import { useRef, useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ImageCropper } from './image-cropper.component'
 
 interface ImagePickerProps {
   currentImageUrl?: string
-  onImageSelect: (imageUrl: string) => void
+  onImageSelect: (imageDataUrl: string) => void // Returns base64, parent handles upload
   size?: 'sm' | 'md' | 'lg'
   className?: string
   initials?: string
@@ -25,7 +25,7 @@ export function ImagePicker({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
   const [preview, setPreview] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
+  const [imageToCrop, setImageToCrop] = useState<string | null>(null)
 
   const sizeClasses = {
     sm: 'w-16 h-16 text-xl',
@@ -92,35 +92,73 @@ export function ImagePicker({
       return
     }
 
-    // Validate file size (max 5MB before compression)
+    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB')
       return
     }
 
     try {
-      setIsUploading(true)
-      
-      // Compress image
-      const compressedDataUrl = await compressImage(file)
-      setPreview(compressedDataUrl)
-
-      // Upload to Cloudinary via backend
-      const uploadResponse = await uploadAPI.uploadImage({
-        image: compressedDataUrl,
-        folder: 'profile-images',
-      })
-
-      // Return Cloudinary URL to parent
-      onImageSelect(uploadResponse.data.url)
-      toast.success('Image uploaded successfully')
+      // Read file as data URL for cropper
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        setImageToCrop(dataUrl)
+      }
+      reader.readAsDataURL(file)
     } catch (error: any) {
-      console.error('Image upload failed:', error)
-      toast.error(error.message || 'Image upload failed')
-      setPreview(null)
-    } finally {
-      setIsUploading(false)
+      console.error('Image read failed:', error)
+      toast.error('Failed to read image')
     }
+  }
+
+  const handleCropComplete = async (croppedImage: string) => {
+    try {
+      // Compress the cropped image
+      const compressedDataUrl = await compressImageDataUrl(croppedImage)
+      setPreview(compressedDataUrl)
+      setImageToCrop(null)
+      
+      // Return compressed base64 to parent (parent will handle Cloudinary upload on save)
+      onImageSelect(compressedDataUrl)
+    } catch (error) {
+      console.error('Image compression failed:', error)
+      toast.error('Failed to process image')
+    }
+  }
+
+  const handleCropCancel = () => {
+    setImageToCrop(null)
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  // Helper to compress a data URL
+  const compressImageDataUrl = (dataUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          reject(new Error('Failed to get canvas context'))
+          return
+        }
+
+        // Set canvas to image size (already cropped to desired size)
+        canvas.width = img.width
+        canvas.height = img.height
+
+        // Draw and compress
+        ctx.drawImage(img, 0, 0)
+        const compressed = canvas.toDataURL('image/jpeg', 0.8)
+        resolve(compressed)
+      }
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = dataUrl
+    })
   }
 
   const handleClick = () => {
@@ -130,63 +168,66 @@ export function ImagePicker({
   const displayImage = preview || currentImageUrl
 
   return (
-    <div className={cn('relative', className)}>
-      <motion.div
-        whileTap={{ scale: 0.95 }}
-        className="cursor-pointer"
-        onClick={handleClick}
-      >
-        <div
-          className={cn(
-            'rounded-full bg-card-700 flex items-center justify-center overflow-hidden relative group',
-            sizeClasses[size]
-          )}
+    <>
+      <div className={cn('relative', className)}>
+        <motion.div
+          whileTap={{ scale: 0.95 }}
+          className="cursor-pointer"
+          onClick={handleClick}
         >
-          {displayImage ? (
-            <img
-              src={displayImage}
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <Text className="text-white font-bbh">{initials}</Text>
-          )}
-
-          {/* Overlay on hover or uploading */}
-          <div className={cn(
-            "absolute inset-0 bg-black/50 transition-opacity flex items-center justify-center",
-            isUploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-          )}>
-            {isUploading ? (
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-            ) : (
-              <Icons.Edit size="sm" color="#ffffff" />
+          <div
+            className={cn(
+              'rounded-full bg-card-700 flex items-center justify-center overflow-hidden relative group',
+              sizeClasses[size]
             )}
+          >
+            {displayImage ? (
+              <img
+                src={displayImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Text className="text-white font-bbh">{initials}</Text>
+            )}
+
+            {/* Overlay on hover */}
+            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Icons.Edit size="sm" color="#ffffff" />
+            </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
 
-      {/* Edit button */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={handleClick}
-        disabled={isUploading}
-        className={cn(
-          "absolute -bottom-1 -right-1 bg-accent-500 rounded-full p-2 shadow-lg border-2 border-black z-10",
-          isUploading && "opacity-50 cursor-not-allowed"
+        {/* Edit button */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleClick}
+          className="absolute -bottom-1 -right-1 bg-accent-500 rounded-full p-2 shadow-lg border-2 border-black z-10"
+          type="button"
+        >
+          <Icons.Edit size="xs" color="#ffffff" />
+        </motion.button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
+
+      {/* Image Cropper Modal */}
+      <AnimatePresence>
+        {imageToCrop && (
+          <ImageCropper
+            image={imageToCrop}
+            onCropComplete={handleCropComplete}
+            onCancel={handleCropCancel}
+            aspectRatio={1}
+          />
         )}
-        type="button"
-      >
-        <Icons.Edit size="xs" color="#ffffff" />
-      </motion.button>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
-    </div>
+      </AnimatePresence>
+    </>
   )
 }
