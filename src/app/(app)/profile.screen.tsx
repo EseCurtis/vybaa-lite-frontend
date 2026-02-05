@@ -1,120 +1,28 @@
-import { ImagePicker } from '@/components/common/image-picker.component'
-import { Input } from '@/components/common/input.component'
-import { BottomNotchPadd, TopNotchPadd } from '@/components/common/notch.component'
-import { TextArea } from '@/components/common/textarea.component'
-import { Button } from '@/components/layout/button.component'
+import { TopNotchPadd } from '@/components/common/notch.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useAuth } from '@/providers/auth.provider'
-import { useToast } from '@/providers/toast.provider'
-import { authAPI } from '@/shared/api/auth.api'
-import { RiArrowRightSLine, RiBarChartBoxLine } from '@remixicon/react'
-import { useMutation } from '@tanstack/react-query'
+import {
+  RiArrowRightSLine,
+  RiBarChartBoxLine,
+  RiGroupLine,
+  RiLogoutBoxRLine,
+  RiQuestionLine,
+  RiSettings3Line
+} from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { useMemo } from 'react'
 
 export default function ProfileScreen() {
-  const { user, logout, refreshSession } = useAuth()
-  const toast = useToast()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
-  const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    currentMood: '',
-    lifeGoal: '',
-    profileImageId: '',
-  })
-  const [formError, setFormError] = useState<string | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(null)
-
-  // Initialize form data from user
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: user.username || '',
-        currentMood: user.currentMood || '',
-        lifeGoal: user.lifeGoal || '',
-        profileImageId: user.avatarUrl || '',
-      })
-      setImagePreview(user.avatarUrl || null)
-    }
-  }, [user])
-
-  const updateProfileMutation = useMutation({
-    mutationFn: (data: typeof formData) => {
-      const { profileImageId, ...rest } = data
-      return authAPI.updateProfile({
-        ...rest,
-        profileImageId: profileImageId || undefined,
-      })
-    },
-    onSuccess: async () => {
-      toast.success('Profile updated successfully!')
-      setIsEditing(false)
-      setFormError(null)
-      // Refresh session to get updated user data
-      await refreshSession()
-    },
-    onError: (error: any) => {
-      const errorMsg =
-        error.response?.data?.msg || error.message || 'Failed to update profile'
-      toast.error(errorMsg)
-      setFormError(errorMsg)
-    },
-  })
-
-  const handleImageSelect = (imageUrl: string) => {
-    setImagePreview(imageUrl)
-    setFormData({ ...formData, profileImageId: imageUrl })
-  }
-
-  const handleSave = () => {
-    setFormError(null)
-
-    // Validation
-    if (formData.username && formData.username.length < 3) {
-      const errorMsg = 'Username must be at least 3 characters'
-      setFormError(errorMsg)
-      toast.warning(errorMsg)
-      return
-    }
-
-    if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      const errorMsg =
-        'Username can only contain letters, numbers, and underscores'
-      setFormError(errorMsg)
-      toast.warning(errorMsg)
-      return
-    }
-
-    updateProfileMutation.mutate(formData)
-  }
-
-  const handleCancel = () => {
-    if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: user.username || '',
-        currentMood: user.currentMood || '',
-        lifeGoal: user.lifeGoal || '',
-        profileImageId: user.avatarUrl || '',
-      })
-      setImagePreview(user.avatarUrl || null)
-    }
-    setIsEditing(false)
-    setFormError(null)
-  }
+  const { goals } = useGoalOperations(1, 100) // Get first 100 for progress calculation
 
   const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-      user.username ||
-      user.email
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
     : 'User'
 
   const initials = user
@@ -126,273 +34,237 @@ export default function ProfileScreen() {
       user.email[0].toUpperCase()
     : 'U'
 
+  // Calculate overall progress for ring
+  const overallProgress = useMemo(() => {
+    if (!goals.length) return 0
+    const totalProgress = goals.reduce((sum, goal) => {
+      return sum + (goal.currentDay / goal.targetDays) * 100
+    }, 0)
+    return Math.round(totalProgress / goals.length)
+  }, [goals])
+
+  const hasProgress = goals.length > 0
+  const radius = 60
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference * (1 - overallProgress / 100)
+
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
-      <TopNotchPadd/>
+      {/* Header */}
+      <TopNotchPadd />
 
-      <View className="flex-1 px-mg pb-[120px] pt-4 max-w-3xl mx-auto space-y-6">
-        {/* Profile Header */}
-        <View className="items-center space-y-3">
-          {isEditing ? (
-            <ImagePicker
-              currentImageUrl={imagePreview || undefined}
-              onImageSelect={handleImageSelect}
-              size="lg"
-              initials={initials}
-            />
-          ) : (
-            <View className="rounded-full w-20 h-20 bg-card-light/40 flex items-center justify-center overflow-hidden">
-              {user?.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Text className="text-white text-2xl font-bbh font-bold">
-                  {initials}
-                </Text>
+      <View className="flex-1 px-mg pb-[120px] pt-4 space-y-8">
+        {/* Profile Header with Progress Ring */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+        >
+          <View className="items-center space-y-4">
+            {/* Avatar with Progress Ring */}
+            <View className="relative">
+              {hasProgress && (
+                <svg className="absolute -inset-2 w-36 h-36">
+                  <circle
+                    cx="72"
+                    cy="72"
+                    r={radius}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="5"
+                    className="text-white/10"
+                  />
+                  <motion.circle
+                    cx="72"
+                    cy="72"
+                    r={radius}
+                    fill="none"
+                    stroke="#FFD60A"
+                    strokeWidth="5"
+                    strokeLinecap="round"
+                    className="transform -rotate-90 origin-center"
+                    strokeDasharray={circumference}
+                    initial={{ strokeDashoffset: circumference }}
+                    animate={{ strokeDashoffset }}
+                    transition={{ duration: 1.2, ease: 'easeOut' }}
+                    style={{ transform: 'rotate(-90deg)', transformOrigin: '72px 72px' }}
+                  />
+                </svg>
+              )}
+              <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-10">
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Text className="text-white text-4xl font-bbh font-bold">{initials}</Text>
+                )}
+              </View>
+              {hasProgress && (
+                <View className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-yellow-400 rounded-full px-3 py-1.5 shadow-lg">
+                  <Text className="text-black text-sm font-bbh font-bold">
+                    {overallProgress}%
+                  </Text>
+                </View>
               )}
             </View>
-          )}
-          <View className="items-center space-y-1">
-            <Text className="text-white text-xl font-bbh font-bold">
-              {displayName}
-            </Text>
-            <Text className="text-white/60 text-sm font-bbh">
-              {user?.email}
-            </Text>
-          </View>
-        </View>
 
-        {/* Quick Actions */}
-        <View className="space-y-2">
-          <Pressable
-            onPress={() => navigate({ to: '/app/sub-profile/insights' })}
-            className="bg-card-light/40 rounded-2xl p-4 flex-row items-center justify-between"
+            {/* Name and Email */}
+            <View className="items-center space-y-1">
+              <Text className="text-white text-2xl font-bbh font-bold">{displayName}</Text>
+              <Text className="text-white/50 text-sm font-bbh">{user?.email}</Text>
+            </View>
+          </View>
+        </motion.div>
+
+        {/* Action Cards Grid */}
+        <View className="grid grid-cols-2 gap-3">
+          {/* Help */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className='col-span-1 bg-card-light/40 rounded-2xl'
           >
-            <View className="flex-row  items-center gap-3">
-              <View className="bg-card-light/60 rounded-xl p-2">
+            <Pressable
+              onPress={() => {}}
+              className=" flex flex-col text-left p-3 rounded-2xl  space-y-3 "
+            >
+              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                <RiQuestionLine size={20} className="text-white" />
+              </View>
+              <View>
+                <Text className="text-white text-base font-bbh font-semibold">
+                  Help
+                </Text>
+                <Text className="text-white/50 text-xs font-bbh">
+                  Help is Here
+                </Text>
+              </View>
+            </Pressable>
+          </motion.div>
+
+          {/* Insights */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+             className='col-span-1 bg-card-light/40 rounded-2xl'
+          >
+            <Pressable
+              onPress={() => navigate({ to: '/app/sub-profile/insights' })}
+              className="  flex flex-col text-left p-3 space-y-3 "
+            >
+              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
                 <RiBarChartBoxLine size={20} className="text-white" />
               </View>
-              <View className='text-left'>
-                <Text className="text-white text-sm font-bbh font-semibold">
+              <View>
+                <Text className="text-white text-base font-bbh font-semibold">
                   Insights
                 </Text>
                 <Text className="text-white/50 text-xs font-bbh">
-                  View your progress stats
+                  Progress Stats
                 </Text>
               </View>
-            </View>
-            <RiArrowRightSLine size={20} className="text-white/40" />
-          </Pressable>
-        </View>
+            </Pressable>
+          </motion.div>
 
-        {/* Edit/Cancel Button */}
-        <View className="flex flex-row gap-3">
-          {!isEditing ? (
-            <Button
-              label="Edit Profile"
-              variant="secondary"
-              fullWidth
-              onClick={() => setIsEditing(true)}
-            />
-          ) : (
-            <View className="flex flex-row gap-3 w-full">
-              <Button
-                label="Cancel"
-                variant="outline"
-                fullWidth
-                onClick={handleCancel}
-                disabled={updateProfileMutation.isPending}
-              />
-              <Button
-                label="Save Changes"
-                variant="default"
-                fullWidth
-                onClick={handleSave}
-                disabled={updateProfileMutation.isPending}
-                loading={updateProfileMutation.isPending}
-              />
-            </View>
-          )}
-        </View>
-
-        {/* Profile Form */}
-        <View className="space-y-3">
-          <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-            Profile Information
-          </Text>
-
-          <View className="bg-card-light/40 rounded-2xl p-5 space-y-4">
-            {/* First Name */}
-            <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">
-                First Name
-              </Text>
-              {isEditing ? (
-                <Input
-                  type="text"
-                  placeholder="First name"
-                  value={formData.firstName}
-                  onChange={(e) => {
-                    setFormData({ ...formData, firstName: e.target.value })
-                    setFormError(null)
-                  }}
-                  className="bg-card-light/40 border-white/10 text-white"
-                />
-              ) : (
-                <Text
-                  className={
-                    user?.firstName
-                      ? 'text-white font-bbh'
-                      : 'text-white/40 font-bbh'
-                  }
-                >
-                  {user?.firstName || 'Not set'}
+          {/* My Goals */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+             className='col-span-1 bg-card-light/40 rounded-2xl'
+          >
+            <Pressable
+              onPress={() => navigate({ to: '/goal' })}
+              className="  flex flex-col text-left p-3 space-y-3 "
+            >
+              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                <RiGroupLine size={20} className="text-white" />
+              </View>
+              <View>
+                <Text className="text-white text-base font-bbh font-semibold">
+                  My Goals
                 </Text>
-              )}
-            </View>
-
-            {/* Last Name */}
-            <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">
-                Last Name
-              </Text>
-              {isEditing ? (
-                <Input
-                  type="text"
-                  placeholder="Last name"
-                  value={formData.lastName}
-                  onChange={(e) => {
-                    setFormData({ ...formData, lastName: e.target.value })
-                    setFormError(null)
-                  }}
-                  className="bg-card-light/40 border-white/10 text-white"
-                />
-              ) : (
-                <Text
-                  className={
-                    user?.lastName
-                      ? 'text-white font-bbh'
-                      : 'text-white/40 font-bbh'
-                  }
-                >
-                  {user?.lastName || 'Not set'}
-                </Text>
-              )}
-            </View>
-
-            {/* Username */}
-            <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">
-                Username
-              </Text>
-              {isEditing ? (
-                <Input
-                  type="text"
-                  placeholder="Username"
-                  value={formData.username}
-                  onChange={(e) => {
-                    setFormData({ ...formData, username: e.target.value })
-                    setFormError(null)
-                  }}
-                  className="bg-card-light/40 border-white/10 text-white"
-                />
-              ) : (
-                <Text
-                  className={
-                    user?.username
-                      ? 'text-white font-bbh'
-                      : 'text-white/40 font-bbh'
-                  }
-                >
-                  {user?.username || 'Not set'}
-                </Text>
-              )}
-            </View>
-
-            {/* Current Mood */}
-            <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">
-                Current Mood
-              </Text>
-              {isEditing ? (
-                <Input
-                  type="text"
-                  placeholder="How are you feeling?"
-                  value={formData.currentMood}
-                  onChange={(e) => {
-                    setFormData({ ...formData, currentMood: e.target.value })
-                    setFormError(null)
-                  }}
-                  className="bg-card-light/40 border-white/10 text-white"
-                  maxLength={200}
-                />
-              ) : (
-                <Text
-                  className={
-                    user?.currentMood
-                      ? 'text-white font-bbh'
-                      : 'text-white/40 font-bbh'
-                  }
-                >
-                  {user?.currentMood || 'Not set'}
-                </Text>
-              )}
-            </View>
-
-            {/* Life Goal */}
-            <View>
-              <Text className="text-white/70 text-sm font-bbh mb-2">
-                Life Goal
-              </Text>
-              {isEditing ? (
-                <TextArea
-                  placeholder="What is your life goal?"
-                  value={formData.lifeGoal}
-                  onChange={(e) => {
-                    setFormData({ ...formData, lifeGoal: e.target.value })
-                    setFormError(null)
-                  }}
-                  className="min-h-[100px] bg-card-light/40 border-white/10 text-white p-1"
-                  maxLength={500}
-                />
-              ) : (
-                <Text
-                  className={
-                    user?.lifeGoal
-                      ? 'text-white font-bbh leading-relaxed'
-                      : 'text-white/40 font-bbh leading-relaxed'
-                  }
-                >
-                  {user?.lifeGoal || 'Not set'}
-                </Text>
-              )}
-            </View>
-
-            {/* Error Display */}
-            {formError && (
-              <View className="bg-danger-500/20 rounded-xl p-4">
-                <Text className="text-danger-500 text-sm font-bbh">
-                  {formError}
+                <Text className="text-white/50 text-xs font-bbh">
+                  View All
                 </Text>
               </View>
-            )}
-          </View>
+            </Pressable>
+          </motion.div>
+
+          {/* Settings */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+             className='col-span-1 bg-card-light/40 rounded-2xl'
+          >
+            <Pressable
+              onPress={() => navigate({ to: '/app/sub-profile/settings' })}
+              className="  flex flex-col text-left p-3 space-y-3 "
+            >
+              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                <RiSettings3Line size={20} className="text-white" />
+              </View>
+              <View>
+                <Text className="text-white text-base font-bbh font-semibold">
+                  Settings
+                </Text>
+                <Text className="text-white/50 text-xs font-bbh">
+                  App Settings
+                </Text>
+              </View>
+            </Pressable>
+          </motion.div>
         </View>
 
-        {/* Logout Button */}
-        <Button
-          label="Logout"
-          onClick={logout}
-          variant="outline"
-          textClassName="text-sm"
-        />
+        {/* Menu List Items */}
+        <View className="space-y-2 grid grid-cols-2 gap-3 flex-row items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+             className='col-span-1 bg-card-light/40 rounded-2xl'
+          >
+            <Pressable
+              onPress={() => navigate({ to: '/app/sub-profile/settings' })}
+              className="px-5 py-4 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center gap-4">
+                <RiSettings3Line size={20} className="text-white/70" />
+                <Text className="text-white text-base font-bbh">
+                  Settings
+                </Text>
+              </View>
+              <RiArrowRightSLine size={20} className="text-white/40" />
+            </Pressable>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+             className='col-span-1 bg-card-light/40 rounded-2xl'
+          >
+            <Pressable
+              onPress={logout}
+              className="px-5 py-4 flex-row items-center justify-between"
+            >
+              <View className="flex-row items-center gap-4">
+                <RiLogoutBoxRLine size={20} className="text-pink-500" />
+                <Text className="text-white text-base font-bbh">
+                  Logout
+                </Text>
+              </View>
+              <RiArrowRightSLine size={20} className="text-white/40" />
+            </Pressable>
+          </motion.div>
+        </View>
       </View>
-
-      <BottomNotchPadd/>
-      <BottomNotchPadd/>
     </View>
   )
 }

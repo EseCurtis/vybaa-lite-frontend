@@ -7,7 +7,7 @@ import { createFileRoute } from '@tanstack/react-router'
  *
  * This route requires authentication and is protected at the route level.
  */
-export const Route = createFileRoute('/app/settings')({
+export const Route = createFileRoute('/app/sub-profile/settings')({
   component: () => (
     <ProtectedRoute requireAuth redirectTo="/">
       <SettingsScreen />

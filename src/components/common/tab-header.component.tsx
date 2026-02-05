@@ -1,5 +1,5 @@
 import { hapticFeedback } from '@/shared/haptic.util'
-import { RiArrowLeftLine } from '@remixicon/react'
+import { RiArrowLeftSLine } from '@remixicon/react'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { Pressable } from '../layout/pressables.component'
@@ -10,7 +10,7 @@ import { TopNotch } from './notch.component'
 export function TabHeader({
   title,
   onBack,
-  children
+  children,
 }: {
   title?: ReactNode
   onBack?: () => void
@@ -29,11 +29,14 @@ export function TabHeader({
               onBack ? onBack() : router.history.back()
               hapticFeedback.light()
             }}
+            className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
           >
-            <RiArrowLeftLine className="text-white" size={32} />
+            <RiArrowLeftSLine size={24} className="text-white" />
           </Pressable>
-          <Text className="text-white text-2xl font-bold">{title}</Text>
+          
         </View>
+
+        <Text className="text-white text-2xl font-bold">{title}</Text>
 
         <View className="">{children}</View>
       </View>

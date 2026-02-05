@@ -26,7 +26,7 @@ export default function GoalsAppScreen() {
 
   return (
     <View className=" flex-1 bg-cardd overflow-y-auto no-scrollbar">
-      <TabHeader title="My Goals">
+      <TabHeader title="Goals">
         <Pressable onPress={handleCreateGoal} className="text-white">
           <RiEditBoxLine />
         </Pressable>
