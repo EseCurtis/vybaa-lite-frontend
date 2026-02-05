@@ -1,25 +1,150 @@
+import { ImagePicker } from '@/components/common/image-picker.component'
+import { Input } from '@/components/common/input.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
+import { TextArea } from '@/components/common/textarea.component'
+import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useAuth } from '@/providers/auth.provider'
+import { useToast } from '@/providers/toast.provider'
+import { authAPI } from '@/shared/api/auth.api'
+import { uploadAPI } from '@/shared/api/upload.api'
 import {
-  RiArrowRightSLine,
-  RiBarChartBoxLine,
-  RiGroupLine,
-  RiLogoutBoxRLine,
-  RiQuestionLine,
-  RiSettings3Line
+  RiArrowRightSLine, RiBarChartBoxLine,
+  RiEmotionLine,
+  RiSettings3Line,
+  RiTargetLine
 } from '@remixicon/react'
+import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth()
+  const { user, refreshSession } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
-  const { goals } = useGoalOperations(1, 100) // Get first 100 for progress calculation
+  const { goals } = useGoalOperations(1, 100)
+  const [updatedProfileImage, setUpdatedProfileImage] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    username: '',
+    currentMood: '',
+    lifeGoal: '',
+    profileImageId: '',
+  })
+  const [formError, setFormError] = useState<string | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  // Initialize form data from user
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        username: user.username || '',
+        currentMood: user.currentMood || '',
+        lifeGoal: user.lifeGoal || '',
+        profileImageId: user.avatarUrl || '',
+      })
+      setImagePreview(user.avatarUrl || null)
+    }
+  }, [user])
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: typeof formData) => {
+      const { profileImageId, ...rest } = data
+      return authAPI.updateProfile({
+        ...rest,
+        profileImageId: profileImageId || undefined,
+      })
+    },
+    onSuccess: async () => {
+      toast.success('Profile updated successfully!')
+      setIsEditing(false)
+      setFormError(null)
+      await refreshSession()
+    },
+    onError: (error: any) => {
+      const errorMsg =
+        error.response?.data?.msg || error.message || 'Failed to update profile'
+      toast.error(errorMsg)
+      setFormError(errorMsg)
+    },
+  })
+
+  const handleImageSelect = (imageDataUrl: string) => {
+    setImagePreview(imageDataUrl)
+    setFormData({ ...formData, profileImageId: imageDataUrl })
+    setUpdatedProfileImage(true)
+  }
+
+  const handleSave = async () => {
+    setFormError(null)
+
+    if (formData.username && formData.username.length < 3) {
+      const errorMsg = 'Username must be at least 3 characters'
+      setFormError(errorMsg)
+      toast.warning(errorMsg)
+      return
+    }
+
+    if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+      const errorMsg =
+        'Username can only contain letters, numbers, and underscores'
+      setFormError(errorMsg)
+      toast.warning(errorMsg)
+      return
+    }
+
+    try {
+      let cloudinaryUrl = formData.profileImageId
+
+      // If image is base64 (new upload), upload to Cloudinary first
+      if (formData.profileImageId && formData.profileImageId.startsWith('data:image/') && updatedProfileImage) {
+        const loadingToast = toast.loading('Uploading image...')
+        const uploadResponse = await uploadAPI.uploadImage({
+          image: formData.profileImageId,
+          folder: 'profile-images',
+        })
+        cloudinaryUrl = uploadResponse.data.url
+         //@ts-ignore
+        toast.dismiss(loadingToast)
+      }
+
+      // Update profile with Cloudinary URL
+      updateProfileMutation.mutate({
+        ...formData,
+        profileImageId: cloudinaryUrl,
+      })
+    } catch (error: any) {
+      //@ts-ignore
+      toast.dismiss()
+      const errorMsg = error.message || 'Failed to upload image'
+      setFormError(errorMsg)
+      toast.error(errorMsg)
+    }
+  }
+
+  const handleCancel = () => {
+    if (user) {
+      setFormData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        username: user.username || '',
+        currentMood: user.currentMood || '',
+        lifeGoal: user.lifeGoal || '',
+        profileImageId: user.avatarUrl || '',
+      })
+      setImagePreview(user.avatarUrl || null)
+    }
+    setIsEditing(false)
+    setFormError(null)
+  }
 
   const displayName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
@@ -53,7 +178,7 @@ export default function ProfileScreen() {
       {/* Header */}
       <TopNotchPadd />
 
-      <View className="flex-1 px-mg pb-[120px] pt-4 space-y-8">
+      <View className="flex-1 px-mg pb-[170px] pt-4 space-y-8">
         {/* Profile Header with Progress Ring */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
@@ -63,7 +188,7 @@ export default function ProfileScreen() {
           <View className="items-center space-y-4">
             {/* Avatar with Progress Ring */}
             <View className="relative">
-              {hasProgress && (
+              {hasProgress && !isEditing && (
                 <svg className="absolute -inset-2 w-36 h-36">
                   <circle
                     cx="72"
@@ -91,18 +216,29 @@ export default function ProfileScreen() {
                   />
                 </svg>
               )}
-              <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-10">
-                {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Text className="text-white text-4xl font-bbh font-bold">{initials}</Text>
-                )}
-              </View>
-              {hasProgress && (
+              
+          {isEditing ? (
+            <ImagePicker
+              currentImageUrl={imagePreview || undefined}
+              onImageSelect={handleImageSelect}
+              size="lg"
+              initials={initials}
+            />
+          ) : (
+                <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-10">
+                  {(imagePreview || user?.avatarUrl) ? (
+                <img
+                      src={imagePreview || user?.avatarUrl}
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                    <Text className="text-white text-4xl font-bbh font-bold">{initials}</Text>
+                  )}
+                </View>
+              )}
+              
+              {hasProgress && !isEditing && (
                 <View className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-yellow-400 rounded-full px-3 py-1.5 shadow-lg">
                   <Text className="text-black text-sm font-bbh font-bold">
                     {overallProgress}%
@@ -112,159 +248,258 @@ export default function ProfileScreen() {
             </View>
 
             {/* Name and Email */}
-            <View className="items-center space-y-1">
-              <Text className="text-white text-2xl font-bbh font-bold">{displayName}</Text>
-              <Text className="text-white/50 text-sm font-bbh">{user?.email}</Text>
+          <View className="items-center space-y-1">
+            <Text className="text-white text-2xl font-bbh font-bold">{displayName}</Text>
+              <Text className="text-white/50 text-sm font-bbh">@{user?.username}</Text>
             </View>
           </View>
         </motion.div>
 
-        {/* Action Cards Grid */}
-        <View className="grid grid-cols-2 gap-3">
-          {/* Help */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
-            <Pressable
-              onPress={() => {}}
-              className=" flex flex-col text-left p-3 rounded-2xl  space-y-3 "
-            >
-              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                <RiQuestionLine size={20} className="text-white" />
-              </View>
-              <View>
-                <Text className="text-white text-base font-bbh font-semibold">
-                  Help
-                </Text>
-                <Text className="text-white/50 text-xs font-bbh">
-                  Help is Here
-                </Text>
-              </View>
-            </Pressable>
-          </motion.div>
+        {/* Edit/Save Buttons */}
+        <View className="flex flex-row gap-3">
+          {!isEditing ? (
+            <Button
+              label="Edit Profile"
+              variant="default"
+              fullWidth
+              onClick={() => setIsEditing(true)}
+              textClassName="text-sm"
+              style={{
+                width: '100%'
+              }}
+            />
+          ) : (
+            <>
+              <Button
+                label="Cancel"
+                variant="outline"
+                fullWidth
+                onClick={handleCancel}
+                disabled={updateProfileMutation.isPending}
+                textClassName="text-sm"
+                style={{
+                width: '100%'
+              }}
+              />
+              <Button
+                label="Save"
+                variant="default"
+                fullWidth
+                onClick={handleSave}
+                disabled={updateProfileMutation.isPending}
+                loading={updateProfileMutation.isPending}
+                textClassName="text-sm"
+                style={{
+                width: '100%'
+              }}
+              />
+            </>
+          )}
+        </View>
 
-          {/* Insights */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-             className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
+        {/* Personal Information Cards */}
+        <View className="space-y-3">
+
+          {!isEditing ? (
+            // Display Mode - Grid Cards with Icons
+            <View className="space-y-3">
+              <View className="grid grid-cols-2 gap-3">
+                {/* Current Mood */}
+                <View
+                  
+                  className="col-span-2"
+                >
+                  <View className="bg-card-light/40 rounded-2xl p-4 flex-row items-start gap-4">
+                    <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center shrink-0">
+                      <RiEmotionLine size={20} className="text-white" />
+                    </View>
+                    <View className="flex-1 min-w-0">
+                      <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-1">
+                        Current Mood
+                      </Text>
+                      <Text className={user?.currentMood ? 'text-white text-base font-bbh font-semibold' : 'text-white/40 text-base font-bbh'}>
+                        {user?.currentMood || 'Not set'}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Life Goal - Full Width */}
+              <View
+              className="col-span-2"
+              >
+                <View className="bg-card-light/40 gap-4 flex flex-col items-start rounded-2xl p-4 space-y-2">
+                  <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                    <RiTargetLine size={20} className="text-white" />
+                  </View>
+                  <View className="flex-1 min-w-0 ">
+                    <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-1">
+                      Life Goal
+                    </Text>
+                    <Text className={user?.lifeGoal ? 'text-white text-base font-bbh font-semibold leading-relaxed' : 'text-white/40 text-base font-bbh'}>
+                      {user?.lifeGoal || 'Not set'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </View>
+          ) : (
+            // Edit Mode - Form Fields
+            <View className="space-y-3">
+              {/* First Name */}
+              <View className="bg-card-light/40 rounded-2xl p-4">
+                <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
+                  First Name
+                </Text>
+                <Input
+                  type="text"
+                  placeholder="First name"
+                  value={formData.firstName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, firstName: e.target.value })
+                    setFormError(null)
+                  }}
+                  className="bg-card-light/40 border-white/10 text-white"
+                />
+              </View>
+
+              {/* Last Name */}
+              <View className="bg-card-light/40 rounded-2xl p-4">
+                <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
+                  Last Name
+                </Text>
+                <Input
+                  type="text"
+                  placeholder="Last name"
+                  value={formData.lastName}
+                  onChange={(e) => {
+                    setFormData({ ...formData, lastName: e.target.value })
+                    setFormError(null)
+                  }}
+                  className="bg-card-light/40 border-white/10 text-white"
+                />
+              </View>
+
+              {/* Username */}
+              <View className="bg-card-light/40 rounded-2xl p-4">
+                <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
+                  Username
+                </Text>
+                <Input
+                  type="text"
+                  placeholder="Username"
+                  value={formData.username}
+                  onChange={(e) => {
+                    setFormData({ ...formData, username: e.target.value })
+                    setFormError(null)
+                  }}
+                  className="bg-card-light/40 border-white/10 text-white"
+                />
+              </View>
+
+              {/* Current Mood */}
+              <View className="bg-card-light/40 rounded-2xl p-4">
+                <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
+                  Current Mood
+                </Text>
+                <Input
+                  type="text"
+                  placeholder="How are you feeling?"
+                  value={formData.currentMood}
+                  onChange={(e) => {
+                    setFormData({ ...formData, currentMood: e.target.value })
+                    setFormError(null)
+                  }}
+                  className="bg-card-light/40 border-white/10 text-white"
+                  maxLength={200}
+                />
+              </View>
+
+              {/* Life Goal */}
+              <View className="bg-card-light/40 rounded-2xl p-4">
+                <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
+                  Life Goal
+                </Text>
+                <TextArea
+                  placeholder="What is your life goal?"
+                  value={formData.lifeGoal}
+                  onChange={(e) => {
+                    setFormData({ ...formData, lifeGoal: e.target.value })
+                    setFormError(null)
+                  }}
+                  className="min-h-[100px] bg-card-light/40 border-white/10 text-white p-3"
+                  maxLength={500}
+                />
+              </View>
+
+              {/* Error Display */}
+              {formError && (
+                <View className="bg-danger-500/20 rounded-xl p-4">
+                  <Text className="text-danger-500 text-sm font-bbh">
+                    {formError}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* Quick Access Actions */}
+        <View className="space-y-3 pb-[200px]">
+          <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
+            Quick Access
+          </Text>
+          
+          <View className="grid grid-cols-2 gap-3">
+            {/* Insights */}
             <Pressable
               onPress={() => navigate({ to: '/app/sub-profile/insights' })}
-              className="  flex flex-col text-left p-3 space-y-3 "
+              className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
             >
-              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                <RiBarChartBoxLine size={20} className="text-white" />
-              </View>
-              <View>
-                <Text className="text-white text-base font-bbh font-semibold">
-                  Insights
-                </Text>
-                <Text className="text-white/50 text-xs font-bbh">
-                  Progress Stats
-                </Text>
-              </View>
-            </Pressable>
-          </motion.div>
-
-          {/* My Goals */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-             className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
-            <Pressable
-              onPress={() => navigate({ to: '/goal' })}
-              className="  flex flex-col text-left p-3 space-y-3 "
-            >
-              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                <RiGroupLine size={20} className="text-white" />
-              </View>
-              <View>
-                <Text className="text-white text-base font-bbh font-semibold">
-                  My Goals
-                </Text>
-                <Text className="text-white/50 text-xs font-bbh">
-                  View All
-                </Text>
-              </View>
-            </Pressable>
-          </motion.div>
-
-          {/* Settings */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-             className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
-            <Pressable
-              onPress={() => navigate({ to: '/app/sub-profile/settings' })}
-              className="  flex flex-col text-left p-3 space-y-3 "
-            >
-              <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                <RiSettings3Line size={20} className="text-white" />
-              </View>
-              <View>
-                <Text className="text-white text-base font-bbh font-semibold">
-                  Settings
-                </Text>
-                <Text className="text-white/50 text-xs font-bbh">
-                  App Settings
-                </Text>
-              </View>
-            </Pressable>
-          </motion.div>
-        </View>
-
-        {/* Menu List Items */}
-        <View className="space-y-2 grid grid-cols-2 gap-3 flex-row items-center justify-between">
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-             className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
-            <Pressable
-              onPress={() => navigate({ to: '/app/sub-profile/settings' })}
-              className="px-5 py-4 flex-row items-center justify-between"
-            >
-              <View className="flex-row items-center gap-4">
-                <RiSettings3Line size={20} className="text-white/70" />
-                <Text className="text-white text-base font-bbh">
-                  Settings
-                </Text>
+              <View className="flex-row items-center text-left gap-4">
+                <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                  <RiBarChartBoxLine size={20} className="text-white" />
+                </View>
+                <View>
+                  <Text className="text-white text-sm font-bbh font-semibold">
+                    Insights
+                  </Text>
+                  <Text className="text-white/50 text-xs font-bbh">
+                    View progress stats
+                  </Text>
+                </View>
               </View>
               <RiArrowRightSLine size={20} className="text-white/40" />
             </Pressable>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-             className='col-span-1 bg-card-light/40 rounded-2xl'
-          >
+            {/* Settings */}
             <Pressable
-              onPress={logout}
-              className="px-5 py-4 flex-row items-center justify-between"
+              onPress={() => navigate({ to: '/app/sub-profile/settings' })}
+              className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
             >
-              <View className="flex-row items-center gap-4">
-                <RiLogoutBoxRLine size={20} className="text-pink-500" />
-                <Text className="text-white text-base font-bbh">
-                  Logout
-                </Text>
+              <View className="flex-row items-center text-left gap-4">
+                <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                  <RiSettings3Line size={20} className="text-white" />
+                </View>
+                <View>
+                  <Text className="text-white text-sm font-bbh font-semibold">
+                    Settings
+                  </Text>
+                  <Text className="text-white/50 text-xs font-bbh">
+                    App preferences
+                  </Text>
+                </View>
               </View>
               <RiArrowRightSLine size={20} className="text-white/40" />
             </Pressable>
-          </motion.div>
+          </View>
+
+          
         </View>
       </View>
+
+     
     </View>
   )
 }
