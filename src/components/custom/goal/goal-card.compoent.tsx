@@ -39,9 +39,9 @@ export function GoalCard({
   }
 
   return (
-    <View className="flex-row w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
+    <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
       <View
-        className="p-3 mt-3 w-full shrink-0 rounded-3xl relative snap-center"
+        className="p-3  w-full shrink-0 rounded-3xl relative snap-center"
         style={{
           backgroundColor: color,
         }}
@@ -84,13 +84,13 @@ export function GoalCard({
       </View>
 
       <View className="flex-row items-center justify-center snap-center">
-        <View className="aspect-square h-[70px]   flex-row items-center justify-center">
+        <View className=" w-[70px] h-full   flex-row items-center justify-center">
           <Pressable
             onPress={onDelete}
-            className="p-1.5 bg-red-900/70 rounded-xl size-full flex flex-row items-center justify-center transition-colors"
+            className="p-1.5 bg-pink-900/30 rounded-xl size-full flex flex-row items-center justify-center transition-colors"
             disabled={deleteIsPending || deleteIsPending}
           >
-            <RiDeleteBinLine color="#EF4444" />
+            <RiDeleteBinLine className='text-pink-500' />
           </Pressable>
         </View>
       </View>
