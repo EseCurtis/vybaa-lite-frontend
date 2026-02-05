@@ -1,12 +1,12 @@
 export type PaginateQuery<T> = {
   data: T[];
   pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    nextPage: number | null;
+    page: number
+    limit: number
+    totalCount: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPrevPage: boolean
   };
 };
 

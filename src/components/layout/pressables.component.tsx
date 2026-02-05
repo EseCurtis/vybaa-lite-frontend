@@ -292,10 +292,10 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
       <button
         ref={ref}
         className={cn(
-          'flex cursor-pointer transition-all duration-150',
+          'flex active:scale-[.97] cursor-pointer transition-all duration-150',
           disabled && 'cursor-not-allowed',
-          isPressed && 'scale-95',
-          isHovered && 'scale-105',
+          isPressed && 'active:scale-105',
+          //isHovered && 'scale-105',
           className
         )}
         style={{

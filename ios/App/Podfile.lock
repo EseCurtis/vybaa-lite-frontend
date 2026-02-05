@@ -19,6 +19,8 @@ PODS:
     - Capacitor
   - CapacitorKeyboard (7.0.3):
     - Capacitor
+  - CapacitorPluginSafeArea (5.0.0):
+    - Capacitor
   - CapacitorPushNotifications (7.0.3):
     - Capacitor
   - CapacitorStatusBar (7.0.3):
@@ -112,6 +114,7 @@ DEPENDENCIES:
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
+  - CapacitorPluginSafeArea (from `../../node_modules/capacitor-plugin-safe-area`)
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/@capgo/capacitor-social-login`)"
@@ -152,6 +155,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/haptics"
   CapacitorKeyboard:
     :path: "../../node_modules/@capacitor/keyboard"
+  CapacitorPluginSafeArea:
+    :path: "../../node_modules/capacitor-plugin-safe-area"
   CapacitorPushNotifications:
     :path: "../../node_modules/@capacitor/push-notifications"
   CapacitorStatusBar:
@@ -170,6 +175,7 @@ SPEC CHECKSUMS:
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
   CapacitorHaptics: b3fb2869e72c4466e18ce9ccbeb60a3d8723b3d4
   CapacitorKeyboard: 62f36104f26d53d8b3a2a43f2a69fe714f1777d5
+  CapacitorPluginSafeArea: 9d0682951c011bf0b36e513a89103c5fbff7ac49
   CapacitorPushNotifications: bdd621fbd562be34a41f4a7b1750efa000447d5a
   CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
   CapgoCapacitorSocialLogin: 251e1ab19a15a4f5d5ae017f15acd34ca76c7114
@@ -192,6 +198,6 @@ SPEC CHECKSUMS:
   RevenueCat: e47ff90dfd271fde155a4befe48e8fc02e8281e4
   RevenuecatPurchasesCapacitor: 6727a4dc1455bdf2374259420719ce5dfbe957fa
 
-PODFILE CHECKSUM: f292525e2bc8f7d52dc68c85eb638d564038b18f
+PODFILE CHECKSUM: 775bfc8740329f114112c5825badd442885e6778
 
 COCOAPODS: 1.16.2

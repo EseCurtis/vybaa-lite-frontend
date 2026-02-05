@@ -140,7 +140,7 @@ export default function ProfileScreen() {
                 <img
                   src={user.avatarUrl}
                   alt={displayName}
-                  className="w-full h-full rounded-full object-cover"
+                  className="w-full h-full object-cover"
                 />
               ) : (
                 <Text className="text-white text-3xl font-bbh">{initials}</Text>

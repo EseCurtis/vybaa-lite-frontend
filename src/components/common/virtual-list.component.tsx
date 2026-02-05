@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import React, { useRef } from 'react';
+import React, { useRef, type ReactNode } from 'react';
 
 /**
  * Generic virtualized list using react-virtual for web.
@@ -22,6 +22,7 @@ export interface VirtualListProps<T> {
   rowHeight?: number;
   height?: number;
   itemKey?: (item: T, index: number) => string | number;
+  footer?: ReactNode
 }
 
 export function VirtualList<T extends { id?: string | number }>({
@@ -30,6 +31,7 @@ export function VirtualList<T extends { id?: string | number }>({
   rowHeight = 72,
   height = 600,
   itemKey = (item, i) => (item.id != null ? item.id : i),
+  footer
 }: VirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -61,7 +63,9 @@ export function VirtualList<T extends { id?: string | number }>({
             </div>
           );
         })}
+        
       </div>
+      {footer}
     </div>
   );
 }

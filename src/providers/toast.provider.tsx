@@ -1,7 +1,6 @@
-import React from 'react'
-import { Toaster } from 'sonner'
 import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
-import { toast as sonnerToast } from 'sonner'
+import React from 'react'
+import { toast as sonnerToast, Toaster } from 'sonner'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
@@ -94,17 +93,20 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       <Toaster
         position="top-center"
-        expand={false}
+        expand={true}
         richColors
-        closeButton
         toastOptions={{
           className: 'rounded-full',
           style: {
             borderRadius: '9999px',
+            top: top,
+            transform: `translateY(${Number(top)*4}px)`,
+           
           },
         }}
         style={{
-          marginTop: `${top}px`,
+          
+          
         }}
       />
     </ToastContext.Provider>

@@ -3,7 +3,7 @@ import mobileConfig from "./mobile";
 
 const iosConfig = () => {
     StatusBar.setOverlaysWebView({ overlay: true });
-    document.documentElement.style.setProperty('--statusbar-clearfix', '25px');
+    document.documentElement.style.setProperty('--statusbar-clearfsix', '25px');
 
     mobileConfig();
 }

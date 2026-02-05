@@ -1,22 +1,48 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { goalAPI, type Goal, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
-import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { useToast } from '@/providers/toast.provider'
+import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
+import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 /**
- * Hook to fetch all goals
+ * Hook to fetch all goals with pagination
  */
-export function useGoals() {
+export function useGoals(page: number = 1, limit: number = 10) {
   return useQuery({
-    queryKey: goalQueryKeys.list(),
+    queryKey: goalQueryKeys.list(page, limit),
     queryFn: async () => {
-      const response = await goalAPI.getAllGoals()
-      return response.data || []
+      const response = await goalAPI.getAllGoals(page, limit)
+      return response
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
 
+/**
+ * Hook to fetch goals with infinite scrolling
+ */
+export function useInfiniteGoals(limit: number = 1) {
+  return useInfiniteQuery({
+    queryKey: goalQueryKeys.infinite(limit),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await goalAPI.getAllGoals(pageParam, limit)
+      return response
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination?.hasNextPage) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
+    },
+    getPreviousPageParam: (firstPage) => {
+      if (firstPage.pagination?.hasPrevPage) {
+        return firstPage.pagination.page - 1
+      }
+      return undefined
+    },
+    initialPageParam: 1,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
 /**
  * Hook to fetch current active goal
  */
@@ -41,8 +67,8 @@ export function useCreateGoal() {
   return useMutation({
     mutationFn: (data: CreateGoalRequest) => goalAPI.createGoal(data),
     onSuccess: (response) => {
-      // Invalidate and refetch goals list
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
+      // Invalidate all goals lists (paginated and infinite)
+      queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       // Update current goal if created
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -70,7 +96,7 @@ export function useCheckIn() {
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
+        queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       }
       toast.success('Check-in successful! Keep it up!')
     },
@@ -94,7 +120,7 @@ export function useResetGoal() {
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
+        queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       }
     },
   })
@@ -111,8 +137,8 @@ export function useUpdateGoal() {
     mutationFn: ({ goalId, data }: { goalId: string; data: UpdateGoalRequest }) =>
       goalAPI.updateGoal(goalId, data),
     onSuccess: (response) => {
-      // Invalidate and refetch goals list
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
+      // Invalidate all goals lists (paginated and infinite)
+      queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       // Update current goal if it was the one updated
       if (response.data) {
         queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
@@ -154,8 +180,8 @@ export function useDeleteGoal() {
  * Combined hook for goal operations
  * Provides all goal-related queries and mutations in one place
  */
-export function useGoalOperations() {
-  const goalsQuery = useGoals()
+export function useGoalOperations(page: number = 1, limit: number = 10) {
+  const goalsQuery = useGoals(page, limit)
   const currentGoalQuery = useCurrentGoal()
   const createGoalMutation = useCreateGoal()
   const checkInMutation = useCheckIn()
@@ -165,10 +191,67 @@ export function useGoalOperations() {
 
   return {
     // Queries
-    goals: goalsQuery.data || [],
+    goals: goalsQuery.data?.data || [],
+    pagination: goalsQuery.data?.pagination,
     currentGoal: currentGoalQuery.data,
     isLoading: goalsQuery.isLoading || currentGoalQuery.isLoading,
     isFetching: goalsQuery.isFetching || currentGoalQuery.isFetching,
+    error: goalsQuery.error || currentGoalQuery.error,
+    
+    // Mutations
+    createGoal: createGoalMutation.mutate,
+    createGoalAsync: createGoalMutation.mutateAsync,
+    isCreating: createGoalMutation.isPending,
+    
+    checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
+    checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
+    isCheckingIn: checkInMutation.isPending,
+    
+    resetGoal: resetGoalMutation.mutate,
+    resetGoalAsync: resetGoalMutation.mutateAsync,
+    isResetting: resetGoalMutation.isPending,
+    
+    updateGoal: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutate({ goalId, data }),
+    updateGoalAsync: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutateAsync({ goalId, data }),
+    isUpdating: updateGoalMutation.isPending,
+    
+    deleteGoal: deleteGoalMutation.mutate,
+    deleteGoalAsync: deleteGoalMutation.mutateAsync,
+    isDeleting: deleteGoalMutation.isPending,
+    
+    // Refetch functions
+    refetchGoals: goalsQuery.refetch,
+    refetchCurrentGoal: currentGoalQuery.refetch,
+  }
+}
+
+/**
+ * Combined hook for goal operations with infinite scrolling
+ * Provides all goal-related queries and mutations with infinite query support
+ */
+export function useGoalOperationsInfinite(limit: number = 10) {
+  const goalsQuery = useInfiniteGoals(limit)
+  const currentGoalQuery = useCurrentGoal()
+  const createGoalMutation = useCreateGoal()
+  const checkInMutation = useCheckIn()
+  const resetGoalMutation = useResetGoal()
+  const updateGoalMutation = useUpdateGoal()
+  const deleteGoalMutation = useDeleteGoal()
+
+  // Flatten pages for easier consumption
+  const goals = goalsQuery.data?.pages.flatMap(page => page.data) || []
+  const lastPage = goalsQuery.data?.pages[goalsQuery.data.pages.length - 1]
+
+  return {
+    // Queries
+    goals,
+    pagination: lastPage?.pagination,
+    currentGoal: currentGoalQuery.data,
+    isLoading: goalsQuery.isLoading || currentGoalQuery.isLoading,
+    isFetching: goalsQuery.isFetching || currentGoalQuery.isFetching,
+    isFetchingNextPage: goalsQuery.isFetchingNextPage,
+    hasNextPage: goalsQuery.hasNextPage,
+    fetchNextPage: goalsQuery.fetchNextPage,
     error: goalsQuery.error || currentGoalQuery.error,
     
     // Mutations

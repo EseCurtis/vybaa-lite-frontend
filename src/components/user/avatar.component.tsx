@@ -24,7 +24,7 @@ export function Avatar({
   return (
     <View
       className={cn(
-        'rounded-full overflow-hidden flex place-content-center items-center justify-center',
+        'rounded-full relative overflow-hidden flex place-content-center items-center justify-center',
         className,
       )}
       style={{

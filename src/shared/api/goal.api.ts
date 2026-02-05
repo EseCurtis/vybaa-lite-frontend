@@ -10,6 +10,7 @@ export interface Goal {
   lastCheckInDate: string | null
   startedAt: string
   wasReset?: boolean
+  canCheckIn: boolean
 }
 
 export interface CreateGoalRequest {
@@ -27,9 +28,19 @@ export interface GoalResponse {
   data: Goal | null
 }
 
+export interface PaginationMeta {
+  page: number
+  limit: number
+  totalCount: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
 export interface GoalsListResponse {
   msg: string
   data: Goal[]
+  pagination: PaginationMeta
 }
 
 class GoalAPI {
@@ -38,8 +49,10 @@ class GoalAPI {
     return res
   }
 
-  async getAllGoals(): Promise<GoalsListResponse> {
-    const { data: res } = await http.get<GoalsListResponse>(`${API_V1}/goals`)
+  async getAllGoals(page: number = 1, limit: number = 10): Promise<GoalsListResponse> {
+    const { data: res } = await http.get<GoalsListResponse>(`${API_V1}/goals`, {
+      params: { page, limit },
+    })
     return res
   }
 

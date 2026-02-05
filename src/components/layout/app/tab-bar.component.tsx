@@ -89,7 +89,7 @@ export const TabBar = memo(() => {
         colors={['transparent', colors.black]}
         locations={[0, 0.9]}
       />
-      <View className="p-mg z-10 relative">
+      <View className="p-mg py-0 z-10 relative">
         <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
           {tabs.map((tab) => {
             const isActive = isActiveTab(
@@ -178,8 +178,8 @@ export const TabBar = memo(() => {
                       }
                     >
                       <tab.icon
-                        color={isActive ? colors.accent[400] : colors.card[100]}
-                        size={32}
+                        color={isActive ? colors.accent[400] : colors['card-lighter-3']}
+                        size={27}
                         fill={
                           isActive ? colors.accent[700] + '7a' : 'transparent'
                         }

@@ -107,7 +107,7 @@ export function useGoogleAuth(options?: UseGoogleAuthOptions): UseGoogleAuthResu
 
       await mutation.mutateAsync({ token })
     } catch (err) {
-      alert(JSON.stringify(err))
+     // alert(JSON.stringify(err))
       // Re-throw the error so it can be caught by the caller
       const errorMessage = err instanceof Error ? err.message : 'Failed to sign in with Google'
       throw new Error(errorMessage)
