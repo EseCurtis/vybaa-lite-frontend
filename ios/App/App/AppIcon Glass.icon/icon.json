@@ -22,8 +22,8 @@
       "appearance" : "dark",
       "value" : {
         "linear-gradient" : [
-          "srgb:0.50000,0.14056,0.30990,1.00000",
-          "srgb:0.05281,0.01486,0.04749,1.00000"
+          "extended-gray:0.25000,1.00000",
+          "extended-gray:0.00000,1.00000"
         ],
         "orientation" : {
           "start" : {
@@ -45,6 +45,17 @@
       "hidden" : false,
       "layers" : [
         {
+          "fill-specializations" : [
+            {
+              "value" : "automatic"
+            },
+            {
+              "appearance" : "dark",
+              "value" : {
+                "solid" : "extended-gray:1.00000,1.00000"
+              }
+            }
+          ],
           "hidden" : false,
           "image-name" : "icon-only-x.png",
           "name" : "icon-only-x",
@@ -69,7 +80,7 @@
           }
         }
       ],
-      "lighting" : "combined",
+      "lighting" : "individual",
       "name" : "Group",
       "opacity" : 1,
       "shadow" : {

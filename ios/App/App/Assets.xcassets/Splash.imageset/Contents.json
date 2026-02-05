@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "onboardingg.png",
+      "filename" : "onboardingg 6.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
@@ -12,12 +12,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "onboardingg 3.png",
+      "filename" : "onboardingg 9.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "onboardingg 1.png",
+      "filename" : "onboardingg 7.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
@@ -28,12 +28,12 @@
           "value" : "dark"
         }
       ],
-      "filename" : "onboardingg 4.png",
+      "filename" : "onboardingg 10.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "onboardingg 2.png",
+      "filename" : "onboardingg 8.png",
       "idiom" : "universal",
       "scale" : "3x"
     },
@@ -44,7 +44,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "onboardingg 5.png",
+      "filename" : "onboardingg 11.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
