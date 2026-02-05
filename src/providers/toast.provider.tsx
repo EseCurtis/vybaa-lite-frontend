@@ -88,6 +88,8 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [showToast, success, error, warning, info, loading, dismiss]
   )
 
+  alert(top)
+
   return (
     <ToastContext.Provider value={value}>
       {children}
@@ -100,7 +102,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           style: {
             borderRadius: '9999px',
             top: top,
-            transform: `translateY(${Number(top)*4}px)`,
+           // transform: `translateY(${Number(top)*4}px)`,
            
           },
         }}

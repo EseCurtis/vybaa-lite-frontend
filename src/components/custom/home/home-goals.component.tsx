@@ -38,8 +38,9 @@ function HomeGoalItem({
 
 export function HomeGoals() {
   const navigate = useNavigate()
-  const { hasNextPage, data } = useInfiniteGoals()
+  const { hasNextPage, data } = useInfiniteGoals({ canCheckIn: true })
   const goals = normalizePages(data?.pages || [])
+  const noGoals = goals.length == 0
 
   return (
     <View className="overflow-x-scroll snap-x snap-mandatory flex-row px-mg shrink-0 no-scrollbar ">
@@ -57,12 +58,26 @@ export function HomeGoals() {
       {hasNextPage && (
         <Pressable
           onPress={() => {
-            navigate({ to: "/goal"})
+            navigate({ to: '/goal' })
           }}
           className="snap-center ml-2 text-card-lighter-3  bg-card-light/20 rounded-full flex-row gap-2 items-center justify-center px-4 font-bold"
         >
           <Text className="whitespace-nowrap text-sm">See all</Text>
         </Pressable>
+      )}
+
+      {noGoals && (
+        <View className="flex-row w-full items-center">
+          <Text className="text-card-lighter-2">You cleared it all! 🎊</Text>
+          <Pressable
+            onPress={() => {
+              navigate({ to: '/goal' })
+            }}
+            className="snap-center bg-white ml-2 text-black ml-auto  rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
+          >
+            <Text className="whitespace-nowrap text-sm">See all goals</Text>
+          </Pressable>
+        </View>
       )}
     </View>
   )

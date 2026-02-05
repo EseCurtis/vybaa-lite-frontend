@@ -49,10 +49,12 @@ class GoalAPI {
     return res
   }
 
-  async getAllGoals(page: number = 1, limit: number = 10): Promise<GoalsListResponse> {
-    const { data: res } = await http.get<GoalsListResponse>(`${API_V1}/goals`, {
-      params: { page, limit },
-    })
+  async getAllGoals(page: number = 1, limit: number = 10, canCheckIn?: boolean): Promise<GoalsListResponse> {
+    const params: any = { page, limit }
+    if (canCheckIn !== undefined) {
+      params.canCheckIn = canCheckIn
+    }
+    const { data: res } = await http.get<GoalsListResponse>(`${API_V1}/goals`, { params })
     return res
   }
 

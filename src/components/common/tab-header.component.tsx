@@ -10,9 +10,11 @@ import { TopNotch } from './notch.component'
 export function TabHeader({
   title,
   onBack,
+  children
 }: {
   title?: ReactNode
   onBack?: () => void
+  children?: ReactNode
 }) {
   const router = useRouter()
 
@@ -20,7 +22,7 @@ export function TabHeader({
     <View className="px-mg py-mg">
       <TopNotch />
 
-      <View className="">
+      <View className="flex-row justify-between items-center">
         <View className="flex-row gap-7 items-center">
           <Pressable
             onPress={() => {
@@ -32,6 +34,8 @@ export function TabHeader({
           </Pressable>
           <Text className="text-white text-2xl font-bold">{title}</Text>
         </View>
+
+        <View className="">{children}</View>
       </View>
     </View>
   )

@@ -4,13 +4,13 @@ import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 /**
- * Hook to fetch all goals with pagination
+ * Hook to fetch all goals with pagination and optional canCheckIn filter
  */
-export function useGoals(page: number = 1, limit: number = 10) {
+export function useGoals(page: number = 1, limit: number = 10, canCheckIn?: boolean) {
   return useQuery({
-    queryKey: goalQueryKeys.list(page, limit),
+    queryKey: [...goalQueryKeys.list(page, limit), { canCheckIn }],
     queryFn: async () => {
-      const response = await goalAPI.getAllGoals(page, limit)
+      const response = await goalAPI.getAllGoals(page, limit, canCheckIn)
       return response
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -18,13 +18,13 @@ export function useGoals(page: number = 1, limit: number = 10) {
 }
 
 /**
- * Hook to fetch goals with infinite scrolling
+ * Hook to fetch goals with infinite scrolling and optional canCheckIn filter
  */
-export function useInfiniteGoals({ limit = 10 }: { limit?: number } = {}) {
+export function useInfiniteGoals({ limit = 10, canCheckIn }: { limit?: number; canCheckIn?: boolean } = {}) {
   return useInfiniteQuery({
-    queryKey: goalQueryKeys.infinite(limit),
+    queryKey: [...goalQueryKeys.infinite(limit), { canCheckIn }],
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await goalAPI.getAllGoals(pageParam, limit)
+      const response = await goalAPI.getAllGoals(pageParam, limit, canCheckIn)
       return response
     },
     getNextPageParam: (lastPage) => {
@@ -180,8 +180,8 @@ export function useDeleteGoal() {
  * Combined hook for goal operations
  * Provides all goal-related queries and mutations in one place
  */
-export function useGoalOperations(page: number = 1, limit: number = 10) {
-  const goalsQuery = useGoals(page, limit)
+export function useGoalOperations(page: number = 1, limit: number = 10, canCheckIn?: boolean) {
+  const goalsQuery = useGoals(page, limit, canCheckIn)
   const currentGoalQuery = useCurrentGoal()
   const createGoalMutation = useCreateGoal()
   const checkInMutation = useCheckIn()
@@ -229,8 +229,8 @@ export function useGoalOperations(page: number = 1, limit: number = 10) {
  * Combined hook for goal operations with infinite scrolling
  * Provides all goal-related queries and mutations with infinite query support
  */
-export function useGoalOperationsInfinite(limit: number = 10) {
-  const goalsQuery = useInfiniteGoals(limit)
+export function useGoalOperationsInfinite(limit: number = 10, canCheckIn?: boolean) {
+  const goalsQuery = useInfiniteGoals({ limit, canCheckIn })
   const currentGoalQuery = useCurrentGoal()
   const createGoalMutation = useCreateGoal()
   const checkInMutation = useCheckIn()

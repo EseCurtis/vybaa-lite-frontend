@@ -50,6 +50,7 @@
     "react-dom": "^19.2.0",
     "react-easy-crop": "^5.5.3",
     "sonner": "^2.0.7",
+    "super-react-hooks": "^1.1.0",
     "tailwind-merge": "^3.3.1",
     "tailwind-variants": "^3.1.1",
     "tailwindcss": "3.4.4"
