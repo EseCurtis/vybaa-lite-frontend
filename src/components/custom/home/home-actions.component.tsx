@@ -1,6 +1,7 @@
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiEmotionLaughLine,
@@ -9,38 +10,19 @@ import {
   RiTempColdLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
-
-const actions = [
-  {
-    name: 'New Goal',
-    description: 'Commit to a new cause',
-    icon: RiFireLine,
-  },
-  {
-    name: 'Flexx',
-    description: 'Share stats to flexx on socials',
-    icon: RiEmotionLaughLine,
-  },
-  {
-    name: 'Journal',
-    description: 'Share stats to flexx on socials',
-    icon: RiFileMarkedLine,
-  },
-  {
-    name: 'Chill',
-    description: 'Share stats to flexx on socials................',
-    icon: RiTempColdLine,
-  }
-]
+import { useNavigate } from '@tanstack/react-router'
+import { CreateGoalSheet } from '../goal/create-goal-sheet.component'
 
 function HomeActionCard({
   name,
   description,
   icon,
+  onAction = () => {},
 }: {
   name: string
   description: string
   icon: RemixiconComponentType
+  onAction?: () => void
 }) {
   const Icon = icon
   const color = seededColor(name, description, icon.displayName!)
@@ -55,6 +37,7 @@ function HomeActionCard({
             //background: color,
           }
         }
+        onPress={onAction}
         className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-3xl p-mg"
       >
         <Icon color={darkColor} size={70} className="text-white" />
@@ -70,6 +53,45 @@ function HomeActionCard({
 }
 
 export function HomeActions() {
+  const bottomSheet = useBottomSheet()
+  const navigate = useNavigate()
+  const handleCreateGoal = () => {
+    bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
+      title: 'New Goal',
+      elevation: 999,
+    })
+  }
+
+  const actions = [
+    {
+      name: 'New Goal',
+      description: 'Commit to a new cause',
+      icon: RiFireLine,
+      onAction() {
+        handleCreateGoal()
+      },
+    },
+    {
+      name: 'Flexx',
+      description: 'Share stats to flexx on socials',
+      icon: RiEmotionLaughLine,
+      onAction() {
+        navigate({
+          to: '/app/actions/flexx',
+        })
+      },
+    },
+    {
+      name: 'Journal',
+      description: 'Share stats to flexx on socials',
+      icon: RiFileMarkedLine,
+    },
+    {
+      name: 'Chill',
+      description: 'Share stats to flexx on socials................',
+      icon: RiTempColdLine,
+    },
+  ]
   return (
     <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-2 ">
       {actions.map((item, index) => {
@@ -78,6 +100,7 @@ export function HomeActions() {
             key={index}
             name={item.name}
             description={item.description}
+            onAction={item?.onAction}
             icon={item.icon}
           />
         )

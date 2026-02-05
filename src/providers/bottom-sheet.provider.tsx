@@ -1,3 +1,4 @@
+import { BottomNotchPadd } from '@/components/common/notch.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -5,7 +6,13 @@ import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
 import { RiCloseCircleFill } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { createContext, useCallback, useContext, useMemo, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react'
 
 type BottomSheetOptions = {
   title?: string
@@ -26,20 +33,29 @@ export const useBottomSheetController = () => {
   return ctx
 }
 
-export const BottomSheetProvider = ({ children }: { children: React.ReactNode }) => {
+export const BottomSheetProvider = ({
+  children,
+}: {
+  children: React.ReactNode
+}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [content, setContent] = useState<React.ReactNode>(null)
   const [title, setTitle] = useState<string | undefined>()
   const [elevation, setElevation] = useState<number>(12)
 
-  const present = useCallback((node: React.ReactNode, opts?: BottomSheetOptions) => {
-    setContent(node)
-    setTitle(opts?.title)
-    setElevation(opts?.elevation ?? 12)
-    setIsOpen(true)
-    // subtle haptic on open
-    try { hapticFeedback?.light && hapticFeedback.light() } catch {}
-  }, [])
+  const present = useCallback(
+    (node: React.ReactNode, opts?: BottomSheetOptions) => {
+      setContent(node)
+      setTitle(opts?.title)
+      setElevation(opts?.elevation ?? 12)
+      setIsOpen(true)
+      // subtle haptic on open
+      try {
+        hapticFeedback?.light && hapticFeedback.light()
+      } catch {}
+    },
+    [],
+  )
 
   const update = useCallback((opts: BottomSheetOptions) => {
     if (opts.title !== undefined) setTitle(opts.title)
@@ -48,17 +64,26 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
 
   const dismiss = useCallback(() => {
     setIsOpen(false)
-    setTimeout(() => {
-      setContent(null)
-      setTitle(undefined)
-    }, shouldAnimate ? 200 : 0)
+    setTimeout(
+      () => {
+        setContent(null)
+        setTitle(undefined)
+      },
+      shouldAnimate ? 200 : 0,
+    )
   }, [])
 
-  const shadow = elevation > 0
-    ? { boxShadow: `0 -${Math.max(2, elevation)}px ${Math.max(8, elevation * 4)}px rgba(0,0,0,0.4)` }
-    : undefined
+  const shadow =
+    elevation > 0
+      ? {
+          boxShadow: `0 -${Math.max(2, elevation)}px ${Math.max(8, elevation * 4)}px rgba(0,0,0,0.4)`,
+        }
+      : undefined
 
-  const value = useMemo(() => ({ present, update, dismiss }), [present, update, dismiss])
+  const value = useMemo(
+    () => ({ present, update, dismiss }),
+    [present, update, dismiss],
+  )
 
   const sheetContent = (
     <>
@@ -71,13 +96,13 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
         ) : (
           <View />
         )}
-        {title && <TouchableOpacity onPress={dismiss}>
-         <RiCloseCircleFill size={32} color='#ffffff'/>
-        </TouchableOpacity>}
+        {title && (
+          <TouchableOpacity onPress={dismiss}>
+            <RiCloseCircleFill size={32} color="#ffffff" />
+          </TouchableOpacity>
+        )}
       </View>
-      <View className="max-h-[70vh] overflow-y-auto pr-1">
-        {content}
-      </View>
+      <View className="max-h-[70vh] overflow-y-auto pr-1">{content}</View>
     </>
   )
 
@@ -107,9 +132,15 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
                 initial={{ y: 40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: 32, opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 26, mass: 0.8 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 320,
+                  damping: 26,
+                  mass: 0.8,
+                }}
               >
                 {sheetContent}
+                <BottomNotchPadd />
               </motion.div>
             </motion.div>
           )}
@@ -121,10 +152,7 @@ export const BottomSheetProvider = ({ children }: { children: React.ReactNode })
               className="absolute inset-0"
               style={{ zIndex: Math.max(2, elevation) }}
             >
-              <div
-                className="absolute inset-0 bg-black/60"
-                onClick={dismiss}
-              />
+              <div className="absolute inset-0 bg-black/60" onClick={dismiss} />
               <div
                 className="bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0"
                 style={shadow}

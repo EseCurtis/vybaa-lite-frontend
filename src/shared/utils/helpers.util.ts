@@ -236,3 +236,14 @@ function rgbToHsl(r: number, g: number, b: number): HslColor {
     l: l * 100,
   };
 }
+
+/**
+ * Returns a random number between min and max
+ * @param min inclusive lower bound
+ * @param max inclusive upper bound
+ */
+export function randomInRange(min: number, max: number): number {
+  if (min > max) [min, max] = [max, min];
+
+  return Math.random() * (max - min) + min;
+}
