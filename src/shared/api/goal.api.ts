@@ -9,6 +9,7 @@ export interface Goal {
   currentDay: number
   lastCheckInDate: string | null
   startedAt: string
+  reminderTime?: string | null
   wasReset?: boolean
   canCheckIn: boolean
 }
@@ -16,11 +17,13 @@ export interface Goal {
 export interface CreateGoalRequest {
   goalText: string
   targetDays: number
+  reminderTime?: string
 }
 
 export interface UpdateGoalRequest {
   goalText?: string
   targetDays?: number
+  reminderTime?: string | null
 }
 
 export interface GoalResponse {

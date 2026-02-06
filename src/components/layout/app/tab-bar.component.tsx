@@ -11,10 +11,12 @@ import { LinearGradient } from '../linear-gradient.component'
 import { TouchableOpacity } from '../pressables.component'
 import { Text } from '../text.component'
 import { View } from '../view.component'
+import { useUnreadCount } from '@/hooks/use-notifications.hook'
 
 export const TabBar = memo(() => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { data: unreadCount } = useUnreadCount()
 
   const tabs = useMemo(
     () => [
@@ -27,6 +29,14 @@ export const TabBar = memo(() => {
         badge: null,
       },
       {
+        id: 'notifications',
+        route: '/app/notifications',
+        icon: Icons.Bell,
+        label: 'Notifications',
+        isSpecial: false,
+        badge: unreadCount || null,
+      },
+      {
         id: 'profile',
         route: '/app/profile',
         icon: Icons.User,
@@ -36,7 +46,7 @@ export const TabBar = memo(() => {
         matchAllRoot: true,
       },
     ],
-    [],
+    [unreadCount],
   )
 
   const isActiveTab = useCallback(
@@ -178,6 +188,14 @@ export const TabBar = memo(() => {
                         }
                         className="relative z-10"
                       />
+                      {/* Notification Badge */}
+                      {tab.badge && tab.badge > 0 && (
+                        <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                          <Text className="text-white text-[10px] font-bbh font-bold">
+                            {tab.badge > 99 ? '99+' : tab.badge}
+                          </Text>
+                        </View>
+                      )}
                       <Text
                         style={{
                           color: isActive

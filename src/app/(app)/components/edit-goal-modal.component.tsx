@@ -13,9 +13,10 @@ interface EditGoalModalProps {
   editFormData: {
     goalText: string
     targetDays: string
+    reminderTime: string
   }
   onClose: () => void
-  onFormChange: (data: { goalText: string; targetDays: string }) => void
+  onFormChange: (data: { goalText: string; targetDays: string; reminderTime: string }) => void
   onSubmit: () => void
 }
 
@@ -81,6 +82,21 @@ export function EditGoalModal({
                   min={1}
                   max={365}
                 />
+              </View>
+
+              <View>
+                <Input
+                  type="time"
+                  placeholder="Reminder Time (Optional)"
+                  value={editFormData.reminderTime}
+                  onChange={(e) => {
+                    onFormChange({ ...editFormData, reminderTime: e.target.value })
+                  }}
+                  className="bg-card-600/50 border-white/10"
+                />
+                <Text className="text-white/60 text-xs font-bbh mt-1 ml-1">
+                  Set a daily reminder time (optional)
+                </Text>
               </View>
 
               <Button

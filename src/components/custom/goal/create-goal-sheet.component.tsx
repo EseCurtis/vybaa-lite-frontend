@@ -18,6 +18,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
   const [formData, setFormData] = useState({
     goalText: '',
     targetDays: '',
+    reminderTime: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -44,10 +45,11 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
       await createGoal({
         goalText: formData.goalText.trim(),
         targetDays,
+        reminderTime: formData.reminderTime || undefined,
       })
       
       // Reset form and dismiss on success
-      setFormData({ goalText: '', targetDays: '' })
+      setFormData({ goalText: '', targetDays: '', reminderTime: '' })
       onSuccess?.()
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to create goal'
@@ -84,6 +86,22 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
           min={1}
           max={365}
         />
+      </View>
+
+      <View>
+        <Input
+          type="time"
+          placeholder="Reminder Time (Optional)"
+          value={formData.reminderTime}
+          onChange={(e) => {
+            setFormData({ ...formData, reminderTime: e.target.value })
+            setFormError(null)
+          }}
+          className="bg-card-light/40 border-white/10 text-white"
+        />
+        <Text className="text-white/60 text-xs font-bbh mt-1 ml-1">
+          Set a daily reminder time (optional)
+        </Text>
       </View>
 
       {formError && (

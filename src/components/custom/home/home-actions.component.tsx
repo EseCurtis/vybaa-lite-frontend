@@ -27,21 +27,15 @@ function HomeActionCard({
   const Icon = icon
   const color = seededColor(name, description, icon.displayName!)
   const darkColor = adjustColor(color, { lightness: -5 })
-  const darkerColor = adjustColor(color, { lightness: 10 })
 
   return (
     <View className="col-span-1 text-center ">
       <Pressable
-        style={
-          {
-            //background: color,
-          }
-        }
         onPress={onAction}
-        className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-2xl p-mg"
+        className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-[50px] p-mg"
       >
         <Icon color={darkColor} size={70} className="text-white" />
-        <View className="mt-3 flex-col items-center justify-center">
+        <View className="mt-1 flex-col items-center justify-center">
           <Text className="font-bold  text-card-lighter-3">{name}</Text>
           <Text className="text-sm hidden leading-tight text-card-lighter-3/60">
             {description}

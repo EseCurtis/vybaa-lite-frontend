@@ -4,6 +4,7 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
+import { NotificationProvider } from './providers/notification.provider.tsx'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -48,8 +49,10 @@ if (rootElement && !rootElement.innerHTML) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ToastProvider>
-            <CapacitorPlugin />
-            <RouterProvider router={router} />
+            <NotificationProvider>
+              <CapacitorPlugin />
+              <RouterProvider router={router} />
+            </NotificationProvider>
           </ToastProvider>
         </AuthProvider>
       </QueryClientProvider>

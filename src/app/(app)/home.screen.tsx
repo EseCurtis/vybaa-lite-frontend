@@ -35,10 +35,12 @@ export default function HomeAppScreen() {
   const [formData, setFormData] = useState({
     goalText: '',
     targetDays: '',
+    reminderTime: '',
   })
   const [editFormData, setEditFormData] = useState({
     goalText: '',
     targetDays: '',
+    reminderTime: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [loadingToastId, setLoadingToastId] = useState<string | null>(null)
@@ -99,8 +101,9 @@ export default function HomeAppScreen() {
       await createGoalAsync({
         goalText: formData.goalText.trim(),
         targetDays,
+        reminderTime: formData.reminderTime || undefined,
       })
-      setFormData({ goalText: '', targetDays: '' })
+      setFormData({ goalText: '', targetDays: '', reminderTime: '' })
       setIsCreatingForm(false)
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to create goal'
@@ -121,6 +124,7 @@ export default function HomeAppScreen() {
     setEditFormData({
       goalText: goal.goalText,
       targetDays: goal.targetDays.toString(),
+      reminderTime: goal.reminderTime || '',
     })
   }
 
@@ -142,9 +146,10 @@ export default function HomeAppScreen() {
       await updateGoalAsync(editingGoal.id, {
         goalText: editFormData.goalText.trim(),
         targetDays,
+        reminderTime: editFormData.reminderTime || null,
       })
       setEditingGoal(null)
-      setEditFormData({ goalText: '', targetDays: '' })
+      setEditFormData({ goalText: '', targetDays: '', reminderTime: '' })
     } catch (err: any) {
       // Error toast is already shown in the mutation hook
     }
@@ -199,7 +204,7 @@ export default function HomeAppScreen() {
           onClose={() => {
             setIsCreatingForm(!isCreatingForm)
             if (isCreatingForm) {
-              setFormData({ goalText: '', targetDays: '' })
+              setFormData({ goalText: '', targetDays: '', reminderTime: '' })
               setFormError(null)
             }
           }}
@@ -232,7 +237,7 @@ export default function HomeAppScreen() {
           editFormData={editFormData}
           onClose={() => {
             setEditingGoal(null)
-            setEditFormData({ goalText: '', targetDays: '' })
+            setEditFormData({ goalText: '', targetDays: '', reminderTime: '' })
           }}
           onFormChange={setEditFormData}
           onSubmit={handleUpdateGoal}
