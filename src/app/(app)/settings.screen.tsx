@@ -1,3 +1,4 @@
+import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -60,6 +61,7 @@ export default function SettingsScreen() {
 
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
+      <NoiseComponent>
       {/* Header */}
       <TopNotchPadd />
       <View className="flex-row items-center justify-between px-mg py-4">
@@ -181,6 +183,7 @@ export default function SettingsScreen() {
           </motion.div>
         </View>
       </View>
+      </NoiseComponent>
     </View>
   )
 }

@@ -1,3 +1,4 @@
+import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { HomeActions } from '@/components/custom/home/home-actions.component'
 import { HomeGoals } from '@/components/custom/home/home-goals.component'
@@ -14,11 +15,13 @@ export function Home2Screen() {
 
   return (
     <View className="bg-cardd flex-1">
-      <TopNotch />
-      <HomeHeader user={user} />
-      <HomeGreetings userName={cn(user.firstName, user.lastName)} />
-      <HomeGoals />
-      <HomeActions />
+      <NoiseComponent>
+        <TopNotch />
+        <HomeHeader user={user} />
+        <HomeGreetings userName={cn(user.firstName, user.lastName)} />
+        <HomeGoals />
+        <HomeActions />
+      </NoiseComponent>
     </View>
   )
 }

@@ -7,7 +7,7 @@ import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
 import { seededColor } from '@/shared/utils/helpers.util'
-import { RiDeleteBinLine } from '@remixicon/react'
+import { RiCheckFill, RiDeleteBinLine } from '@remixicon/react'
 import { GoalDurationPill } from './duration-pill.component'
 
 interface GoalCardProps extends Goal {
@@ -63,12 +63,12 @@ export function GoalCard({
     <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
       <Pressable
         onPress={handleCardClick}
-        className="p-3 flex flex-col w-full shrink-0 rounded-3xl relative snap-center"
+        className="p-2 flex flex-col w-full shrink-0 rounded-3xl relative snap-center"
         style={{
           backgroundColor: color,
         }}
       >
-        <View className="flex-col items-start">
+        <View className="flex-col items-start pl-3">
           <Text className="mb-3 max-w-[80vw]">{goalText}</Text>
         </View>
         <View className="flex-row justify-between">
@@ -82,7 +82,7 @@ export function GoalCard({
           >
             {canCheckIn ? (
               <Button
-                label="✓ Check In"
+                leftIcon={<RiCheckFill color={"#0a0e16"}/>}
                 variant="default"
                 fullWidth
                 onClick={(e) => {
@@ -91,13 +91,24 @@ export function GoalCard({
                 }}
                 disabled={isPending}
                 loading={isPending}
-                className="text-sm font-bold px-4 !py-0"
+                className="text-sm font-bold border-2 border-cardd !bg-black/20  p-2 h-auto"
                 textClassName="text-sm"
+                bgColor={color}
               />
             ) : (
-              <Pressable className="snap-center ml-2 text-black   rounded-full flex-row gap-2 items-center justify-center px-2 mx-auto py-2 font-bold">
-                <Text className="whitespace-nowrap text-sm">Done</Text>
-              </Pressable>
+              // <Pressable className="snap-center ml-2 text-black   rounded-full flex-row gap-2 items-center justify-center px-2 mx-auto py-2 font-bold">
+              //   <Text className="whitespace-nowrap text-sm">Done</Text>
+              // </Pressable>
+              <Button
+                leftIcon={<RiCheckFill color={color}/>}
+                variant="default"
+                fullWidth
+                disabled={isPending}
+                loading={isPending}
+                className="text-sm font-bold !bg-cardd border-2 border-transparent  p-2 h-auto"
+                textClassName="text-sm"
+                bgColor="rgb(6 5 9 / 0.01)"
+              />
             )}
           </Moti.div>
         </View>

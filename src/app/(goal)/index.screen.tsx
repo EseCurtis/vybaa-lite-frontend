@@ -1,3 +1,4 @@
+import { NoiseComponent } from '@/components/common/noise.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { CreateGoalSheet } from '@/components/custom/goal/create-goal-sheet.component'
 import { GoalDetailsSheet } from '@/components/custom/goal/goal-details-sheet.component'
@@ -26,6 +27,7 @@ export default function GoalsAppScreen() {
 
   return (
     <View className=" flex-1 bg-cardd overflow-y-auto no-scrollbar">
+      <NoiseComponent>
       <TabHeader title="Goals">
         <Pressable onPress={handleCreateGoal} className="text-white">
           <RiEditBoxLine />
@@ -33,6 +35,7 @@ export default function GoalsAppScreen() {
       </TabHeader>
 
       <GoalList onGoalClick={handleGoalClick} onCreateGoal={handleCreateGoal} />
+      </NoiseComponent>
     </View>
   )
 }

@@ -5,15 +5,19 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { domtoimage } from '@/plugins/dom-to-img'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
+import { shareImageBlob } from '@/shared/utils/filesystem.util'
 import { randomInRange } from '@/shared/utils/helpers.util'
 import { RiImageAddLine, RiUpload2Fill } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
+import html2canvas from 'html2canvas'
 import { useRef, useState } from 'react'
 
 export function FlexxAppScreen() {
   const { user } = useAuth()
+  const ref = useRef<HTMLDivElement>(null)
   const toast = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([
     null,
@@ -144,6 +148,62 @@ export function FlexxAppScreen() {
     setBoxImages(newImages)
   }
 
+  const handleExportAndShare = async (element: any) => {
+    if (!element) {
+      toast.error('Card not found')
+      return
+    }
+
+    try {
+      toast.loading('Generating image...')
+
+      // Convert to canvas
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+      })
+
+      // Convert to blob
+      const blob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob!)
+          },
+          'image/png',
+          1.0,
+        )
+      })
+
+      let scale = 7
+      let style = {
+        transform: `scale(${scale})`,
+        transformOrigin: 'top left',
+        width: element.clientWidth + 'px', // use original width of DOM element to avoid part of the image being cropped out
+        height: element.clientHeight + 'px', // use original height of DOM element
+      }
+
+      await domtoimage
+        .toBlob(element, {
+          width: element.clientWidth * scale,
+          height: element.clientHeight * scale,
+          style: style,
+        })
+        .then(async function (blobx) {
+          await shareImageBlob(blobx)
+        })
+
+      toast.dismiss()
+    } catch (error: any) {
+      alert(error)
+      console.error('Export failed:', error)
+      console.log(error)
+      toast.dismiss()
+      toast.error('Failed to export image')
+    }
+  }
+
   const boxes = [
     { height: box1, image: boxImages[0], index: 0 },
     { height: box2, image: boxImages[1], index: 1 },
@@ -166,11 +226,11 @@ export function FlexxAppScreen() {
   )
 
   return (
-    <View className=" overflow-y-scroll">
+    <View className="overflow-y-scroll [&_*]:!border-transparent">
       <TabHeader title="Flex On'Em">
         <Pressable
           onPress={() => {
-            
+            handleExportAndShare(ref.current)
           }}
           className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
         >
@@ -178,32 +238,36 @@ export function FlexxAppScreen() {
         </Pressable>
       </TabHeader>
 
-      <View className="px-05-mg  no-scrollbar">
-        <View id="flexx-card" className="bg-[#1d1d29] overflow-hidden rounded-3xl borsder border-card-lighter flex-col relative">
+      <View className="px-05-mg   no-scrollbar">
+        <div
+          id="flexx-card"
+          ref={ref}
+          className="bg-[#1d1d29] overflow-hidden flex  borsder border-card-lighter flex-col relative"
+        >
           <div
             style={{
               background: 'url(/assets/framernoise.png)',
-              //mixBlendMode: 'multiply',
               opacity: 0.9,
-
               filter: `contrast(70%) brightness(1.5) saturate(0.9) invert(40%)`,
             }}
-            alt=""
-            className="top-0 left-0 size-full absolute mix-blend-multiply "
+            className="top-0  left-0 size-full absolute mix-blend-multiply "
           />
-          <View className="flex-row gap-2  items-center bg-black/0  backdrop-blur-xl p-1 rounded-full absolute bottom-0 right-0 m-mg drop-shadow z-10 ">
-            <View className="size-4 ">
-              <img src={'/assets/icon-foreground.png'} />
+          <View className="flex-row gap-2  items-center bg-black/0  backdrop-blur-xl p-1 rounded-full absolute bottom-0 right-0 m-mg drop-shadow z-[99999] ">
+            <View className="size-4 overflow-hidden relative z-[999]">
+              <img
+                src={'/assets/icon-foreground.png'}
+                className="size-full "
+              />
             </View>
             <Text className="text-white text-xs font-bold pr-2">vybaa.app</Text>
           </View>
-          <View className="p-05-mg pb-0  z-10 flex-row justify-between">
+          <View className="p-05-mg pb-0 size-full  z-10 flex-row justify-between">
             <View className="flex-row gap-3">
               <View className="">
                 <Avatar user={user!} size={40} />
               </View>
               <View className="">
-                <Text className="text-white text-sm font-bold">
+                <Text className="text-white text-sm whitespace-nowrap font-bold">
                   {user?.firstName} {user?.lastName}
                 </Text>
                 <Text className="text-card-lighter-2 text-xs">
@@ -231,7 +295,14 @@ export function FlexxAppScreen() {
               >
                 {boxImages[0] ? (
                   <>
-                    <View className="relative">
+                    <View
+                      className="relative"
+                      style={{
+                        background: `url(${boxImages[0]})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    >
                       <img
                         src={boxImages[0]}
                         alt="Box 1"
@@ -249,7 +320,7 @@ export function FlexxAppScreen() {
                   </>
                 ) : (
                   <View className="w-full h-full flex flex-col items-center justify-center p-3">
-                    <RiImageAddLine size={24} className="text-white/30 mb-2" />
+                    <RiImageAddLine size={24} className="text-white/30 mb-2 " />
                     <Text className="text-white/40 text-xs font-bbh text-center leading-tight">
                       {boxHints[0]}
                     </Text>
@@ -268,7 +339,14 @@ export function FlexxAppScreen() {
               >
                 {boxImages[1] ? (
                   <>
-                    <View className="relative">
+                    <View
+                      className="relative size-full bg-cardd"
+                      style={{
+                        background: `url(${boxImages[1]})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    >
                       <img
                         src={boxImages[1]}
                         alt="Box 2"
@@ -300,7 +378,7 @@ export function FlexxAppScreen() {
               {/* Box 3 */}
               <Pressable
                 onPress={() => handleBoxClick(2, box4 / 100)}
-                className="bg-card-lighter-3/10 overflow-hidden relative group flex-shrink-0"
+                className="bg-card-lighter-3/10 overflow-hidden size-full relative group flex-shrink-0"
                 style={{
                   flex: `0 0 ${box4}%`,
                   height: `${box4}%`,
@@ -308,11 +386,18 @@ export function FlexxAppScreen() {
               >
                 {boxImages[2] ? (
                   <>
-                    <View className="relative">
+                    <View
+                      className="relative size-full"
+                      style={{
+                        background: `url(${boxImages[2]})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    >
                       <img
                         src={boxImages[2]}
                         alt="Box 3"
-                        className="w-full h-full object-cover"
+                        className="w-full opacity-0 h-full object-cover"
                       />
                       <Noise />
                     </View>
@@ -345,7 +430,14 @@ export function FlexxAppScreen() {
               >
                 {boxImages[3] ? (
                   <>
-                    <View className="relative">
+                    <View
+                      className="relative"
+                      style={{
+                        background: `url(${boxImages[3]})`,
+                        backgroundSize: 'cover',
+                        backgroundRepeat: 'no-repeat',
+                      }}
+                    >
                       <img
                         src={boxImages[3]}
                         alt="Box 4"
@@ -372,7 +464,7 @@ export function FlexxAppScreen() {
               </Pressable>
             </View>
           </View>
-        </View>
+        </div>
 
         <View className="pt-3 w-full flex-row justify-center gap-2">
           <Button onClick={regen} label="New Grid" textClassName="text-sm" />

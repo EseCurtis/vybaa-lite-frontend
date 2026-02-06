@@ -19,7 +19,7 @@ export const Route = createRootRoute({
           <>
             <AppLayout />
 
-              <div className="fixed top-0 right-0 opacity-5 z-[99999]  m-7 rounded-full">
+              <div className="fixed bottom-0 right-[50%] opacity-5 z-[99999]  m-7 rounded-full">
                         <TopNotch />
                         <div className="flex">
                           <div

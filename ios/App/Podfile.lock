@@ -15,6 +15,9 @@ PODS:
   - CapacitorApp (7.1.0):
     - Capacitor
   - CapacitorCordova (7.4.4)
+  - CapacitorFilesystem (8.1.0):
+    - Capacitor
+    - IONFilesystemLib (~> 1.1.0)
   - CapacitorHaptics (7.0.2):
     - Capacitor
   - CapacitorKeyboard (7.0.3):
@@ -22,6 +25,8 @@ PODS:
   - CapacitorPluginSafeArea (5.0.0):
     - Capacitor
   - CapacitorPushNotifications (7.0.3):
+    - Capacitor
+  - CapacitorShare (8.0.0):
     - Capacitor
   - CapacitorStatusBar (7.0.3):
     - Capacitor
@@ -95,6 +100,7 @@ PODS:
     - AppAuth/Core (~> 2.0)
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
   - GTMSessionFetcher/Core (3.5.0)
+  - IONFilesystemLib (1.1.0)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
     - nanopb/encode (= 3.30910.0)
@@ -112,10 +118,12 @@ DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/@capacitor/app`)"
   - "CapacitorCordova (from `../../node_modules/@capacitor/ios`)"
+  - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorHaptics (from `../../node_modules/@capacitor/haptics`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
   - CapacitorPluginSafeArea (from `../../node_modules/capacitor-plugin-safe-area`)
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
+  - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/@capgo/capacitor-social-login`)"
   - FirebaseMessaging
@@ -139,6 +147,7 @@ SPEC REPOS:
     - GoogleUtilities
     - GTMAppAuth
     - GTMSessionFetcher
+    - IONFilesystemLib
     - nanopb
     - PromisesObjC
     - PurchasesHybridCommon
@@ -151,6 +160,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/app"
   CapacitorCordova:
     :path: "../../node_modules/@capacitor/ios"
+  CapacitorFilesystem:
+    :path: "../../node_modules/@capacitor/filesystem"
   CapacitorHaptics:
     :path: "../../node_modules/@capacitor/haptics"
   CapacitorKeyboard:
@@ -159,6 +170,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/capacitor-plugin-safe-area"
   CapacitorPushNotifications:
     :path: "../../node_modules/@capacitor/push-notifications"
+  CapacitorShare:
+    :path: "../../node_modules/@capacitor/share"
   CapacitorStatusBar:
     :path: "../../node_modules/@capacitor/status-bar"
   CapgoCapacitorSocialLogin:
@@ -173,10 +186,12 @@ SPEC CHECKSUMS:
   Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
   CapacitorApp: 26587c2ce485d88ddb39adb21cac64f8e481afe3
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
+  CapacitorFilesystem: a957d4a4b6860844c4eba5bf441607a5166f92a7
   CapacitorHaptics: b3fb2869e72c4466e18ce9ccbeb60a3d8723b3d4
   CapacitorKeyboard: 62f36104f26d53d8b3a2a43f2a69fe714f1777d5
   CapacitorPluginSafeArea: 9d0682951c011bf0b36e513a89103c5fbff7ac49
   CapacitorPushNotifications: bdd621fbd562be34a41f4a7b1750efa000447d5a
+  CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
   CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
   CapgoCapacitorSocialLogin: 251e1ab19a15a4f5d5ae017f15acd34ca76c7114
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
@@ -192,12 +207,13 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: 217a876b249c3c585a54fd6f73e6b58c4f5c4238
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
+  IONFilesystemLib: 50b9a0f3052a9b40b9bedb43f328a8fe222f9f87
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PurchasesHybridCommon: fa166fc8b385cf80f581f923c91d8ccffe5dd7f8
   RevenueCat: e47ff90dfd271fde155a4befe48e8fc02e8281e4
   RevenuecatPurchasesCapacitor: 6727a4dc1455bdf2374259420719ce5dfbe957fa
 
-PODFILE CHECKSUM: 775bfc8740329f114112c5825badd442885e6778
+PODFILE CHECKSUM: 748805550bb2877e74c17e5c48e7b93713a14f84
 
 COCOAPODS: 1.16.2

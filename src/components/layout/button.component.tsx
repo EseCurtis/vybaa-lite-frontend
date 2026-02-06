@@ -97,6 +97,7 @@ interface ButtonProps
   withIcon?: boolean
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
+  bgColor?: string 
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -111,6 +112,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       className = '',
       textClassName = '',
       withIcon = false,
+      bgColor,
       leftIcon,
       rightIcon,
       children,
@@ -124,6 +126,9 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     )
 
     const gradientColors = React.useMemo(() => {
+      if(bgColor) return  [bgColor, bgColor];
+
+
       if (variant === 'default') {
         return [colors.white, colors.white]
       }
@@ -143,7 +148,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         return ['transparent', 'transparent']
       }
       return [colors.white, colors.white]
-    }, [variant])
+    }, [variant, bgColor])
 
     return (
       <button

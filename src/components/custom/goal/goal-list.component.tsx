@@ -43,12 +43,12 @@ export function GoalList({ onGoalClick, onCreateGoal }: GoalListProps) {
                 setTab(item)
               }}
               className={cn(
-                'shrink-0 rounded-2xl px-5 py-2 ',
-                active ? 'bg-white' : 'bg-card-lighter-2/50',
+                'shrink-0 border border-card-lighter-3/20 rounded-full px-4 py-2 ',
+                active ? 'bg-white text-black' : 'bg-transparent !text-white',
               )}
               key={index}
             >
-              <Text className="text-black text-sm font-bold">{item}</Text>
+              <Text className=" text-sm font-bold">{item}</Text>
             </Pressable>
           )
         })}

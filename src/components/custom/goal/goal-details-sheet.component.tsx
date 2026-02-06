@@ -118,7 +118,7 @@ export function GoalDetailsSheet({
           />
         ) : (
           <View className="justify-center rounded-2xl p-4 text-center">
-            <Text className="text-white/60 text-sm font-bold font-bbh">
+            <Text className="!text-success-green text-sm font-bold font-bbh">
               Done ✓
             </Text>
           </View>
