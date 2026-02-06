@@ -38,11 +38,11 @@ function HomeActionCard({
           }
         }
         onPress={onAction}
-        className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-3xl p-mg"
+        className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-2xl p-mg"
       >
         <Icon color={darkColor} size={70} className="text-white" />
         <View className="mt-3 flex-col items-center justify-center">
-          <Text className="font-bold text-card-lighter-3">{name}</Text>
+          <Text className="font-bold  text-card-lighter-3">{name}</Text>
           <Text className="text-sm hidden leading-tight text-card-lighter-3/60">
             {description}
           </Text>

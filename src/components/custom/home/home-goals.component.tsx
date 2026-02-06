@@ -82,7 +82,7 @@ export function HomeGoals() {
 
       {noGoals && (
         <View className="flex-row w-full items-center">
-          <Text className="text-card-lighter-2">You cleared it all! 🎊</Text>
+          <Text className="text-card-lighter-2/50 font-medium">You cleared it all! 🎊</Text>
           <Pressable
             onPress={() => {
               navigate({ to: '/goal' })
