@@ -13,12 +13,16 @@ export function Home2Screen() {
 
   if (!user) return null
 
+  const userName = [user.firstName, user.lastName]
+    .filter(Boolean)
+    .join(' ') || user.username || user.email
+
   return (
     <View className="bg-cardd flex-1">
       <NoiseComponent>
         <TopNotch />
         <HomeHeader user={user} />
-        <HomeGreetings userName={cn(user.firstName, user.lastName)} />
+        <HomeGreetings userName={userName} />
         <HomeGoals />
         <HomeActions />
       </NoiseComponent>

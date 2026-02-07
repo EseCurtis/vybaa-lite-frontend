@@ -1,4 +1,5 @@
 import { BottomNotch } from '@/components/common/notch.component'
+import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
@@ -11,7 +12,6 @@ import { LinearGradient } from '../linear-gradient.component'
 import { TouchableOpacity } from '../pressables.component'
 import { Text } from '../text.component'
 import { View } from '../view.component'
-import { useUnreadCount } from '@/hooks/use-notifications.hook'
 
 export const TabBar = memo(() => {
   const navigate = useNavigate()
@@ -28,14 +28,14 @@ export const TabBar = memo(() => {
         isSpecial: false,
         badge: null,
       },
-      {
-        id: 'notifications',
-        route: '/app/notifications',
-        icon: Icons.Bell,
-        label: 'Notifications',
-        isSpecial: false,
-        badge: unreadCount || null,
-      },
+      // {
+      //   id: 'notifications',
+      //   route: '/app/notifications',
+      //   icon: Icons.Bell,
+      //   label: 'Notifications',
+      //   isSpecial: false,
+      //   badge: unreadCount || null,
+      // },
       {
         id: 'profile',
         route: '/app/profile',

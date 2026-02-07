@@ -1,29 +1,82 @@
 import { http } from '@/shared/api/http'
-import type { NotificationsResponse } from '@/shared/types/notification.types'
+
+const API_V1 = '/api/v1'
+
+export interface Notification {
+  id: string
+  userId: string
+  goalId?: string
+  type: 'goal_reminder' | 'goal_completed' | 'streak_milestone' | 'system'
+  title: string
+  message: string
+  data?: any
+  isRead: boolean
+  scheduledFor?: string
+  sentAt?: string
+  createdAt: string
+}
+
+export interface NotificationResponse {
+  msg: string
+  data: Notification[]
+  pagination: {
+    page: number
+    limit: number
+    totalCount: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPrevPage: boolean
+  }
+}
+
+export interface UnreadCountResponse {
+  msg: string
+  data: {
+    count: number
+  }
+}
+
+export interface AblyAuthResponse {
+  msg: string
+  data: any // Ably token request
+}
 
 class NotificationAPI {
-  private base = '/api/v1/notifications'
-
-  async list(page = 1, limit = 10, seen?: boolean): Promise<NotificationsResponse> {
-    const params = new URLSearchParams()
-    params.set('page', String(page))
-    params.set('limit', String(limit))
-    if (typeof seen === 'boolean') params.set('seen', String(seen))
-    const { data } = await http.get(`${this.base}?${params.toString()}`)
-    return data as NotificationsResponse
+  async getAblyAuth(): Promise<AblyAuthResponse> {
+    const { data: res } = await http.get<AblyAuthResponse>(`${API_V1}/notifications/auth/ably`)
+    return res
   }
 
-  async markSeen(id: number): Promise<{ msg: string }> {
-    const { data } = await http.patch(`${this.base}/${id}/seen`)
-    return data
+  async getNotifications(page: number = 1, limit: number = 50): Promise<NotificationResponse> {
+    const { data: res } = await http.get<NotificationResponse>(`${API_V1}/notifications`, {
+      params: { page, limit },
+    })
+    return res
+  }
+
+  async getUnreadCount(): Promise<UnreadCountResponse> {
+    const { data: res } = await http.get<UnreadCountResponse>(`${API_V1}/notifications/unread-count`)
+    return res
+  }
+
+  async markAsRead(notificationId: string): Promise<{ msg: string }> {
+    const { data: res } = await http.patch<{ msg: string }>(
+      `${API_V1}/notifications/${notificationId}/read`
+    )
+    return res
+  }
+
+  async markAllAsRead(): Promise<{ msg: string }> {
+    const { data: res } = await http.patch<{ msg: string }>(`${API_V1}/notifications/read-all`)
+    return res
+  }
+
+  async deleteNotification(notificationId: string): Promise<{ msg: string }> {
+    const { data: res } = await http.delete<{ msg: string }>(
+      `${API_V1}/notifications/${notificationId}`
+    )
+    return res
   }
 }
 
 export const notificationAPI = new NotificationAPI()
-
-
-
-
-
-
-

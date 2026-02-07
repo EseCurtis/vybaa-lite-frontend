@@ -36,22 +36,20 @@ export interface GoogleAuthRequest {
 }
 
 export interface User {
-  uuid: string
+  id: string // Changed from uuid to match backend
   email: string
-  firstName: string
-  lastName: string
-  role: string
+  firstName?: string // Optional to match backend
+  lastName?: string // Optional to match backend
   isConfirmed: boolean
   isFirstTime: boolean
-  latitude?: number
-  longitude?: number
-  // New onboarding fields
+  // Profile fields
   username?: string
   avatarUrl?: string
   currentMood?: string
   lifeGoal?: string
-  lastActive?: string
-  timezone?: string
+  // OAuth fields
+  googleId?: string
+  // Timestamps
   createdAt: string
   updatedAt: string
 }

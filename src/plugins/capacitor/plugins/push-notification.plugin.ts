@@ -1,6 +1,14 @@
 import { userAPI } from '@/shared/api/user.api';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { createPushNotificationChannel } from '../helpers/push-notifications.helper';
+import { notificationQueryKeys } from '@/shared/api/notification.query-keys';
+
+// Store queryClient reference for invalidation
+let queryClientRef: any = null;
+
+export const setQueryClientForNotifications = (queryClient: any) => {
+    queryClientRef = queryClient;
+};
 
 export const addPushNotificationListeners = async () => {
     return Promise.all([await PushNotifications.addListener('registration', async (token) => {
@@ -27,10 +35,25 @@ export const addPushNotificationListeners = async () => {
 
     await PushNotifications.addListener('pushNotificationReceived', notification => {
         console.log('Push notification received: ', notification);
+        
+        // Refresh notification list when push is received
+        if (queryClientRef) {
+            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.lists() });
+            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() });
+        }
     }),
 
     await PushNotifications.addListener('pushNotificationActionPerformed', notification => {
         console.log('Push notification action performed', notification.actionId, notification.inputValue);
+        
+        // Refresh notification list when user taps notification
+        if (queryClientRef) {
+            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.lists() });
+            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() });
+        }
+        
+        // TODO: Navigate to specific screen based on notification data
+        // Example: if (notification.data?.goalId) navigate to goal details
     })])
 }
 

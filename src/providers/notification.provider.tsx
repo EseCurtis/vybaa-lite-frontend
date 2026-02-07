@@ -1,10 +1,8 @@
-import { notificationAPI, type Notification } from '@/shared/api/notification.api'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { LocalNotifications } from '@capacitor/local-notifications'
-import { Capacitor } from '@capacitor/core'
-import { useQueryClient } from '@tanstack/react-query'
+import { notificationAPI, type Notification } from '@/shared/api/notification.api'
 import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
+import { useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
   useCallback,
@@ -20,7 +18,6 @@ interface NotificationContextValue {
   unreadCount: number
   isConnected: boolean
   addNotification: (notification: Notification) => void
-  showLocalNotification: (title: string, body: string, data?: any) => Promise<void>
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null)
@@ -36,83 +33,44 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   
   const ablyRef = useRef<any>(null)
   const channelRef = useRef<any>(null)
-  const isInitializedRef = useRef(false)
+  const connectionListenersRef = useRef<{ connected?: any; disconnected?: any; failed?: any }>({})
 
-  // Initialize local notifications on mobile
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) {
-      initializeLocalNotifications()
-    }
-  }, [])
-
-  const initializeLocalNotifications = async () => {
-    try {
-      // Request permission
-      const permission = await LocalNotifications.requestPermissions()
-      
-      if (permission.display === 'granted') {
-        console.log('Local notifications permission granted')
-        
-        // Listen for notification actions
-        await LocalNotifications.addListener('localNotificationActionPerformed', (notification) => {
-          console.log('Notification action performed:', notification)
-          // Handle notification tap - could navigate to specific page based on data
-        })
-      }
-    } catch (error) {
-      console.error('Error initializing local notifications:', error)
-    }
-  }
-
-  const showLocalNotification = useCallback(async (title: string, body: string, data?: any) => {
-    if (!Capacitor.isNativePlatform()) {
-      // Show toast on web
-      toast.info(title + ': ' + body)
-      return
-    }
-
-    try {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title,
-            body,
-            id: Date.now(),
-            extra: data,
-            schedule: { at: new Date(Date.now() + 1000) }, // Show after 1 second
-          },
-        ],
-      })
-    } catch (error) {
-      console.error('Error showing local notification:', error)
-    }
-  }, [toast])
+  // Note: FCM push notifications are handled by Capacitor plugin
+  // See: app/src/plugins/capacitor/plugins/push-notification.plugin.ts
+  // The plugin automatically registers FCM tokens and syncs to backend
 
   // Connect to Ably when user is authenticated
   useEffect(() => {
-    if (!isAuthenticated || !user || isInitializedRef.current) {
+    if (!isAuthenticated || !user?.id) {
       return
     }
 
+    let isMounted = true
+
     const connectToAbly = async () => {
       try {
+        console.log('Initializing Ably connection for user:', user.id)
+        
         // Dynamically import Ably (only on client side)
         const Ably = (await import('ably')).default
         
-        // Get auth token from backend
-        const authResponse = await notificationAPI.getAblyAuth()
-        
-        // Create Ably client with token
+        // Create Ably client with token auth
         const ablyClient = new Ably.Realtime({
           authCallback: async (tokenParams, callback) => {
             try {
               const response = await notificationAPI.getAblyAuth()
               callback(null, response.data)
             } catch (error: any) {
+              console.error('Ably auth error:', error)
               callback(error, null)
             }
           },
         })
+
+        if (!isMounted) {
+          ablyClient.close()
+          return
+        }
 
         ablyRef.current = ablyClient
 
@@ -120,58 +78,118 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         const channel = ablyClient.channels.get(`user:${user.id}`)
         channelRef.current = channel
 
-        // Listen for connection state changes
-        ablyClient.connection.on('connected', () => {
-          console.log('Connected to Ably')
-          setIsConnected(true)
-        })
+        // Connection event handlers
+        const onConnected = () => {
+          console.log('✅ Connected to Ably')
+          if (isMounted) {
+            setIsConnected(true)
+          }
+        }
 
-        ablyClient.connection.on('disconnected', () => {
-          console.log('Disconnected from Ably')
-          setIsConnected(false)
-        })
+        const onDisconnected = () => {
+          console.log('❌ Disconnected from Ably')
+          if (isMounted) {
+            setIsConnected(false)
+          }
+        }
+
+        const onFailed = (stateChange: any) => {
+          console.error('⚠️ Ably connection failed:', stateChange.reason)
+          if (isMounted) {
+            setIsConnected(false)
+          }
+        }
+
+        // Store references for cleanup
+        connectionListenersRef.current = {
+          connected: onConnected,
+          disconnected: onDisconnected,
+          failed: onFailed,
+        }
+
+        // Listen for connection state changes
+        ablyClient.connection.on('connected', onConnected)
+        ablyClient.connection.on('disconnected', onDisconnected)
+        ablyClient.connection.on('failed', onFailed)
 
         // Listen for notifications
         channel.subscribe('notification', (message: any) => {
+          if (!isMounted) return
+
           const notification = message.data as Notification
-          console.log('Received notification:', notification)
+          console.log('📬 Received notification:', notification)
           
-          // Add to local state
-          setNotifications((prev) => [notification, ...prev])
-          setUnreadCount((prev) => prev + 1)
+          // Add to local state (only if unread)
+          if (!notification.isRead) {
+            setNotifications((prev) => [notification, ...prev])
+            setUnreadCount((prev) => prev + 1)
+          }
           
           // Show toast
-          toast.info(notification.title, {
-            description: notification.message,
-          })
-          
-          // Show local notification on mobile
-          showLocalNotification(notification.title, notification.message, notification.data)
+          toast.info(notification.title)
+          toast.info(notification.message)
           
           // Invalidate queries to refresh notification list
           queryClient.invalidateQueries({ queryKey: notificationQueryKeys.lists() })
           queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() })
         })
 
-        isInitializedRef.current = true
+        console.log('🔔 Subscribed to notifications channel')
       } catch (error) {
-        console.error('Error connecting to Ably:', error)
+        console.error('❌ Error connecting to Ably:', error)
+        if (isMounted) {
+          setIsConnected(false)
+        }
       }
     }
 
     connectToAbly()
 
-    // Cleanup on unmount
+    // Cleanup function
     return () => {
+      console.log('🧹 Cleaning up Ably connection')
+      isMounted = false
+
+      // Unsubscribe from channel
       if (channelRef.current) {
-        channelRef.current.unsubscribe()
+        try {
+          channelRef.current.unsubscribe('notification')
+          channelRef.current.detach()
+        } catch (error) {
+          console.error('Error unsubscribing from channel:', error)
+        }
       }
+
+      // Remove connection event listeners
+      if (ablyRef.current && connectionListenersRef.current) {
+        const conn = ablyRef.current.connection
+        if (connectionListenersRef.current.connected) {
+          conn.off('connected', connectionListenersRef.current.connected)
+        }
+        if (connectionListenersRef.current.disconnected) {
+          conn.off('disconnected', connectionListenersRef.current.disconnected)
+        }
+        if (connectionListenersRef.current.failed) {
+          conn.off('failed', connectionListenersRef.current.failed)
+        }
+      }
+
+      // Close Ably connection
       if (ablyRef.current) {
-        ablyRef.current.close()
+        try {
+          ablyRef.current.close()
+        } catch (error) {
+          console.error('Error closing Ably connection:', error)
+        }
       }
-      isInitializedRef.current = false
+
+      // Reset refs
+      ablyRef.current = null
+      channelRef.current = null
+      connectionListenersRef.current = {}
+      setIsConnected(false)
     }
-  }, [isAuthenticated, user, toast, showLocalNotification, queryClient])
+  }, [isAuthenticated, user?.id, toast, queryClient])
 
   const addNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev])
@@ -185,7 +203,6 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     unreadCount,
     isConnected,
     addNotification,
-    showLocalNotification,
   }
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>

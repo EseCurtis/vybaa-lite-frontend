@@ -12,12 +12,25 @@ export interface UserStats {
 }
 
 class UserAPI {
-  async syncFCMToken(token: string): Promise<{ msg: string; data: any }> {
-    const { data: res } = await http.post<{ msg: string; data: any }>(
-      `${API_V1}/users/me/sync-fcm`,
-      { token }
+  async registerFCMToken(fcmToken: string): Promise<{ msg: string }> {
+    const { data: res } = await http.post<{ msg: string }>(
+      `${API_V1}/users/fcm-token`,
+      { fcmToken }
     )
     return res
+  }
+
+  async removeFCMToken(fcmToken: string): Promise<{ msg: string }> {
+    const { data: res } = await http.delete<{ msg: string }>(
+      `${API_V1}/users/fcm-token`,
+      { data: { fcmToken } }
+    )
+    return res
+  }
+
+  async syncFCMToken(token: string): Promise<{ msg: string; data: any }> {
+    // Backward compatibility - calls registerFCMToken
+    return this.registerFCMToken(token)
   }
 
   async getStats(): Promise<{ msg: string; data: UserStats }> {

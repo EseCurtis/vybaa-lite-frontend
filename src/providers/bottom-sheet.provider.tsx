@@ -87,10 +87,10 @@ export const BottomSheetProvider = ({
 
   const sheetContent = (
     <>
-      <View className="items-center mb-4">
+      {/* <View className="items-center mb-4">
         <View className="w-12 h-1.5 bg-card-light-50 rounded-full" />
-      </View>
-      <View className="flex-row items-center justify-between mb-3">
+      </View> */}
+      <View className="flex-row items-center justify-between mb-7">
         {title ? (
           <Text className="text-white text-lg font-bold font-bbh">{title}</Text>
         ) : (
@@ -98,7 +98,7 @@ export const BottomSheetProvider = ({
         )}
         {title && (
           <TouchableOpacity onPress={dismiss}>
-            <RiCloseCircleFill size={32} color="#ffffff" />
+            <RiCloseCircleFill size={27} color="#ffffff" />
           </TouchableOpacity>
         )}
       </View>

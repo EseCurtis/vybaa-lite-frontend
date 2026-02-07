@@ -9,16 +9,21 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
-import { Route as AppNotificationsRouteImport } from './routes/app/notifications'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -32,11 +37,6 @@ const GoalIndexRoute = GoalIndexRouteImport.update({
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/app/profile',
   path: '/app/profile',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AppNotificationsRoute = AppNotificationsRouteImport.update({
-  id: '/app/notifications',
-  path: '/app/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
@@ -67,9 +67,9 @@ const AppActionsFlexxRoute = AppActionsFlexxRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/notifications': typeof NotificationsRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -78,9 +78,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/notifications': typeof NotificationsRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -90,9 +90,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/notifications': typeof NotificationsRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/notifications': typeof AppNotificationsRoute
   '/app/profile': typeof AppProfileRoute
   '/goal/': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -103,9 +103,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/notifications'
     | '/app/home'
     | '/app/insights'
-    | '/app/notifications'
     | '/app/profile'
     | '/goal'
     | '/app/actions/flexx'
@@ -114,9 +114,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/notifications'
     | '/app/home'
     | '/app/insights'
-    | '/app/notifications'
     | '/app/profile'
     | '/goal'
     | '/app/actions/flexx'
@@ -125,9 +125,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/notifications'
     | '/app/home'
     | '/app/insights'
-    | '/app/notifications'
     | '/app/profile'
     | '/goal/'
     | '/app/actions/flexx'
@@ -137,9 +137,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  NotificationsRoute: typeof NotificationsRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
-  AppNotificationsRoute: typeof AppNotificationsRoute
   AppProfileRoute: typeof AppProfileRoute
   GoalIndexRoute: typeof GoalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
@@ -149,6 +149,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -168,13 +175,6 @@ declare module '@tanstack/react-router' {
       path: '/app/profile'
       fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/app/notifications': {
-      id: '/app/notifications'
-      path: '/app/notifications'
-      fullPath: '/app/notifications'
-      preLoaderRoute: typeof AppNotificationsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/insights': {
@@ -217,9 +217,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  NotificationsRoute: NotificationsRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
-  AppNotificationsRoute: AppNotificationsRoute,
   AppProfileRoute: AppProfileRoute,
   GoalIndexRoute: GoalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,

@@ -1,4 +1,4 @@
-import { TopNotchPadd } from '@/components/common/notch.component'
+import { TabHeader } from '@/components/common/tab-header.component'
 import { Button } from '@/components/layout/button.component'
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
@@ -10,8 +10,9 @@ import {
   useNotifications,
 } from '@/hooks/use-notifications.hook'
 import type { Notification } from '@/shared/api/notification.api'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { seededColor } from '@/shared/utils/helpers.util'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Fragment, useState } from 'react'
 
 function NotificationItem({
   notification,
@@ -22,6 +23,8 @@ function NotificationItem({
   onMarkAsRead: (id: string) => void
   onDelete: (id: string) => void
 }) {
+  const color = seededColor(notification.title)
+
   const getIcon = () => {
     switch (notification.type) {
       case 'goal_completed':
@@ -57,21 +60,27 @@ function NotificationItem({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -100 }}
-      className={`bg-card-700/80 backdrop-blur-xl rounded-2xl p-4 mb-3 ${
-        !notification.isRead ? 'border-l-4 border-primary-500' : ''
+      className={` backdrop-blur-xl   p-4 mb-3 ${
+        !notification.isRead ? 'bg-card-light/20 rounded-2xl' : 'border-b border-card-light'
       }`}
     >
       <View className="flex flex-row items-start gap-3">
         <View className="text-3xl">{getIcon()}</View>
-        
+
         <View className="flex-1">
-          <Text className={`font-bbh font-bold mb-1 ${notification.isRead ? 'text-white/70' : 'text-white'}`}>
+          <Text
+            className={`font-bbh font-bold mb-1 ${notification.isRead ? 'text-white/70' : 'text-white'}`}
+          >
             {notification.title}
           </Text>
-          <Text className={`text-sm mb-2 ${notification.isRead ? 'text-white/50' : 'text-white/80'}`}>
+          <Text
+            className={`text-sm mb-2 ${notification.isRead ? 'text-white/50' : 'text-white/80'}`}
+          >
             {notification.message}
           </Text>
-          <Text className="text-xs text-white/40">{formatDate(notification.createdAt)}</Text>
+          <Text className="text-xs text-white/40">
+            {formatDate(notification.createdAt)}
+          </Text>
         </View>
 
         <View className="flex flex-row gap-2">
@@ -112,38 +121,34 @@ export default function NotificationsScreen() {
 
   return (
     <View className="flex-1 bg-cardd">
-      <TopNotchPadd />
-      <TopNotchPadd />
+      <TabHeader title="Notifications" />
 
-      <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
+      <View className="flex-1 px-4 pb-[120px] pt-3 max-w-4xl mx-auto overflow-y-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6"
+          className="mb-6 flex justify-end"
         >
-          <View className="flex flex-row items-center justify-between mb-4">
-            <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-              Notifications
-            </Text>
-            {hasUnread && (
-              <Button
-                label="Mark all read"
-                variant="secondary"
-                size="sm"
-                onClick={() => markAllAsRead()}
-                loading={isMarkingAll}
-                disabled={isMarkingAll}
-              />
-            )}
-          </View>
+          {hasUnread && (
+            <Button
+              label="Mark all read"
+              variant="secondary"
+              size="sm"
+              onClick={() => markAllAsRead()}
+              loading={isMarkingAll}
+              disabled={isMarkingAll}
+            />
+          )}
         </motion.div>
 
         {/* Notifications List */}
         {loading && notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-white/60 text-lg font-bbh">Loading notifications...</Text>
+            <Text className="text-white/60 text-lg font-bbh">
+              Loading notifications...
+            </Text>
           </View>
         ) : notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
@@ -158,14 +163,17 @@ export default function NotificationsScreen() {
         ) : (
           <>
             <AnimatePresence mode="popLayout">
-              {notifications.map((notification) => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onMarkAsRead={markAsRead}
-                  onDelete={deleteNotification}
-                />
-              ))}
+              {[...notifications, ...notifications, ...notifications].map(
+                (notification) => (
+                  <Fragment key={notification.id}>
+                    <NotificationItem
+                      notification={notification}
+                      onMarkAsRead={markAsRead}
+                      onDelete={deleteNotification}
+                    />
+                  </Fragment>
+                ),
+              )}
             </AnimatePresence>
 
             {/* Pagination */}

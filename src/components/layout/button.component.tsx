@@ -133,7 +133,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         return [colors.white, colors.white]
       }
       if (variant === 'secondary') {
-        return [colors.card[500], colors.card[500]]
+        return [colors['card-lighter-2'], colors['card-lighter-2']]
       }
       if (variant === 'outline') {
         return ['transparent', 'transparent']
