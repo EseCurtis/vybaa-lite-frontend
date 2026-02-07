@@ -10,7 +10,9 @@ import {
   useNotifications,
 } from '@/hooks/use-notifications.hook'
 import type { Notification } from '@/shared/api/notification.api'
+import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { seededColor } from '@/shared/utils/helpers.util'
+import { Icon } from '@iconify/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Fragment, useState } from 'react'
 
@@ -25,7 +27,7 @@ function NotificationItem({
 }) {
   const color = seededColor(notification.title)
 
-  const getIcon = () => {
+  const getIconEmoji = () => {
     switch (notification.type) {
       case 'goal_completed':
         return '🎉'
@@ -69,8 +71,12 @@ function NotificationItem({
       }`}
     >
       <View className="flex flex-row items-start gap-3">
-        <View className="text-3xl">{getIcon()}</View>
-
+        <Icon 
+          icon={getEmojiIcon(getIconEmoji())} 
+          className="text-white shrink-0" 
+          style={{ fontSize: '32px' }}
+        />
+        
         <View className="flex-1">
           <Text
             className={`font-bbh font-bold mb-1 ${notification.isRead ? 'text-white/70' : 'text-white'}`}
@@ -156,7 +162,11 @@ export default function NotificationsScreen() {
           </View>
         ) : notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-6xl mb-4">🔔</Text>
+            <Icon 
+              icon={getEmojiIcon('🔔')} 
+              className="text-white/60 mb-4" 
+              style={{ fontSize: '64px' }}
+            />
             <Text className="text-white/60 text-lg font-bbh text-center">
               No notifications yet
             </Text>

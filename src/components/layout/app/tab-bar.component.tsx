@@ -82,15 +82,19 @@ export const TabBar = memo(() => {
 
   return (
     <Moti.div
-      className="bottom-0 left-0 fixed w-full z-50  "
+      className="bottom-0 left-0 fixed w-full z-50 "
       initial={{ y: 0, opacity: 1 }}
       animate={{ y: 0, opacity: 1 }}
       key="tabbar"
+
     >
       <LinearGradient
-        className="absolute top-0 size-full left-0"
-        colors={['transparent', colors.black]}
-        locations={[0, 0.9]}
+        className="absolute top-0 size-full left-0 backdrop-blur-xl "
+        colors={['transparent', "transparent"]}
+        locations={[0, 0.5]}
+            style={{
+        mask: "linear-gradient(transparent , #000 30%)"
+      }}
       />
       <View className="p-mg py-0 z-10 relative">
         <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">

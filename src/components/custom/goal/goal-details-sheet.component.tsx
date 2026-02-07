@@ -6,7 +6,9 @@ import { View } from '@/components/layout/view.component'
 import { useCheckIn, useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
+import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { seededColor } from '@/shared/utils/helpers.util'
+import { Icon } from '@iconify/react'
 import { RiDeleteBinLine } from '@remixicon/react'
 import moment from 'moment'
 import { GoalDurationPill } from './duration-pill.component'
@@ -158,9 +160,16 @@ export function GoalDetailsSheet({
             <Text className="text-white/50 text-xs font-bbh mb-1">
               Daily reminder
             </Text>
-            <Text className="text-white text-sm font-bbh">
-              ⏰ {formatReminderTime(goal.reminderTime)}
-            </Text>
+            <View className="flex flex-row items-center gap-2">
+              <Icon 
+                icon={getEmojiIcon('⏰')} 
+                className="text-white" 
+                style={{ fontSize: '16px' }}
+              />
+              <Text className="text-white text-sm font-bbh">
+                {formatReminderTime(goal.reminderTime)}
+              </Text>
+            </View>
           </View>
         )}
       </View>

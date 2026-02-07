@@ -1,9 +1,11 @@
 import { TopNotchPadd } from '@/components/common/notch.component'
+import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
 import { useModalController } from '@/providers/modal.provider'
+import { useAuth } from '@/providers/auth.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import type { Achievement } from '@/shared/api/achievement.api'
 import { AchievementModal } from '@/components/custom/achievement/achievement-modal.component'
@@ -17,6 +19,7 @@ import { GoalsList } from './components/goals-list.component'
 export default function HomeAppScreen() {
   const toast = useToast()
   const modal = useModalController()
+  const { user } = useAuth()
   const {
     goals,
     currentGoal,
@@ -192,6 +195,73 @@ export default function HomeAppScreen() {
     }
   }
 
+  // TEST: Simulate achievement popup
+  const testAchievementPopup = (milestone: number) => {
+    const achievementData: { [key: number]: Achievement } = {
+      3: {
+        id: 'test-3',
+        userId: user?.id || '',
+        type: 'streak_milestone',
+        milestone: 3,
+        title: 'Rising Star',
+        description: 'Reached 3 consecutive days',
+        badgeIcon: '⭐',
+        earnedAt: new Date().toISOString(),
+      },
+      7: {
+        id: 'test-7',
+        userId: user?.id || '',
+        type: 'streak_milestone',
+        milestone: 7,
+        title: 'Week Warrior',
+        description: 'Completed a full week streak',
+        badgeIcon: '🗡️',
+        earnedAt: new Date().toISOString(),
+      },
+      21: {
+        id: 'test-21',
+        userId: user?.id || '',
+        type: 'streak_milestone',
+        milestone: 21,
+        title: 'Habit Hero',
+        description: 'Reached 21 days - a true habit formed',
+        badgeIcon: '🦸',
+        earnedAt: new Date().toISOString(),
+      },
+      30: {
+        id: 'test-30',
+        userId: user?.id || '',
+        type: 'streak_milestone',
+        milestone: 30,
+        title: 'Month Master',
+        description: 'Dominated an entire month',
+        badgeIcon: '👑',
+        earnedAt: new Date().toISOString(),
+      },
+      100: {
+        id: 'test-100',
+        userId: user?.id || '',
+        type: 'streak_milestone',
+        milestone: 100,
+        title: 'Century Champion',
+        description: '100 days of unstoppable dedication',
+        badgeIcon: '🏆',
+        earnedAt: new Date().toISOString(),
+      },
+    }
+
+    const achievement = achievementData[milestone]
+    if (achievement) {
+      modal.present(
+        <AchievementModal
+          achievement={achievement}
+          onDismiss={() => modal.dismiss()}
+        />,
+        { dismissible: false }
+      )
+    }
+  }
+
   const loading = isLoading || isFetching
 
   return (
@@ -207,9 +277,43 @@ export default function HomeAppScreen() {
           transition={{ duration: 0.3 }}
           className="mb-6"
         >
-          <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-            Lock In
-          </Text>
+          <View className="flex flex-row items-center justify-between">
+            <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
+              Lock In
+            </Text>
+            
+            {/* TEST: Achievement Popups */}
+            <View className="flex flex-row gap-2">
+              <Button
+                label="Day 3"
+                variant="secondary"
+                size="sm"
+                onClick={() => testAchievementPopup(3)}
+                className="text-xs"
+              />
+              <Button
+                label="Day 7"
+                variant="secondary"
+                size="sm"
+                onClick={() => testAchievementPopup(7)}
+                className="text-xs"
+              />
+              <Button
+                label="Day 21"
+                variant="secondary"
+                size="sm"
+                onClick={() => testAchievementPopup(21)}
+                className="text-xs"
+              />
+              <Button
+                label="Day 100"
+                variant="secondary"
+                size="sm"
+                onClick={() => testAchievementPopup(100)}
+                className="text-xs"
+              />
+            </View>
+          </View>
         </motion.div>
 
         {/* Current Goal - Hero Card */}

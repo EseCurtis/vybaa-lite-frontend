@@ -22,24 +22,27 @@ export function TabHeader({
     <View className="px-mg py-mg">
       <TopNotch />
 
-      <View className="grid grid-cols-3 justify-center items-center">
-        <Pressable
-          onPress={() => {
-            onBack ? onBack() : router.history.back()
-            hapticFeedback.light()
-          }}
-          className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
-        >
-          <RiArrowLeftSLine size={24} className="text-white" />
-        </Pressable>
+      <View className="flex-row justify-between  items-center">
+        <View className="">
+          <Pressable
+            onPress={() => {
+              onBack ? onBack() : router.history.back()
+              hapticFeedback.light()
+            }}
+            className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
+          >
+            <RiArrowLeftSLine size={24} className="text-white" />
+          </Pressable>
+        </View>
+
         <View className="mx-auto col-span-1 items-center text-center">
           <Text className="text-white text-xl whitespace-nowrap font-bold">
             {title}
           </Text>
         </View>
 
-        <View className="col-span-1 items-end">
-          <View className="">{children}</View>
+        <View className="col-span-1 items-end  min-w-12 ">
+          <View className="">{children || ''}</View>
         </View>
       </View>
     </View>

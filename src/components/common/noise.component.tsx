@@ -13,7 +13,7 @@ export function NoiseComponent({ children }: PropsWithChildren) {
         }}
         className="top-0 zoomie left-0 size-full absolute mix-blend-multiply "
       />
-      <View className="z-10 relative">{children}</View>
+      <View className="z-10 flex-1 relative">{children}</View>
     </>
   )
 }

@@ -1,8 +1,14 @@
-import { TopNotchPadd } from '@/components/common/notch.component'
+import { TabHeader } from '@/components/common/tab-header.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useAchievements, useAchievementStats, useBadgeDefinitions } from '@/hooks/use-achievements.hook'
+import {
+  useAchievements,
+  useAchievementStats,
+  useBadgeDefinitions,
+} from '@/hooks/use-achievements.hook'
 import type { Achievement, BadgeDefinition } from '@/shared/api/achievement.api'
+import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+import { Icon } from '@iconify/react'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 
@@ -17,7 +23,11 @@ function BadgeCard({
 }) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
   }
 
   return (
@@ -39,9 +49,11 @@ function BadgeCard({
               : 'bg-card-600/50'
           }`}
         >
-          <Text className={`text-5xl ${!isEarned && 'opacity-30 grayscale'}`}>
-            {badge.badgeIcon}
-          </Text>
+          <Icon
+            icon={getEmojiIcon(badge.badgeIcon)}
+            className={`text-white ${!isEarned && 'opacity-30 grayscale'}`}
+            style={{ fontSize: '48px' }}
+          />
         </View>
       </View>
 
@@ -72,7 +84,7 @@ function BadgeCard({
         {/* Locked Indicator */}
         {!isEarned && (
           <View className="mt-2 px-3 py-1 bg-white/5 rounded-full">
-            <Text className="text-xs text-white/40 font-bbh">🔒 Locked</Text>
+            <Text className="text-xs text-white/40 font-bbh"> Locked</Text>
           </View>
         )}
       </View>
@@ -81,9 +93,11 @@ function BadgeCard({
 }
 
 export default function AchievementsScreen() {
-  const { data: achievements = [], isLoading: achievementsLoading } = useAchievements()
+  const { data: achievements = [], isLoading: achievementsLoading } =
+    useAchievements()
   const { data: stats, isLoading: statsLoading } = useAchievementStats()
-  const { data: definitions = [], isLoading: defsLoading } = useBadgeDefinitions()
+  const { data: definitions = [], isLoading: defsLoading } =
+    useBadgeDefinitions()
 
   // Create a map of earned achievements
   const earnedMap = useMemo(() => {
@@ -109,42 +123,36 @@ export default function AchievementsScreen() {
 
   const loading = achievementsLoading || statsLoading || defsLoading
 
-  const getTypeTitle = (type: string): string => {
-    const titles: Record<string, string> = {
-      streak_milestone: '🔥 Streak Milestones',
-      total_goals: '🎯 Goals Completed',
-      total_checkins: '✅ Total Check-ins',
-      perfect_week: '✨ Perfect Weeks',
-      comeback: '🦅 Comeback Stories',
-      early_bird: '🌅 Early Bird',
-      night_owl: '🌙 Night Owl',
+  const getTypeInfo = (type: string): { icon: string; title: string } => {
+    const typeInfo: Record<string, { icon: string; title: string }> = {
+      streak_milestone: { icon: '🔥', title: 'Streak Milestones' },
+      total_goals: { icon: '🎯', title: 'Goals Completed' },
+      total_checkins: { icon: '✨', title: 'Total Check-ins' },
+      perfect_week: { icon: '✨', title: 'Perfect Weeks' },
+      comeback: { icon: '🦅', title: 'Comeback Stories' },
+      early_bird: { icon: '🌅', title: 'Early Bird' },
+      night_owl: { icon: '🌙', title: 'Night Owl' },
     }
-    return titles[type] || type
+    return typeInfo[type] || { icon: '🏆', title: type }
   }
 
   return (
     <View className="flex-1 bg-cardd">
-      <TopNotchPadd />
-      <TopNotchPadd />
+      <TabHeader
+        title={
+          <View >
+            Achievements
+            {stats && (
+              <Text className="!text-white/20 text-sm font-bbh mb-2">
+                {stats.totalBadges}{' '}
+                {stats.totalBadges === 1 ? 'badge' : 'badges'} earned
+              </Text>
+            )}
+          </View>
+        }
+      />
 
       <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-6"
-        >
-          <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-            Achievements
-          </Text>
-          {stats && (
-            <Text className="text-white/60 text-lg font-bbh mt-2">
-              {stats.totalBadges} {stats.totalBadges === 1 ? 'badge' : 'badges'} earned
-            </Text>
-          )}
-        </motion.div>
-
         {/* Stats Cards */}
         {stats && stats.totalBadges > 0 && (
           <View className="mb-8">
@@ -161,7 +169,11 @@ export default function AchievementsScreen() {
                   className="shrink-0"
                 >
                   <View className="bg-card-700/80 rounded-2xl p-4 flex items-center gap-3 min-w-[200px]">
-                    <Text className="text-4xl">{badge.badgeIcon}</Text>
+                    <Icon
+                      icon={getEmojiIcon(badge.badgeIcon)}
+                      className="text-white"
+                      style={{ fontSize: '36px' }}
+                    />
                     <View>
                       <Text className="text-white font-bbh font-bold text-sm">
                         {badge.title}
@@ -180,11 +192,17 @@ export default function AchievementsScreen() {
         {/* All Badges */}
         {loading ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-white/60 text-lg font-bbh">Loading achievements...</Text>
+            <Text className="text-white/60 text-lg font-bbh">
+              Loading achievements...
+            </Text>
           </View>
         ) : Object.keys(badgesByType).length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-6xl mb-4">🏆</Text>
+            <Icon
+              icon={getEmojiIcon('🏆')}
+              className="text-white/60 mb-4"
+              style={{ fontSize: '64px' }}
+            />
             <Text className="text-white/60 text-lg font-bbh text-center">
               No achievements yet
             </Text>
@@ -194,27 +212,37 @@ export default function AchievementsScreen() {
           </View>
         ) : (
           <View className="space-y-8">
-            {Object.entries(badgesByType).map(([type, badges]) => (
-              <View key={type}>
-                <Text className="text-white text-xl font-bbh font-bold mb-4">
-                  {getTypeTitle(type)}
-                </Text>
-                <View className="grid grid-cols-2 gap-4">
-                  {badges.map((badge) => {
-                    const key = `${badge.type}-${badge.milestone}`
-                    const earned = earnedMap.get(key)
-                    return (
-                      <BadgeCard
-                        key={key}
-                        badge={badge}
-                        isEarned={!!earned}
-                        earnedDate={earned?.earnedAt}
-                      />
-                    )
-                  })}
+            {Object.entries(badgesByType).map(([type, badges]) => {
+              const typeInfo = getTypeInfo(type)
+              return (
+                <View key={type}>
+                  <View className="flex flex-row items-center gap-2 mb-4">
+                    <Icon
+                      icon={getEmojiIcon(typeInfo.icon)}
+                      className="text-white"
+                      style={{ fontSize: '24px' }}
+                    />
+                    <Text className="text-white text-xl font-bbh font-bold">
+                      {typeInfo.title}
+                    </Text>
+                  </View>
+                  <View className="grid grid-cols-2 gap-4">
+                    {badges.map((badge) => {
+                      const key = `${badge.type}-${badge.milestone}`
+                      const earned = earnedMap.get(key)
+                      return (
+                        <BadgeCard
+                          key={key}
+                          badge={badge}
+                          isEarned={!!earned}
+                          earnedDate={earned?.earnedAt}
+                        />
+                      )
+                    })}
+                  </View>
                 </View>
-              </View>
-            ))}
+              )
+            })}
           </View>
         )}
       </View>
