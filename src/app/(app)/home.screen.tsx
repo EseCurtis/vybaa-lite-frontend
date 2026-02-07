@@ -4,7 +4,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
-import { useModalController } from '@/providers/modal.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { useAuth } from '@/providers/auth.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import type { Achievement } from '@/shared/api/achievement.api'
@@ -18,7 +18,7 @@ import { GoalsList } from './components/goals-list.component'
 
 export default function HomeAppScreen() {
   const toast = useToast()
-  const modal = useModalController()
+  const bottomSheet = useBottomSheetController()
   const { user } = useAuth()
   const {
     goals,
@@ -126,18 +126,17 @@ export default function HomeAppScreen() {
       const achievements = (response as any)?.data?.achievements as Achievement[] | undefined
       
       if (achievements && achievements.length > 0) {
-        // Show achievement modal for each earned badge (one at a time)
+        // Show achievement bottom sheet for each earned badge (one at a time)
         for (const achievement of achievements) {
           await new Promise<void>((resolve) => {
-            modal.present(
+            bottomSheet.present(
               <AchievementModal
                 achievement={achievement}
                 onDismiss={() => {
-                  modal.dismiss()
+                  bottomSheet.dismiss()
                   resolve()
                 }}
-              />,
-              { dismissible: false }
+              />
             )
           })
         }
@@ -252,12 +251,11 @@ export default function HomeAppScreen() {
 
     const achievement = achievementData[milestone]
     if (achievement) {
-      modal.present(
+      bottomSheet.present(
         <AchievementModal
           achievement={achievement}
-          onDismiss={() => modal.dismiss()}
-        />,
-        { dismissible: false }
+          onDismiss={() => bottomSheet.dismiss()}
+        />
       )
     }
   }

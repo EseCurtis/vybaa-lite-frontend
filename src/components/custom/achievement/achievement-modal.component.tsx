@@ -2,8 +2,8 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { Achievement } from '@/shared/api/achievement.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { hapticFeedback } from '@/shared/haptic.util'
+import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { Icon } from '@iconify/react'
 import { motion, useAnimation } from 'framer-motion'
 import { useEffect } from 'react'
@@ -38,13 +38,12 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
   }
 
   return (
-    <View className="flex items-center text-center justify-center h-full w-full p-6">
+    <View className="w-full text-center">
       <motion.div
-        initial={{ scale: 0.5, opacity: 0, y: 50 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-        className="bg-gradient-to-br from-cardd via-card-700 to-card-light rounded-3xl p-8 max-w-md w-full shadow-2xl border border-white/10 relative overflow-hidden"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="b rounded-3xl p-8 w-full shadow-2xl relative overflow-hidden"
       >
         {/* Animated Background Glow */}
         <motion.div
