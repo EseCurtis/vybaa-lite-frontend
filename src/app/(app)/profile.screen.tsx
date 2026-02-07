@@ -18,6 +18,7 @@ import {
   RiEmotionLine,
   RiSettings3Line,
   RiTargetLine,
+  RiTrophyLine,
 } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -476,6 +477,27 @@ export default function ProfileScreen() {
             </Text>
 
             <View className="grid grid-cols-2 gap-3">
+              {/* Achievements */}
+              <Pressable
+                onPress={() => navigate({ to: '/achievements' })}
+                className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+              >
+                <View className="flex-row items-center text-left gap-4">
+                  <View className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/60 to-accent-500/60 flex items-center justify-center">
+                    <RiTrophyLine size={20} className="text-white" />
+                  </View>
+                  <View>
+                    <Text className="text-white text-sm font-bbh font-semibold">
+                      Achievements
+                    </Text>
+                    <Text className="text-white/50 text-xs font-bbh">
+                      View your earned badges
+                    </Text>
+                  </View>
+                </View>
+                <RiArrowRightSLine size={20} className="text-white/40" />
+              </Pressable>
+
               {/* Insights */}
               <Pressable
                 onPress={() => navigate({ to: '/app/sub-profile/insights' })}

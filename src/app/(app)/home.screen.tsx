@@ -3,7 +3,10 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
+import { useModalController } from '@/providers/modal.provider'
 import type { Goal } from '@/shared/api/goal.api'
+import type { Achievement } from '@/shared/api/achievement.api'
+import { AchievementModal } from '@/components/custom/achievement/achievement-modal.component'
 import { motion } from 'framer-motion'
 import { useEffect, useMemo, useState } from 'react'
 import { CreateGoalForm } from './components/create-goal-form.component'
@@ -13,6 +16,7 @@ import { GoalsList } from './components/goals-list.component'
 
 export default function HomeAppScreen() {
   const toast = useToast()
+  const modal = useModalController()
   const {
     goals,
     currentGoal,
@@ -113,7 +117,28 @@ export default function HomeAppScreen() {
 
   const handleCheckIn = async (goalId?: string) => {
     try {
-      await checkInAsync(goalId)
+      const response = await checkInAsync(goalId)
+      
+      // Check if any achievements were earned
+      const achievements = (response as any)?.data?.achievements as Achievement[] | undefined
+      
+      if (achievements && achievements.length > 0) {
+        // Show achievement modal for each earned badge (one at a time)
+        for (const achievement of achievements) {
+          await new Promise<void>((resolve) => {
+            modal.present(
+              <AchievementModal
+                achievement={achievement}
+                onDismiss={() => {
+                  modal.dismiss()
+                  resolve()
+                }}
+              />,
+              { dismissible: false }
+            )
+          })
+        }
+      }
     } catch (err: any) {
       // Error toast is already shown in the mutation hook
     }

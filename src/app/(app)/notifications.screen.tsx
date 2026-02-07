@@ -34,6 +34,10 @@ function NotificationItem({
       case 'streak_milestone':
         return '🔥'
       case 'system':
+        // Check if it's a streak reset notification
+        if (notification.title?.includes('Streak Reset')) {
+          return '⚠️'
+        }
         return '📢'
       default:
         return '🔔'
