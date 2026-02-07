@@ -1,4 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { TextArea } from '@/components/common/textarea.component'
 import { AffirmationSlider } from '@/components/custom/chill/affirmation-slider.component'
 import { BreathingCircle } from '@/components/custom/chill/breathing-circle.component'
 import { Button } from '@/components/layout/button.component'
@@ -32,6 +33,8 @@ export default function ChillTimerScreen() {
   const [timeRemaining, setTimeRemaining] = useState(durationMs)
   const [isPaused, setIsPaused] = useState(false)
   const [isCompleted, setIsCompleted] = useState(false)
+  const [postMood, setPostMood] = useState('')
+  const [showMoodInput, setShowMoodInput] = useState(false)
   const startTimeRef = useRef<number>(Date.now())
   const pausedTimeRef = useRef<number>(0)
 
@@ -73,10 +76,18 @@ export default function ChillTimerScreen() {
   // Handle completion
   const handleComplete = async () => {
     setIsCompleted(true)
+    setShowMoodInput(true)
     hapticFeedback.heavy()
+  }
 
+  // Handle mood submission
+  const handleMoodSubmit = async () => {
     try {
-      await completeSession(sessionId)
+      await completeSession({
+        sessionId,
+        postSessionMood: postMood.trim() || undefined,
+      })
+      navigate({ to: '/app/home-2' })
     } catch (error) {
       console.error('Error completing session:', error)
     }
@@ -222,30 +233,46 @@ export default function ChillTimerScreen() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="flex flex-col"
+                  className="flex flex-col w-full max-w-xs"
                 >
                   <Text className="text-white text-3xl font-bbh font-bold mb-2">
                     Well done
                   </Text>
-                  <Text className="text-white/70 text-lg font-bbh">
+                  <Text className="text-white/70 text-lg font-bbh mb-4">
                     How do you feel now?
                   </Text>
-                </motion.div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="w-full max-w-xs mx-auto"
-                >
-                  <Button
-                    label="Continue"
-                    variant="default"
-                    fullWidth
-                    onClick={() => navigate({ to: '/app/home' })}
-                    className="!bg-gradient-to-r !from-cyan-500 !to-teal-500"
-                    textClassName="!text-white"
-                  />
+                  {showMoodInput && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.5 }}
+                      className="space-y-4"
+                    >
+                      <TextArea
+                        value={postMood}
+                        onChange={(e) => setPostMood(e.target.value)}
+                        placeholder="I feel calmer, more relaxed..."
+                        className="min-h-[100px] bg-card-700/60 border-white/10 text-white/90 text-base"
+                        maxLength={200}
+                      />
+                      <View className="flex flex-row gap-3">
+                        <Button
+                          label="Skip"
+                          variant="secondary"
+                          onClick={handleMoodSubmit}
+                          className="flex-1 bg-white/5 hover:bg-white/10"
+                        />
+                        <Button
+                          label="Continue"
+                          variant="default"
+                          onClick={handleMoodSubmit}
+                          className="flex-1 !bg-gradient-to-r !from-cyan-500 !to-teal-500"
+                          textClassName="!text-white"
+                        />
+                      </View>
+                    </motion.div>
+                  )}
                 </motion.div>
               </View>
             </motion.div>

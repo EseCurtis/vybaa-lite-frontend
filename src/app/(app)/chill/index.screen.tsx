@@ -6,7 +6,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateChillSession } from '@/hooks/use-chill.hook'
 import type { ChillSuggestion } from '@/shared/api/chill.api'
-import { RiMicLine, RiVoiceprintLine } from '@remixicon/react'
+import { RiHistoryLine, RiMicLine, RiVoiceprintLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
@@ -61,7 +61,14 @@ export default function ChillEmotionScreen() {
      
 
       <NoiseComponent>
-         <TabHeader title="Chill" />
+        <TabHeader title="Chill">
+          <button
+            onClick={() => navigate({ to: '/app/wellness' })}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <RiHistoryLine size={20} className="text-white/70" />
+          </button>
+        </TabHeader>
         <View className="flex-1 px-4 pb-[120px] pt-6 max-w-2xl mx-auto">
           {/* Time Pills - Appear after submission */}
           <AnimatePresence>

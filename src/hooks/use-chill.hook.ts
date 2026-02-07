@@ -29,15 +29,46 @@ export function useCompleteChillSession() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (sessionId: string) => chillAPI.completeSession(sessionId),
+    mutationFn: ({ sessionId, postSessionMood }: { sessionId: string; postSessionMood?: string }) =>
+      chillAPI.completeSession(sessionId, postSessionMood),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: chillQueryKeys.sessions() })
       queryClient.invalidateQueries({ queryKey: chillQueryKeys.stats() })
+      queryClient.invalidateQueries({ queryKey: chillQueryKeys.all })
       toast.success('Session completed! Well done.')
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to complete session')
     },
+  })
+}
+
+/**
+ * Hook to get emotion summary only
+ */
+export function useEmotionSummary() {
+  return useQuery({
+    queryKey: chillQueryKeys.summary(),
+    queryFn: async () => {
+      const response = await chillAPI.getEmotionSummary()
+      return response.data
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour (summary is cached for 24h on backend)
+  })
+}
+
+/**
+ * Hook to get paginated sessions
+ */
+export function usePaginatedChillSessions(page: number = 1, limit: number = 10) {
+  return useQuery({
+    queryKey: chillQueryKeys.paginatedSessions(page, limit),
+    queryFn: async () => {
+      const response = await chillAPI.getPaginatedSessions(page, limit)
+      return response.data
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    keepPreviousData: true, // Keep previous data while loading new page
   })
 }
 

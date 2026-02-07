@@ -14,6 +14,7 @@ import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
 import { Route as ChillIndexRouteImport } from './routes/chill/index'
+import { Route as AppWellnessRouteImport } from './routes/app/wellness'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
@@ -45,6 +46,11 @@ const GoalIndexRoute = GoalIndexRouteImport.update({
 const ChillIndexRoute = ChillIndexRouteImport.update({
   id: '/chill/',
   path: '/chill/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppWellnessRoute = AppWellnessRouteImport.update({
+  id: '/app/wellness',
+  path: '/app/wellness',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/wellness': typeof AppWellnessRoute
   '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/wellness': typeof AppWellnessRoute
   '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/wellness': typeof AppWellnessRoute
   '/chill/': typeof ChillIndexRoute
   '/goal/': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/wellness'
     | '/chill'
     | '/goal'
     | '/app/actions/flexx'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/wellness'
     | '/chill'
     | '/goal'
     | '/app/actions/flexx'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/wellness'
     | '/chill/'
     | '/goal/'
     | '/app/actions/flexx'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppWellnessRoute: typeof AppWellnessRoute
   ChillIndexRoute: typeof ChillIndexRoute
   GoalIndexRoute: typeof GoalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
@@ -222,6 +235,13 @@ declare module '@tanstack/react-router' {
       path: '/chill'
       fullPath: '/chill'
       preLoaderRoute: typeof ChillIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/wellness': {
+      id: '/app/wellness'
+      path: '/app/wellness'
+      fullPath: '/app/wellness'
+      preLoaderRoute: typeof AppWellnessRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/profile': {
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
+  AppWellnessRoute: AppWellnessRoute,
   ChillIndexRoute: ChillIndexRoute,
   GoalIndexRoute: GoalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,

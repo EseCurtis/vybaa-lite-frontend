@@ -14,6 +14,7 @@ export interface ChillSession {
   duration: number
   completed: boolean
   completedAt?: string
+  postSessionMood?: string
   createdAt: string
 }
 
@@ -60,9 +61,10 @@ class ChillAPI {
     return res
   }
 
-  async completeSession(sessionId: string): Promise<{ msg: string }> {
+  async completeSession(sessionId: string, postSessionMood?: string): Promise<{ msg: string }> {
     const { data: res } = await http.patch<{ msg: string }>(
-      `${API_V1}/chill/sessions/${sessionId}/complete`
+      `${API_V1}/chill/sessions/${sessionId}/complete`,
+      { postSessionMood }
     )
     return res
   }
@@ -76,6 +78,54 @@ class ChillAPI {
 
   async getStats(): Promise<ChillStatsResponse> {
     const { data: res} = await http.get<ChillStatsResponse>(`${API_V1}/chill/stats`)
+    return res
+  }
+
+  async getEmotionSummary(): Promise<{
+    msg: string
+    data: {
+      summary: string
+      summaryGenerated: boolean
+    }
+  }> {
+    const { data: res } = await http.get<{
+      msg: string
+      data: {
+        summary: string
+        summaryGenerated: boolean
+      }
+    }>(`${API_V1}/chill/summary`)
+    return res
+  }
+
+  async getPaginatedSessions(page: number = 1, limit: number = 10): Promise<{
+    msg: string
+    data: {
+      sessions: ChillSession[]
+      pagination: {
+        page: number
+        limit: number
+        total: number
+        totalPages: number
+        hasMore: boolean
+      }
+    }
+  }> {
+    const { data: res } = await http.get<{
+      msg: string
+      data: {
+        sessions: ChillSession[]
+        pagination: {
+          page: number
+          limit: number
+          total: number
+          totalPages: number
+          hasMore: boolean
+        }
+      }
+    }>(`${API_V1}/chill/sessions/paginated`, {
+      params: { page, limit },
+    })
     return res
   }
 }

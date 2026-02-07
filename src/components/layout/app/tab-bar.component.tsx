@@ -28,14 +28,15 @@ export const TabBar = memo(() => {
         isSpecial: false,
         badge: null,
       },
-      // {
-      //   id: 'notifications',
-      //   route: '/app/notifications',
-      //   icon: Icons.Bell,
-      //   label: 'Notifications',
-      //   isSpecial: false,
-      //   badge: unreadCount || null,
-      // },
+      {
+        id: 'wellness',
+        route: '/app/wellness',
+        icon: Icons.Heart,
+        label: 'Wellness',
+        isSpecial: false,
+        badge: null,
+        matchAllRoot: true,
+      },
       {
         id: 'profile',
         route: '/app/profile',

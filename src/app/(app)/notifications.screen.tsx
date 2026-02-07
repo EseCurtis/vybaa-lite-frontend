@@ -133,13 +133,13 @@ export default function NotificationsScreen() {
     <View className="flex-1 bg-cardd">
       <TabHeader title="Notifications" />
 
-      <View className="flex-1 px-4 pb-[120px] pt-3 max-w-4xl mx-auto overflow-y-auto">
+      <View className="flex-1 w-full  px-4 pb-[120px] pt-3 max-w-4xl mx-auto overflow-y-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="mb-6 flex justify-end"
+          className="mb-6 w-full flex justify-end"
         >
           {hasUnread && (
             <Button
@@ -149,6 +149,10 @@ export default function NotificationsScreen() {
               onClick={() => markAllAsRead()}
               loading={isMarkingAll}
               disabled={isMarkingAll}
+              fullWidth
+              style={{
+                width: "100%"
+              }}
             />
           )}
         </motion.div>
