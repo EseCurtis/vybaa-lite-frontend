@@ -82,8 +82,13 @@ export function HomeActions() {
     },
     {
       name: 'Chill',
-      description: 'Share stats to flexx on socials................',
+      description: 'Calm down and regulate your emotions',
       icon: RiTempColdLine,
+      onAction() {
+        navigate({
+          to: '/chill',
+        })
+      },
     },
   ]
   return (

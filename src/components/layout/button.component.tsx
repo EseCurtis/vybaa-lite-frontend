@@ -23,8 +23,8 @@ const button = tv({
         indicator: 'text-black',
       },
       secondary: {
-        label: 'text-white',
-        indicator: 'text-white',
+        label: '!text-white',
+        indicator: '!text-white',
       },
       outline: {
         container: 'border border-neutral-400',
@@ -133,7 +133,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         return [colors.white, colors.white]
       }
       if (variant === 'secondary') {
-        return [colors['card-lighter-2'], colors['card-lighter-2']]
+        return [colors['card-light'], colors['card-light']]
       }
       if (variant === 'outline') {
         return ['transparent', 'transparent']

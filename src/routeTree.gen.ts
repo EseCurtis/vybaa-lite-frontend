@@ -13,12 +13,14 @@ import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
+import { Route as ChillIndexRouteImport } from './routes/chill/index'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
+import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -38,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
 const GoalIndexRoute = GoalIndexRouteImport.update({
   id: '/goal/',
   path: '/goal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChillIndexRoute = ChillIndexRouteImport.update({
+  id: '/chill/',
+  path: '/chill/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -70,6 +77,12 @@ const AppActionsFlexxRoute = AppActionsFlexxRouteImport.update({
   path: '/app/actions/flexx',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChillTimerSessionIdDurationRoute =
+  ChillTimerSessionIdDurationRouteImport.update({
+    id: '/chill/timer/$sessionId/$duration',
+    path: '/chill/timer/$sessionId/$duration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -78,10 +91,12 @@ export interface FileRoutesByFullPath {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,10 +105,12 @@ export interface FileRoutesByTo {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,10 +120,12 @@ export interface FileRoutesById {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/chill/': typeof ChillIndexRoute
   '/goal/': typeof GoalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -117,10 +136,12 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/chill'
     | '/goal'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/chill/timer/$sessionId/$duration'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -129,10 +150,12 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/chill'
     | '/goal'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/chill/timer/$sessionId/$duration'
   id:
     | '__root__'
     | '/'
@@ -141,10 +164,12 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/chill/'
     | '/goal/'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/chill/timer/$sessionId/$duration'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -154,10 +179,12 @@ export interface RootRouteChildren {
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
+  ChillIndexRoute: typeof ChillIndexRoute
   GoalIndexRoute: typeof GoalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
+  ChillTimerSessionIdDurationRoute: typeof ChillTimerSessionIdDurationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -188,6 +215,13 @@ declare module '@tanstack/react-router' {
       path: '/goal'
       fullPath: '/goal'
       preLoaderRoute: typeof GoalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chill/': {
+      id: '/chill/'
+      path: '/chill'
+      fullPath: '/chill'
+      preLoaderRoute: typeof ChillIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/profile': {
@@ -232,6 +266,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppActionsFlexxRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chill/timer/$sessionId/$duration': {
+      id: '/chill/timer/$sessionId/$duration'
+      path: '/chill/timer/$sessionId/$duration'
+      fullPath: '/chill/timer/$sessionId/$duration'
+      preLoaderRoute: typeof ChillTimerSessionIdDurationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -242,10 +283,12 @@ const rootRouteChildren: RootRouteChildren = {
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
+  ChillIndexRoute: ChillIndexRoute,
   GoalIndexRoute: GoalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
+  ChillTimerSessionIdDurationRoute: ChillTimerSessionIdDurationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
