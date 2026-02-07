@@ -3,6 +3,7 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
+import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
 import { useToast } from '@/providers/toast.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { useAuth } from '@/providers/auth.provider'
@@ -20,6 +21,7 @@ export default function HomeAppScreen() {
   const toast = useToast()
   const bottomSheet = useBottomSheetController()
   const { user } = useAuth()
+  const { checkIn, isCheckingIn } = useCheckInWithAchievements()
   const {
     goals,
     currentGoal,
@@ -28,8 +30,6 @@ export default function HomeAppScreen() {
     error,
     createGoalAsync,
     isCreating,
-    checkInAsync,
-    isCheckingIn,
     updateGoalAsync,
     isUpdating,
     deleteGoalAsync,
@@ -120,29 +120,9 @@ export default function HomeAppScreen() {
 
   const handleCheckIn = async (goalId?: string) => {
     try {
-      const response = await checkInAsync(goalId)
-      
-      // Check if any achievements were earned
-      const achievements = (response as any)?.data?.achievements as Achievement[] | undefined
-      
-      if (achievements && achievements.length > 0) {
-        // Show achievement bottom sheet for each earned badge (one at a time)
-        for (const achievement of achievements) {
-          await new Promise<void>((resolve) => {
-            bottomSheet.present(
-              <AchievementModal
-                achievement={achievement}
-                onDismiss={() => {
-                  bottomSheet.dismiss()
-                  resolve()
-                }}
-              />
-            )
-          })
-        }
-      }
+      await checkIn(goalId)
     } catch (err: any) {
-      // Error toast is already shown in the mutation hook
+      // Error toast and achievement display handled in hook
     }
   }
 

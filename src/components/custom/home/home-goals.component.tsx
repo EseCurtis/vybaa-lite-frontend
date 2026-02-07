@@ -31,7 +31,7 @@ function HomeGoalItem({
       className=" snap-center max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
       <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
-      <Text className="text-black/40 leading-tight text-sm">{title}</Text>
+      <Text className="text-black/40 leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden whitespace-nowrap text-left">{title}</Text>
       <View className="">
         <RiArrowRightUpLine size={27} />
       </View>

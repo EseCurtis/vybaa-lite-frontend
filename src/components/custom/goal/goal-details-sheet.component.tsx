@@ -3,7 +3,8 @@ import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useCheckIn, useDeleteGoal } from '@/hooks/use-goals.hook'
+import { useDeleteGoal } from '@/hooks/use-goals.hook'
+import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
@@ -34,7 +35,7 @@ export function GoalDetailsSheet({
 }: GoalDetailsSheetProps) {
   const toast = useToast()
   const color = seededColor(goal.goalText)
-  const { mutate: checkIn, isPending: isCheckingIn } = useCheckIn()
+  const { checkIn, isCheckingIn } = useCheckInWithAchievements()
   const { mutate: deleteGoal, isPending: isDeleting } = useDeleteGoal()
 
   const progressPercentage = Math.min(
@@ -42,12 +43,13 @@ export function GoalDetailsSheet({
     100,
   )
 
-  const handleCheckIn = () => {
-    checkIn(goal.id, {
-      onSuccess: () => {
-        onDismiss?.()
-      },
-    })
+  const handleCheckIn = async () => {
+    try {
+      await checkIn(goal.id)
+      onDismiss?.()
+    } catch (err: any) {
+      // Error toast handled in hook
+    }
   }
 
   const handleDelete = () => {

@@ -2,7 +2,8 @@ import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useCheckIn, useDeleteGoal } from '@/hooks/use-goals.hook'
+import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
+import { useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
@@ -26,7 +27,7 @@ export function GoalCard({
 }: GoalCardProps) {
   const toast = useToast()
   const color = seededColor(goalText)
-  const { mutate, isPending } = useCheckIn()
+  const { checkIn, isCheckingIn } = useCheckInWithAchievements()
   const { mutate: deleteMutate, isPending: deleteIsPending } = useDeleteGoal()
 
   const onDelete = () => {
@@ -85,12 +86,12 @@ export function GoalCard({
                 leftIcon={<RiCheckFill color={"#0a0e16"}/>}
                 variant="default"
                 fullWidth
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation()
-                  mutate(id)
+                  await checkIn(id)
                 }}
-                disabled={isPending}
-                loading={isPending}
+                disabled={isCheckingIn}
+                loading={isCheckingIn}
                 className="text-sm font-bold border-2 border-cardd !bg-black/20  p-2 h-auto"
                 textClassName="text-sm"
                 bgColor={color}
@@ -103,8 +104,8 @@ export function GoalCard({
                 leftIcon={<RiCheckFill color={color}/>}
                 variant="default"
                 fullWidth
-                disabled={isPending}
-                loading={isPending}
+                disabled={isCheckingIn}
+                loading={isCheckingIn}
                 className="text-sm font-bold !bg-cardd border-2 border-transparent  p-2 h-auto"
                 textClassName="text-sm"
                 bgColor="rgb(6 5 9 / 0.01)"
