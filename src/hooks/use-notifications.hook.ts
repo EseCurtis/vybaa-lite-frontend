@@ -71,7 +71,8 @@ export function useMarkAllAsRead() {
  */
 export function useDeleteNotification() {
   const queryClient = useQueryClient()
-  const toast = useToast()  return useMutation({
+  const toast = useToast() 
+   return useMutation({
     mutationFn: (notificationId: string) => notificationAPI.deleteNotification(notificationId),
     onSuccess: () => {
       // Invalidate notifications list and unread count
