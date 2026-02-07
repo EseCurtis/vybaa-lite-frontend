@@ -20,17 +20,37 @@ const filterTabMap = {
 interface GoalListProps {
   onGoalClick?: (goal: Goal) => void
   onCreateGoal?: () => void
+  bulkMode?: boolean
+  selectedGoals?: Set<string>
+  onToggleSelection?: (goalId: string) => void
 }
 
-export function GoalList({ onGoalClick, onCreateGoal }: GoalListProps) {
+export function GoalList({ 
+  onGoalClick, 
+  onCreateGoal,
+  bulkMode = false,
+  selectedGoals = new Set(),
+  onToggleSelection,
+}: GoalListProps) {
   const [tab, setTab] = useState(tabs?.[0])
   const filter = useMemo(() => {
     return filterTabMap[tab]
   }, [tab])
 
-  const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isLoading } =
+  const { data, hasNextPage, fetchNextPage, isFetchingNextPage, isLoading, refetch } =
     useInfiniteGoals(filter)
   const goals = normalizePages(data?.pages)
+  
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await refetch()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   return (
     <View className="flex-1 ">
@@ -67,7 +87,7 @@ export function GoalList({ onGoalClick, onCreateGoal }: GoalListProps) {
               action={
                 onCreateGoal
                   ? {
-                      label: 'Create your first goal',
+                      label: 'Create  goal',
                       onPress: onCreateGoal,
                     }
                   : undefined
@@ -84,7 +104,15 @@ export function GoalList({ onGoalClick, onCreateGoal }: GoalListProps) {
           <VirtualList
             items={goals}
             renderItem={(goal, index) => {
-              return <GoalCard {...goal} onPress={onGoalClick} />
+              return (
+                <GoalCard 
+                  {...goal} 
+                  onPress={onGoalClick}
+                  bulkMode={bulkMode}
+                  isSelected={selectedGoals.has(goal.id)}
+                  onToggleSelection={onToggleSelection}
+                />
+              )
             }}
             footer={
               hasNextPage && (

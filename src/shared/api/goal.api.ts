@@ -85,6 +85,25 @@ class GoalAPI {
     const { data: res } = await http.delete<{ msg: string }>(`${API_V1}/goals/${goalId}`)
     return res
   }
+
+  async bulkDeleteGoals(goalIds: string[]): Promise<{ 
+    msg: string
+    data: {
+      deleted: number
+      notFound: number
+      total: number
+    }
+  }> {
+    const { data: res } = await http.post<{ 
+      msg: string
+      data: {
+        deleted: number
+        notFound: number
+        total: number
+      }
+    }>(`${API_V1}/goals/bulk-delete`, { goalIds })
+    return res
+  }
 }
 
 export const goalAPI = new GoalAPI()

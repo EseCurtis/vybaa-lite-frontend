@@ -8,11 +8,15 @@ import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
 import { seededColor } from '@/shared/utils/helpers.util'
-import { RiCheckFill, RiDeleteBinLine } from '@remixicon/react'
+import { RiDeleteBinLine, RiFireFill } from '@remixicon/react'
+import { motion } from 'framer-motion'
 import { GoalDurationPill } from './duration-pill.component'
 
 interface GoalCardProps extends Goal {
   onPress?: (goal: Goal) => void
+  bulkMode?: boolean
+  isSelected?: boolean
+  onToggleSelection?: (goalId: string) => void
 }
 
 export function GoalCard({
@@ -24,6 +28,9 @@ export function GoalCard({
   lastCheckInDate,
   startedAt,
   onPress,
+  bulkMode = false,
+  isSelected = false,
+  onToggleSelection,
 }: GoalCardProps) {
   const toast = useToast()
   const color = seededColor(goalText)
@@ -47,7 +54,9 @@ export function GoalCard({
   }
 
   const handleCardClick = () => {
-    if (onPress) {
+    if (bulkMode && onToggleSelection) {
+      onToggleSelection(id)
+    } else if (onPress) {
       onPress({
         id,
         goalText,
@@ -64,11 +73,36 @@ export function GoalCard({
     <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
       <Pressable
         onPress={handleCardClick}
-        className="p-2 flex flex-col w-full shrink-0 rounded-3xl relative snap-center"
+        className={`p-2 flex flex-col w-full shrink-0 rounded-3xl relative snap-center transition-all ${
+          isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-cardd' : ''
+        }`}
         style={{
           backgroundColor: color,
         }}
       >
+        {/* Bulk Selection Checkbox */}
+        {bulkMode && (
+          <View className="absolute top-3 right-3 z-10">
+            <View
+              className={`w-7 h-7 rounded-full flex items-center justify-center border-2 transition-all ${
+                isSelected
+                  ? 'bg-black border-black'
+                  : 'bg-black/20 border-black/40'
+              }`}
+            >
+              {isSelected && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500 }}
+                >
+                  <Text className="text-white text-sm font-bold">✓</Text>
+                </motion.div>
+              )}
+            </View>
+          </View>
+        )}
+        
         <View className="flex-col items-start pl-3">
           <Text className="mb-3 max-w-[80vw]">{goalText}</Text>
         </View>
@@ -83,7 +117,7 @@ export function GoalCard({
           >
             {canCheckIn ? (
               <Button
-                leftIcon={<RiCheckFill color={"#0a0e16"}/>}
+                leftIcon={<RiFireFill color={"#0a0e16"}/>}
                 variant="default"
                 fullWidth
                 onClick={async (e) => {
@@ -101,7 +135,7 @@ export function GoalCard({
               //   <Text className="whitespace-nowrap text-sm">Done</Text>
               // </Pressable>
               <Button
-                leftIcon={<RiCheckFill color={color}/>}
+                leftIcon={<RiFireFill color={color}/>}
                 variant="default"
                 fullWidth
                 disabled={isCheckingIn}
