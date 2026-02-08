@@ -87,7 +87,7 @@ export function GoalList({
               action={
                 onCreateGoal
                   ? {
-                      label: 'Create  goal',
+                      label: 'Create goal',
                       onPress: onCreateGoal,
                     }
                   : undefined

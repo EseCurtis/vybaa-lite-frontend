@@ -191,6 +191,14 @@ html, body, #app {
    display: none;
 }
 
+
+*::-webkit-scrollbar {
+   display: none !important;
+   height: 0;
+   width: 0;
+}
+
+
 .zoomie {
   animation: zoomie 0.4s  infinite;
 }

@@ -27,6 +27,7 @@ export const TabBar = memo(() => {
         label: 'Home',
         isSpecial: false,
         badge: null,
+        matchAlso: [],
       },
       {
         id: 'wellness',
@@ -87,16 +88,16 @@ export const TabBar = memo(() => {
       initial={{ y: 0, opacity: 1 }}
       animate={{ y: 0, opacity: 1 }}
       key="tabbar"
-
     >
-      <LinearGradient
-        className="absolute top-0 size-full left-0 backdrop-blur-xl "
-        colors={['transparent', "transparent"]}
-        locations={[0, 0.5]}
-            style={{
-        mask: "linear-gradient(transparent , #000 30%)"
-      }}
-      />
+        <LinearGradient
+          className="absolute top-0 size-full left-0 backdrop-blur-xl "
+          colors={['transparent', 'transparent']}
+          locations={[0, 0.5]}
+          style={{
+            mask: 'linear-gradient(transparent , #000 30%)',
+          }}
+        />
+        
       <View className="p-mg py-0 z-10 relative">
         <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
           {tabs.map((tab) => {
@@ -186,7 +187,11 @@ export const TabBar = memo(() => {
                       }
                     >
                       <tab.icon
-                        color={isActive ? colors.accent[400] : colors['card-lighter-3']}
+                        color={
+                          isActive
+                            ? colors.accent[400]
+                            : colors['card-lighter-3']
+                        }
                         size={27}
                         fill={
                           isActive ? colors.accent[700] + '7a' : 'transparent'
@@ -203,9 +208,7 @@ export const TabBar = memo(() => {
                       )}
                       <Text
                         style={{
-                          color: isActive
-                            ? 'transparent'
-                            : colors.card[100],
+                          color: isActive ? 'transparent' : colors.card[100],
                         }}
                         className="text-white hidden text-[0.6rem] font-bold"
                       >
@@ -221,6 +224,7 @@ export const TabBar = memo(() => {
 
         <BottomNotch />
       </View>
+
     </Moti.div>
   )
 })

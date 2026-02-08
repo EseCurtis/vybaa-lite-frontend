@@ -55,8 +55,9 @@ export function VirtualList<T extends { id?: string | number }>({
     <div
       ref={parentRef}
       style={{ height, overflowY: 'auto', position: 'relative' }}
+      className='no-scrollbar'
     >
-      <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+      <div  className='no-scrollbar' style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const item = items[virtualRow.index];
           return (
