@@ -60,7 +60,7 @@ export function JournalInsightModal({ onClose }: { onClose?: () => void }) {
     if (existingJournal?.data?.journal) {
       const journal = existingJournal.data.journal
       setMood(journal.mood || null)
-      setText(journal.entry)
+      setText(journal?.entry)
       // Rating is not stored in the backend, so we keep it at 0
     }
   }, [existingJournal])

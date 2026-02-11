@@ -143,20 +143,51 @@ export default function WellnessScreen() {
             )
           )}
 
-          {/* Journal Summary Placeholder */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-gradient-to-br flex flex-col from-pink-500/20 to-rose-500/20 rounded-3xl p-6 mb-6 "
-          >
-            <Text className="text-pink-300 text-lg font-bbh font-bold mb-2">
-              Journal Summary
-            </Text>
-            <Text className="text-white/60 text-sm font-bbh">
-              Coming soon - Your journal entries will be summarized here
-            </Text>
-          </motion.div>
+        {/* Journal Summary */}
+        {journalSummaryLoading ? (
+          <SkeletonSummaryCard />
+        ) : journalSummaryError ? (
+          <View className="bg-card-700/40 rounded-3xl p-6 mb-6 border border-white/10">
+            <Text className="text-white/50 font-bbh text-center">Failed to load journal summary</Text>
+          </View>
+        ) : (
+          journalStats.totalEntries > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="rounded-3xl p-6 mb-6"
+            >
+              <View className="flex flex-row items-center justify-between mb-3">
+                <Text className="text-pink-300 text-lg font-bbh font-bold">Your Journal Insights</Text>
+                {journalSummaryGenerated && (
+                  <Text className="text-pink-300/50 text-xs font-bbh">Updated just now</Text>
+                )}
+                <button
+                  onClick={() => navigate({ to: '/journal' })}
+                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                >
+                  <RiArrowRightLine size={18} className="text-pink-300/70" />
+                </button>
+              </View>
+              <Text className="text-white/80 text-base font-bbh leading-relaxed mb-3 whitespace-pre-line">
+                {journalSummary}
+              </Text>
+              <View className="flex flex-row gap-2">
+                <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
+                  <Text className="text-pink-200/80 text-xs font-bbh">
+                    {journalStats.totalEntries} entries
+                  </Text>
+                </View>
+                <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
+                  <Text className="text-pink-200/80 text-xs font-bbh">
+                    {journalStats.currentStreak} day streak
+                  </Text>
+                </View>
+              </View>
+            </motion.div>
+          )
+        )}
 
           {/* Sessions List */}
           <View className="space-y-3">

@@ -64,9 +64,7 @@ export function useMarkAllAsRead() {
       toast.success('All notifications marked as read')
     },
   })
-}
-
-/**
+}/**
  * Hook to delete a notification
  */
 export function useDeleteNotification() {

@@ -12,8 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JournalIndexRouteImport } from './routes/journal/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
 import { Route as ChillIndexRouteImport } from './routes/chill/index'
+import { Route as JournalDateRouteImport } from './routes/journal/$date'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
@@ -38,6 +40,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JournalIndexRoute = JournalIndexRouteImport.update({
+  id: '/journal/',
+  path: '/journal/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GoalIndexRoute = GoalIndexRouteImport.update({
   id: '/goal/',
   path: '/goal/',
@@ -46,6 +53,11 @@ const GoalIndexRoute = GoalIndexRouteImport.update({
 const ChillIndexRoute = ChillIndexRouteImport.update({
   id: '/chill/',
   path: '/chill/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JournalDateRoute = JournalDateRouteImport.update({
+  id: '/journal/$date',
+  path: '/journal/$date',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWellnessRoute = AppWellnessRouteImport.update({
@@ -98,8 +110,10 @@ export interface FileRoutesByFullPath {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/journal/$date': typeof JournalDateRoute
   '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
+  '/journal': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -113,8 +127,10 @@ export interface FileRoutesByTo {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/journal/$date': typeof JournalDateRoute
   '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
+  '/journal': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -129,8 +145,10 @@ export interface FileRoutesById {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/journal/$date': typeof JournalDateRoute
   '/chill/': typeof ChillIndexRoute
   '/goal/': typeof GoalIndexRoute
+  '/journal/': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -146,8 +164,10 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/wellness'
+    | '/journal/$date'
     | '/chill'
     | '/goal'
+    | '/journal'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -161,8 +181,10 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/wellness'
+    | '/journal/$date'
     | '/chill'
     | '/goal'
+    | '/journal'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -176,8 +198,10 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/wellness'
+    | '/journal/$date'
     | '/chill/'
     | '/goal/'
+    | '/journal/'
     | '/app/actions/flexx'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -192,8 +216,10 @@ export interface RootRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppWellnessRoute: typeof AppWellnessRoute
+  JournalDateRoute: typeof JournalDateRoute
   ChillIndexRoute: typeof ChillIndexRoute
   GoalIndexRoute: typeof GoalIndexRoute
+  JournalIndexRoute: typeof JournalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
@@ -223,6 +249,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/journal/': {
+      id: '/journal/'
+      path: '/journal'
+      fullPath: '/journal'
+      preLoaderRoute: typeof JournalIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goal/': {
       id: '/goal/'
       path: '/goal'
@@ -235,6 +268,13 @@ declare module '@tanstack/react-router' {
       path: '/chill'
       fullPath: '/chill'
       preLoaderRoute: typeof ChillIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/journal/$date': {
+      id: '/journal/$date'
+      path: '/journal/$date'
+      fullPath: '/journal/$date'
+      preLoaderRoute: typeof JournalDateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/wellness': {
@@ -304,8 +344,10 @@ const rootRouteChildren: RootRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
   AppWellnessRoute: AppWellnessRoute,
+  JournalDateRoute: JournalDateRoute,
   ChillIndexRoute: ChillIndexRoute,
   GoalIndexRoute: GoalIndexRoute,
+  JournalIndexRoute: JournalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,

@@ -10,6 +10,10 @@ export const journalKeys = {
   details: () => [...journalKeys.all, 'detail'] as const,
   detail: (id: string) => [...journalKeys.details(), id] as const,
   byDate: (date: string) => [...journalKeys.all, 'date', date] as const,
+  today: () => [...journalKeys.all, 'today'] as const,
+  summary: () => [...journalKeys.all, 'summary'] as const,
+  stats: () => [...journalKeys.all, 'stats'] as const,
+  paginated: (page: number, limit: number) => [...journalKeys.all, 'paginated', { page, limit }] as const,
   infinite: () => [...journalKeys.all, 'infinite'] as const,
 }
 
@@ -87,6 +91,45 @@ export const useJournalByDate = (date?: string) => {
     queryFn: date ? () => journalAPI.getJournalByDate(date) : undefined,
     enabled: !!date,
     staleTime: 2 * 60 * 1000,
+  })
+}
+
+export const useTodayJournal = () => {
+  return useQuery({
+    queryKey: journalKeys.today(),
+    queryFn: () => journalAPI.getTodayEntry(),
+    staleTime: 1 * 60 * 1000, // 1 minute
+  })
+}
+
+export const useJournalSummary = () => {
+  return useQuery({
+    queryKey: journalKeys.summary(),
+    queryFn: async () => {
+      const response = await journalAPI.getJournalSummary()
+      return response.data
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour (summary is cached for 24h on backend)
+  })
+}
+
+export const useJournalStats = () => {
+  return useQuery({
+    queryKey: journalKeys.stats(),
+    queryFn: async () => {
+      const response = await journalAPI.getJournalStats()
+      return response.data
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+export const usePaginatedJournals = (page: number = 1, limit: number = 20) => {
+  return useQuery({
+    queryKey: journalKeys.paginated(page, limit),
+    queryFn: () => journalAPI.getJournals(page, limit),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    keepPreviousData: true,
   })
 }
 

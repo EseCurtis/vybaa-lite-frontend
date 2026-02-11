@@ -77,8 +77,13 @@ export function HomeActions() {
     },
     {
       name: 'Journal',
-      description: 'Share stats to flexx on socials',
+      description: 'Reflect on your day and track your thoughts',
       icon: RiFileMarkedLine,
+      onAction() {
+        navigate({
+          to: '/journal',
+        })
+      },
     },
     {
       name: 'Chill',
