@@ -1,0 +1,24 @@
+/* Custom Swiper styles for Flexx cards */
+
+.flexx-swiper {
+  width: 100%;
+  height: 100%;
+  padding: 20px 0;
+}
+
+.flexx-swiper .swiper-slide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.flexx-swiper .swiper-slide-active {
+  opacity: 1;
+}
+
+/* Remove default Swiper pagination if not needed */
+.flexx-swiper .swiper-pagination {
+  display: none;
+}
