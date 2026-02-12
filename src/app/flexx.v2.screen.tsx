@@ -1,4 +1,3 @@
-import { NoiseComponent } from '@/components/common/noise.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
@@ -173,15 +172,37 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
     }
   }
 
+  // Dynamic font sizing based on number length for scalability
+  const getHeroFontSize = (value: number) => {
+    const digits = value.toString().length
+    if (digits <= 2) return 'text-[70px]'  // 0-99
+    if (digits === 3) return 'text-[60px]' // 100-999
+    return 'text-[50px]' // 1000+
+  }
+
+  const getStreakFontSize = (value: number) => {
+    const digits = value.toString().length
+    if (digits <= 2) return 'text-[110px]' // 0-99
+    if (digits === 3) return 'text-[90px]' // 100-999
+    return 'text-[50px]' // 1000+
+  }
+
+  const getGridFontSize = (value: number | string) => {
+    const str = value.toString()
+    if (str.length <= 2) return 'text-6xl'  // 0-99
+    if (str.length === 3) return 'text-5xl' // 100-999
+    return 'text-4xl' // 1000+
+  }
+
   // Different layouts for each card type
   if (type === 'daily') {
-    return (
+  return (
       <View className="size-full relative overflow-hidden">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-          style={{
+              style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -200,41 +221,41 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
 
           {/* Center - Hero Stat */}
           <View className="flex-1 justify-center items-center">
-            <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-3">
+            <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-4">
               Today's Discipline
             </Text>
-            <Text className="text-white text-[70px] leading-none font-bbh font-bold mb-1">
+            <Text className={`text-white ${getHeroFontSize(data.totalCheckIns)} leading-none font-bbh font-bold mb-2`}>
               {data.totalCheckIns}
             </Text>
             <Text className="text-white/80 text-lg font-bbh tracking-wide">
               check-ins
             </Text>
 
-            {/* Secondary Stats */}
+            {/* Secondary Stats - Flexible width */}
             <View className="mt-16 space-y-3 w-full max-w-[85%]">
-              <View className="flex-row justify-between items-center">
-                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+              <View className="flex-row justify-between items-center gap-4">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide flex-shrink-0">
                   Goals
                 </Text>
-                <Text className="text-white text-xl font-bbh font-bold">
+                <Text className="text-white text-2xl font-bbh font-bold text-right flex-shrink">
                   {data.totalGoals}
                 </Text>
               </View>
               <View className="h-px bg-white/10" />
-              <View className="flex-row justify-between items-center">
-                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+              <View className="flex-row justify-between items-center gap-4">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide flex-shrink-0">
                   Streak
                 </Text>
-                <Text className="text-white text-xl font-bbh font-bold">
+                <Text className="text-white text-2xl font-bbh font-bold text-right flex-shrink">
                   {data.currentStreak} days
                 </Text>
               </View>
               <View className="h-px bg-white/10" />
-              <View className="flex-row justify-between items-center">
-                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+              <View className="flex-row justify-between items-center gap-4">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide flex-shrink-0">
                   Completion
                 </Text>
-                <Text className="text-white text-xl font-bbh font-bold">
+                <Text className="text-white text-2xl font-bbh font-bold text-right flex-shrink">
                   {Math.round(data.completionRate)}%
                 </Text>
               </View>
@@ -270,13 +291,13 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
   }
 
   if (type === 'weekly') {
-    return (
+              return (
       <View className="size-full relative overflow-hidden">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-          style={{
+                  style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -298,41 +319,43 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
             <Text className="text-white/50 text-sm font-bbh">{today}</Text>
           </View>
 
-          {/* Stats Grid - 2x2 with better spacing */}
+          {/* Stats Grid - 2x2 with responsive sizing */}
           <View className="flex-1 grid grid-cols-2 gap-3 mb-8">
-            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between min-h-[120px]">
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Total Goals
               </Text>
-              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+              <Text className={`text-white ${getGridFontSize(data.totalGoals)} font-bbh font-bold leading-none break-all`}>
                 {data.totalGoals}
               </Text>
             </View>
 
-            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between min-h-[120px]">
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Check-ins
               </Text>
-              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+              <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none break-all`}>
                 {data.totalCheckIns}
               </Text>
             </View>
 
-            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between min-h-[120px]">
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Progress
               </Text>
-              <Text className="text-white text-6xl font-bbh font-bold leading-none">
-                {Math.round(data.averageProgress)} <span className='text-lg'>%</span>
+              <Text className={`text-white ${getGridFontSize(data.averageProgress)} font-bbh font-bold leading-none`}>
+                {Math.round(data.averageProgress)}
+                <span className="text-2xl">%</span>
               </Text>
             </View>
 
-            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between min-h-[120px]">
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Streak
               </Text>
-              <Text className="text-white text-6xl font-bbh font-bold leading-none">
-                {data.currentStreak}d
+              <Text className={`text-white ${getGridFontSize(data.currentStreak)} font-bbh font-bold leading-none break-all`}>
+                {data.currentStreak}
+                <span className="text-xl">d</span>
               </Text>
             </View>
           </View>
@@ -361,8 +384,8 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
             </View>
           </View>
         </View>
-      </View>
-    )
+                </View>
+              )
   }
 
   if (type === 'streak') {
@@ -372,7 +395,7 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-          style={{
+              style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -395,48 +418,49 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="text-center flex flex-col items-center"
+              className="text-center flex flex-col items-center w-full px-4"
             >
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.3em] mb-4">
                 Current Streak
               </Text>
-              <Text className="text-white text-[140px] leading-none font-bbh font-bold">
+              <Text className={`text-white ${getStreakFontSize(data.currentStreak)} leading-none font-bbh font-bold break-all`}>
                 {data.currentStreak}
               </Text>
-              <Text className="text-white text-5xl font-bbh font-bold mt-2 tracking-wider">
+              <Text className="text-white text-5xl font-bbh font-bold mt-3 tracking-wider">
                 DAYS
               </Text>
             </motion.div>
 
-            {/* Mini Stats Row */}
-            <View className="flex-row items-center gap-6 mt-20">
-              <View className="text-center flex-1">
-                <Text className="text-white text-4xl font-bbh font-bold leading-none">
+            {/* Mini Stats Row - Flexible */}
+            <View className="flex-row items-stretch justify-between w-full max-w-[90%] mt-20 gap-3">
+              <View className="text-center flex-1 flex flex-col items-center">
+                <Text className={`text-white ${getGridFontSize(data.longestStreak)} font-bbh font-bold leading-none break-all`}>
                   {data.longestStreak}
                 </Text>
-                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
-                  Best Streak
+                <Text className="text-white/60 text-[10px] font-bbh uppercase mt-2 tracking-wide">
+                  Best
                 </Text>
               </View>
 
-              <View className="w-px h-14 bg-white/20" />
+              <View className="w-px self-stretch bg-white/20 my-1" />
 
-              <View className="text-center flex-1">
-                <Text className="text-white text-4xl font-bbh font-bold leading-none">
+              <View className="text-center flex-1 flex flex-col items-center">
+                <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}>
                   {data.totalCheckIns}
                 </Text>
-                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
-                  Total Check-ins
+                <Text className="text-white/60 text-[10px] font-bbh uppercase mt-2 tracking-wide">
+                  Total
                 </Text>
               </View>
 
-              <View className="w-px h-14 bg-white/20" />
+              <View className="w-px self-stretch bg-white/20 my-1" />
 
-              <View className="text-center flex-1">
-                <Text className="text-white text-4xl font-bbh font-bold leading-none">
-                  {Math.round(data.completionRate)}%
+              <View className="text-center flex-1 flex flex-col items-center">
+                <Text className={`text-white ${getGridFontSize(data.completionRate)} font-bbh font-bold leading-none break-all`}>
+                  {Math.round(data.completionRate)}
+                  <span className="text-xl">%</span>
                 </Text>
-                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
+                <Text className="text-white/60 text-[10px] font-bbh uppercase mt-2 tracking-wide">
                   Score
                 </Text>
               </View>
@@ -490,6 +514,19 @@ export function FlexxV2AppScreen() {
     setActiveCardIndex(swiper.activeIndex)
   }
 
+  const getBackgroundGradient = () => {
+    switch (activeCardIndex) {
+      case 0: // Daily - Purple
+        return 'from-purple-900/30 via-purple-950/20 to-cardd'
+      case 1: // Weekly - Emerald
+        return 'from-emerald-900/30 via-teal-950/20 to-cardd'
+      case 2: // Streak - Orange/Red
+        return 'from-orange-900/30 via-red-950/20 to-cardd'
+      default:
+        return 'from-purple-900/30 via-purple-950/20 to-cardd'
+    }
+  }
+
   const handleShareBottomSheet = () => {
     const currentCardRef = cardRefs.current[activeCardIndex]
     if (!currentCardRef) return
@@ -525,8 +562,30 @@ export function FlexxV2AppScreen() {
   }
 
   return (
-    <View className=" max-h-screen bg-cardd flex-1">
-      <NoiseComponent>
+    <View className="max-h-screen bg-cardd flex-1 relative overflow-hidden">
+      {/* Dynamic Background Gradient */}
+      <motion.div
+        key={activeCardIndex}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.6 }}
+        className={`absolute inset-0 bg-gradient-to-br ${getBackgroundGradient()}`}
+      />
+      
+      {/* Noise Overlay */}
+      <div
+        style={{
+          background: 'url(/assets/framernoise.png)',
+          backgroundSize: '300px',
+          opacity: 0.3,
+          mixBlendMode: 'overlay',
+        }}
+        className="absolute inset-0"
+      />
+
+      <View className="relative z-10 flex-1">
+       
         <View className="h-full overflow-hidden">
           <View className="">
             <TabHeader title="Flexx On'Em ">
@@ -575,7 +634,7 @@ export function FlexxV2AppScreen() {
             </View>
 
             {/* Swipe Indicator */}
-            <View className="pb-2 justify-center items-center">
+            <View className="pb-2 mt-6 justify-center items-center">
               <View className="flex-row gap-2 mb-2">
                 {cards.map((_, index) => (
                   <div
@@ -595,7 +654,7 @@ export function FlexxV2AppScreen() {
             <BottomNotch />
           </View>
         </View>
-      </NoiseComponent>
+      </View>
     </View>
   )
 }
