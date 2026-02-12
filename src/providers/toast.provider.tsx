@@ -102,12 +102,13 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           style: {
             borderRadius: '9999px',
             top: top,
+            textAlign: "center"
            // transform: `translateY(${Number(top)*4}px)`,
            
           },
         }}
         style={{
-          
+          textAlign: "center"
           
         }}
       />

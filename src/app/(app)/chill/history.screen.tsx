@@ -13,13 +13,16 @@ import {
   useEmotionSummary,
   usePaginatedChillSessions,
 } from '@/hooks/use-chill.hook'
+import { useJournalStats, useJournalSummary } from '@/hooks/use-journal.hook'
 import type { ChillSession } from '@/shared/api/chill.api'
 import {
   RiArrowLeftSLine,
+  RiArrowRightLine,
   RiArrowRightSLine,
   RiCheckLine,
   RiCloseLine,
 } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import moment from 'moment'
 import { useState } from 'react'
@@ -28,6 +31,7 @@ const SESSIONS_PER_PAGE = 10
 
 export default function WellnessScreen() {
   const [currentPage, setCurrentPage] = useState(1)
+  const navigate = useNavigate()
 
   // Separate API calls
   const {
@@ -45,11 +49,32 @@ export default function WellnessScreen() {
 
   const { data: statsData, isLoading: statsLoading } = useChillStats()
 
+  // Journal data
+  const {
+    data: journalSummaryData,
+    isLoading: journalSummaryLoading,
+    error: journalSummaryError,
+  } = useJournalSummary()
+
+  const { data: journalStatsData, isLoading: journalStatsLoading } =
+    useJournalStats()
+
   const summary = summaryData?.summary || ''
   const summaryGenerated = summaryData?.summaryGenerated || false
   const sessions = sessionsData?.sessions || []
   const pagination = sessionsData?.pagination
   const stats = statsData || { totalSessions: 0, completedSessions: 0 }
+
+  // Journal data extraction
+  const journalSummary = journalSummaryData?.summary || ''
+  const journalSummaryGenerated = journalSummaryData?.summaryGenerated || false
+  const journalStats = journalStatsData || {
+    totalEntries: 0,
+    completedEntries: 0,
+    totalMinutes: 0,
+    currentStreak: 0,
+    longestStreak: 0,
+  }
 
   const handleNextPage = () => {
     if (pagination?.hasMore) {
@@ -65,10 +90,8 @@ export default function WellnessScreen() {
 
   return (
     <View className="flex-1 bg-cardd">
-     
-
       <NoiseComponent>
-        <TopNotch/>
+        <TopNotch />
         <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
           {/* Stats Cards */}
           <View className="grid grid-cols-2 gap-3 mb-6">
@@ -143,51 +166,59 @@ export default function WellnessScreen() {
             )
           )}
 
-        {/* Journal Summary */}
-        {journalSummaryLoading ? (
-          <SkeletonSummaryCard />
-        ) : journalSummaryError ? (
-          <View className="bg-card-700/40 rounded-3xl p-6 mb-6 border border-white/10">
-            <Text className="text-white/50 font-bbh text-center">Failed to load journal summary</Text>
-          </View>
-        ) : (
-          journalStats.totalEntries > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-3xl p-6 mb-6"
-            >
-              <View className="flex flex-row items-center justify-between mb-3">
-                <Text className="text-pink-300 text-lg font-bbh font-bold">Your Journal Insights</Text>
-                {journalSummaryGenerated && (
-                  <Text className="text-pink-300/50 text-xs font-bbh">Updated just now</Text>
-                )}
-                <button
-                  onClick={() => navigate({ to: '/journal' })}
-                  className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
-                >
-                  <RiArrowRightLine size={18} className="text-pink-300/70" />
-                </button>
-              </View>
-              <Text className="text-white/80 text-base font-bbh leading-relaxed mb-3 whitespace-pre-line">
-                {journalSummary}
+          {/* Journal Summary */}
+          {journalSummaryLoading ? (
+            <SkeletonSummaryCard />
+          ) : journalSummaryError ? (
+            <View className="bg-card-700/40 rounded-3xl p-6 mb-6 border border-white/10">
+              <Text className="text-white/50 font-bbh text-center">
+                Failed to load journal summary
               </Text>
-              <View className="flex flex-row gap-2">
-                <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
-                  <Text className="text-pink-200/80 text-xs font-bbh">
-                    {journalStats.totalEntries} entries
-                  </Text>
+            </View>
+          ) : (
+            journalStats.totalEntries > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="rounded-3xl p-6 mb-6 px-05-mg"
+              >
+                <View className="flex flex-row items-center justify-between mb-3">
+                  <View className="">
+                    <Text className="text-pink-300 text-lg font-bbh font-bold">
+                      Your Journal Insights
+                    </Text>
+                    {journalSummaryGenerated && (
+                      <Text className="text-pink-300/50 text-xs font-bbh">
+                        Updated just now
+                      </Text>
+                    )}
+                  </View>
+                  <button
+                    onClick={() => navigate({ to: '/journal' })}
+                    className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                  >
+                    <RiArrowRightLine size={18} className="text-pink-300/70" />
+                  </button>
                 </View>
-                <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
-                  <Text className="text-pink-200/80 text-xs font-bbh">
-                    {journalStats.currentStreak} day streak
-                  </Text>
+                <Text className="text-white/80 text-base font-bbh leading-relaxed mb-3 whitespace-pre-line">
+                  {journalSummary}
+                </Text>
+                <View className="flex flex-row gap-2">
+                  <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
+                    <Text className="text-pink-200/80 text-xs font-bbh">
+                      {journalStats.totalEntries} entries
+                    </Text>
+                  </View>
+                  <View className="bg-pink-500/20 rounded-xl px-3 py-1.5">
+                    <Text className="text-pink-200/80 text-xs font-bbh">
+                      {journalStats.currentStreak} day streak
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            </motion.div>
-          )
-        )}
+              </motion.div>
+            )
+          )}
 
           {/* Sessions List */}
           <View className="space-y-3">
@@ -244,9 +275,7 @@ export default function WellnessScreen() {
                 {pagination && pagination.totalPages > 1 && (
                   <View className="flex flex-row items-center justify-between mt-6 pt-4 border-t border-white/10">
                     <Button
-                      label="Previous"
-                      leftIcon={<RiArrowLeftSLine size={18} />}
-                      variant="secondary"
+                      leftIcon={<RiArrowLeftSLine size={27} />}
                       onClick={handlePrevPage}
                       disabled={currentPage === 1 || sessionsFetching}
                       className="bg-white/5 hover:bg-white/10"
@@ -255,12 +284,13 @@ export default function WellnessScreen() {
                       {pagination.page} / {pagination.totalPages}
                     </Text>
                     <Button
-                      label="Next"
-                      rightIcon={<RiArrowRightSLine size={18} />}
-                      variant="secondary"
+                      rightIcon={<RiArrowRightSLine size={27} />}
                       onClick={handleNextPage}
                       disabled={!pagination.hasMore || sessionsFetching}
                       className="bg-white/5 hover:bg-white/10"
+                      style={{
+                        width: 'auto',
+                      }}
                     />
                   </View>
                 )}

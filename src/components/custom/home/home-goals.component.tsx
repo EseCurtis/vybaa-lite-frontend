@@ -4,7 +4,7 @@ import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import type { Goal } from '@/shared/api/goal.api'
-import { normalizePages, seededColor } from '@/shared/utils/helpers.util'
+import { normalizePages, seededColor, smartTruncate } from '@/shared/utils/helpers.util'
 import { RiArrowRightUpLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { GoalDurationPill } from '../goal/duration-pill.component'
@@ -28,10 +28,10 @@ function HomeGoalItem({
         backgroundColor: color,
       }}
       onPress={onOpen}
-      className=" snap-center max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
+      className=" snap-center  max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
       <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
-      <Text className="text-black/40 leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden whitespace-nowrap text-left">{title}</Text>
+      <Text className="text-black/40 leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden  text-left ">{smartTruncate(title,30)}</Text>
       <View className="">
         <RiArrowRightUpLine size={27} />
       </View>

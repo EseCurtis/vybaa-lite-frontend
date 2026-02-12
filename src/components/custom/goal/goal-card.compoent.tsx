@@ -106,7 +106,7 @@ export function GoalCard({
         <View className="flex-col items-start pl-3">
           <Text className="mb-3 max-w-[80vw]">{goalText}</Text>
         </View>
-        <View className="flex-row justify-between">
+        <View className="flex-row w-full justify-between">
           <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
 
           <Moti.div

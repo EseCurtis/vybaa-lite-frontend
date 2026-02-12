@@ -46,6 +46,9 @@ export default function JournalListScreen() {
   //@ts-ignore
   const pagination = journalsData?.pagination
 
+
+  console.log(journals);
+
   const handleCreateToday = () => {
     const today = moment().format('YYYY-MM-DD')
     navigate({ to: `/journal/${today}` })

@@ -7,6 +7,9 @@ import { RiAppleFill, RiGoogleFill } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
+import { LineWobble } from 'ldrs/react'
+import 'ldrs/react/LineWobble.css'
+
 /**
  * Generic landing screen for the starter template.
  *
@@ -42,7 +45,7 @@ export default function AppScreen() {
     }
   }
 
-  if(stale) {
+  if (stale) {
     return null
   }
 
@@ -66,7 +69,7 @@ export default function AppScreen() {
               />
             </div>
             <Text className="whitespace-nowrap mt-3 leading-tight text-center text-[30px] font-black text-white">
-              Catch the Vybe.🔥 <br /> Lock In. Streak Up.
+              Catch the Vybe. 🔥 <br /> Lock In. Streak Up.
             </Text>
             <Text className="text-center text-card-lighter-3 text-[15px] leading-[28px] text-white opacity-70">
               Streaking with epic rewards?{'\n'} Totally worth starting!
@@ -75,6 +78,17 @@ export default function AppScreen() {
         </View>
 
         <View className="flex flex-col gap-3 text-center">
+          {isLoading && (
+            <View className="items-center">
+              <LineWobble
+                size="50"
+                stroke="12"
+                bgOpacity="0.1"
+                speed="1.8"
+                color="white"
+              />
+            </View>
+          )}
           <View className="flex-row p-1 gap-2 mx-auto bg-card-light/50 rounded-full">
             <TouchableOpacity
               className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
