@@ -6,11 +6,15 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { useAchievements } from '@/hooks/use-achievements.hook'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useFlexxExport } from '@/hooks/use-flexx-export.hook'
 import { useInsights } from '@/hooks/use-insights.hook'
 import { useAuth } from '@/providers/auth.provider'
+import type { Achievement } from '@/shared/api/achievement.api'
+import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import '@/styles/swiper-custom.css'
+import { Icon } from '@iconify/react'
 import {
     RiFireFill,
     RiFlashlightFill,
@@ -26,7 +30,7 @@ import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-type CardType = 'daily' | 'weekly' | 'streak'
+type CardType = 'daily' | 'weekly' | 'streak' | 'achievement'
 
 interface FlexxCardProps {
   type: CardType
@@ -40,6 +44,7 @@ interface FlexxCardProps {
   }
   username?: string
   userAvatarUrl?: string
+  achievement?: Achievement | null
 }
 
 interface ShareBottomSheetContentProps {
@@ -47,6 +52,62 @@ interface ShareBottomSheetContentProps {
   cardType: CardType
   onShare: (element: HTMLElement) => Promise<void>
   onDismiss: () => void
+}
+
+interface AchievementSelectorProps {
+  achievements: Achievement[]
+  onSelect: (achievement: Achievement) => void
+  selectedId?: string
+}
+
+function AchievementSelector({ achievements, onSelect, selectedId }: AchievementSelectorProps) {
+  return (
+    <View className="space-y-3">
+      <Text className="text-white/70 text-sm font-bbh mb-2">Select Achievement to Flex</Text>
+      <View className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
+        {achievements.map((achievement) => {
+          const isSelected = selectedId === achievement.id
+          const emojiIcon = getEmojiIcon(achievement.badgeIcon)
+          
+          return (
+            <motion.div
+              key={achievement.id}
+              whileTap={{ scale: 0.95 }}
+              animate={isSelected ? {
+                scale: [1, 1.1, 1],
+                rotate: [0, -5, 5, -5, 0],
+              } : {}}
+              transition={{
+                duration: 0.5,
+                ease: 'easeInOut',
+              }}
+            >
+              <Pressable
+                onPress={() => onSelect(achievement)}
+                className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all ${
+                  isSelected
+                    ? 'bg-warning-yellow/20 border-2 border-warning-yellow'
+                    : 'bg-card-light border-2 border-transparent hover:bg-card-light/80'
+                }`}
+              >
+                <Icon icon={emojiIcon} width={48} height={48} className="mb-2" />
+                <Text className="text-white text-xs font-bbh text-center leading-tight line-clamp-2">
+                  {achievement.title}
+                </Text>
+              </Pressable>
+            </motion.div>
+          )
+        })}
+      </View>
+      {achievements.length === 0 && (
+        <View className="py-12 items-center">
+          <Text className="text-white/40 text-sm font-bbh text-center">
+            No achievements yet. Keep going! 💪
+          </Text>
+        </View>
+      )}
+    </View>
+  )
 }
 
 function ShareBottomSheetContent({
@@ -141,7 +202,7 @@ function ShareBottomSheetContent({
   )
 }
 
-function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
+function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCardProps) {
   const today = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -156,12 +217,19 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
         return 'from-emerald-600 via-teal-700 to-cyan-900'
       case 'streak':
         return 'from-orange-600 via-red-700 to-pink-900'
+      case 'achievement':
+        return 'from-yellow-600 via-amber-700 to-orange-900'
       default:
         return 'from-purple-600 via-purple-700 to-indigo-900'
     }
   }
 
   const getIcon = (size: number = 40) => {
+    if (type === 'achievement' && achievement) {
+      const emojiIcon = getEmojiIcon(achievement.badgeIcon)
+      return <Icon icon={emojiIcon} width={size} height={size} />
+    }
+    
     switch (type) {
       case 'daily':
         return <RiFlashlightFill size={size} className="text-white/90" />
@@ -169,6 +237,8 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
         return <RiTrophyFill size={size} className="text-white/90" />
       case 'streak':
         return <RiFireFill size={size} className="text-white/90" />
+      default:
+        return <RiTrophyFill size={size} className="text-white/90" />
     }
   }
 
@@ -495,20 +565,184 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
     )
   }
 
+  if (type === 'achievement') {
+    if (!achievement) {
+      return (
+        <View className="size-full relative overflow-hidden">
+          <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`} />
+          <div
+            style={{
+              background: 'url(/assets/framernoise.png)',
+              backgroundSize: '300px',
+              opacity: 0.15,
+              mixBlendMode: 'overlay',
+            }}
+            className="absolute inset-0"
+          />
+          <View className="relative z-10 flex-1 size-full flex flex-col items-center justify-center p-8">
+            <motion.div
+              animate={{
+                y: [0, -10, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            >
+              <RiTrophyFill size={80} className="text-white/40 mb-6" />
+            </motion.div>
+            <Text className="text-white/70 text-xl font-bbh text-center font-semibold mb-2">
+              Tap to Select
+            </Text>
+            <Text className="text-white/50 text-sm font-bbh text-center">
+              Choose an achievement to flex
+            </Text>
+          </View>
+        </View>
+      )
+    }
+
+    const earnedDate = new Date(achievement.earnedAt).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+
+    return (
+      <View className="size-full relative overflow-hidden">
+        <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`} />
+        <div
+          style={{
+            background: 'url(/assets/framernoise.png)',
+            backgroundSize: '300px',
+            opacity: 0.15,
+            mixBlendMode: 'overlay',
+          }}
+          className="absolute inset-0"
+        />
+
+        {/* Achievement Badge Layout */}
+        <View className="relative z-10 flex-1 size-full flex flex-col p-6">
+          {/* Top */}
+          <View className="flex-row justify-between items-center mb-6">
+            <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em]">
+              Achievement Unlocked
+            </Text>
+            <Text className="text-white/50 text-sm font-bbh">{earnedDate}</Text>
+          </View>
+
+          {/* Center - Badge */}
+          <View className="flex-1 justify-center items-center">
+            {/* Large Badge with Glow and Wiggle Animation */}
+            <motion.div
+              key={achievement.id}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ 
+                scale: 1, 
+                opacity: 1,
+                rotate: [0, -3, 3, -3, 0],
+                y: [0, -10, 0, -5, 0],
+              }}
+              transition={{ 
+                scale: { duration: 0.6, type: 'spring', stiffness: 200 },
+                opacity: { duration: 0.4 },
+                rotate: { duration: 0.8, ease: 'easeInOut', delay: 0.3 },
+                y: { duration: 0.8, ease: 'easeInOut', delay: 0.3 },
+              }}
+              className="relative mb-8"
+            >
+              {/* Animated Glow */}
+              <motion.div
+                animate={{
+                  scale: [1, 1.2, 1],
+                  opacity: [0.3, 0.5, 0.3],
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: 'easeInOut',
+                }}
+                className="absolute inset-0 bg-yellow-400/30 rounded-full blur-3xl scale-150"
+              />
+              
+              <View className="relative z-10 flex items-center justify-center">
+                <Icon 
+                  icon={getEmojiIcon(achievement.badgeIcon)} 
+                  width={160} 
+                  height={160}
+                />
+              </View>
+            </motion.div>
+
+            {/* Title */}
+            <Text className="text-white text-4xl font-bbh font-bold text-center mb-3 leading-tight">
+              {achievement.title}
+            </Text>
+
+            {/* Description */}
+            <Text className="text-white/70 text-base font-bbh text-center max-w-[85%] leading-relaxed">
+              {achievement.description}
+            </Text>
+
+            {/* Milestone Badge */}
+            <View className="mt-8 bg-white backdrop-blur-sm rounded-full px-6 py-3">
+              <Text className="text-black text-lg font-bbh font-bold">
+                {achievement.type === 'streak_milestone' && `${achievement.milestone} Day Streak`}
+                {achievement.type === 'total_goals' && `${achievement.milestone} Goals`}
+                {achievement.type === 'total_checkins' && `${achievement.milestone} Check-ins`}
+                {achievement.type === 'perfect_week' && 'Perfect Week'}
+                {achievement.type === 'comeback' && 'Comeback'}
+                {achievement.type === 'early_bird' && 'Early Bird'}
+                {achievement.type === 'night_owl' && 'Night Owl'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Bottom */}
+          <View className="flex-row items-center justify-between pt-4 border-t border-white/10">
+            <View className="flex-row gap-3 items-center">
+              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
+              <View>
+                {username && (
+                  <Text className="text-white text-base font-bbh font-semibold">
+                    @{username}
+                  </Text>
+                )}
+                <Text className="text-white/40 text-xs font-bbh">
+                  Achievement • Vybaa
+                </Text>
+              </View>
+            </View>
+            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <img
+                src="/assets/icon-foreground.png"
+                className="w-6 h-6 brightness-[100]"
+                alt="Vybaa"
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
   // Fallback (shouldn't reach here)
   return null
 }
 
 export function FlexxV2AppScreen() {
   const [activeCardIndex, setActiveCardIndex] = useState(0)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null])
+  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null])
   const swiperRef = useRef<SwiperType | null>(null)
   const { exportCardFromElement } = useFlexxExport()
   const { present, dismiss } = useBottomSheet()
   const { user } = useAuth()
   const { data: insightsData, isLoading } = useInsights()
+  const { data: achievements = [], isLoading: achievementsLoading } = useAchievements()
 
-  const cards: CardType[] = ['daily', 'weekly', 'streak']
+  const cards: CardType[] = ['daily', 'weekly', 'streak', 'achievement']
 
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveCardIndex(swiper.activeIndex)
@@ -522,9 +756,31 @@ export function FlexxV2AppScreen() {
         return 'from-emerald-900/30 via-teal-950/20 to-cardd'
       case 2: // Streak - Orange/Red
         return 'from-orange-900/30 via-red-950/20 to-cardd'
+      case 3: // Achievement - Yellow/Gold
+        return 'from-yellow-900/30 via-amber-950/20 to-cardd'
       default:
         return 'from-purple-900/30 via-purple-950/20 to-cardd'
     }
+  }
+
+  const handleAchievementSelect = (achievement: Achievement) => {
+    setSelectedAchievement(achievement)
+    dismiss()
+    // Switch to achievement card if not already there
+    if (activeCardIndex !== 3) {
+      swiperRef.current?.slideTo(3)
+    }
+  }
+
+  const handleAchievementCardClick = () => {
+    present(
+      <AchievementSelector
+        achievements={achievements}
+        onSelect={handleAchievementSelect}
+        selectedId={selectedAchievement?.id}
+      />,
+      { title: 'Choose Your Achievement' }
+    )
   }
 
   const handleShareBottomSheet = () => {
@@ -542,7 +798,7 @@ export function FlexxV2AppScreen() {
     )
   }
 
-  if (isLoading) {
+  if (isLoading || achievementsLoading) {
     return (
       <View className="flex-1 bg-cardd items-center justify-center">
         <Spinner size={32} />
@@ -612,24 +868,26 @@ export function FlexxV2AppScreen() {
                 className="flexx-swiper"
                 style={{ height: '100%', width: '100%' }}
               >
-                {cards.map((cardType, index) => (
-                  <SwiperSlide key={cardType}>
-                    <div
-                      ref={(el) => (cardRefs.current[index] = el)}
-                      style={{
-                        width: '100%',
-                      }}
-                      className="rounded-3xl size-full overflow-hidden shadow-2xl"
-                    >
-                      <FlexxCard
-                        type={cardType}
-                        data={stats}
-                        username={user?.username}
-                        userAvatarUrl={user?.avatarUrl}
-                      />
-                    </div>
-                  </SwiperSlide>
-                ))}
+              {cards.map((cardType, index) => (
+                <SwiperSlide key={cardType}>
+                  <div
+                    ref={(el) => (cardRefs.current[index] = el)}
+                    style={{
+                      width: '100%',
+                    }}
+                    className="rounded-3xl size-full overflow-hidden shadow-2xl"
+                    onClick={cardType === 'achievement' ? handleAchievementCardClick : undefined}
+                  >
+                    <FlexxCard
+                      type={cardType}
+                      data={stats}
+                      username={user?.username}
+                      userAvatarUrl={user?.avatarUrl}
+                      achievement={cardType === 'achievement' ? selectedAchievement : undefined}
+                    />
+                  </div>
+                </SwiperSlide>
+              ))}
               </Swiper>
             </View>
 
