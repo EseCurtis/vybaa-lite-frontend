@@ -5,20 +5,19 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
-import { domtoimage } from '@/plugins/dom-to-img'
+import { useDomExport } from '@/hooks/use-dom-export.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { shareImageBlob } from '@/shared/utils/filesystem.util'
 import { randomInRange } from '@/shared/utils/helpers.util'
 import { RiImageAddLine, RiUpload2Fill } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
-import html2canvas from 'html2canvas'
 import { useRef, useState } from 'react'
 
 export function FlexxAppScreen() {
   const { user } = useAuth()
   const ref = useRef<HTMLDivElement>(null)
   const toast = useToast()
+  const { exportAndShare } = useDomExport({ scale: 7 })
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([
     null,
     null,
@@ -148,62 +147,6 @@ export function FlexxAppScreen() {
     setBoxImages(newImages)
   }
 
-  const handleExportAndShare = async (element: any) => {
-    if (!element) {
-      toast.error('Card not found')
-      return
-    }
-
-    try {
-      toast.loading('Generating image...')
-
-      // Convert to canvas
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-      })
-
-      // Convert to blob
-      const blob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob(
-          (blob) => {
-            resolve(blob!)
-          },
-          'image/png',
-          1.0,
-        )
-      })
-
-      let scale = 7
-      let style = {
-        transform: `scale(${scale})`,
-        transformOrigin: 'top left',
-        width: element.clientWidth + 'px', // use original width of DOM element to avoid part of the image being cropped out
-        height: element.clientHeight + 'px', // use original height of DOM element
-      }
-
-      await domtoimage
-        .toBlob(element, {
-          width: element.clientWidth * scale,
-          height: element.clientHeight * scale,
-          style: style,
-        })
-        .then(async function (blobx) {
-          await shareImageBlob(blobx)
-        })
-
-      toast.dismiss()
-    } catch (error: any) {
-      alert(error)
-      console.error('Export failed:', error)
-      console.log(error)
-      toast.dismiss()
-      toast.error('Failed to export image')
-    }
-  }
-
   const boxes = [
     { height: box1, image: boxImages[0], index: 0 },
     { height: box2, image: boxImages[1], index: 1 },
@@ -230,7 +173,7 @@ export function FlexxAppScreen() {
       <TabHeader title="Flex On'Em">
         <Pressable
           onPress={() => {
-            handleExportAndShare(ref.current)
+            exportAndShare(ref.current)
           }}
           className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
         >
