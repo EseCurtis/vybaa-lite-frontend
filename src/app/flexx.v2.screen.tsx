@@ -75,7 +75,7 @@ function ShareBottomSheetContent({
   return (
     <View className="space-y-4 pb-4">
       {/* Preview */}
-      <View className="space-y-2">
+      <View className="space-y-2 hidden">
         <Text className="text-white/70 text-sm font-bbh">Preview</Text>
         <View className="rounded-2xl overflow-hidden bg-card-light max-h-[300px] flex items-center justify-center p-4">
           <View
@@ -132,7 +132,7 @@ function ShareBottomSheetContent({
         </View>
 
         <Button
-          label="Download Image"
+          label="Download"
           onClick={handleShareAndClose}
           variant="outline"
           className="w-full"
@@ -162,194 +162,317 @@ function FlexxCard({ type, data, username, userAvatarUrl }: FlexxCardProps) {
     }
   }
 
-  const getIcon = () => {
-    const size = 40
-    const Icon = () => {
-      switch (type) {
-        case 'daily':
-          return <RiFlashlightFill size={size} className="text-white/90" />
-        case 'weekly':
-          return <RiTrophyFill size={size} className="text-white/90" />
-        case 'streak':
-          return <RiFireFill size={size} className="text-white/90" />
-      }
+  const getIcon = (size: number = 40) => {
+    switch (type) {
+      case 'daily':
+        return <RiFlashlightFill size={size} className="text-white/90" />
+      case 'weekly':
+        return <RiTrophyFill size={size} className="text-white/90" />
+      case 'streak':
+        return <RiFireFill size={size} className="text-white/90" />
     }
+  }
 
+  // Different layouts for each card type
+  if (type === 'daily') {
     return (
-      <View className="">
-        <View className="absolute top-0 right-0 p-mg mt-3">
-          <Icon />
-        </View>
-        <View className="absolute scale-[7.1] bottom-mg opacity-10 right-0 p-mg mt-3">
-          <Icon />
+      <View className="size-full relative overflow-hidden">
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+        />
+        <div
+          style={{
+            background: 'url(/assets/framernoise.png)',
+            backgroundSize: '300px',
+            opacity: 0.15,
+            mixBlendMode: 'overlay',
+          }}
+          className="absolute inset-0"
+        />
+
+        {/* Minimal/Clean Layout */}
+        <View className="relative z-10 flex-1 p-6 size-full flex flex-col">
+          {/* Top Corner - Date & Icon */}
+          <View className="flex-row justify-between items-start mb-8">
+            <Text className="text-white/50 text-sm font-bbh">{today}</Text>
+            {getIcon()}
+          </View>
+
+          {/* Center - Hero Stat */}
+          <View className="flex-1 justify-center items-center">
+            <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-3">
+              Today's Discipline
+            </Text>
+            <Text className="text-white text-[70px] leading-none font-bbh font-bold mb-1">
+              {data.totalCheckIns}
+            </Text>
+            <Text className="text-white/80 text-lg font-bbh tracking-wide">
+              check-ins
+            </Text>
+
+            {/* Secondary Stats */}
+            <View className="mt-16 space-y-3 w-full max-w-[85%]">
+              <View className="flex-row justify-between items-center">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+                  Goals
+                </Text>
+                <Text className="text-white text-xl font-bbh font-bold">
+                  {data.totalGoals}
+                </Text>
+              </View>
+              <View className="h-px bg-white/10" />
+              <View className="flex-row justify-between items-center">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+                  Streak
+                </Text>
+                <Text className="text-white text-xl font-bbh font-bold">
+                  {data.currentStreak} days
+                </Text>
+              </View>
+              <View className="h-px bg-white/10" />
+              <View className="flex-row justify-between items-center">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+                  Completion
+                </Text>
+                <Text className="text-white text-xl font-bbh font-bold">
+                  {Math.round(data.completionRate)}%
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom - User Info */}
+          <View className="flex-row items-center justify-between pt-4">
+            <View className="flex-row gap-3 items-center">
+              {userAvatarUrl && <Avatar url={userAvatarUrl} size={40} />}
+              <View>
+                {username && (
+                  <Text className="text-white text-base font-bbh font-semibold">
+                    @{username}
+                  </Text>
+                )}
+                <Text className="text-white/40 text-xs font-bbh">
+                  Made with Vybaa
+                </Text>
+              </View>
+            </View>
+            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <img
+                src="/assets/icon-foreground.png"
+                className="w-6 h-6 brightness-[100]"
+                alt="Vybaa"
+              />
+            </View>
+          </View>
         </View>
       </View>
     )
   }
 
-  const getTitle = () => {
-    switch (type) {
-      case 'daily':
-        return (
-          <>
-            <View className="flex-row flex gap-2 items-center">
-              <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-                Daily
-              </Text>
+  if (type === 'weekly') {
+    return (
+      <View className="size-full relative overflow-hidden">
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+        />
+        <div
+          style={{
+            background: 'url(/assets/framernoise.png)',
+            backgroundSize: '300px',
+            opacity: 0.15,
+            mixBlendMode: 'overlay',
+          }}
+          className="absolute inset-0"
+        />
+
+        {/* Grid Layout */}
+        <View className="relative z-10 flex-1 p-6 size-full flex flex-col">
+          {/* Header */}
+          <View className="flex-col text-center justify-center items-center mb-10">
+            <View className="flex-col gap-3 items-center">
               {getIcon()}
-            </View>
-            <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-              Discipline
-            </Text>
-          </>
-        )
-      case 'weekly':
-        return (
-          <>
-            <View className="flex-row  flex gap-2 items-center">
-              <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-                Weekly
+              <Text className="text-white text-2xl font-bbh font-bold leading-tight">
+                Weekly{'\n'}Flexx
               </Text>
-              {getIcon()}
             </View>
-            <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-              Flexx
-            </Text>
-          </>
-        )
-      case 'streak':
-        return (
-          <>
-            <View className="flex-row flex gap-2 items-center">
-              <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-                Streak
-              </Text>
-              {getIcon()}
-            </View>
-            <Text className="text-white text-4xl font-bbh font-bold tracking-tight">
-              Power
-            </Text>
-          </>
-        )
-    }
-  }
-
-  const getStats = () => {
-    switch (type) {
-      case 'daily':
-        return [
-          { label: 'Goals', value: data.totalGoals },
-          { label: 'Check-ins Today', value: data.totalCheckIns },
-          { label: 'Completion', value: `${Math.round(data.completionRate)}%` },
-          { label: 'Current Streak', value: `${data.currentStreak} days` },
-        ]
-      case 'weekly':
-        return [
-          { label: 'Total Goals', value: data.totalGoals },
-          {
-            label: 'Avg Progress',
-            value: `${Math.round(data.averageProgress)}%`,
-          },
-          { label: 'Check-ins', value: data.totalCheckIns },
-          { label: 'Streak', value: `${data.currentStreak} days` },
-        ]
-      case 'streak':
-        return [
-          { label: 'Current Streak', value: `${data.currentStreak} days` },
-          { label: 'Longest Streak', value: `${data.longestStreak} days` },
-          { label: 'Total Check-ins', value: data.totalCheckIns },
-          {
-            label: 'Discipline Score',
-            value: `${Math.round(data.completionRate)}%`,
-          },
-        ]
-    }
-  }
-
-  return (
-    <View className="size-full relative overflow-hidden">
-      {/* Gradient background */}
-      <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`} />
-
-      {/* Noise texture */}
-      <div
-        style={{
-          background: 'url(/assets/framernoise.png)',
-          backgroundSize: '300px',
-          opacity: 0.15,
-          mixBlendMode: 'overlay',
-        }}
-        className="absolute inset-0"
-      />
-
-      {/* Content */}
-      <View className="relative z-10 flex-1 p-8 size-full  flex flex-col justify-between">
-        {/* Header */}
-        <View className="space-y-1  ">
-          <View className="flex-row items-center justify-between">
             <Text className="text-white/50 text-sm font-bbh">{today}</Text>
           </View>
 
-          <View className="flex-col space-y-1">
-            {getTitle()}
-            <Text className="text-white/60 text-base font-bbh mt-2">
-              Proof of Discipline
-            </Text>
+          {/* Stats Grid - 2x2 with better spacing */}
+          <View className="flex-1 grid grid-cols-2 gap-3 mb-8">
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+              <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
+                Total Goals
+              </Text>
+              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+                {data.totalGoals}
+              </Text>
+            </View>
+
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+              <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
+                Check-ins
+              </Text>
+              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+                {data.totalCheckIns}
+              </Text>
+            </View>
+
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+              <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
+                Progress
+              </Text>
+              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+                {Math.round(data.averageProgress)} <span className='text-lg'>%</span>
+              </Text>
+            </View>
+
+            <View className="bg-black/20 backdrop-blur-sm rounded-2xl p-5 flex flex-col justify-between">
+              <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
+                Streak
+              </Text>
+              <Text className="text-white text-6xl font-bbh font-bold leading-none">
+                {data.currentStreak}d
+              </Text>
+            </View>
           </View>
-        </View>
 
-        {/* Stats Grid */}
-        <View className="space-y-1 my-1">
-          {getStats().map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="flex flex-row items-center justify-between py-2 border-b border-white/10"
-            >
-              <Text className="text-white/70 text-xs font-bbh uppercase tracking-wide">
-                {stat.label}
-              </Text>
-              <Text className="text-white text-md font-bbh font-bold">
-                {stat.value}
-              </Text>
-            </motion.div>
-          ))}
-        </View>
-
-        {/* Footer */}
-        <View className="flex-row items-center justify-between">
-          <View>
-            <View className="flex-row gap-2">
-              {userAvatarUrl && (
-                <View className="">
-                  <Avatar url={userAvatarUrl} />
-                </View>
-              )}
-              <View className="">
+          {/* Bottom */}
+          <View className="flex-row items-center justify-between border-t border-white/10 pt-5">
+            <View className="flex-row gap-3 items-center">
+              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
+              <View>
                 {username && (
-                  <Text className="text-white text-lg font-bbh font-semibold">
+                  <Text className="text-white text-base font-bbh font-semibold">
                     @{username}
                   </Text>
                 )}
-                <Text className="text-white/40 text-xs font-bbh mt-0">
+                <Text className="text-white/40 text-xs font-bbh">
                   Made with Vybaa
                 </Text>
               </View>
             </View>
-          </View>
-          <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-            <img
-              src="/assets/icon-foreground.png"
-              className="w-7 h-7 brightness-[100] "
-              alt="Vybaa"
-            />
+            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <img
+                src="/assets/icon-foreground.png"
+                className="w-6 h-6 brightness-[100]"
+                alt="Vybaa"
+              />
+            </View>
           </View>
         </View>
       </View>
-    </View>
-  )
+    )
+  }
+
+  if (type === 'streak') {
+    return (
+      <View className="size-full relative overflow-hidden">
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+        />
+        <div
+          style={{
+            background: 'url(/assets/framernoise.png)',
+            backgroundSize: '300px',
+            opacity: 0.15,
+            mixBlendMode: 'overlay',
+          }}
+          className="absolute inset-0"
+        />
+
+        {/* Dramatic Center-Focused Layout */}
+        <View className="relative z-10 flex-1 size-full flex flex-col p-6">
+          {/* Top Corner Info */}
+          <View className="flex-row justify-between items-center mb-6">
+            {getIcon()}
+            <Text className="text-white/50 text-sm font-bbh">{today}</Text>
+          </View>
+
+          {/* Massive Center Streak */}
+          <View className="flex-1 justify-center items-center -mt-8">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="text-center flex flex-col items-center"
+            >
+              <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.3em] mb-4">
+                Current Streak
+              </Text>
+              <Text className="text-white text-[140px] leading-none font-bbh font-bold">
+                {data.currentStreak}
+              </Text>
+              <Text className="text-white text-5xl font-bbh font-bold mt-2 tracking-wider">
+                DAYS
+              </Text>
+            </motion.div>
+
+            {/* Mini Stats Row */}
+            <View className="flex-row items-center gap-6 mt-20">
+              <View className="text-center flex-1">
+                <Text className="text-white text-4xl font-bbh font-bold leading-none">
+                  {data.longestStreak}
+                </Text>
+                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
+                  Best Streak
+                </Text>
+              </View>
+
+              <View className="w-px h-14 bg-white/20" />
+
+              <View className="text-center flex-1">
+                <Text className="text-white text-4xl font-bbh font-bold leading-none">
+                  {data.totalCheckIns}
+                </Text>
+                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
+                  Total Check-ins
+                </Text>
+              </View>
+
+              <View className="w-px h-14 bg-white/20" />
+
+              <View className="text-center flex-1">
+                <Text className="text-white text-4xl font-bbh font-bold leading-none">
+                  {Math.round(data.completionRate)}%
+                </Text>
+                <Text className="text-white/60 text-xs font-bbh uppercase mt-2 tracking-wide">
+                  Score
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom */}
+          <View className="flex-row items-center justify-between pt-4">
+            <View className="flex-row gap-3 items-center">
+              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
+              <View>
+                {username && (
+                  <Text className="text-white text-base font-bbh font-semibold">
+                    @{username}
+                  </Text>
+                )}
+                <Text className="text-white/40 text-xs font-bbh">
+                  Streak Power • Vybaa
+                </Text>
+              </View>
+            </View>
+            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <img
+                src="/assets/icon-foreground.png"
+                className="w-6 h-6 brightness-[100]"
+                alt="Vybaa"
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
+  // Fallback (shouldn't reach here)
+  return null
 }
 
 export function FlexxV2AppScreen() {
@@ -404,69 +527,73 @@ export function FlexxV2AppScreen() {
   return (
     <View className=" max-h-screen bg-cardd flex-1">
       <NoiseComponent>
-        <TabHeader title="Flexx On'Em ">
-          <Pressable
-            onPress={handleShareBottomSheet}
-            className="w-12 h-12 rounded-full bg-warning-yellow/10 flex items-center justify-center"
-          >
-            <RiUpload2Fill size={24} className="text-warning-yellow" />
-          </Pressable>
-        </TabHeader>
-
-        <View className="flex-1 w-full flex flex-col">
-          {/* Cards Container with Swiper */}
-          <View className="flex-1">
-            <Swiper
-              spaceBetween={20}
-              slidesPerView={1.2}
-              centeredSlides={true}
-              onSwiper={(swiper) => (swiperRef.current = swiper)}
-              onSlideChange={handleSlideChange}
-              className="flexx-swiper"
-              style={{ height: '100%', width: '100%' }}
-            >
-              {cards.map((cardType, index) => (
-                <SwiperSlide key={cardType}>
-                  <div
-                    ref={(el) => (cardRefs.current[index] = el)}
-                    style={{
-                      aspectRatio: '9/16',
-                      maxHeight: '85%',
-                      width: '100%',
-                    }}
-                    className="rounded-3xl size-full overflow-hidden shadow-2xl"
-                  >
-                    <FlexxCard
-                      type={cardType}
-                      data={stats}
-                      username={user?.username}
-                      userAvatarUrl={user?.avatarUrl}
-                    />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+        <View className="h-full overflow-hidden">
+          <View className="">
+            <TabHeader title="Flexx On'Em ">
+              <Pressable
+                onPress={handleShareBottomSheet}
+                className="w-12 h-12 rounded-full bg-warning-yellow/10 flex items-center justify-center"
+              >
+                <RiUpload2Fill size={24} className="text-warning-yellow" />
+              </Pressable>
+            </TabHeader>
           </View>
 
-          {/* Swipe Indicator */}
-          <View className="py-6 justify-center items-center">
-            <View className="flex-row gap-2 mb-2">
-              {cards.map((_, index) => (
-                <div
-                  key={index}
-                  className={`h-2 rounded-full transition-all ${
-                    index === activeCardIndex
-                      ? 'w-8 bg-warning-yellow'
-                      : 'w-2 bg-white/20'
-                  }`}
-                />
-              ))}
+          <View className="h-full w-full overflow-y-hidden flex flex-col">
+           
+           
+            {/* Cards Container with Swiper */}
+            <View className="h-full overflow-y-hidden">
+              <Swiper
+                spaceBetween={20}
+                slidesPerView={1.2}
+                centeredSlides={true}
+                onSwiper={(swiper) => (swiperRef.current = swiper)}
+                onSlideChange={handleSlideChange}
+                className="flexx-swiper"
+                style={{ height: '100%', width: '100%' }}
+              >
+                {cards.map((cardType, index) => (
+                  <SwiperSlide key={cardType}>
+                    <div
+                      ref={(el) => (cardRefs.current[index] = el)}
+                      style={{
+                        width: '100%',
+                      }}
+                      className="rounded-3xl size-full overflow-hidden shadow-2xl"
+                    >
+                      <FlexxCard
+                        type={cardType}
+                        data={stats}
+                        username={user?.username}
+                        userAvatarUrl={user?.avatarUrl}
+                      />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
             </View>
-            <Text className="text-white/60 text-sm font-bbh">
-              Swipe to see different cards
-            </Text>
+
+            {/* Swipe Indicator */}
+            <View className="pb-2 justify-center items-center">
+              <View className="flex-row gap-2 mb-2">
+                {cards.map((_, index) => (
+                  <div
+                    key={index}
+                    className={`h-2 rounded-full transition-all ${
+                      index === activeCardIndex
+                        ? 'w-8 bg-warning-yellow'
+                        : 'w-2 bg-white/20'
+                    }`}
+                  />
+                ))}
+              </View>
+              <Text className="text-white/60 text-sm font-bbh">
+                Swipe to see different cards
+              </Text>
+            </View>
+            <BottomNotch />
           </View>
-          <BottomNotch />
         </View>
       </NoiseComponent>
     </View>
