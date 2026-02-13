@@ -80,8 +80,10 @@ export function HomeActions() {
       description: 'Reflect on your day and track your thoughts',
       icon: RiFileMarkedLine,
       onAction() {
+        // Navigate directly to today's journal entry
+        const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
         navigate({
-          to: '/journal',
+          to: `/journal/${today}`,
         })
       },
     },

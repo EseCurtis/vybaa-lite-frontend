@@ -2,7 +2,7 @@
   "appId": "com.vybaa.app",
   "appName": "Vybaa",
   "webDir": "dist",
-  "server": {
+  "semrver": {
     "androidScheme": "http",
     "url": "http://localhost:3005"
   },
