@@ -8,6 +8,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
+import { useTabBar } from '@/hooks/use-tab-bar.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
@@ -42,6 +43,8 @@ export default function ProfileScreen() {
   })
   const [formError, setFormError] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  const { hide, show } = useTabBar()
 
   // Initialize form data from user
   useEffect(() => {
@@ -182,6 +185,14 @@ export default function ProfileScreen() {
   const circumference = 2 * Math.PI * radius
   const strokeDashoffset = circumference * (1 - overallProgress / 100)
 
+  useEffect(() => {
+    if (isEditing) {
+      hide()
+    } else {
+      show()
+    }
+  }, [isEditing])
+
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
       <NoiseComponent>
@@ -197,9 +208,9 @@ export default function ProfileScreen() {
           >
             <View className="items-center space-y-4">
               {/* Avatar with Progress Ring */}
-              <View className="relative">
+              <View className="relative ">
                 {hasProgress && !isEditing && (
-                  <svg className="absolute -inset-2 w-36 h-36">
+                  <svg className="absolute scale-[1.2] -inset-2 w-36 h-36 z-[999]">
                     <circle
                       cx="72"
                       cy="72"
@@ -214,7 +225,7 @@ export default function ProfileScreen() {
                       cy="72"
                       r={radius}
                       fill="none"
-                      stroke="#FFD60A"
+                      stroke="#cc004a"
                       strokeWidth="5"
                       strokeLinecap="round"
                       className="transform -rotate-90 origin-center"
@@ -238,7 +249,7 @@ export default function ProfileScreen() {
                     initials={initials}
                   />
                 ) : (
-                  <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-10">
+                  <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
                     {imagePreview || user?.avatarUrl ? (
                       <img
                         src={imagePreview || user?.avatarUrl}
@@ -254,8 +265,8 @@ export default function ProfileScreen() {
                 )}
 
                 {hasProgress && !isEditing && (
-                  <View className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-yellow-400 rounded-full px-3 py-1.5 shadow-lg">
-                    <Text className="text-black text-sm font-bbh font-bold">
+                  <View className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-accent-700 rounded-full px-3 py-1.5 shadow-lg">
+                    <Text className="text-white text-sm font-bbh font-bold">
                       {overallProgress}%
                     </Text>
                   </View>
@@ -509,7 +520,7 @@ export default function ProfileScreen() {
                   </View>
                   <View>
                     <Text className="text-white text-sm font-bbh font-semibold">
-                      Insights
+                      Metric
                     </Text>
                     <Text className="text-white/50 text-xs font-bbh">
                       View progress stats

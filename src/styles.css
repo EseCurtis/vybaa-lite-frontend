@@ -211,3 +211,12 @@ html, body, #app {
     transform: rotate(0deg);
   }
 }
+
+.limit-text-to-two-lines {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Number of lines to show */
+    line-clamp: 2; /* Standard property */
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis; /* Optional: adds the '...' */
+}

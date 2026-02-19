@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as AchievementsRouteImport } from './routes/achievements'
+import { Route as AchievementSimulatorRouteImport } from './routes/achievement-simulator'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as JournalIndexRouteImport } from './routes/journal/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
@@ -20,6 +21,7 @@ import { Route as AppWellnessRouteImport } from './routes/app/wellness'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
+import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
@@ -33,6 +35,11 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const AchievementsRoute = AchievementsRouteImport.update({
   id: '/achievements',
   path: '/achievements',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AchievementSimulatorRoute = AchievementSimulatorRouteImport.update({
+  id: '/achievement-simulator',
+  path: '/achievement-simulator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -80,6 +87,11 @@ const AppHomeRoute = AppHomeRouteImport.update({
   path: '/app/home',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppGoalRoute = AppGoalRouteImport.update({
+  id: '/app/goal',
+  path: '/app/goal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSubProfileSettingsRoute = AppSubProfileSettingsRouteImport.update({
   id: '/app/sub-profile/settings',
   path: '/app/sub-profile/settings',
@@ -104,8 +116,10 @@ const ChillTimerSessionIdDurationRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
@@ -121,8 +135,10 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
@@ -139,8 +155,10 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
@@ -158,8 +176,10 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/goal'
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
@@ -175,8 +195,10 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/goal'
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
@@ -192,8 +214,10 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/goal'
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
@@ -210,8 +234,10 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AchievementSimulatorRoute: typeof AchievementSimulatorRoute
   AchievementsRoute: typeof AchievementsRoute
   NotificationsRoute: typeof NotificationsRoute
+  AppGoalRoute: typeof AppGoalRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
@@ -240,6 +266,13 @@ declare module '@tanstack/react-router' {
       path: '/achievements'
       fullPath: '/achievements'
       preLoaderRoute: typeof AchievementsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/achievement-simulator': {
+      id: '/achievement-simulator'
+      path: '/achievement-simulator'
+      fullPath: '/achievement-simulator'
+      preLoaderRoute: typeof AchievementSimulatorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -305,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppHomeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/goal': {
+      id: '/app/goal'
+      path: '/app/goal'
+      fullPath: '/app/goal'
+      preLoaderRoute: typeof AppGoalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sub-profile/settings': {
       id: '/app/sub-profile/settings'
       path: '/app/sub-profile/settings'
@@ -338,8 +378,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AchievementSimulatorRoute: AchievementSimulatorRoute,
   AchievementsRoute: AchievementsRoute,
   NotificationsRoute: NotificationsRoute,
+  AppGoalRoute: AppGoalRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,

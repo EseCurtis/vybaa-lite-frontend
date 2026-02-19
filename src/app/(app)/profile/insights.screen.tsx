@@ -23,7 +23,7 @@ export default function InsightsScreen() {
   return (
     <View className="flex-1 bg-cardd ">
       <NoiseComponent>
-        <TabHeader title="Insights">
+        <TabHeader title="Metrics">
           <Pressable
             onPress={() => navigate({ to: '/app/profile' })}
             className="text-white"

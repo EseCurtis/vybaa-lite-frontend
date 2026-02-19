@@ -2,8 +2,8 @@ import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
 import { useDeleteGoal } from '@/hooks/use-goals.hook'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
@@ -11,6 +11,7 @@ import { seededColor } from '@/shared/utils/helpers.util'
 import { RiDeleteBinLine, RiFireFill } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { GoalDurationPill } from './duration-pill.component'
+import { GoalDetailsSheet } from './goal-details-sheet.component'
 
 interface GoalCardProps extends Goal {
   onPress?: (goal: Goal) => void
@@ -34,8 +35,8 @@ export function GoalCard({
 }: GoalCardProps) {
   const toast = useToast()
   const color = seededColor(goalText)
-  const { checkIn, isCheckingIn } = useCheckInWithAchievements()
   const { mutate: deleteMutate, isPending: deleteIsPending } = useDeleteGoal()
+  const bottomSheet = useBottomSheet()
 
   const onDelete = () => {
     if (
@@ -122,24 +123,36 @@ export function GoalCard({
                 fullWidth
                 onClick={async (e) => {
                   e.stopPropagation()
-                  await checkIn(id)
+                  const goal: Goal = {
+                    id,
+                    goalText,
+                    currentDay,
+                    targetDays,
+                    canCheckIn,
+                    lastCheckInDate,
+                    startedAt,
+                  }
+                  bottomSheet.present(
+                    <GoalDetailsSheet
+                      goal={goal}
+                      onDismiss={bottomSheet.dismiss}
+                    />,
+                    {
+                      title: 'Goal Details',
+                      elevation: 999,
+                    }
+                  )
                 }}
-                disabled={isCheckingIn}
-                loading={isCheckingIn}
                 className="text-sm font-bold border-2 border-cardd !bg-black/20  p-2 h-auto"
                 textClassName="text-sm"
                 bgColor={color}
               />
             ) : (
-              // <Pressable className="snap-center ml-2 text-black   rounded-full flex-row gap-2 items-center justify-center px-2 mx-auto py-2 font-bold">
-              //   <Text className="whitespace-nowrap text-sm">Done</Text>
-              // </Pressable>
               <Button
                 leftIcon={<RiFireFill color={color}/>}
                 variant="default"
                 fullWidth
-                disabled={isCheckingIn}
-                loading={isCheckingIn}
+                disabled
                 className="text-sm font-bold !bg-cardd border-2 border-transparent  p-2 h-auto"
                 textClassName="text-sm"
                 bgColor="rgb(6 5 9 / 0.01)"

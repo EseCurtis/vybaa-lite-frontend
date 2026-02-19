@@ -1,11 +1,16 @@
 import { BottomNotch } from '@/components/common/notch.component'
+import { Avatar } from '@/components/user/avatar.component'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
+import { useAuth } from '@/providers/auth.provider'
+import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
+import { featureFlags } from '@/shared/config/feature-flags.config'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
+import { AnimatePresence } from 'framer-motion'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
 import { LinearGradient } from '../linear-gradient.component'
@@ -17,37 +22,50 @@ export const TabBar = memo(() => {
   const navigate = useNavigate()
   const location = useLocation()
   const { data: unreadCount } = useUnreadCount()
+  const { isVisible } = useTabBarController()
+  const { user } = useAuth();
 
   const tabs = useMemo(
-    () => [
-      {
-        id: 'home',
-        route: '/app/home',
-        icon: Icons.Home,
-        label: 'Home',
-        isSpecial: false,
-        badge: null,
-        matchAlso: [],
-      },
-      {
-        id: 'wellness',
-        route: '/app/wellness',
-        icon: Icons.Heart,
-        label: 'Wellness',
-        isSpecial: false,
-        badge: null,
-        matchAllRoot: true,
-      },
-      {
-        id: 'profile',
-        route: '/app/profile',
-        icon: Icons.User,
-        label: 'Me',
-        isSpecial: false,
-        badge: null,
-        matchAllRoot: true,
-      },
-    ],
+    () =>
+      [
+        {
+          id: 'home',
+          route: '/app/home',
+          icon: Icons.Home,
+          label: 'Home',
+          isSpecial: false,
+          badge: null,
+          matchAlso: [],
+        },
+        {
+          id: 'goals',
+          route: '/app/goal',
+          icon: Icons.Target,
+          label: 'Goals',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+        },
+        {
+          id: 'wellness',
+          route: '/app/wellness',
+          icon: Icons.Heart,
+          label: 'Wellness',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+          enabled: featureFlags.insights, // Hide wellness tab when insights is disabled
+        },
+        {
+          id: 'profile',
+          route: '/app/profile',
+          icon: user?.avatarUrl  ? () => <Avatar user={user}/>:Icons.User,
+          label: 'Me',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+        },
+      ].filter((tab) => tab.enabled !== false), // Filter out disabled tabs
     [unreadCount],
   )
 
@@ -82,16 +100,25 @@ export const TabBar = memo(() => {
     [location.pathname, navigate],
   )
 
+  if (!isVisible) return null
+
   return (
-    <Moti.div
-      className="bottom-0 left-0 fixed w-full z-50 "
-      initial={{ y: 0, opacity: 1 }}
-      animate={{ y: 0, opacity: 1 }}
-      key="tabbar"
-    >
+    <AnimatePresence>
+      <Moti.div
+        className="bottom-0 left-0 fixed w-full z-50 "
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{
+          type: 'spring',
+          stiffness: 300,
+          damping: 30,
+        }}
+        key="tabbar"
+      >
         <LinearGradient
           className="absolute top-0 size-full left-0 backdrop-blur-xl "
-          colors={['transparent', 'transparent']}
+          colors={['transparent', colors.cardd]}
           locations={[0, 0.5]}
           style={{
             mask: 'linear-gradient(transparent , #000 30%)',
@@ -225,7 +252,8 @@ export const TabBar = memo(() => {
         <BottomNotch />
       </View>
 
-    </Moti.div>
+      </Moti.div>
+    </AnimatePresence>
   )
 })
 

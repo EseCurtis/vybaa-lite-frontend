@@ -11,6 +11,10 @@ import { routeTree } from './routeTree.gen.ts'
 
 import { CapacitorPlugin } from './plugins/capacitor/capacitor-plugin.tsx'
 import reportWebVitals from './reportWebVitals.ts'
+import { CapacitorUpdater } from '@capgo/capacitor-updater';
+
+CapacitorUpdater.notifyAppReady();
+
 import './styles.css'
 
 // Create a QueryClient instance

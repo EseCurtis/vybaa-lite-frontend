@@ -11,6 +11,13 @@ export interface UserStats {
   totalJournals: number
 }
 
+export interface UsernameAvailability {
+  canChange: boolean
+  daysRemaining: number
+  nextAvailableDate: string
+  currentUsername?: string
+}
+
 class UserAPI {
   async registerFCMToken(fcmToken: string): Promise<{ msg: string }> {
     const { data: res } = await http.post<{ msg: string }>(
@@ -36,6 +43,29 @@ class UserAPI {
   async getStats(): Promise<{ msg: string; data: UserStats }> {
     const { data: res } = await http.get<{ msg: string; data: UserStats }>(
       `${API_V1}/users/me/stats`
+    )
+    return res
+  }
+
+  async checkUsernameAvailability(): Promise<{ msg: string; data: UsernameAvailability }> {
+    const { data: res } = await http.get<{ msg: string; data: UsernameAvailability }>(
+      `${API_V1}/users/username/availability`
+    )
+    return res
+  }
+
+  async checkUsernameExists(username: string): Promise<{ 
+    msg: string; 
+    data: { 
+      available: boolean; 
+      exists?: boolean;
+      reason?: string;
+      isCurrentUsername?: boolean;
+    } 
+  }> {
+    const { data: res } = await http.get(
+      `${API_V1}/users/username/check`,
+      { params: { username } }
     )
     return res
   }

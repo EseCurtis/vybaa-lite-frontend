@@ -4,59 +4,12 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
-import {
-  RiArrowRightSLine,
-  RiInformationLine,
-  RiLogoutBoxRLine,
-  RiNotification3Line,
-  RiPaletteLine,
-  RiQuestionLine,
-  RiShieldLine
-} from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
+import { publicUrls, openPublicUrl } from '@/shared/config/public-urls.config'
+import { RiLogoutBoxRLine, RiArrowRightSLine, RiFileTextLine, RiShieldCheckLine } from '@remixicon/react'
 import { motion } from 'framer-motion'
 
 export default function SettingsScreen() {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-
-  const settingsItems = [
-    {
-      id: 'notifications',
-      icon: RiNotification3Line,
-      label: 'Notifications',
-      description: 'Manage alerts',
-      action: () => {},
-    },
-    {
-      id: 'appearance',
-      icon: RiPaletteLine,
-      label: 'Appearance',
-      description: 'Theme & display',
-      action: () => {},
-    },
-    {
-      id: 'privacy',
-      icon: RiShieldLine,
-      label: 'Privacy',
-      description: 'Data & security',
-      action: () => {},
-    },
-    {
-      id: 'about',
-      icon: RiInformationLine,
-      label: 'About',
-      description: 'App info',
-      action: () => {},
-    },
-    {
-      id: 'help',
-      icon: RiQuestionLine,
-      label: 'Help & Support',
-      description: 'Get assistance',
-      action: () => {},
-    },
-  ]
 
   return (
     <View className="flex-1 bg-cardd ">
@@ -101,46 +54,72 @@ export default function SettingsScreen() {
               </View>
             </motion.div>
 
-            {/* App Settings Section */}
+            {/* Legal Section */}
             <View className="space-y-3">
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-                App Settings
+                Legal
               </Text>
 
               <View className="space-y-2 w-full">
-                {settingsItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 + index * 0.05 }}
-                    className="w-full"
+                {/* Terms of Service */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="w-full"
+                >
+                  <Pressable
+                    onPress={() => openPublicUrl(publicUrls.termsOfService)}
+                    className="bg-card-light/40 w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
-                    <Pressable
-                      onPress={item.action}
-                      className="bg-card-light/40 w-full  text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
-                    >
-                      <View className="flex-row items-center gap-4">
-                        <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                          <item.icon size={20} className="text-white" />
-                        </View>
-                        <View>
-                          <Text className="text-white text-sm font-bbh font-semibold">
-                            {item.label}
-                          </Text>
-                          <Text className="text-white/50 text-xs font-bbh">
-                            {item.description}
-                          </Text>
-                        </View>
+                    <View className="flex-row items-center gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                        <RiFileTextLine size={20} className="text-white" />
                       </View>
-                      <RiArrowRightSLine size={20} className="text-white/40" />
-                    </Pressable>
-                  </motion.div>
-                ))}
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Terms of Service
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          Read our terms and conditions
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
+                </motion.div>
+
+                {/* Privacy Policy */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="w-full"
+                >
+                  <Pressable
+                    onPress={() => openPublicUrl(publicUrls.privacyPolicy)}
+                    className="bg-card-light/40 w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                        <RiShieldCheckLine size={20} className="text-white" />
+                      </View>
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Privacy Policy
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          How we protect your data
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
+                </motion.div>
               </View>
             </View>
 
-            {/* Danger Zone */}
+            {/* Account Section */}
             <View className="space-y-3">
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
                 Account

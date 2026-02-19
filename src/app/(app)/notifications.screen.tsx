@@ -181,7 +181,7 @@ export default function NotificationsScreen() {
         ) : (
           <>
             <AnimatePresence mode="popLayout">
-              {[...notifications, ...notifications, ...notifications].map(
+              {notifications.map(
                 (notification) => (
                   <Fragment key={notification.id}>
                     <NotificationItem

@@ -92,7 +92,15 @@ export function useCheckIn() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (goalId?: string) => goalAPI.checkIn(goalId),
+    mutationFn: ({
+      goalId,
+      notes,
+      attachments,
+    }: {
+      goalId?: string
+      notes?: string
+      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+    } = {}) => goalAPI.checkIn(goalId, notes, attachments),
     onSuccess: (response) => {
       // Invalidate and refetch current goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
@@ -214,8 +222,16 @@ export function useGoalOperations(page: number = 1, limit: number = 10, canCheck
     createGoalAsync: createGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
 
-    checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
-    checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
+    checkIn: (
+      goalId?: string,
+      notes?: string,
+      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+    ) => checkInMutation.mutate({ goalId, notes, attachments }),
+    checkInAsync: (
+      goalId?: string,
+      notes?: string,
+      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+    ) => checkInMutation.mutateAsync({ goalId, notes, attachments }),
     isCheckingIn: checkInMutation.isPending,
 
     resetGoal: resetGoalMutation.mutate,
@@ -270,8 +286,16 @@ export function useGoalOperationsInfinite(limit: number = 10, canCheckIn?: boole
     createGoalAsync: createGoalMutation.mutateAsync,
     isCreating: createGoalMutation.isPending,
 
-    checkIn: (goalId?: string) => checkInMutation.mutate(goalId),
-    checkInAsync: (goalId?: string) => checkInMutation.mutateAsync(goalId),
+    checkIn: (
+      goalId?: string,
+      notes?: string,
+      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+    ) => checkInMutation.mutate({ goalId, notes, attachments }),
+    checkInAsync: (
+      goalId?: string,
+      notes?: string,
+      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+    ) => checkInMutation.mutateAsync({ goalId, notes, attachments }),
     isCheckingIn: checkInMutation.isPending,
 
     resetGoal: resetGoalMutation.mutate,

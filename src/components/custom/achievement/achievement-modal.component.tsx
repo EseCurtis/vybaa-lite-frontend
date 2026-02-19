@@ -263,7 +263,7 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
                 variant="default"
                 fullWidth
                 onClick={handleDismiss}
-                className="!bg-gradient-to-r !from-primary-500 !to-accent-500 shadow-lg shadow-primary-500/30"
+                className="!bg-gradient-to-r !from-white !to-accent-500 shadow-lg shadow-primary-500/30"
                 textClassName="font-bold"
               />
             </motion.div>

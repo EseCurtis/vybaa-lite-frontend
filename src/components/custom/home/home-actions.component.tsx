@@ -2,6 +2,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { featureFlags } from '@/shared/config/feature-flags.config'
 import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiEmotionLaughLine,
@@ -79,6 +80,7 @@ export function HomeActions() {
       name: 'Journal',
       description: 'Reflect on your day and track your thoughts',
       icon: RiFileMarkedLine,
+      enabled: featureFlags.journal,
       onAction() {
         // Navigate directly to today's journal entry
         const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
@@ -91,13 +93,14 @@ export function HomeActions() {
       name: 'Chill',
       description: 'Calm down and regulate your emotions',
       icon: RiTempColdLine,
+      enabled: featureFlags.chill,
       onAction() {
         navigate({
           to: '/chill',
         })
       },
     },
-  ]
+  ].filter((action) => action.enabled !== false) // Filter out disabled features
   return (
     <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-2 ">
       {actions.map((item, index) => {

@@ -66,8 +66,17 @@ class GoalAPI {
     return res
   }
 
-  async checkIn(goalId?: string): Promise<GoalResponse> {
-    const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals/check-in`, goalId ? { goalId } : {})
+  async checkIn(
+    goalId?: string,
+    notes?: string,
+    attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
+  ): Promise<GoalResponse> {
+    const payload: any = {}
+    if (goalId) payload.goalId = goalId
+    if (notes) payload.notes = notes
+    if (attachments && attachments.length > 0) payload.attachments = attachments
+    
+    const { data: res } = await http.post<GoalResponse>(`${API_V1}/goals/check-in`, payload)
     return res
   }
 

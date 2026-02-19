@@ -177,6 +177,9 @@ export const Icons = {
   // Analytics
   Activity: (props: Omit<IconProps, 'name'>) => <Icon name="Activity" {...props} />,
   BarChart: (props: Omit<IconProps, 'name'>) => <Icon name="BarChart" {...props} />,
+  
+  // Goals
+  Target: (props: Omit<IconProps, 'name'>) => <Icon name="Target" {...props} />,
 }
 
 export default Icon

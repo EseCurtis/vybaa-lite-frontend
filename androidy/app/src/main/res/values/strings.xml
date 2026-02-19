@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">StreekApp</string>
+    <string name="title_activity_main">StreekApp</string>
+    <string name="package_name">com.streek.dezrektech</string>
+    <string name="custom_url_scheme">com.streek.dezrektech</string>
+</resources>

@@ -2,6 +2,7 @@ import { AchievementModal } from '@/components/custom/achievement/achievement-mo
 import { useCheckIn } from '@/hooks/use-goals.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { Achievement } from '@/shared/api/achievement.api'
+import type { Attachment } from '@/components/custom/goal/attachment-picker.component'
 
 /**
  * Enhanced check-in hook that automatically shows achievement popups
@@ -10,9 +11,13 @@ export function useCheckInWithAchievements() {
   const checkInMutation = useCheckIn()
   const bottomSheet = useBottomSheetController()
 
-  const checkIn = async (goalId?: string) => {
+  const checkIn = async (
+    goalId?: string,
+    notes?: string,
+    attachments?: Attachment[]
+  ) => {
     try {
-      const response = await checkInMutation.mutateAsync(goalId)
+      const response = await checkInMutation.mutateAsync({ goalId, notes, attachments })
 
       // Check if any achievements were earned
       const achievements = (response as any)?.data?.achievements as Achievement[] | undefined

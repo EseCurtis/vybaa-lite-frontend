@@ -31,7 +31,7 @@ function HomeGoalItem({
       className=" snap-center  max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
       <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
-      <Text className="text-black/40 leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden  text-left ">{smartTruncate(title,23)}</Text>
+      <Text className="text-black/40 limit-text-to-two-lines  leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden  text-left ">{smartTruncate(title,23)}</Text>
       <View className="">
         <RiArrowRightUpLine size={27} />
       </View>
@@ -72,7 +72,7 @@ export function HomeGoals() {
       {!noGoals && (
         <Pressable
           onPress={() => {
-            navigate({ to: '/goal' })
+            navigate({ to: '/app/goal' })
           }}
           className="snap-center ml-2 text-card-lighter-3  bg-card-light/20 rounded-full flex-row gap-2 items-center justify-center px-4 font-bold"
         >
@@ -85,7 +85,7 @@ export function HomeGoals() {
           <Text className="text-card-lighter-2/50 font-medium">You cleared it all! 🎊</Text>
           <Pressable
             onPress={() => {
-              navigate({ to: '/goal' })
+              navigate({ to: '/app/goal' })
             }}
             className="snap-center bg-white ml-2 text-black ml-auto  rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
           >

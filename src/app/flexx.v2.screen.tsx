@@ -395,7 +395,7 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Total Goals
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.totalGoals)} font-bbh font-bold leading-none break-all`}>
+              <Text className={`text-white ${getGridFontSize(data.totalGoals)} font-bbh font-bold leading-none `}>
                 {data.totalGoals}
               </Text>
             </View>
@@ -404,7 +404,7 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Check-ins
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none break-all`}>
+              <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}>
                 {data.totalCheckIns}
               </Text>
             </View>
@@ -875,7 +875,7 @@ export function FlexxV2AppScreen() {
                     style={{
                       width: '100%',
                     }}
-                    className="rounded-3xl size-full overflow-hidden shadow-2xl"
+                    className="rounded-3xxl size-full overflow-hidden shadow-2xl"
                     onClick={cardType === 'achievement' ? handleAchievementCardClick : undefined}
                   >
                     <FlexxCard
