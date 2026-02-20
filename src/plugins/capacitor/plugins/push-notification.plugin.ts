@@ -1,7 +1,7 @@
+import { notificationQueryKeys } from '@/shared/api/notification.query-keys';
 import { userAPI } from '@/shared/api/user.api';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { createPushNotificationChannel } from '../helpers/push-notifications.helper';
-import { notificationQueryKeys } from '@/shared/api/notification.query-keys';
 
 // Store queryClient reference for invalidation
 let queryClientRef: any = null;
@@ -86,9 +86,9 @@ export const createPushNotificationChannels = async () => {
         lights: true,
         vibration: true,
         lightColor: "green",
-        id: "streek_notif_1",
-        name: "STREEK_REMINDER",
-        description: "Reminder for your streeks",
+        id: "vybaa_notifications",
+        name: "vybaa_notifications",
+        description: "Reminder for your goals",
         sound: "streek_reminder_sound.wav",
     });
 
