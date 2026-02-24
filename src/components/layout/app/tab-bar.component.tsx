@@ -47,6 +47,15 @@ export const TabBar = memo(() => {
           matchAllRoot: true,
         },
         {
+          id: 'communities',
+          route: '/app/communities',
+          icon: Icons.Users,
+          label: 'Communities',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+        },
+        {
           id: 'wellness',
           route: '/app/wellness',
           icon: Icons.Heart,

@@ -53,8 +53,7 @@ export function useMarkAsRead() {
  */
 export function useMarkAllAsRead() {
   const queryClient = useQueryClient()
-  const toast = useToast()
-
+  const toast = useToast()  
   return useMutation({
     mutationFn: () => notificationAPI.markAllAsRead(),
     onSuccess: () => {

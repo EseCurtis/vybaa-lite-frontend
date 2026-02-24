@@ -16,7 +16,7 @@ export function EmptyList({ icon, title, description, action }: EmptyListProps) 
   return (
     <View className="flex-1 items-center justify-start  px-8 py-16 ">
       {icon && (
-        <View className="mb-6 opacity-40">
+        <View className="mb-6 ">
           {icon}
         </View>
       )}

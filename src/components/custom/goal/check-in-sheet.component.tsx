@@ -2,8 +2,8 @@ import { TextArea } from '@/components/common/textarea.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { AttachmentPicker, type Attachment } from './attachment-picker.component'
 import { useState } from 'react'
+import { AttachmentPicker, type Attachment } from './attachment-picker.component'
 
 interface CheckInSheetProps {
   goalText: string

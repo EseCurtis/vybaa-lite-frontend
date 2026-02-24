@@ -41,7 +41,7 @@ export default function GoalsAppScreen() {
       // Normal click - show details
       bottomSheet.present(
         <GoalDetailsSheet goal={goal} onDismiss={bottomSheet.dismiss} />,
-        { title: 'Goal Details' },
+        { title: 'Goal Details', elevation: 9999 },
       )
     }
   }

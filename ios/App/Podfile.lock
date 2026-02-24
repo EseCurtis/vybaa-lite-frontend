@@ -10,6 +10,7 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
+  - BigInt (5.2.0)
   - Capacitor (7.4.4):
     - CapacitorCordova
   - CapacitorApp (7.1.0):
@@ -36,6 +37,12 @@ PODS:
     - FBSDKCoreKit (= 18.0.0)
     - FBSDKLoginKit (= 18.0.0)
     - GoogleSignIn (~> 9.0.0)
+  - CapgoCapacitorUpdater (7.43.3):
+    - Alamofire (= 5.10.2)
+    - BigInt (= 5.2.0)
+    - Capacitor
+    - Version (= 0.8.0)
+    - ZIPFoundation (~> 0.9)
   - FBAEMKit (18.0.0):
     - FBSDKCoreKit_Basics (= 18.0.0)
   - FBSDKCoreKit (18.0.0):
@@ -113,6 +120,8 @@ PODS:
   - RevenuecatPurchasesCapacitor (9.2.2):
     - Capacitor
     - PurchasesHybridCommon (= 13.26.0)
+  - Version (0.8.0)
+  - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/@capacitor/ios`)"
@@ -126,6 +135,7 @@ DEPENDENCIES:
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/@capgo/capacitor-social-login`)"
+  - "CapgoCapacitorUpdater (from `../../node_modules/@capgo/capacitor-updater`)"
   - FirebaseMessaging
   - "RevenuecatPurchasesCapacitor (from `../../node_modules/@revenuecat/purchases-capacitor`)"
 
@@ -134,6 +144,7 @@ SPEC REPOS:
     - Alamofire
     - AppAuth
     - AppCheckCore
+    - BigInt
     - FBAEMKit
     - FBSDKCoreKit
     - FBSDKCoreKit_Basics
@@ -152,6 +163,8 @@ SPEC REPOS:
     - PromisesObjC
     - PurchasesHybridCommon
     - RevenueCat
+    - Version
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -176,6 +189,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/status-bar"
   CapgoCapacitorSocialLogin:
     :path: "../../node_modules/@capgo/capacitor-social-login"
+  CapgoCapacitorUpdater:
+    :path: "../../node_modules/@capgo/capacitor-updater"
   RevenuecatPurchasesCapacitor:
     :path: "../../node_modules/@revenuecat/purchases-capacitor"
 
@@ -183,6 +198,7 @@ SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
+  BigInt: f668a80089607f521586bbe29513d708491ef2f7
   Capacitor: 358dd1c3fdd71d969547b17e159fd8a7736cb45f
   CapacitorApp: 26587c2ce485d88ddb39adb21cac64f8e481afe3
   CapacitorCordova: bf648a636f3c153f652d312ae145fb508b6ffced
@@ -194,6 +210,7 @@ SPEC CHECKSUMS:
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
   CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
   CapgoCapacitorSocialLogin: 251e1ab19a15a4f5d5ae017f15acd34ca76c7114
+  CapgoCapacitorUpdater: da7d18b310f35e6d022fe63417b8e5c18b40cd24
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
   FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f
   FBSDKCoreKit_Basics: 017b6dc2a1862024815a8229e75661e627ac1e29
@@ -213,7 +230,9 @@ SPEC CHECKSUMS:
   PurchasesHybridCommon: fa166fc8b385cf80f581f923c91d8ccffe5dd7f8
   RevenueCat: e47ff90dfd271fde155a4befe48e8fc02e8281e4
   RevenuecatPurchasesCapacitor: 6727a4dc1455bdf2374259420719ce5dfbe957fa
+  Version: de5907f2c5d0f3cf21708db7801d1d5401139486
+  ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: c2da90f1cb689c34aa25051d63c55dc5cc31f68f
+PODFILE CHECKSUM: 6e252f8f35bee3795a869685bd7fdd3ce86572f7
 
 COCOAPODS: 1.16.2

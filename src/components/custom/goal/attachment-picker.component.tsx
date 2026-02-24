@@ -1,12 +1,12 @@
-import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { uploadAPI } from '@/shared/api/upload.api'
 import { useToast } from '@/providers/toast.provider'
-import { RiImageLine, RiMicLine, RiCloseLine } from '@remixicon/react'
+import { uploadAPI } from '@/shared/api/upload.api'
+import { smartTruncate } from '@/shared/utils/helpers.util'
+import { RiCloseLine, RiImageLine, RiMicLine } from '@remixicon/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 
 export interface Attachment {
   type: 'image' | 'audio'
@@ -241,7 +241,7 @@ export function AttachmentPicker({
                   ) : (
                     <>
                       <Text className="text-white/90 text-xs font-bbh font-medium truncate">
-                        {attachment.name || 'Image'}
+                        {smartTruncate(attachment.name || 'Image Attachment', 10)}
                       </Text>
                       <Text className="text-white/40 text-[10px] font-bbh">
                         Image

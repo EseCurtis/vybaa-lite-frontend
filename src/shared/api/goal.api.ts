@@ -12,6 +12,12 @@ export interface Goal {
   reminderTime?: string | null
   wasReset?: boolean
   canCheckIn: boolean
+  templateId?: string | null
+  communityId?: string | null
+  community?: {
+    id: string
+    name: string
+  } | null
 }
 
 export interface CreateGoalRequest {

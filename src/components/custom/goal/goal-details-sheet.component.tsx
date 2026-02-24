@@ -3,19 +3,20 @@ import { TextArea } from '@/components/common/textarea.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
+import { useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { Icon } from '@iconify/react'
-import { RiDeleteBinLine, RiFireFill, RiImageLine, RiCheckLine, RiEditLine } from '@remixicon/react'
+import { RiArrowRightSLine, RiCheckLine, RiDeleteBinLine, RiEditLine, RiFireFill, RiGroupLine } from '@remixicon/react'
+import { useRouter } from '@tanstack/react-router'
+import { AnimatePresence, motion } from 'framer-motion'
 import moment from 'moment'
 import { useState } from 'react'
-import { GoalDurationPill } from './duration-pill.component'
 import { AttachmentPicker, type Attachment } from './attachment-picker.component'
-import { motion, AnimatePresence } from 'framer-motion'
+import { GoalDurationPill } from './duration-pill.component'
 
 // Helper function to format reminder time (HH:MM to 12-hour format)
 function formatReminderTime(time24: string): string {
@@ -36,6 +37,7 @@ export function GoalDetailsSheet({
   onDismiss,
   onEdit,
 }: GoalDetailsSheetProps) {
+  const router = useRouter()
   const toast = useToast()
   const color = seededColor(goal.goalText)
   const { checkIn, isCheckingIn } = useCheckInWithAchievements()
@@ -44,6 +46,13 @@ export function GoalDetailsSheet({
   const [showCheckInForm, setShowCheckInForm] = useState(false)
   const [notes, setNotes] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
+
+  const handleCommunityClick = () => {
+    if (goal.communityId) {
+      router.navigate({ to: `/app/communities/${goal.communityId}` })
+      onDismiss?.()
+    }
+  }
 
   const progressPercentage = Math.min(
     (goal.currentDay / goal.targetDays) * 100,
@@ -105,7 +114,7 @@ export function GoalDetailsSheet({
           className="rounded-3xl shrink-0 p-6 w-full snap-center"
           style={{ backgroundColor: color }}
         >
-          <Text className="text-card-lighter text-sm font-bold font-bbh mb-4 leading-tight">
+          <Text className="text-black text-sm font-bold font-bbh mb-4 leading-tight">
             {goal.goalText}
           </Text>
 
@@ -115,15 +124,15 @@ export function GoalDetailsSheet({
               targetDays={goal.targetDays}
             />
 
-            <Text className="text-card-lighter/60 text-sm font-bbh">
+            <Text className="text-cardd/60 text-sm font-bbh">
               {Math.round(progressPercentage)}% complete
             </Text>
           </View>
 
           {/* Progress Bar */}
-          <View className="h-2 bg-card-lighter/10 rounded-full overflow-hidden">
+          <View className="h-2 bg-cardd/10 rounded-full overflow-hidden">
             <View
-              className="h-full bg-card-lighter/30 rounded-full transition-all"
+              className="h-full bg-cardd rounded-full transition-all"
               style={{ width: `${progressPercentage}%` }}
             />
           </View>
@@ -143,6 +152,29 @@ export function GoalDetailsSheet({
         </View>
       </View>
 
+      {/* Community Link */}
+      {goal.community && goal.communityId && (
+        <Pressable
+          onPress={handleCommunityClick}
+          className="w-full bg-card-light/40 hover:bg-card-light/60 rounded-2xl p-4 flex-row items-center justify-between transition-colors border border-card-lighter/20"
+        >
+          <View className="flex-row items-center gap-3">
+            <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center">
+              <RiGroupLine size={18} className="text-white/60" />
+            </View>
+            <View>
+              <Text className="text-white text-sm font-bold font-bbh">
+                From Community
+              </Text>
+              <Text className="text-white/60 text-xs font-bbh">
+                {goal.community.name}
+              </Text>
+            </View>
+          </View>
+          <RiArrowRightSLine size={20} className="text-white/40" />
+        </Pressable>
+      )}
+
       {/* Check-in Section */}
       <AnimatePresence mode="wait">
         {!showCheckInForm ? (
@@ -157,15 +189,15 @@ export function GoalDetailsSheet({
               <Pressable
                 onPress={handleCheckIn}
                 disabled={isCheckingIn || isDeleting}
-                className="w-full bg-green-500/20 hover:bg-green-500/30 rounded-2xl p-4 flex-row items-center justify-center gap-2 transition-colors border border-green-500/30"
+                className="w-full bg-white rounded-full p-4 flex-row items-center justify-center gap-2 transition-colors "
               >
-                <RiFireFill className="text-green-400" size={20} />
-                <Text className="text-green-400 text-sm font-bbh font-bold">
+                <RiFireFill className="text-black" size={20} />
+                <Text className="text-black text-sm font-bbh font-bold">
                   Check In
                 </Text>
               </Pressable>
             ) : (
-              <View className="w-full bg-green-500/10 rounded-2xl p-4 flex-row items-center justify-center gap-2 border border-green-500/20">
+              <View className="w-full bg-green-500/5 p-4 flex-row items-center justify-center gap-2  rounded-full">
                 <RiCheckLine className="text-green-400" size={20} />
                 <Text className="text-green-400 text-sm font-bbh font-semibold">
                   Already checked in today
@@ -216,7 +248,7 @@ export function GoalDetailsSheet({
               <Pressable
                 onPress={handleCheckIn}
                 disabled={isCheckingIn || isDeleting}
-                className="w-full bg-card-lighter hover:bg-card-lighter/90 rounded-xl py-4 px-6 flex-row items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white rounded-full p-4 flex-row items-center justify-center gap-2 transition-colors "
               >
                 {isCheckingIn ? (
                   <>

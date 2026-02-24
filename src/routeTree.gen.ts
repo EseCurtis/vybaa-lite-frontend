@@ -22,8 +22,12 @@ import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
+import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
+import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
+import { Route as AppCommunitiesCommunityIdRouteImport } from './routes/app/communities.$communityId'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
 
@@ -92,6 +96,11 @@ const AppGoalRoute = AppGoalRouteImport.update({
   path: '/app/goal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCommunitiesRoute = AppCommunitiesRouteImport.update({
+  id: '/app/communities',
+  path: '/app/communities',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSubProfileSettingsRoute = AppSubProfileSettingsRouteImport.update({
   id: '/app/sub-profile/settings',
   path: '/app/sub-profile/settings',
@@ -102,6 +111,22 @@ const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   path: '/app/sub-profile/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppCommunityCommunityIdRoute = AppCommunityCommunityIdRouteImport.update({
+  id: '/app/community/$communityId',
+  path: '/app/community/$communityId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppCommunitiesMyRoute = AppCommunitiesMyRouteImport.update({
+  id: '/my',
+  path: '/my',
+  getParentRoute: () => AppCommunitiesRoute,
+} as any)
+const AppCommunitiesCommunityIdRoute =
+  AppCommunitiesCommunityIdRouteImport.update({
+    id: '/$communityId',
+    path: '/$communityId',
+    getParentRoute: () => AppCommunitiesRoute,
+  } as any)
 const AppActionsFlexxRoute = AppActionsFlexxRouteImport.update({
   id: '/app/actions/flexx',
   path: '/app/actions/flexx',
@@ -119,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/communities': typeof AppCommunitiesRouteWithChildren
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
@@ -129,6 +155,9 @@ export interface FileRoutesByFullPath {
   '/goal': typeof GoalIndexRoute
   '/journal': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/communities/$communityId': typeof AppCommunitiesCommunityIdRoute
+  '/app/communities/my': typeof AppCommunitiesMyRoute
+  '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
@@ -138,6 +167,7 @@ export interface FileRoutesByTo {
   '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/communities': typeof AppCommunitiesRouteWithChildren
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
@@ -148,6 +178,9 @@ export interface FileRoutesByTo {
   '/goal': typeof GoalIndexRoute
   '/journal': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/communities/$communityId': typeof AppCommunitiesCommunityIdRoute
+  '/app/communities/my': typeof AppCommunitiesMyRoute
+  '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
@@ -158,6 +191,7 @@ export interface FileRoutesById {
   '/achievement-simulator': typeof AchievementSimulatorRoute
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
+  '/app/communities': typeof AppCommunitiesRouteWithChildren
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
@@ -168,6 +202,9 @@ export interface FileRoutesById {
   '/goal/': typeof GoalIndexRoute
   '/journal/': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/communities/$communityId': typeof AppCommunitiesCommunityIdRoute
+  '/app/communities/my': typeof AppCommunitiesMyRoute
+  '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
@@ -179,6 +216,7 @@ export interface FileRouteTypes {
     | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/communities'
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
@@ -189,6 +227,9 @@ export interface FileRouteTypes {
     | '/goal'
     | '/journal'
     | '/app/actions/flexx'
+    | '/app/communities/$communityId'
+    | '/app/communities/my'
+    | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/chill/timer/$sessionId/$duration'
@@ -198,6 +239,7 @@ export interface FileRouteTypes {
     | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/communities'
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
@@ -208,6 +250,9 @@ export interface FileRouteTypes {
     | '/goal'
     | '/journal'
     | '/app/actions/flexx'
+    | '/app/communities/$communityId'
+    | '/app/communities/my'
+    | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/chill/timer/$sessionId/$duration'
@@ -217,6 +262,7 @@ export interface FileRouteTypes {
     | '/achievement-simulator'
     | '/achievements'
     | '/notifications'
+    | '/app/communities'
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
@@ -227,6 +273,9 @@ export interface FileRouteTypes {
     | '/goal/'
     | '/journal/'
     | '/app/actions/flexx'
+    | '/app/communities/$communityId'
+    | '/app/communities/my'
+    | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/chill/timer/$sessionId/$duration'
@@ -237,6 +286,7 @@ export interface RootRouteChildren {
   AchievementSimulatorRoute: typeof AchievementSimulatorRoute
   AchievementsRoute: typeof AchievementsRoute
   NotificationsRoute: typeof NotificationsRoute
+  AppCommunitiesRoute: typeof AppCommunitiesRouteWithChildren
   AppGoalRoute: typeof AppGoalRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
@@ -247,6 +297,7 @@ export interface RootRouteChildren {
   GoalIndexRoute: typeof GoalIndexRoute
   JournalIndexRoute: typeof JournalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
+  AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
   ChillTimerSessionIdDurationRoute: typeof ChillTimerSessionIdDurationRoute
@@ -345,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppGoalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/communities': {
+      id: '/app/communities'
+      path: '/app/communities'
+      fullPath: '/app/communities'
+      preLoaderRoute: typeof AppCommunitiesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sub-profile/settings': {
       id: '/app/sub-profile/settings'
       path: '/app/sub-profile/settings'
@@ -358,6 +416,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/sub-profile/insights'
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/community/$communityId': {
+      id: '/app/community/$communityId'
+      path: '/app/community/$communityId'
+      fullPath: '/app/community/$communityId'
+      preLoaderRoute: typeof AppCommunityCommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/communities/my': {
+      id: '/app/communities/my'
+      path: '/my'
+      fullPath: '/app/communities/my'
+      preLoaderRoute: typeof AppCommunitiesMyRouteImport
+      parentRoute: typeof AppCommunitiesRoute
+    }
+    '/app/communities/$communityId': {
+      id: '/app/communities/$communityId'
+      path: '/$communityId'
+      fullPath: '/app/communities/$communityId'
+      preLoaderRoute: typeof AppCommunitiesCommunityIdRouteImport
+      parentRoute: typeof AppCommunitiesRoute
     }
     '/app/actions/flexx': {
       id: '/app/actions/flexx'
@@ -376,11 +455,26 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppCommunitiesRouteChildren {
+  AppCommunitiesCommunityIdRoute: typeof AppCommunitiesCommunityIdRoute
+  AppCommunitiesMyRoute: typeof AppCommunitiesMyRoute
+}
+
+const AppCommunitiesRouteChildren: AppCommunitiesRouteChildren = {
+  AppCommunitiesCommunityIdRoute: AppCommunitiesCommunityIdRoute,
+  AppCommunitiesMyRoute: AppCommunitiesMyRoute,
+}
+
+const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
+  AppCommunitiesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementSimulatorRoute: AchievementSimulatorRoute,
   AchievementsRoute: AchievementsRoute,
   NotificationsRoute: NotificationsRoute,
+  AppCommunitiesRoute: AppCommunitiesRouteWithChildren,
   AppGoalRoute: AppGoalRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
@@ -391,6 +485,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoalIndexRoute: GoalIndexRoute,
   JournalIndexRoute: JournalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,
+  AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
   ChillTimerSessionIdDurationRoute: ChillTimerSessionIdDurationRoute,

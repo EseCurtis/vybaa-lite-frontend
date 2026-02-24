@@ -2,16 +2,19 @@ import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useDeleteGoal } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { Moti } from '@/shared/constants.shared'
 import { seededColor } from '@/shared/utils/helpers.util'
-import { RiDeleteBinLine, RiFireFill } from '@remixicon/react'
+import { RiArrowRightUpLine, RiDeleteBinLine } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { GoalDurationPill } from './duration-pill.component'
 import { GoalDetailsSheet } from './goal-details-sheet.component'
+
+import { RiGroupLine } from '@remixicon/react'
+import { useRouter } from '@tanstack/react-router'
 
 interface GoalCardProps extends Goal {
   onPress?: (goal: Goal) => void
@@ -28,15 +31,25 @@ export function GoalCard({
   canCheckIn,
   lastCheckInDate,
   startedAt,
+  communityId,
+  community,
   onPress,
   bulkMode = false,
   isSelected = false,
   onToggleSelection,
 }: GoalCardProps) {
   const toast = useToast()
+  const router = useRouter()
   const color = seededColor(goalText)
   const { mutate: deleteMutate, isPending: deleteIsPending } = useDeleteGoal()
   const bottomSheet = useBottomSheet()
+
+  const handleCommunityClick = (e: any) => {
+    e.stopPropagation()
+    if (communityId) {
+      router.navigate({ to: `/app/communities/${communityId}` })
+    }
+  }
 
   const onDelete = () => {
     if (
@@ -104,8 +117,21 @@ export function GoalCard({
           </View>
         )}
         
-        <View className="flex-col items-start pl-3">
-          <Text className="mb-3 max-w-[80vw]">{goalText}</Text>
+        <View className="flex-col items-start pl-3 text-left  w-full">
+          <View className="flex-row items-start gap-2 mb-2 w-full ">
+            <Text className="mb-1 max-w-[80vw] flex-1 font-semibold">{goalText} </Text>
+            {community && (
+              <Pressable
+                onPress={handleCommunityClick as any}
+                className="flex-row items-center gap-1 px-2 py-1 rounded-full bg-black/10 hover:bg-black/20 transition-colors"
+              >
+                <RiGroupLine size={14} className="text-black/60" />
+                <Text className="text-black/60 text-xs font-bbh">
+                  {community?.name || 'Community'}
+                </Text>
+              </Pressable>
+            )}
+          </View>
         </View>
         <View className="flex-row w-full justify-between">
           <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
@@ -118,7 +144,7 @@ export function GoalCard({
           >
             {canCheckIn ? (
               <Button
-                leftIcon={<RiFireFill color={"#0a0e16"}/>}
+                leftIcon={<RiArrowRightUpLine color={"#0a0e16"}/>}
                 variant="default"
                 fullWidth
                 onClick={async (e) => {
@@ -143,17 +169,17 @@ export function GoalCard({
                     }
                   )
                 }}
-                className="text-sm font-bold border-2 border-cardd !bg-black/20  p-2 h-auto"
+                className="text-sm font-bold border-2 border-cardd !bg-black/20  p-1 px-4 h-auto"
                 textClassName="text-sm"
                 bgColor={color}
               />
             ) : (
               <Button
-                leftIcon={<RiFireFill color={color}/>}
+                leftIcon={<RiArrowRightUpLine color={color}/>}
                 variant="default"
                 fullWidth
                 disabled
-                className="text-sm font-bold !bg-cardd border-2 border-transparent  p-2 h-auto"
+                className="text-sm font-bold !bg-cardd border-2 border-transparent   p-1 px-4  h-auto"
                 textClassName="text-sm"
                 bgColor="rgb(6 5 9 / 0.01)"
               />
