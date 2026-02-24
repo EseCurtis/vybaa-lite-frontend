@@ -48,10 +48,9 @@ export interface CommunityMember {
 export interface GoalTemplate {
   id: string
   communityId: string
-  title: string
-  description: string | null
+  goalText: string // Aligned with Goal model
   targetDays: number
-  icon: string | null
+  reminderTime: string | null // Format: "HH:MM" (24-hour format)
   createdBy: string
   createdAt: string
   updatedAt: string
@@ -138,17 +137,15 @@ export interface UpdateCommunityRequest {
 }
 
 export interface CreateTemplateRequest {
-  title: string
-  description?: string
+  goalText: string // Aligned with goal creation
   targetDays: number
-  icon?: string
+  reminderTime?: string // Format: "HH:MM" (24-hour format)
 }
 
 export interface UpdateTemplateRequest {
-  title?: string
-  description?: string | null
+  goalText?: string
   targetDays?: number
-  icon?: string | null
+  reminderTime?: string | null
 }
 
 export interface StartGoalFromTemplateRequest {
@@ -212,6 +209,30 @@ export interface CommentResponse {
 export interface CommunityStatsResponse {
   msg: string
   data: CommunityStats
+}
+
+export interface TemplateParticipant {
+  goalId: string
+  userId: string
+  user: {
+    id: string
+    username: string | null
+    firstName: string | null
+    lastName: string | null
+    avatarUrl: string | null
+  }
+  currentDay: number
+  targetDays: number
+  progress: number
+  lastCheckInDate: string | null
+  startedAt: string
+  isCompleted: boolean
+}
+
+export interface TemplateParticipantsResponse {
+  msg: string
+  data: TemplateParticipant[]
+  pagination: PaginationMeta
 }
 
 // ==================== API Class ====================
@@ -306,6 +327,12 @@ class CommunityAPI {
 
   async startGoalFromTemplate(templateId: string, data?: StartGoalFromTemplateRequest): Promise<{ msg: string; data: any }> {
     const { data: res } = await http.post<{ msg: string; data: any }>(`${API_V1}/communities/templates/${templateId}/start`, data || {})
+    return res
+  }
+
+  async getTemplateParticipants(templateId: string, page: number = 1, limit: number = 20): Promise<TemplateParticipantsResponse> {
+    const params = { page, limit }
+    const { data: res } = await http.get<TemplateParticipantsResponse>(`${API_V1}/communities/templates/${templateId}/participants`, { params })
     return res
   }
 

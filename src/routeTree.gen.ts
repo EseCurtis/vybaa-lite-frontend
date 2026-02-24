@@ -30,6 +30,7 @@ import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.m
 import { Route as AppCommunitiesCommunityIdRouteImport } from './routes/app/communities.$communityId'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
+import { Route as AppCommunitiesTemplatesTemplateIdRouteImport } from './routes/app/communities.templates.$templateId'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -138,6 +139,12 @@ const ChillTimerSessionIdDurationRoute =
     path: '/chill/timer/$sessionId/$duration',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppCommunitiesTemplatesTemplateIdRoute =
+  AppCommunitiesTemplatesTemplateIdRouteImport.update({
+    id: '/templates/$templateId',
+    path: '/templates/$templateId',
+    getParentRoute: () => AppCommunitiesRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/communities/templates/$templateId': typeof AppCommunitiesTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesByTo {
@@ -183,6 +191,7 @@ export interface FileRoutesByTo {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/communities/templates/$templateId': typeof AppCommunitiesTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesById {
@@ -207,6 +216,7 @@ export interface FileRoutesById {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/communities/templates/$templateId': typeof AppCommunitiesTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRouteTypes {
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/communities/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/communities/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   id:
     | '__root__'
@@ -278,6 +290,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/communities/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesById: FileRoutesById
 }
@@ -452,17 +465,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChillTimerSessionIdDurationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/communities/templates/$templateId': {
+      id: '/app/communities/templates/$templateId'
+      path: '/templates/$templateId'
+      fullPath: '/app/communities/templates/$templateId'
+      preLoaderRoute: typeof AppCommunitiesTemplatesTemplateIdRouteImport
+      parentRoute: typeof AppCommunitiesRoute
+    }
   }
 }
 
 interface AppCommunitiesRouteChildren {
   AppCommunitiesCommunityIdRoute: typeof AppCommunitiesCommunityIdRoute
   AppCommunitiesMyRoute: typeof AppCommunitiesMyRoute
+  AppCommunitiesTemplatesTemplateIdRoute: typeof AppCommunitiesTemplatesTemplateIdRoute
 }
 
 const AppCommunitiesRouteChildren: AppCommunitiesRouteChildren = {
   AppCommunitiesCommunityIdRoute: AppCommunitiesCommunityIdRoute,
   AppCommunitiesMyRoute: AppCommunitiesMyRoute,
+  AppCommunitiesTemplatesTemplateIdRoute:
+    AppCommunitiesTemplatesTemplateIdRoute,
 }
 
 const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(

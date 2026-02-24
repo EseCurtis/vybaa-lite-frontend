@@ -1,8 +1,10 @@
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Avatar } from '@/components/user/avatar.component'
 import type { Community } from '@/shared/api/community.api'
-import { RiFileList3Line, RiFireLine, RiGroupLine } from '@remixicon/react'
+import { seededColor } from '@/shared/utils/helpers.util'
+import { RiArrowRightUpLine, RiFileList3Line, RiFireFill, RiGroupLine } from '@remixicon/react'
 
 interface CommunityCardProps {
   community: Community
@@ -14,64 +16,69 @@ export function CommunityCard({ community, onPress }: CommunityCardProps) {
     onPress?.(community)
   }
 
+  const bgColor = seededColor(community.name)
+
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 rounded-2xl bg-card-light/40 border border-card-lighter/20 mb-3"
+      className="p-3 flex-row gap-4 rounded-3xl mb-3 w-full shrink-0 relative transition-all"
     >
-      {community.coverImage && (
-        <View className="w-full h-32 rounded-xl mb-3 overflow-hidden">
-          <img
-            src={community.coverImage}
-            alt={community.name}
-            className="w-full h-full object-cover"
-          />
+      <View className="relative size-[50px] shrink-0 inline-block">
+        <View
+          className="rounded-3xl absolute right-0 bottom-0 border border-white"
+          style={{ backgroundColor: bgColor }}
+        >
+          <Avatar url={community?.owner?.avatarUrl}/>
         </View>
-      )}
 
-      <View className="flex-row items-start justify-between mb-2">
-        <View className="flex-1">
-          <Text className="text-white text-lg font-bold font-bbh mb-1">
-            {community.name}
-          </Text>
-          {community.description && (
-            <Text className="text-white/60 text-sm font-bbh line-clamp-2">
-              {community.description}
+        <View
+          className="size-full rounded-full overflow-hidden"
+          style={{ backgroundColor: bgColor }}
+        >
+         <img src={community?.coverImage} className='object-cover'/>
+        </View>
+      </View>
+      <View className="flex flex-col gap-2">
+        <View className="flex text-left flex-row items-start justify-between gap-2">
+          <View className="flex-1">
+            <Text className="text-white text-base font-bold font-bbh mb-1">
+              {community.name}
             </Text>
-          )}
+            {community.description && (
+              <Text className="text-white/70 text-xs font-bbh line-clamp-2">
+                {community.description}
+              </Text>
+            )}
+          </View>
         </View>
-      </View>
 
-      <View className="flex-row items-center gap-4 mt-3">
-        <View className="flex-row items-center gap-1.5">
-          <RiGroupLine size={16} className="text-white/40" />
-          <Text className="text-white/60 text-xs font-bbh">
-            {community._count?.members || 0} members
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1.5">
-          <RiFileList3Line size={16} className="text-white/40" />
-          <Text className="text-white/60 text-xs font-bbh">
-            {community._count?.templates || 0} templates
-          </Text>
-        </View>
-        <View className="flex-row items-center gap-1.5">
-          <RiFireLine size={16} className="text-white/40" />
-          <Text className="text-white/60 text-xs font-bbh">
-            {community._count?.goals || 0} active
-          </Text>
-        </View>
-      </View>
+        <View className="flex flex-row flex-wrap items-center justify-between mt-1 gap-3">
+          <View className="flex flex-row items-center gap-3">
+            <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
+              <RiGroupLine size={16} className="text-white/60" />
+              <Text className="text-white/70 text-[11px] font-bbh">
+                {community._count?.members || 0} members
+              </Text>
+            </View>
+            <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
+              <RiFileList3Line size={16} className="text-white/60" />
+              <Text className="text-white/70 text-[11px] font-bbh">
+                {community._count?.templates || 0} templates
+              </Text>
+            </View>
+          </View>
 
-      {community.category && (
-        <View className="mt-2">
-          <View className="inline-block px-2 py-1 rounded-full bg-card-lighter/20">
-            <Text className="text-white/60 text-xs font-bbh">
-              {community.category}
+          <View className="px-3 pl-2 py-1 flex whitespace-nowrap rounded-full bg-warning-yellow/10 flex flex-row items-center gap-1">
+            <RiFireFill size={14} className="text-warning-yellow/70" />
+            <Text className="text-warning-yellow/80 text-[11px] font-bbh">
+              {community._count?.goals || 0} active
             </Text>
           </View>
         </View>
-      )}
+      </View>
+      <View className="p-2">
+        <RiArrowRightUpLine className='text-card-lighter-3'/>
+      </View>
     </Pressable>
   )
 }

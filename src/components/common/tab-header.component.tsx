@@ -1,4 +1,5 @@
 import { hapticFeedback } from '@/shared/haptic.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { RiArrowLeftSLine } from '@remixicon/react'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
@@ -11,10 +12,12 @@ export function TabHeader({
   title,
   onBack,
   children,
+  canGoBack = true,
 }: {
   title?: ReactNode
   onBack?: () => void
   children?: ReactNode
+  canGoBack?: boolean
 }) {
   const router = useRouter()
 
@@ -23,19 +26,26 @@ export function TabHeader({
       <TopNotch />
 
       <View className="flex-row justify-between  items-center">
-        <View className="">
-          <Pressable
-            onPress={() => {
-              onBack ? onBack() : router.history.back()
-              hapticFeedback.light()
-            }}
-            className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
-          >
-            <RiArrowLeftSLine size={24} className="text-white" />
-          </Pressable>
-        </View>
+        {canGoBack && (
+          <View className="">
+            <Pressable
+              onPress={() => {
+                onBack ? onBack() : router.history.back()
+                hapticFeedback.light()
+              }}
+              className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
+            >
+              <RiArrowLeftSLine size={24} className="text-white" />
+            </Pressable>{' '}
+          </View>
+        )}
 
-        <View className="mx-auto col-span-1 items-center text-center">
+        <View
+          className={cn(
+            canGoBack ? 'text-center  items-center mx-auto' : 'text-left',
+            ' col-span-1 ',
+          )}
+        >
           <Text className="text-white text-xl whitespace-nowrap font-bold">
             {title}
           </Text>

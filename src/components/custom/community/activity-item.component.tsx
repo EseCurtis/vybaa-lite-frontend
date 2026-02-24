@@ -43,9 +43,9 @@ export function ActivityItem({ activity, onReact, onComment, isReacting }: Activ
   }
 
   return (
-    <View className="p-4 rounded-2xl bg-card-light/40 border border-card-lighter/20 mb-3">
+    <View className="p-4 rounded-2xl bg-card-light mb-3">
       <View className="flex-row items-start gap-3 mb-3">
-        <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center shrink-0">
+        <View className="w-10 h-10 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
           {activity.user.avatarUrl ? (
             <img
               src={activity.user.avatarUrl}

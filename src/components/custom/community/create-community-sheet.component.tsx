@@ -89,7 +89,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
             setFormData({ ...formData, name: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
+          className="bg-card-light text-white"
           maxLength={100}
         />
       </View>
@@ -102,7 +102,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
             setFormData({ ...formData, description: e.target.value })
             setFormError(null)
           }}
-          className="min-h-[100px] bg-card-light/40 p-4 text-white rounded-2xl"
+          className="min-h-[100px] bg-card-light p-4 text-white rounded-2xl"
           maxLength={1000}
         />
       </View>
@@ -125,7 +125,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
                 }}
                 className={cn(
                   'relative w-28 h-20 rounded-2xl overflow-hidden border transition-all shrink-0',
-                  isActive ? 'border-accent-500' : 'border-card-lighter/40',
+                  isActive ? 'border-accent-500' : 'border-card-lighter',
                 )}
               >
                 <img
@@ -170,7 +170,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
                   setIsUploadingImage(false)
                 }
               }}
-              className="border border-card-lighter/40 rounded-2xl bg-card-light/40"
+              className="border border-card-lighter rounded-2xl bg-card-light"
             />
             <Text className="text-white/40 text-[10px] font-bbh mt-1 text-center">
               Upload
@@ -190,7 +190,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
             setFormData({ ...formData, category: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
+          className="bg-card-light text-white"
           maxLength={50}
         />
       </View>

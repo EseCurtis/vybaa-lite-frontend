@@ -3,6 +3,7 @@ import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { VirtualList } from '@/components/common/virtual-list.component'
 import { CommunityCard } from '@/components/custom/community/community-card.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -60,30 +61,32 @@ export default function MyCommunitiesScreen() {
               }}
             />
           ) : (
-            <>
-              <View className="py-4">
-                {communities.map((community) => (
-                  <CommunityCard
-                    key={community.id}
-                    community={community}
-                    onPress={handleCommunityPress}
-                  />
-                ))}
-              </View>
-
-              {hasMore && (
-                <View className="py-4">
-                  <Button
-                    label={isFetching ? 'Loading...' : 'Load More'}
-                    variant="default"
-                    fullWidth
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={isFetching}
-                    textClassName="text-sm"
-                  />
-                </View>
+            <VirtualList
+              items={communities}
+              estimateSize={120}
+              height={520}
+              renderItem={(community) => (
+                <CommunityCard
+                  key={community.id}
+                  community={community}
+                  onPress={handleCommunityPress}
+                />
               )}
-            </>
+              footer={
+                hasMore ? (
+                  <View className="py-4">
+                    <Button
+                      label={isFetching ? 'Loading...' : 'Load More'}
+                      variant="default"
+                      fullWidth
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={isFetching}
+                      textClassName="text-sm"
+                    />
+                  </View>
+                ) : null
+              }
+            />
           )}
         </View>
       </NoiseComponent>

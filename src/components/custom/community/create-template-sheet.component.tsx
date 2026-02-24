@@ -15,16 +15,15 @@ export function CreateTemplateSheet({ communityId, onSuccess }: CreateTemplateSh
   const { mutateAsync: createTemplate, isPending: isCreating } = useCreateTemplate()
   
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    goalText: '',
     targetDays: '',
-    icon: '',
+    reminderTime: '',
   })
   const [formError, setFormError] = useState<string | null>(null)
 
   const handleSubmit = async () => {
-    if (!formData.title.trim()) {
-      setFormError('Template title is required')
+    if (!formData.goalText.trim()) {
+      setFormError('Goal text is required')
       return
     }
 
@@ -39,14 +38,13 @@ export function CreateTemplateSheet({ communityId, onSuccess }: CreateTemplateSh
       await createTemplate({
         communityId,
         data: {
-          title: formData.title.trim(),
-          description: formData.description.trim() || undefined,
+          goalText: formData.goalText.trim(),
           targetDays,
-          icon: formData.icon.trim() || undefined,
+          reminderTime: formData.reminderTime || undefined,
         },
       })
       
-      setFormData({ title: '', description: '', targetDays: '', icon: '' })
+      setFormData({ goalText: '', targetDays: '', reminderTime: '' })
       onSuccess?.()
     } catch (err: any) {
       setFormError(err.message || 'Failed to create template')
@@ -56,41 +54,28 @@ export function CreateTemplateSheet({ communityId, onSuccess }: CreateTemplateSh
   return (
     <View className="space-y-4">
       <View>
-        <Input
-          placeholder="Template title"
-          value={formData.title}
-          onChange={(e) => {
-            setFormData({ ...formData, title: e.target.value })
-            setFormError(null)
-          }}
-          className="bg-card-light/40 border-white/10 text-white"
-          maxLength={200}
-        />
-      </View>
-
-      <View>
         <TextArea
-          placeholder="Description (optional)"
-          value={formData.description}
+          placeholder="What's your commitment?"
+          value={formData.goalText}
           onChange={(e) => {
-            setFormData({ ...formData, description: e.target.value })
+            setFormData({ ...formData, goalText: e.target.value })
             setFormError(null)
           }}
-          className="min-h-[100px] bg-card-light/40 p-4 text-white rounded-2xl"
-          maxLength={1000}
+          className="min-h-[100px] bg-card-light p-1 text-white"
+          maxLength={500}
         />
       </View>
 
       <View>
         <Input
           type="number"
-          placeholder="Target days (1-365)"
+          placeholder="Days (1-365)"
           value={formData.targetDays}
           onChange={(e) => {
             setFormData({ ...formData, targetDays: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
+          className="bg-card-light text-white"
           min={1}
           max={365}
         />
@@ -98,17 +83,17 @@ export function CreateTemplateSheet({ communityId, onSuccess }: CreateTemplateSh
 
       <View>
         <Input
-          placeholder="Icon emoji (optional)"
-          value={formData.icon}
+          type="time"
+          placeholder="Reminder Time (Optional)"
+          value={formData.reminderTime}
           onChange={(e) => {
-            setFormData({ ...formData, icon: e.target.value })
+            setFormData({ ...formData, reminderTime: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
-          maxLength={50}
+          className="bg-card-light text-white"
         />
         <Text className="text-white/60 text-xs font-bbh mt-1 ml-1">
-          Enter an emoji or icon identifier
+          Set a daily reminder time (optional)
         </Text>
       </View>
 

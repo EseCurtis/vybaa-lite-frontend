@@ -3,6 +3,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { GoalTemplate } from '@/shared/api/community.api'
+import { seededColor } from '@/shared/utils/helpers.util'
 import { RiCalendarLine, RiUserLine } from '@remixicon/react'
 
 interface TemplateCardProps {
@@ -10,6 +11,14 @@ interface TemplateCardProps {
   onPress?: (template: GoalTemplate) => void
   onStart?: (template: GoalTemplate) => void
   isStarting?: boolean
+}
+
+const formatParticipantsCount = (count: number): string => {
+  if (count < 10) return `${count}`
+  if (count < 100) return `${Math.floor(count / 10) * 10}+`
+  if (count < 1000) return `${Math.floor(count / 100) * 100}+`
+  if (count < 1000000) return `${Math.floor(count / 1000)}k+`
+  return `${Math.floor(count / 1000000)}m+`
 }
 
 export function TemplateCard({ template, onPress, onStart, isStarting }: TemplateCardProps) {
@@ -22,52 +31,46 @@ export function TemplateCard({ template, onPress, onStart, isStarting }: Templat
     onStart?.(template)
   }
 
+  const bgColor = seededColor(template.goalText)
+  const participants = template._count?.startedGoals || 0
+
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 rounded-2xl bg-card-light/40 border border-card-lighter/20 mb-3"
+      className="p-3 rounded-3xl mb-3 w-full shrink-0 relative transition-all"
+      style={{ backgroundColor: bgColor }}
     >
-      <View className="flex-row items-start justify-between mb-2">
-        <View className="flex-1">
-          {template.icon && (
-            <Text className="text-2xl mb-2">{template.icon}</Text>
-          )}
-          <Text className="text-white text-lg font-bold font-bbh mb-1">
-            {template.title}
-          </Text>
-          {template.description && (
-            <Text className="text-white/60 text-sm font-bbh line-clamp-2 mb-3">
-              {template.description}
-            </Text>
-          )}
-        </View>
-      </View>
+      <View className="flex flex-col gap-2 w-full">
+        <Text className="text-black text-left text-base font-bold font-bbh mb-1">
+          {template.goalText}
+        </Text>
 
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-4">
-          <View className="flex-row items-center gap-1.5">
-            <RiCalendarLine size={16} className="text-white/40" />
-            <Text className="text-white/60 text-xs font-bbh">
-              {template.targetDays} days
-            </Text>
+        <View className="flex flex-row items-center justify-between mt-1">
+          <View className="flex flex-row items-center gap-3">
+            <View className="flex flex-row items-center gap-1.5">
+              <RiCalendarLine size={16} className="text-black/60" />
+              <Text className="text-black/70 text-[11px] font-bbh">
+                {template.targetDays} days 
+              </Text>
+            </View>
+            <View className="flex flex-row items-center gap-1.5">
+              <RiUserLine size={16} className="text-black/60" />
+              <Text className="text-black/70 text-[11px] font-bbh">
+                {formatParticipantsCount(participants)} sharing
+              </Text>
+            </View>
           </View>
-          <View className="flex-row items-center gap-1.5">
-            <RiUserLine size={16} className="text-white/40" />
-            <Text className="text-white/60 text-xs font-bbh">
-              {template._count?.startedGoals || 0} started
-            </Text>
-          </View>
-        </View>
 
-        <Button
-          label="Start"
-          variant="default"
-          onClick={handleStart}
-          disabled={isStarting}
-          loading={isStarting}
-          className="px-4 py-2"
-          textClassName="text-sm"
-        />
+          <Button
+            label="Start"
+            variant="default"
+            onClick={handleStart}
+            disabled={isStarting}
+            loading={isStarting}
+            className="px-4 py-2 bg-black/10 border-0"
+            textClassName="text-sm text-black font-bbh"
+          />
+        </View>
       </View>
     </Pressable>
   )

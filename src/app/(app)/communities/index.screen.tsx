@@ -1,12 +1,12 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { TopNotch } from '@/components/common/notch.component'
 import { Spinner } from '@/components/common/spinner.component'
+import { TabHeader } from '@/components/common/tab-header.component'
+import { VirtualList } from '@/components/common/virtual-list.component'
 import { CommunityCard } from '@/components/custom/community/community-card.component'
 import { CreateCommunitySheet } from '@/components/custom/community/create-community-sheet.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
-import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
   useCommunities,
@@ -28,7 +28,6 @@ export default function CommunitiesDiscoverScreen() {
     true,
   )
 
-  
   const { mutateAsync: createCommunity } = useCreateCommunity()
 
   const communities = data?.data || []
@@ -60,23 +59,22 @@ export default function CommunitiesDiscoverScreen() {
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TopNotch />
-        <View className=""><Text className="text-white text-sm break-words p-mg">{location.href}</Text></View>
-        <View className="flex-row gap-2 w-full p-mg justify-end">
-          
-          <Pressable
-            onPress={handleRefresh}
-            className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <RiRefreshLine size={20} />
-          </Pressable>
-          <Pressable
-            onPress={handleCreateCommunity}
-            className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
-          >
-            <RiAddLine size={22} />
-          </Pressable>
-        </View>
+        <TabHeader canGoBack={false} title="Communities">
+          <View className="flex-row gap-2 w-full  justify-end">
+            <Pressable
+              onPress={handleRefresh}
+              className="text-white p-2 rounded-full transition-colors"
+            >
+              <RiRefreshLine size={20} />
+            </Pressable>
+            <Pressable
+              onPress={handleCreateCommunity}
+              className="text-white p-2 rounded-full transition-colors"
+            >
+              <RiAddLine size={22} />
+            </Pressable>
+          </View>
+        </TabHeader>
 
         <View className="flex-1 px-mg pb-20">
           {isLoading ? (
@@ -94,30 +92,35 @@ export default function CommunitiesDiscoverScreen() {
               }}
             />
           ) : (
-            <>
-              <View className="py-4">
-                {communities.map((community) => (
+            <VirtualList
+              items={communities}
+              estimateSize={120}
+              height={520}
+              renderItem={(community, index) => (
+                <>
+                  {!(index == 0) && <hr className='border-card-lighter/20' />}
                   <CommunityCard
                     key={community.id}
                     community={community}
                     onPress={handleCommunityPress}
                   />
-                ))}
-              </View>
-
-              {hasMore && (
-                <View className="py-4">
-                  <Button
-                    label={isFetching ? 'Loading...' : 'Load More'}
-                    variant="default"
-                    fullWidth
-                    onClick={() => setPage((p) => p + 1)}
-                    disabled={isFetching}
-                    textClassName="text-sm"
-                  />
-                </View>
+                </>
               )}
-            </>
+              footer={
+                hasMore ? (
+                  <View className="py-4">
+                    <Button
+                      label={isFetching ? 'Loading...' : 'Load More'}
+                      variant="default"
+                      fullWidth
+                      onClick={() => setPage((p) => p + 1)}
+                      disabled={isFetching}
+                      textClassName="text-sm"
+                    />
+                  </View>
+                ) : null
+              }
+            />
           )}
         </View>
       </NoiseComponent>

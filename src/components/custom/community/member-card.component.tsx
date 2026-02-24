@@ -39,11 +39,11 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 rounded-2xl bg-card-light/40 border border-card-lighter/20 mb-3"
+      className="p-4 rounded-2xl bg-card-light mb-3"
     >
       <View className="flex-row items-center gap-3">
         {/* Avatar */}
-        <View className="w-12 h-12 rounded-full bg-card-lighter/20 flex items-center justify-center shrink-0">
+        <View className="w-12 h-12 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
           {member.user.avatarUrl ? (
             <img
               src={member.user.avatarUrl}

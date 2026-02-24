@@ -274,6 +274,8 @@ export function useStartGoalFromTemplate() {
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       // Invalidate template to update startedGoals count
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
+      // Invalidate template participants
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.templateParticipants(variables.templateId) })
       // Invalidate community activity feed
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('Goal started successfully!')
@@ -282,6 +284,24 @@ export function useStartGoalFromTemplate() {
       const message = error?.response?.data?.msg || error?.message || 'Failed to start goal'
       toast.error(message)
     },
+  })
+}
+
+export function useTemplateParticipants(templateId: string, page: number = 1, limit: number = 20) {
+  return useInfiniteQuery({
+    queryKey: communityQueryKeys.templateParticipants(templateId, page, limit),
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await communityAPI.getTemplateParticipants(templateId, pageParam, limit)
+      return response
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.hasNextPage) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
+    },
+    enabled: !!templateId,
+    staleTime: 1000 * 60 * 2, // 2 minutes
   })
 }
 

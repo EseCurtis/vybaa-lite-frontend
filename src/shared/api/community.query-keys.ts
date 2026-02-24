@@ -17,6 +17,8 @@ export const communityQueryKeys = {
     [...communityQueryKeys.detail(communityId), 'templates', { page, limit }] as const,
   template: (templateId: string) =>
     [...communityQueryKeys.all, 'template', templateId] as const,
+  templateParticipants: (templateId: string, page?: number, limit?: number) =>
+    [...communityQueryKeys.template(templateId), 'participants', { page, limit }] as const,
   activity: (communityId: string, page?: number, limit?: number) =>
     [...communityQueryKeys.detail(communityId), 'activity', { page, limit }] as const,
   comments: (activityId: string, page?: number, limit?: number) =>
