@@ -4,7 +4,7 @@
   "webDir": "dist",
   "server": {
     "androidScheme": "http",
-    "url": "http://localhost:3005"
+    "url": "http://10.47.118.60:3005"
   },
   "plugins": {
     "PushNotifications": {

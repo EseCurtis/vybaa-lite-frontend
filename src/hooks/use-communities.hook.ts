@@ -1,13 +1,13 @@
 import { useToast } from '@/providers/toast.provider'
 import {
-    communityAPI,
-    type CreateCommentRequest,
-    type CreateCommunityRequest,
-    type CreateTemplateRequest,
-    type StartGoalFromTemplateRequest,
-    type UpdateCommunityRequest,
-    type UpdateMemberRoleRequest,
-    type UpdateTemplateRequest,
+  communityAPI,
+  type CreateCommentRequest,
+  type CreateCommunityRequest,
+  type CreateTemplateRequest,
+  type StartGoalFromTemplateRequest,
+  type UpdateCommunityRequest,
+  type UpdateMemberRoleRequest,
+  type UpdateTemplateRequest,
 } from '@/shared/api/community.api'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
@@ -319,25 +319,55 @@ export function useActivityFeed(communityId: string, page: number = 1, limit: nu
   })
 }
 
-export function useReactToActivity() {
+export function useReactToActivity(communityId?: string) {
   const queryClient = useQueryClient()
   const toast = useToast()
 
   return useMutation({
     mutationFn: (activityId: string) => communityAPI.reactToActivity(activityId),
     onSuccess: (response, activityId) => {
-      // Invalidate activity feed (need to get communityId from activity)
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
-      if (response.data.reacted) {
-        toast.success('Reaction added!')
-      } else {
-        toast.success('Reaction removed!')
+      // Optimistically update activity feed for this community
+      if (communityId) {
+        queryClient.setQueriesData(
+          {
+            queryKey: [...communityQueryKeys.detail(communityId), 'activity'],
+          },
+          (oldData: any) => {
+            if (!oldData || !oldData.data) return oldData
+
+            const delta = response.data.reacted ? 1 : -1
+
+            return {
+              ...oldData,
+              data: oldData.data.map((activity: any) => {
+                if (activity.id !== activityId) return activity
+                const currentCount = activity._count?.reactions || 0
+                const nextCount = Math.max(0, currentCount + delta)
+                return {
+                  ...activity,
+                  hasUserReacted: response.data.reacted,
+                  _count: {
+                    ...activity._count,
+                    reactions: nextCount,
+                  },
+                }
+              }),
+            }
+          },
+        )
       }
+
+      // if (response.data.reacted) {
+      //   toast.success('Reaction added!')
+      // } else {
+      //   toast.success('Reaction removed!')
+      // }
     },
     onError: (error: any) => {
       const message = error?.response?.data?.msg || error?.message || 'Failed to react'
       toast.error(message)
     },
+    // We rely on the optimistic cache update; no heavy invalidation needed here
   })
 }
 
