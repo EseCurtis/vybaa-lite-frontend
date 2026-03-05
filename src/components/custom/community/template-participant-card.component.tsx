@@ -1,7 +1,7 @@
-import { Avatar } from '@/components/user/avatar.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Avatar } from '@/components/user/avatar.component'
 import type { TemplateParticipant } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { RiCheckLine, RiFireLine } from '@remixicon/react'
@@ -16,15 +16,17 @@ export function TemplateParticipantCard({ participant, templateGoalText }: Templ
   const bgColor = seededColor(templateGoalText)
   const displayName = participant.user.firstName && participant.user.lastName
     ? `${participant.user.firstName} ${participant.user.lastName}`
-    : participant.user.username || 'Anonymous'
+    : participant.user.username || 'Anonymous';
+
+    
 
   return (
     <Pressable
-      className="p-4 rounded-2xl bg-card-light mb-3 w-full shrink-0"
+      className="p-4 rounded-2xl bg-card-light/20 mb-3 w-full flex-col justify-between shrink-0"
     >
-      <View className="flex-row items-center gap-3 mb-3">
-        <Avatar url={participant.user.avatarUrl} />
-        <View className="flex-1">
+      <View className="flex-row items-center  gap-3 mb-3">
+        <Avatar url={participant.user.avatarUrl!} />
+        <View className="flex-1 justify-start text-left">
           <Text className="text-white text-sm font-bold font-bbh">
             {displayName}
           </Text>
@@ -42,8 +44,8 @@ export function TemplateParticipantCard({ participant, templateGoalText }: Templ
         )}
       </View>
 
-      <View className="mb-2">
-        <View className="flex-row items-center justify-between mb-1">
+      <View className="mb-2 mt-3">
+        <View className="flex-row items-center justify-between mb-1 gap-3">
           <Text className="text-white/80 text-xs font-bbh">
             Day {participant.currentDay} of {participant.targetDays}
           </Text>

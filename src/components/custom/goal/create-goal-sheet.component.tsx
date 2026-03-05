@@ -68,7 +68,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
             setFormData({ ...formData, goalText: e.target.value })
             setFormError(null)
           }}
-          className="min-h-[100px] bg-card-light/40 p-1 text-white"
+          className="min-h-[100px] rounded-xl bg-card-light/30 p-1 text-white"
           maxLength={500}
         />
       </View>
@@ -82,7 +82,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
             setFormData({ ...formData, targetDays: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
+          className="bg-card-light/30 border-0 text-white"
           min={1}
           max={365}
         />
@@ -97,10 +97,10 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
             setFormData({ ...formData, reminderTime: e.target.value })
             setFormError(null)
           }}
-          className="bg-card-light/40 border-white/10 text-white"
+          className="bg-card-light/30 border-0 text-white"
         />
-        <Text className="text-white/60 text-xs font-bbh mt-1 ml-1">
-          Set a daily reminder time (optional)
+        <Text className="text-card-lighter-3/60 text-xs text-center font-bbh mt-1 ml-1">
+          Set a daily reminder time (optional) - tap to select
         </Text>
       </View>
 

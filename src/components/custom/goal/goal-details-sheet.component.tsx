@@ -49,7 +49,7 @@ export function GoalDetailsSheet({
 
   const handleCommunityClick = () => {
     if (goal.communityId) {
-      router.navigate({ to: `/app/communities/${goal.communityId}` })
+      router.navigate({ to: `/app/community/${goal.communityId}` })
       onDismiss?.()
     }
   }
@@ -108,6 +108,28 @@ export function GoalDetailsSheet({
 
   return (
     <View className="space-y-5 pb-4">
+          {/* Community Link */}
+      {goal.community && goal.communityId && (
+        <Pressable
+          onPress={handleCommunityClick}
+          className="w-full bg-card-light/40 hover:bg-card-light/60 rounded-full p-4 flex-row items-center justify-between transition-colors  "
+        >
+          <View className="flex-row items-center gap-3">
+            <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center">
+              <RiGroupLine size={18} className="text-white/60" />
+            </View>
+            <View className='text-left'>
+              <Text className="text-white text-sm font-bold font-bbh">
+                From Community
+              </Text>
+              <Text className="text-white/60 text-xs font-bbh">
+                {goal.community.name}
+              </Text>
+            </View>
+          </View>
+          <RiArrowRightSLine size={20} className="text-white/40" />
+        </Pressable>
+      )}
       {/* Goal Card with Color */}
       <View className="flex-row gap-3 overflow-x-scroll w-full no-scrollbar snap-x snap-mandatory">
         <View
@@ -152,28 +174,7 @@ export function GoalDetailsSheet({
         </View>
       </View>
 
-      {/* Community Link */}
-      {goal.community && goal.communityId && (
-        <Pressable
-          onPress={handleCommunityClick}
-          className="w-full bg-card-light/40 hover:bg-card-light/60 rounded-2xl p-4 flex-row items-center justify-between transition-colors border border-card-lighter/20"
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center">
-              <RiGroupLine size={18} className="text-white/60" />
-            </View>
-            <View>
-              <Text className="text-white text-sm font-bold font-bbh">
-                From Community
-              </Text>
-              <Text className="text-white/60 text-xs font-bbh">
-                {goal.community.name}
-              </Text>
-            </View>
-          </View>
-          <RiArrowRightSLine size={20} className="text-white/40" />
-        </Pressable>
-      )}
+  
 
       {/* Check-in Section */}
       <AnimatePresence mode="wait">

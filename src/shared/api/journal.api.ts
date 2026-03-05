@@ -19,6 +19,11 @@ class JournalAPI {
     return data
   }
 
+  async getJournalsPage(pageParam, limit) {
+     const { data } = await http.get<any>(`${this.base}/date`)
+    return data
+  }
+
   async getJournals(page: number = 1, limit: number = 20): Promise<JournalsResponse> {
     const { data } = await http.get<JournalsResponse>(this.base, {
       params: { page, limit },

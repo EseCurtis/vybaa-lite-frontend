@@ -22,7 +22,7 @@ export default function MyCommunitiesScreen() {
   const hasMore = data?.pagination?.hasNextPage || false
 
   const handleCommunityPress = (community: any) => {
-    router.navigate({ to: `/app/communities/${community.id}` })
+    router.navigate({ to: `/app/community/${community.id}` })
   }
 
   const handleRefresh = async () => {

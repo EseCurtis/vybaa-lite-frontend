@@ -14,7 +14,7 @@ export function CommunityBackground({ communityName }: CommunityBackgroundProps)
         //@ts-ignore
         '--theme-color': seedColor,
       }}
-      className="absolute top-0 left-0 bg-gradient-to-br opacity-10 from-[var(--theme-color)] to-transparent bg-blend-multiply size-full"
+      className="absolute top-0 left-0 bg-gradient-to-b opacity-5 from-[var(--theme-color)] to-transparent bg-blend-multiply size-full"
     />
   )
 }

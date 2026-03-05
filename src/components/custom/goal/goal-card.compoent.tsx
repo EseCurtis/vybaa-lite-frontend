@@ -47,7 +47,7 @@ export function GoalCard({
   const handleCommunityClick = (e: any) => {
     e.stopPropagation()
     if (communityId) {
-      router.navigate({ to: `/app/communities/${communityId}` })
+      router.navigate({ to: `/app/community/${communityId}` })
     }
   }
 

@@ -14,7 +14,7 @@ export function CommunityTabs({ activeTab, onTabChange }: CommunityTabsProps) {
   const tabs: Tab[] = ['templates', 'activity', 'members']
 
   return (
-    <View className="flex-row gap-3 mb-4 bg-card-lighter-2/5 rounded-full max-w-full overflow-x-auto no-scrollbar">
+    <View className="flex-row gap-3 mb-4 p-2 bg-card-lighter-2/5 rounded-full max-w-full overflow-x-auto no-scrollbar">
       {tabs.map((tab) => (
         <Pressable
           key={tab}

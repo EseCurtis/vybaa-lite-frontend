@@ -74,7 +74,7 @@ export function TemplatesTab({
             template={template}
             onPress={(template) => {
               router.navigate({
-                to: `/app/communities/templates/${template.id}`,
+                to: `/app/community/templates/${template.id}`,
               })
             }}
             onStart={onStartGoal}

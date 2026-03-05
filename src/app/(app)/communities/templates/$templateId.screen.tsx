@@ -1,11 +1,10 @@
-import { BottomNotch } from '@/components/common/notch.component'
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
+import { BottomNotch } from '@/components/common/notch.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { TemplateParticipantCard } from '@/components/custom/community/template-participant-card.component'
-import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -17,7 +16,7 @@ import { useState } from 'react'
 
 export default function TemplateDetailScreen() {
   const router = useRouter()
-  const { templateId } = useParams({ from: '/app/communities/templates/$templateId' })
+  const { templateId } = useParams({ from: '/app/community/templates/$templateId' })
   const [page, setPage] = useState(1)
 
   const { data: template, isLoading: isLoadingTemplate } = useTemplate(templateId)
@@ -38,7 +37,7 @@ export default function TemplateDetailScreen() {
 
   const handleBack = () => {
     if (template?.communityId) {
-      router.navigate({ to: `/app/communities/${template.communityId}` })
+     history.back()
     } else {
       router.navigate({ to: '/app/communities' })
     }
@@ -79,7 +78,7 @@ export default function TemplateDetailScreen() {
       <NoiseComponent>
         <TabHeader
           canGoBack
-          title="Participants"
+          title={"Participants"}
           onBack={handleBack}
           children={
             <Pressable
@@ -92,11 +91,11 @@ export default function TemplateDetailScreen() {
         />
 
         <View className="px-mg py-4">
-          <View className="p-4 rounded-2xl bg-card-light mb-4">
+          <View className="p-4 rounded-2xl border border-dashed border-card-light/70 mb-4 justify-between">
             <Text className="text-white text-lg font-bold font-bbh mb-2">
               {template.goalText}
             </Text>
-            <View className="flex-row items-center gap-4">
+            <View className="flex-row items-center justify-between gap-4">
               <Text className="text-white/60 text-sm font-bbh">
                 {template.targetDays} days
               </Text>
@@ -120,13 +119,13 @@ export default function TemplateDetailScreen() {
             />
           ) : (
             <VirtualList
-              items={participants}
+              items={participants as any}
               estimateSize={140}
               height={520}
               renderItem={(participant) => (
                 <TemplateParticipantCard
-                  key={participant.goalId}
-                  participant={participant}
+                  key={(participant as any).goalId}
+                  participant={participant as any}
                   templateGoalText={template.goalText}
                 />
               )}

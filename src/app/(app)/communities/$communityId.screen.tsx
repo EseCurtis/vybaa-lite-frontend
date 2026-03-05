@@ -16,17 +16,16 @@ import {
   useActivityFeed,
   useCommunity,
   useCommunityMembers,
-  useCommunityStats,
-  useCreateTemplate,
-  useJoinCommunity,
+  useCommunityStats, useJoinCommunity,
   useLeaveCommunity,
   useReactToActivity,
   useStartGoalFromTemplate,
-  useTemplates,
+  useTemplates
 } from '@/hooks/use-communities.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { hapticFeedback } from '@/shared/haptic.util'
 import { useParams, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 type Tab = 'templates' | 'activity' | 'members'
 
@@ -59,10 +58,13 @@ export default function CommunityDetailScreen() {
     useCommunityMembers(communityId, membersPage, 50)
   const { mutateAsync: joinCommunity } = useJoinCommunity()
   const { mutateAsync: leaveCommunity } = useLeaveCommunity()
-  const { mutateAsync: createTemplate } = useCreateTemplate()
   const { mutateAsync: startGoal, isPending: isStartingGoal } =
     useStartGoalFromTemplate()
   const { mutateAsync: reactToActivity } = useReactToActivity(communityId)
+
+  useEffect(()=> {
+    hapticFeedback.light()
+  }, [activeTab])
 
   const templates = templatesData?.data || []
   const templatesPagination = templatesData?.pagination
@@ -199,7 +201,7 @@ export default function CommunityDetailScreen() {
       <NoiseComponent>
         <View className="z-10 relative">
           <TabHeader
-            // title={community.name}
+            title={community.name}
             children={
               <CommunityHeaderActions
                 isMember={isMember}

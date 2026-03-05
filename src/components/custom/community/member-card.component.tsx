@@ -2,7 +2,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityMember } from '@/shared/api/community.api'
-import { RiShieldStarLine, RiShieldLine, RiUserLine } from '@remixicon/react'
+import { RiShieldLine, RiShieldStarLine, RiUserLine } from '@remixicon/react'
 import moment from 'moment'
 
 interface MemberCardProps {
@@ -39,7 +39,7 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 rounded-2xl bg-card-light mb-3"
+      className="p-4 w-full rounded-2xl bg-card-light/20 mb-3"
     >
       <View className="flex-row items-center gap-3">
         {/* Avatar */}

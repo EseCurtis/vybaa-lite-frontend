@@ -11,7 +11,7 @@ import {
 } from '@/shared/api/community.api'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 // ==================== Communities ====================
 
@@ -289,6 +289,7 @@ export function useStartGoalFromTemplate() {
 
 export function useTemplateParticipants(templateId: string, page: number = 1, limit: number = 20) {
   return useInfiniteQuery({
+   initialPageParam: 1,
     queryKey: communityQueryKeys.templateParticipants(templateId, page, limit),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await communityAPI.getTemplateParticipants(templateId, pageParam, limit)
