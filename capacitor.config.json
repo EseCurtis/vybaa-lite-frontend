@@ -2,9 +2,9 @@
   "appId": "com.vybaa.app",
   "appName": "Vybaa",
   "webDir": "dist",
-  "semrver": {
-    "androidScheme": "http",
-    "url": "http://localhost:3005"
+  "server": {
+    "androidScheme": "https",
+    "url": "https://tryvybaa.vercel.app"
   },
   "plugins": {
     "PushNotifications": {
