@@ -56,6 +56,15 @@ export const TabBar = memo(() => {
           matchAllRoot: true,
         },
         {
+          id: 'rewards',
+          route: '/app/rewards',
+          icon: Icons.Coins,
+          label: 'Play Points',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+        },
+        {
           id: 'wellness',
           route: '/app/wellness',
           icon: Icons.Heart,

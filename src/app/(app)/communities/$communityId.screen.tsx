@@ -5,8 +5,10 @@ import { ActivityTab } from '@/components/custom/community/activity-tab.componen
 import { CommunityBackground } from '@/components/custom/community/community-background.component'
 import { CommunityHeaderActions } from '@/components/custom/community/community-header-actions.component'
 import { CommunityHeader } from '@/components/custom/community/community-header.component'
+import { CommunitySettingsSheet } from '@/components/custom/community/community-settings-sheet.component'
 import { CommunityTabs } from '@/components/custom/community/community-tabs.component'
 import { CreateTemplateSheet } from '@/components/custom/community/create-template-sheet.component'
+import { InviteSheet } from '@/components/custom/community/invite-sheet.component'
 import { MembersTab } from '@/components/custom/community/members-tab.component'
 import { StartGoalConfirmationSheet } from '@/components/custom/community/start-goal-confirmation-sheet.component'
 import { TemplatesTab } from '@/components/custom/community/templates-tab.component'
@@ -23,7 +25,9 @@ import {
   useTemplates
 } from '@/hooks/use-communities.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
+import { useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
@@ -31,12 +35,10 @@ type Tab = 'templates' | 'activity' | 'members'
 
 export default function CommunityDetailScreen() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const { communityId } = useParams({ from: '/app/community/$communityId' })
   const bottomSheet = useBottomSheetController()
   const [activeTab, setActiveTab] = useState<Tab>('templates')
-  const [templatesPage, setTemplatesPage] = useState(1)
-  const [activityPage, setActivityPage] = useState(1)
-  const [membersPage, setMembersPage] = useState(1)
   const [reactingActivityId, setReactingActivityId] = useState<string | null>(
     null,
   )
@@ -44,18 +46,24 @@ export default function CommunityDetailScreen() {
   const { data: community, isLoading: isLoadingCommunity } =
     useCommunity(communityId)
   const { data: stats } = useCommunityStats(communityId)
-  const { data: templatesData, isLoading: isLoadingTemplates } = useTemplates(
-    communityId,
-    templatesPage,
-    20,
-  )
-  const { data: activityData, isLoading: isLoadingActivity } = useActivityFeed(
-    communityId,
-    activityPage,
-    20,
-  )
-  const { data: membersData, isLoading: isLoadingMembers } =
-    useCommunityMembers(communityId, membersPage, 50)
+  const {
+    data: templatesData,
+    isLoading: isLoadingTemplates,
+    fetchNextPage: fetchNextTemplates,
+    hasNextPage: hasNextTemplates,
+  } = useTemplates(communityId, 20)
+  const {
+    data: activityData,
+    isLoading: isLoadingActivity,
+    fetchNextPage: fetchNextActivity,
+    hasNextPage: hasNextActivity,
+  } = useActivityFeed(communityId, 20)
+  const {
+    data: membersData,
+    isLoading: isLoadingMembers,
+    fetchNextPage: fetchNextMembers,
+    hasNextPage: hasNextMembers,
+  } = useCommunityMembers(communityId, 50)
   const { mutateAsync: joinCommunity } = useJoinCommunity()
   const { mutateAsync: leaveCommunity } = useLeaveCommunity()
   const { mutateAsync: startGoal, isPending: isStartingGoal } =
@@ -66,12 +74,9 @@ export default function CommunityDetailScreen() {
     hapticFeedback.light()
   }, [activeTab])
 
-  const templates = templatesData?.data || []
-  const templatesPagination = templatesData?.pagination
-  const activities = activityData?.data || []
-  const activityPagination = activityData?.pagination
-  const members = membersData?.data || []
-  const membersPagination = membersData?.pagination
+  const templates = templatesData?.pages.flatMap((page) => page.data) || []
+  const activities = activityData?.pages.flatMap((page) => page.data) || []
+  const members = membersData?.pages.flatMap((page) => page.data) || []
   const isMember = community?.isMember || false
   const userRole = community?.userRole
 
@@ -105,6 +110,37 @@ export default function CommunityDetailScreen() {
       {
         title: 'Create Template',
       },
+    )
+  }
+
+  const handleRefreshCommunity = () => {
+    // Invalidate all community-related queries for this community
+    queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
+    queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(communityId) })
+    queryClient.invalidateQueries({ queryKey: communityQueryKeys.templates(communityId) })
+    queryClient.invalidateQueries({ queryKey: communityQueryKeys.activity(communityId) })
+    queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(communityId) })
+  }
+
+  const handleOpenSettings = () => {
+    if (!community) return
+    bottomSheet.present(
+      <CommunitySettingsSheet
+        community={community}
+        onClose={bottomSheet.dismiss}
+        onDeleted={() => {
+          router.navigate({ to: '/app/communities' })
+        }}
+      />,
+      { title: 'Community settings' },
+    )
+  }
+
+  const handleInvite = () => {
+    if (!community) return
+    bottomSheet.present(
+      <InviteSheet communityId={community.id} communityName={community.name} />,
+      { title: 'Invite to Community' },
     )
   }
 
@@ -150,21 +186,39 @@ export default function CommunityDetailScreen() {
   }
 
   const handleLoadMoreTemplates = () => {
-    if (templatesPagination?.hasNextPage) {
-      setTemplatesPage((prev) => prev + 1)
+    if (hasNextTemplates) {
+      fetchNextTemplates()
     }
   }
 
   const handleLoadMoreActivity = () => {
-    if (activityPagination?.hasNextPage) {
-      setActivityPage((prev) => prev + 1)
+    if (hasNextActivity) {
+      fetchNextActivity()
     }
   }
 
   const handleLoadMoreMembers = () => {
-    if (membersPagination?.hasNextPage) {
-      setMembersPage((prev) => prev + 1)
+    if (hasNextMembers) {
+      fetchNextMembers()
     }
+  }
+
+  const handleShowAllActivity = () => {
+    router.navigate({
+      to: `/app/community/activity/${communityId}`,
+    })
+  }
+
+  const handleShowAllMembers = () => {
+    router.navigate({
+      to: `/app/community/members/${communityId}`,
+    })
+  }
+
+  const handleShowAllGoals = () => {
+    router.navigate({
+      to: `/app/community/goals/${communityId}`,
+    })
   }
 
   if (isLoadingCommunity) {
@@ -209,6 +263,9 @@ export default function CommunityDetailScreen() {
                 onJoin={handleJoin}
                 onLeave={handleLeave}
                 onCreateTemplate={handleCreateTemplate}
+                onOpenSettings={handleOpenSettings}
+                onRefresh={handleRefreshCommunity}
+                onInvite={handleInvite}
               />
             }
           />
@@ -222,36 +279,42 @@ export default function CommunityDetailScreen() {
           <View className="flex-1 px-mg pb-20">
             {activeTab === 'templates' && (
               <TemplatesTab
-                templates={templates}
+                templates={templates.slice(0, 4)}
                 isLoading={isLoadingTemplates}
                 isMember={isMember}
                 userRole={userRole}
                 onCreateTemplate={handleCreateTemplate}
                 onStartGoal={handleStartGoal}
-                hasNextPage={templatesPagination?.hasNextPage}
+                hasNextPage={hasNextTemplates}
                 onLoadMore={handleLoadMoreTemplates}
+                isPreview
+                onShowAll={handleShowAllGoals}
               />
             )}
 
             {activeTab === 'activity' && (
               <ActivityTab
-                activities={activities}
+                activities={activities.slice(0, 4)}
                 isLoading={isLoadingActivity}
                 onReact={handleReact}
                 onComment={handleComment}
                 reactingActivityId={reactingActivityId}
-                hasNextPage={activityPagination?.hasNextPage}
+                hasNextPage={hasNextActivity}
                 onLoadMore={handleLoadMoreActivity}
+                isPreview
+                onShowAll={handleShowAllActivity}
               />
             )}
 
             {activeTab === 'members' && (
               <MembersTab
-                members={members}
+                members={members.slice(0, 4)}
                 isLoading={isLoadingMembers}
                 currentUserRole={userRole}
-                hasNextPage={membersPagination?.hasNextPage}
+                hasNextPage={hasNextMembers}
                 onLoadMore={handleLoadMoreMembers}
+                isPreview
+                onShowAll={handleShowAllMembers}
               />
             )}
           </View>

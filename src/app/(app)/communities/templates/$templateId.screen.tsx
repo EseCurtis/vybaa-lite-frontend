@@ -90,8 +90,8 @@ export default function TemplateDetailScreen() {
           }
         />
 
-        <View className="px-mg py-4">
-          <View className="p-4 rounded-2xl border border-dashed border-card-light/70 mb-4 justify-between">
+        <View className="px-mg py-4 space-y-3">
+          <View className="p-4 rounded-2xl border border-dashed border-card-light/70 mb-2 justify-between">
             <Text className="text-white text-lg font-bold font-bbh mb-2">
               {template.goalText}
             </Text>
@@ -104,6 +104,42 @@ export default function TemplateDetailScreen() {
               </Text>
             </View>
           </View>
+
+          {template.milestones && template.milestones.length > 0 && (
+            <View className="p-3 rounded-2xl bg-card-light/10 border border-card-lighter-3/30 space-y-2">
+              <Text className="text-white/80 text-sm font-bbh mb-1">
+                Milestones
+              </Text>
+              {template.milestones
+                .slice()
+                .sort((a, b) => a.order - b.order)
+                .map((m) => (
+                  <View
+                    key={m.id}
+                    className="flex-row items-center justify-between py-1.5"
+                  >
+                    <View className="flex-1 pr-2">
+                      <Text className="text-white/80 text-xs font-bbh">
+                        {m.name}
+                      </Text>
+                      {m.description && (
+                        <Text className="text-white/50 text-[11px] font-bbh">
+                          {m.description}
+                        </Text>
+                      )}
+                      <Text className="text-card-lighter-3/80 text-[11px] font-bbh mt-0.5">
+                        {m.triggerType === 'DAY'
+                          ? `Day ${m.triggerValue}`
+                          : `${m.triggerValue}% of goal`}
+                      </Text>
+                    </View>
+                    <Text className="text-accent-400 text-xs font-bbh">
+                      +{m.points} pts
+                    </Text>
+                  </View>
+                ))}
+            </View>
+          )}
         </View>
 
         <View className="flex-1 px-mg pb-20">

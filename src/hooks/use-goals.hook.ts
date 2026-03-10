@@ -106,6 +106,8 @@ export function useCheckIn() {
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Invalidate insights to refresh stats
       queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      // Invalidate rewards to refresh balance and pending points
+      queryClient.invalidateQueries({ queryKey: ['rewards'] })
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -132,6 +134,8 @@ export function useResetGoal() {
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Invalidate insights to refresh stats
       queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      // Invalidate rewards to refresh balance and pending points (reset clears pending points)
+      queryClient.invalidateQueries({ queryKey: ['rewards'] })
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -183,6 +187,8 @@ export function useDeleteGoal() {
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
       // Invalidate insights to refresh stats
       queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      // Invalidate rewards to refresh balance and pending points
+      queryClient.invalidateQueries({ queryKey: ['rewards'] })
       // Invalidate current goal if it was deleted
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Remove from cache

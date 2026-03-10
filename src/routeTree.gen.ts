@@ -18,6 +18,7 @@ import { Route as GoalIndexRouteImport } from './routes/goal/index'
 import { Route as ChillIndexRouteImport } from './routes/chill/index'
 import { Route as JournalDateRouteImport } from './routes/journal/$date'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
+import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
@@ -25,11 +26,15 @@ import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
 import { Route as AppCommunityTemplatesTemplateIdRouteImport } from './routes/app/community/templates/$templateId'
+import { Route as AppCommunityMembersCommunityIdRouteImport } from './routes/app/community/members/$communityId'
+import { Route as AppCommunityGoalsCommunityIdRouteImport } from './routes/app/community/goals/$communityId'
+import { Route as AppCommunityActivityCommunityIdRouteImport } from './routes/app/community/activity/$communityId'
 
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
@@ -76,6 +81,11 @@ const AppWellnessRoute = AppWellnessRouteImport.update({
   path: '/app/wellness',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRewardsRoute = AppRewardsRouteImport.update({
+  id: '/app/rewards',
+  path: '/app/rewards',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/app/profile',
   path: '/app/profile',
@@ -111,6 +121,11 @@ const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   path: '/app/sub-profile/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
+  id: '/app/invite/$code',
+  path: '/app/invite/$code',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppCommunityCommunityIdRoute = AppCommunityCommunityIdRouteImport.update({
   id: '/app/community/$communityId',
   path: '/app/community/$communityId',
@@ -138,6 +153,24 @@ const AppCommunityTemplatesTemplateIdRoute =
     path: '/app/community/templates/$templateId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppCommunityMembersCommunityIdRoute =
+  AppCommunityMembersCommunityIdRouteImport.update({
+    id: '/app/community/members/$communityId',
+    path: '/app/community/members/$communityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppCommunityGoalsCommunityIdRoute =
+  AppCommunityGoalsCommunityIdRouteImport.update({
+    id: '/app/community/goals/$communityId',
+    path: '/app/community/goals/$communityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppCommunityActivityCommunityIdRoute =
+  AppCommunityActivityCommunityIdRouteImport.update({
+    id: '/app/community/activity/$communityId',
+    path: '/app/community/activity/$communityId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -149,6 +182,7 @@ export interface FileRoutesByFullPath {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill': typeof ChillIndexRoute
@@ -157,8 +191,12 @@ export interface FileRoutesByFullPath {
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
+  '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
+  '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
@@ -172,6 +210,7 @@ export interface FileRoutesByTo {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill': typeof ChillIndexRoute
@@ -180,8 +219,12 @@ export interface FileRoutesByTo {
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
+  '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
+  '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
@@ -196,6 +239,7 @@ export interface FileRoutesById {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
+  '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill/': typeof ChillIndexRoute
@@ -204,8 +248,12 @@ export interface FileRoutesById {
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
+  '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
+  '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
@@ -221,6 +269,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/rewards'
     | '/app/wellness'
     | '/journal/$date'
     | '/chill'
@@ -229,8 +278,12 @@ export interface FileRouteTypes {
     | '/app/actions/flexx'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/community/activity/$communityId'
+    | '/app/community/goals/$communityId'
+    | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesByTo: FileRoutesByTo
@@ -244,6 +297,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/rewards'
     | '/app/wellness'
     | '/journal/$date'
     | '/chill'
@@ -252,8 +306,12 @@ export interface FileRouteTypes {
     | '/app/actions/flexx'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/community/activity/$communityId'
+    | '/app/community/goals/$communityId'
+    | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   id:
@@ -267,6 +325,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
+    | '/app/rewards'
     | '/app/wellness'
     | '/journal/$date'
     | '/chill/'
@@ -275,8 +334,12 @@ export interface FileRouteTypes {
     | '/app/actions/flexx'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/community/activity/$communityId'
+    | '/app/community/goals/$communityId'
+    | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesById: FileRoutesById
@@ -291,6 +354,7 @@ export interface RootRouteChildren {
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
+  AppRewardsRoute: typeof AppRewardsRoute
   AppWellnessRoute: typeof AppWellnessRoute
   JournalDateRoute: typeof JournalDateRoute
   ChillIndexRoute: typeof ChillIndexRoute
@@ -298,8 +362,12 @@ export interface RootRouteChildren {
   JournalIndexRoute: typeof JournalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
+  AppInviteCodeRoute: typeof AppInviteCodeRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
+  AppCommunityActivityCommunityIdRoute: typeof AppCommunityActivityCommunityIdRoute
+  AppCommunityGoalsCommunityIdRoute: typeof AppCommunityGoalsCommunityIdRoute
+  AppCommunityMembersCommunityIdRoute: typeof AppCommunityMembersCommunityIdRoute
   AppCommunityTemplatesTemplateIdRoute: typeof AppCommunityTemplatesTemplateIdRoute
   ChillTimerSessionIdDurationRoute: typeof ChillTimerSessionIdDurationRoute
 }
@@ -369,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWellnessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewards': {
+      id: '/app/rewards'
+      path: '/app/rewards'
+      fullPath: '/app/rewards'
+      preLoaderRoute: typeof AppRewardsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/profile': {
       id: '/app/profile'
       path: '/app/profile'
@@ -418,6 +493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/invite/$code': {
+      id: '/app/invite/$code'
+      path: '/app/invite/$code'
+      fullPath: '/app/invite/$code'
+      preLoaderRoute: typeof AppInviteCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/community/$communityId': {
       id: '/app/community/$communityId'
       path: '/app/community/$communityId'
@@ -453,6 +535,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunityTemplatesTemplateIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/community/members/$communityId': {
+      id: '/app/community/members/$communityId'
+      path: '/app/community/members/$communityId'
+      fullPath: '/app/community/members/$communityId'
+      preLoaderRoute: typeof AppCommunityMembersCommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/community/goals/$communityId': {
+      id: '/app/community/goals/$communityId'
+      path: '/app/community/goals/$communityId'
+      fullPath: '/app/community/goals/$communityId'
+      preLoaderRoute: typeof AppCommunityGoalsCommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/community/activity/$communityId': {
+      id: '/app/community/activity/$communityId'
+      path: '/app/community/activity/$communityId'
+      fullPath: '/app/community/activity/$communityId'
+      preLoaderRoute: typeof AppCommunityActivityCommunityIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -478,6 +581,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
+  AppRewardsRoute: AppRewardsRoute,
   AppWellnessRoute: AppWellnessRoute,
   JournalDateRoute: JournalDateRoute,
   ChillIndexRoute: ChillIndexRoute,
@@ -485,8 +589,12 @@ const rootRouteChildren: RootRouteChildren = {
   JournalIndexRoute: JournalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
+  AppInviteCodeRoute: AppInviteCodeRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
+  AppCommunityActivityCommunityIdRoute: AppCommunityActivityCommunityIdRoute,
+  AppCommunityGoalsCommunityIdRoute: AppCommunityGoalsCommunityIdRoute,
+  AppCommunityMembersCommunityIdRoute: AppCommunityMembersCommunityIdRoute,
   AppCommunityTemplatesTemplateIdRoute: AppCommunityTemplatesTemplateIdRoute,
   ChillTimerSessionIdDurationRoute: ChillTimerSessionIdDurationRoute,
 }

@@ -147,6 +147,9 @@ export const Icons = {
   Share: (props: Omit<IconProps, 'name'>) => <Icon name="Share" {...props} />,
   MessageCircle: (props: Omit<IconProps, 'name'>) => <Icon name="MessageCircle" {...props} />,
   
+  // Rewards
+  Coins: (props: Omit<IconProps, 'name'>) => <Icon name="CircleDollarSign" {...props} />,
+  
   // Files
   File: (props: Omit<IconProps, 'name'>) => <Icon name="File" {...props} />,
   Folder: (props: Omit<IconProps, 'name'>) => <Icon name="Folder" {...props} />,

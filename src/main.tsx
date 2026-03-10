@@ -5,6 +5,7 @@ import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
+import { installServerConsoleBridge } from '@/utils/server-console-bridge'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -16,6 +17,9 @@ import { CapacitorUpdater } from '@capgo/capacitor-updater';
 CapacitorUpdater.notifyAppReady();
 
 import './styles.css'
+
+// In dev, mirror browser console.* calls to the server console
+installServerConsoleBridge()
 
 // Create a QueryClient instance
 const queryClient = new QueryClient({

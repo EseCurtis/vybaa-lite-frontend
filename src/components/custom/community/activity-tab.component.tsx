@@ -16,6 +16,8 @@ interface ActivityTabProps {
   reactingActivityId?: string | null
   hasNextPage?: boolean
   onLoadMore?: () => void
+  isPreview?: boolean
+  onShowAll?: () => void
 }
 
 export function ActivityTab({
@@ -26,6 +28,8 @@ export function ActivityTab({
   reactingActivityId,
   hasNextPage,
   onLoadMore,
+  isPreview,
+  onShowAll,
 }: ActivityTabProps) {
   if (isLoading) {
     return (
@@ -45,12 +49,42 @@ export function ActivityTab({
     )
   }
 
+  // Preview mode on community page: simple list (no virtualization)
+  if (isPreview) {
+    return (
+      <View className="py-4 space-y-3">
+        {activities.map((activity) => (
+          <ActivityItem
+            key={activity.id}
+            activity={activity}
+            onReact={onReact}
+            onComment={onComment}
+            isReacting={reactingActivityId === activity.id}
+          />
+        ))}
+        {onShowAll && (
+          <View className="mt-2">
+            <Pressable
+              onPress={onShowAll}
+              className="snap-center ml-2 text-card-lighter-3 bg-card-light/20 rounded-full flex-row gap-2 items-center justify-center px-7 mx-auto py-3 font-bold"
+            >
+              <Text className="whitespace-nowrap text-sm">
+                Show all activity
+              </Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
+    )
+  }
+
+  // Full page: keep virtualization
   return (
-    <View className="py-4">
+    <View className=" h-full overflow-hidden">
       <VirtualList
         items={activities}
         estimateSize={120}
-        height={520}
+       
         renderItem={(activity) => (
           <ActivityItem
             key={activity.id}

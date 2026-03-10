@@ -2,7 +2,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityMember } from '@/shared/api/community.api'
-import { RiShieldLine, RiShieldStarLine, RiUserLine } from '@remixicon/react'
+import { RiCoinsLine, RiShieldLine, RiShieldStarLine, RiUserLine } from '@remixicon/react'
 import moment from 'moment'
 
 interface MemberCardProps {
@@ -70,9 +70,19 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
               </Text>
             </View>
           </View>
-          <Text className="text-white/40 text-xs font-bbh">
-            Joined {moment(member.joinedAt).fromNow()}
-          </Text>
+          <View className="flex-row items-center gap-3">
+            <Text className="text-white/40 text-xs font-bbh">
+              Joined {moment(member.joinedAt).fromNow()}
+            </Text>
+            {typeof member.totalRewards === 'number' && (
+              <View className="flex-row items-center gap-1">
+                <RiCoinsLine size={12} className="text-accent-400" />
+                <Text className="text-accent-400 text-xs font-bbh">
+                  {member.totalRewards.toLocaleString()} Play Points
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
       </View>
     </Pressable>

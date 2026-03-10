@@ -5,6 +5,7 @@ import type { CommunityActivity } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
 import {
   RiChat3Line,
+  RiErrorWarningLine,
   RiFileAddLine,
   RiFireLine,
   RiHeartFill,
@@ -26,14 +27,20 @@ const activityIcons = {
   GOAL_COMPLETED: RiTrophyLine,
   ACHIEVEMENT_EARNED: RiTrophyLine,
   TEMPLATE_CREATED: RiFileAddLine,
+  GOAL_STREAK_RESET: RiErrorWarningLine,
+  MILESTONE_REACHED: RiTrophyLine,
 }
 
 const activityLabels = {
+  GOAL_STREAK_RESET: 'lost a streak',
   GOAL_STARTED: 'started a goal',
   GOAL_CHECK_IN: 'checked in',
   GOAL_COMPLETED: 'completed a goal',
   ACHIEVEMENT_EARNED: 'earned an achievement',
   TEMPLATE_CREATED: 'created a template',
+  GOAL_DELETED: 'deleted a goal',
+  MEMBER_LEFT: 'left the community',
+  MILESTONE_REACHED: 'reached a milestone',
 }
 
 export function ActivityItem({
@@ -43,10 +50,35 @@ export function ActivityItem({
   isReacting,
 }: ActivityItemProps) {
   const Icon = activityIcons[activity.type] || RiFireLine
-  const label = activityLabels[activity.type] || 'did something'
+  const baseLabel = activityLabels[activity.type] || activity.type
+
+  let goalOrTemplateLabel: string | null = null
+  let milestonePointsLabel: string | null = null
+  if (activity.metadata) {
+    try {
+      const meta = JSON.parse(activity.metadata)
+      goalOrTemplateLabel =
+        meta.goalText || meta.templateTitle || meta.title || meta.milestoneName || null
+
+      if (activity.type === 'MILESTONE_REACHED' && typeof meta.points === 'number') {
+        milestonePointsLabel = `(+${meta.points} pts)`
+      }
+    } catch {
+      goalOrTemplateLabel = null
+    }
+  }
+
+  let label = baseLabel
+  if (goalOrTemplateLabel) {
+    label = `${label} - ${goalOrTemplateLabel}`
+  }
+  if (milestonePointsLabel) {
+    label = `${label} ${milestonePointsLabel}`
+  }
 
   const handleReact = () => {
-   // e.stopPropagation()
+    // e.stopPropagation()
+
     onReact?.(activity.id)
   }
 
@@ -80,21 +112,24 @@ export function ActivityItem({
         </View>
 
         <View className="flex-1">
-          <View className="flex-row items-center gap-2 mb-1">
-            <Text className="text-white text-xs font-bold font-bbh">
+          <View className="flex-col items-start gap-2 mb-1">
+         <View className="flex-row gap-2 items-center">
+             <Text className="text-white text-xs font-bold font-bbh">
               @{activity.user.username || activity.user.firstName || 'User'}
             </Text>
             <Icon size={14} color={seedColor} className="text-white/40" />
-            <Text className="text-white/60 text-sm font-bbh">{label}</Text>
-          </View>
-          <View className="">
             <Text className="text-white/40 text-xs font-bbh">
               {moment(activity.createdAt).fromNow()}
             </Text>
+         </View>
+            <Text className="text-white/60 text-sm font-bbh">{label}</Text>
+          </View>
+          <View className="">
+            
             <View className="flex-row justify-ensd items-center gap-4 mt-3">
               <Pressable
                 onPress={() => {
-                   handleReact()
+                  handleReact()
                 }}
                 disabled={isReacting}
                 className="flex-row  items-center gap-1.5 active:scale-95 transition-transform"

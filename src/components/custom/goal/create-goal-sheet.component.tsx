@@ -1,5 +1,7 @@
 import { Input } from '@/components/common/input.component'
+import { Switch } from '@/components/common/switch.component'
 import { TextArea } from '@/components/common/textarea.component'
+import { TimeField } from '@/components/common/time-field.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -20,6 +22,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
     targetDays: '',
     reminderTime: '',
   })
+  const [reminderEnabled, setReminderEnabled] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
   const handleSubmit = async () => {
@@ -45,11 +48,15 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
       await createGoal({
         goalText: formData.goalText.trim(),
         targetDays,
-        reminderTime: formData.reminderTime || undefined,
+        reminderTime:
+          reminderEnabled && formData.reminderTime
+            ? formData.reminderTime
+            : undefined,
       })
       
       // Reset form and dismiss on success
       setFormData({ goalText: '', targetDays: '', reminderTime: '' })
+      setReminderEnabled(false)
       onSuccess?.()
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to create goal'
@@ -88,19 +95,31 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
         />
       </View>
 
-      <View>
-        <Input
-          type="time"
-          placeholder="Reminder Time (Optional)"
+      <View className="space-y-2">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-card-lighter-3/80 text-xs font-bbh">
+            Reminder time (optional)
+          </Text>
+          <Switch
+            checked={reminderEnabled}
+            onChange={(checked) => {
+              setReminderEnabled(checked)
+              if (!checked) {
+                setFormData({ ...formData, reminderTime: '' })
+              }
+            }}
+          />
+        </View>
+        <TimeField
           value={formData.reminderTime}
-          onChange={(e) => {
-            setFormData({ ...formData, reminderTime: e.target.value })
+          onChange={(val) => {
+            setFormData({ ...formData, reminderTime: val })
             setFormError(null)
           }}
-          className="bg-card-light/30 border-0 text-white"
+          disabled={!reminderEnabled}
         />
-        <Text className="text-card-lighter-3/60 text-xs text-center font-bbh mt-1 ml-1">
-          Set a daily reminder time (optional) - tap to select
+        <Text className="text-card-lighter-3/60 text-xs text-left font-bbh mt-1 ml-1">
+          Set a daily reminder time (optional) - toggle on to schedule
         </Text>
       </View>
 

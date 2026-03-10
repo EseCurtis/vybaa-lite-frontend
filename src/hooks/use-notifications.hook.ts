@@ -36,9 +36,8 @@ export function useUnreadCount() {
  * Hook to mark notification as read
  */
 export function useMarkAsRead() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
+  const queryClient = useQueryClient() 
+   return useMutation({
     mutationFn: (notificationId: string) => notificationAPI.markAsRead(notificationId),
     onSuccess: () => {
       // Invalidate notifications list and unread count

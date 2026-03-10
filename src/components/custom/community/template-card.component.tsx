@@ -2,6 +2,7 @@ import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useAuth } from '@/providers/auth.provider'
 import type { GoalTemplate } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { RiCalendarLine, RiUserLine } from '@remixicon/react'
@@ -22,6 +23,7 @@ const formatParticipantsCount = (count: number): string => {
 }
 
 export function TemplateCard({ template, onPress, onStart, isStarting }: TemplateCardProps) {
+  const { user } = useAuth()
   const handlePress = () => {
     onPress?.(template)
   }
@@ -33,6 +35,7 @@ export function TemplateCard({ template, onPress, onStart, isStarting }: Templat
 
   const bgColor = seededColor(template.goalText)
   const participants = template._count?.startedGoals || 0
+  const isOwnTemplate = user && template.creator?.id === user.id
 
   return (
     <Pressable
@@ -61,15 +64,17 @@ export function TemplateCard({ template, onPress, onStart, isStarting }: Templat
             </View>
           </View>
 
-          <Button
-            label="Start"
-            variant="default"
-            onClick={handleStart}
-            disabled={isStarting}
-            loading={isStarting}
-            className="px-4 py-2 bg-black/10 border-0"
-            textClassName="text-sm text-black font-bbh"
-          />
+          {!isOwnTemplate && onStart && (
+            <Button
+              label="Start"
+              variant="default"
+              onClick={handleStart}
+              disabled={isStarting}
+              loading={isStarting}
+              className="px-4 py-2 bg-black/10 border-0"
+              textClassName="text-sm text-black font-bbh"
+            />
+          )}
         </View>
       </View>
     </Pressable>

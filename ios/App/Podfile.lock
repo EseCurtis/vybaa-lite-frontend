@@ -31,11 +31,11 @@ PODS:
     - Capacitor
   - CapacitorStatusBar (7.0.3):
     - Capacitor
-  - CapgoCapacitorSocialLogin (8.2.16):
+  - CapgoCapacitorSocialLogin (8.3.8):
     - Alamofire (~> 5.10.2)
     - Capacitor
-    - FBSDKCoreKit (= 18.0.0)
-    - FBSDKLoginKit (= 18.0.0)
+    - FBSDKCoreKit (~> 18.0)
+    - FBSDKLoginKit (~> 18.0)
     - GoogleSignIn (~> 9.0.0)
   - CapgoCapacitorUpdater (7.43.3):
     - Alamofire (= 5.10.2)
@@ -209,7 +209,7 @@ SPEC CHECKSUMS:
   CapacitorPushNotifications: bdd621fbd562be34a41f4a7b1750efa000447d5a
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
   CapacitorStatusBar: 0659ddc7b1713764a05831463d215b177a15d054
-  CapgoCapacitorSocialLogin: 251e1ab19a15a4f5d5ae017f15acd34ca76c7114
+  CapgoCapacitorSocialLogin: 08ffdbd1a0ce4b088a1b2162c584b7ed31122b1f
   CapgoCapacitorUpdater: da7d18b310f35e6d022fe63417b8e5c18b40cd24
   FBAEMKit: e34530df538b8eb8aeb53c35867715ba6c63ef0c
   FBSDKCoreKit: d3f479a69127acebb1c6aad91c1a33907bcf6c2f

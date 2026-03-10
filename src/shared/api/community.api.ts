@@ -36,6 +36,7 @@ export interface CommunityMember {
   userId: string
   role: 'OWNER' | 'MOD' | 'MEMBER'
   joinedAt: string
+  totalRewards?: number // Total earned rewards (points)
   user: {
     id: string
     username: string | null
@@ -54,6 +55,7 @@ export interface GoalTemplate {
   createdBy: string
   createdAt: string
   updatedAt: string
+  milestones?: TemplateMilestone[]
   creator: {
     id: string
     username: string | null
@@ -66,14 +68,39 @@ export interface GoalTemplate {
   }
 }
 
+export type MilestoneTriggerType = 'DAY' | 'PERCENTAGE'
+
+export interface TemplateMilestone {
+  id: string
+  templateId: string
+  name: string
+  description?: string | null
+  triggerType: MilestoneTriggerType
+  triggerValue: number
+  points: number
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CommunityActivity {
   id: string
   communityId: string
   userId: string
-  type: 'GOAL_STARTED' | 'GOAL_CHECK_IN' | 'GOAL_COMPLETED' | 'ACHIEVEMENT_EARNED' | 'TEMPLATE_CREATED'
+  type:
+    | 'GOAL_STARTED'
+    | 'GOAL_CHECK_IN'
+    | 'GOAL_COMPLETED'
+    | 'GOAL_STREAK_RESET'
+    | 'GOAL_DELETED'
+    | 'MEMBER_LEFT'
+    | 'MILESTONE_REACHED'
+    | 'ACHIEVEMENT_EARNED'
+    | 'TEMPLATE_CREATED'
   goalId: string | null
   metadata: string | null
   createdAt: string
+  hourBucket?: string
   user: {
     id: string
     username: string | null
@@ -140,12 +167,30 @@ export interface CreateTemplateRequest {
   goalText: string // Aligned with goal creation
   targetDays: number
   reminderTime?: string // Format: "HH:MM" (24-hour format)
+  milestones?: {
+    id?: string
+    name: string
+    description?: string
+    triggerType: MilestoneTriggerType
+    triggerValue: number
+    points: number
+    order?: number
+  }[]
 }
 
 export interface UpdateTemplateRequest {
   goalText?: string
   targetDays?: number
   reminderTime?: string | null
+  milestones?: {
+    id?: string
+    name: string
+    description?: string | null
+    triggerType: MilestoneTriggerType
+    triggerValue: number
+    points: number
+    order?: number
+  }[]
 }
 
 export interface StartGoalFromTemplateRequest {
@@ -233,6 +278,70 @@ export interface TemplateParticipantsResponse {
   msg: string
   data: TemplateParticipant[]
   pagination: PaginationMeta
+}
+
+// ==================== Invite Types ====================
+
+export interface CreateInviteRequest {
+  inviteeUsername?: string
+  inviteeEmail?: string
+  maxUses?: number
+  expiresInDays?: number
+}
+
+export interface CommunityInvite {
+  id: string
+  code: string
+  link: string
+  communityId: string
+  communityName?: string
+  invitedBy?: {
+    id: string
+    username: string | null
+    firstName: string | null
+  }
+  invitee?: {
+    id: string
+    username: string | null
+    firstName: string | null
+  } | null
+  inviteeUsername?: string | null
+  inviteeEmail?: string | null
+  maxUses: number
+  uses: number
+  expiresAt: string | null
+  createdAt: string
+  isExpired?: boolean
+  isMaxed?: boolean
+}
+
+export interface InviteResponse {
+  msg: string
+  data: CommunityInvite
+}
+
+export interface InvitePreviewResponse {
+  msg: string
+  data: {
+    id: string
+    code: string
+    community: {
+      id: string
+      name: string
+      description: string | null
+      coverImage: string | null
+      _count: { members: number }
+    }
+    invitedBy: {
+      id: string
+      username: string | null
+      firstName: string | null
+      lastName: string | null
+      avatarUrl: string | null
+    }
+    expiresAt: string | null
+    createdAt: string
+  }
 }
 
 // ==================== API Class ====================
@@ -369,6 +478,33 @@ class CommunityAPI {
 
   async getCommunityStats(communityId: string): Promise<CommunityStatsResponse> {
     const { data: res } = await http.get<CommunityStatsResponse>(`${API_V1}/communities/${communityId}/stats`)
+    return res
+  }
+
+  // ==================== Invites ====================
+
+  async createInvite(communityId: string, data?: CreateInviteRequest): Promise<InviteResponse> {
+    const { data: res } = await http.post<InviteResponse>(`${API_V1}/communities/${communityId}/invites`, data || {})
+    return res
+  }
+
+  async getInviteByCode(code: string): Promise<InvitePreviewResponse> {
+    const { data: res } = await http.get<InvitePreviewResponse>(`${API_V1}/communities/invites/${code.toUpperCase()}`)
+    return res
+  }
+
+  async joinByInviteCode(code: string): Promise<{ msg: string; data: { community: Community | null } }> {
+    const { data: res } = await http.post<{ msg: string; data: { community: Community | null } }>(`${API_V1}/communities/invites/${code.toUpperCase()}/join`, {})
+    return res
+  }
+
+  async getCommunityInvites(communityId: string): Promise<{ msg: string; data: CommunityInvite[] }> {
+    const { data: res } = await http.get<{ msg: string; data: CommunityInvite[] }>(`${API_V1}/communities/${communityId}/invites`)
+    return res
+  }
+
+  async revokeInvite(inviteId: string): Promise<{ msg: string }> {
+    const { data: res } = await http.delete<{ msg: string }>(`${API_V1}/communities/invites/${inviteId}`)
     return res
   }
 }

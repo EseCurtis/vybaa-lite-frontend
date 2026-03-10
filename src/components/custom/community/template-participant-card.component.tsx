@@ -44,7 +44,7 @@ export function TemplateParticipantCard({ participant, templateGoalText }: Templ
         )}
       </View>
 
-      <View className="mb-2 mt-3">
+      <View className="mb-2 mt-3 w-full">
         <View className="flex-row items-center justify-between mb-1 gap-3">
           <Text className="text-white/80 text-xs font-bbh">
             Day {participant.currentDay} of {participant.targetDays}
@@ -53,9 +53,9 @@ export function TemplateParticipantCard({ participant, templateGoalText }: Templ
             {participant.progress}%
           </Text>
         </View>
-        <View className="h-2 rounded-full bg-card-lighter overflow-hidden">
+        <View className="h-2     w-full rounded-full bg-card-lighter overflow-hidden">
           <View
-            className="h-full rounded-full"
+            className="h-full  w-full  rounded-full"
             style={{
               width: `${Math.min(participant.progress, 100)}%`,
               backgroundColor: bgColor,

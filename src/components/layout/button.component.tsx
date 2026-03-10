@@ -36,8 +36,8 @@ const button = tv({
         indicator: 'text-white',
       },
       ghost: {
-        label: 'text-black underline',
-        indicator: 'text-black',
+        label: '!text-white ',
+        indicator: 'text-white',
       },
       link: {
         container: 'h-auto',

@@ -3,6 +3,7 @@ import {
   communityAPI,
   type CreateCommentRequest,
   type CreateCommunityRequest,
+  type CreateInviteRequest,
   type CreateTemplateRequest,
   type StartGoalFromTemplateRequest,
   type UpdateCommunityRequest,
@@ -147,12 +148,19 @@ export function useLeaveCommunity() {
   })
 }
 
-export function useCommunityMembers(communityId: string, page: number = 1, limit: number = 20) {
-  return useQuery({
-    queryKey: communityQueryKeys.members(communityId, page, limit),
-    queryFn: async () => {
-      const response = await communityAPI.getCommunityMembers(communityId, page, limit)
+export function useCommunityMembers(communityId: string, limit: number = 20) {
+  return useInfiniteQuery({
+    initialPageParam: 1,
+    queryKey: [...communityQueryKeys.detail(communityId), 'members', { limit }],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await communityAPI.getCommunityMembers(communityId, pageParam, limit)
       return response
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.hasNextPage) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
     },
     enabled: !!communityId,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -180,12 +188,19 @@ export function useUpdateMemberRole() {
 
 // ==================== Templates ====================
 
-export function useTemplates(communityId: string, page: number = 1, limit: number = 20) {
-  return useQuery({
-    queryKey: communityQueryKeys.templates(communityId, page, limit),
-    queryFn: async () => {
-      const response = await communityAPI.getTemplates(communityId, page, limit)
+export function useTemplates(communityId: string, limit: number = 20) {
+  return useInfiniteQuery({
+    initialPageParam: 1,
+    queryKey: [...communityQueryKeys.detail(communityId), 'templates', { limit }],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await communityAPI.getTemplates(communityId, pageParam, limit)
       return response
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.hasNextPage) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
     },
     enabled: !!communityId,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -233,9 +248,11 @@ export function useUpdateTemplate() {
     mutationFn: ({ templateId, data }: { templateId: string; data: UpdateTemplateRequest }) =>
       communityAPI.updateTemplate(templateId, data),
     onSuccess: (response, variables) => {
+      // Refresh this template
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
-      // Invalidate templates list for the community (need to get communityId from template)
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
+      // Refresh all community details and lists that might include this template
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.details() })
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       toast.success('Template updated successfully!')
     },
     onError: (error: any) => {
@@ -252,7 +269,8 @@ export function useDeleteTemplate() {
   return useMutation({
     mutationFn: (templateId: string) => communityAPI.deleteTemplate(templateId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.details() })
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       toast.success('Template deleted successfully!')
     },
     onError: (error: any) => {
@@ -308,12 +326,19 @@ export function useTemplateParticipants(templateId: string, page: number = 1, li
 
 // ==================== Activity ====================
 
-export function useActivityFeed(communityId: string, page: number = 1, limit: number = 20) {
-  return useQuery({
-    queryKey: communityQueryKeys.activity(communityId, page, limit),
-    queryFn: async () => {
-      const response = await communityAPI.getActivityFeed(communityId, page, limit)
+export function useActivityFeed(communityId: string, limit: number = 20) {
+  return useInfiniteQuery({
+    initialPageParam: 1,
+    queryKey: [...communityQueryKeys.detail(communityId), 'activity', { limit }],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await communityAPI.getActivityFeed(communityId, pageParam, limit)
       return response
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.pagination.hasNextPage) {
+        return lastPage.pagination.page + 1
+      }
+      return undefined
     },
     enabled: !!communityId,
     staleTime: 1000 * 60 * 2, // 2 minutes (activity feed should be more fresh)
@@ -431,5 +456,77 @@ export function useCommunityStats(communityId: string) {
     },
     enabled: !!communityId,
     staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+}
+
+// ==================== Invites ====================
+
+export function useCreateInvite() {
+  const toast = useToast()
+  return useMutation({
+    mutationFn: ({ communityId, data }: { communityId: string; data?: CreateInviteRequest }) =>
+      communityAPI.createInvite(communityId, data),
+    onError: (error: any) => {
+      const message = error?.response?.data?.msg || error?.message || 'Failed to create invite'
+      toast.error(message)
+    },
+  })
+}
+
+export function useInviteByCode(code: string) {
+  return useQuery({
+    queryKey: ['invite', code.toUpperCase()],
+    queryFn: async () => {
+      const response = await communityAPI.getInviteByCode(code)
+      return response.data
+    },
+    enabled: !!code && code.length >= 6,
+    staleTime: 1000 * 30, // 30 seconds
+    retry: false,
+  })
+}
+
+export function useJoinByInviteCode() {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (code: string) => communityAPI.joinByInviteCode(code),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
+      toast.success(response.msg || 'Joined successfully!')
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.msg || error?.message || 'Failed to join community'
+      toast.error(message)
+    },
+  })
+}
+
+export function useCommunityInvites(communityId: string) {
+  return useQuery({
+    queryKey: ['communityInvites', communityId],
+    queryFn: async () => {
+      const response = await communityAPI.getCommunityInvites(communityId)
+      return response.data
+    },
+    enabled: !!communityId,
+    staleTime: 1000 * 60,
+  })
+}
+
+export function useRevokeInvite() {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (inviteId: string) => communityAPI.revokeInvite(inviteId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['communityInvites'] })
+      toast.success('Invite revoked')
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.msg || error?.message || 'Failed to revoke invite'
+      toast.error(message)
+    },
   })
 }
