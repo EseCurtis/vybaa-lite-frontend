@@ -20,7 +20,7 @@
     "android:dev": "export JAVA_HOME=`/usr/bin/java_home -v 23.0.2` && sudo vite build --mode development && npx cap sync android && npx cap run android",
     "check": "prettier --write . && eslint --fix"
   },
-  "packageManagers": "pnpm@8.15.6",
+  "packageManager": "pnpm@8.15.6",
   "dependencies": {
     "@capacitor/android": "^7.4.4",
     "@capacitor/app": "^7.1.0",
