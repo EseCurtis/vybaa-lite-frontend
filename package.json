@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite --port 3005 --host",
     "prod": "vite --mode production --port 3005 --host -- ",
-    "build": "vite build && tsc",
+    "build": "vite build",
     "build:prod": "yarn build production",
     "serve": "vite preview",
     "testx": "vitest run",
