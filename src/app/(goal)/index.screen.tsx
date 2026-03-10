@@ -22,6 +22,7 @@ export default function GoalsAppScreen() {
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
       title: 'New Goal',
+        elevation: 999,
     })
   }
 
