@@ -1,0 +1,10 @@
+{
+  "apps": [
+    {
+      "appId": "681fac38",
+      "root": "./",
+      "dependencyInstallCommand": "pnpm i"
+     
+    }
+  ]
+}
