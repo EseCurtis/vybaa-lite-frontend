@@ -26,6 +26,8 @@ export default function GoalsAppScreen() {
     })
   }
 
+  //$ 
+
   const handleGoalClick = (goal: Goal) => {
     if (bulkMode) {
       // Toggle selection
