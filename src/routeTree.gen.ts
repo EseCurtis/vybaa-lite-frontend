@@ -185,9 +185,9 @@ export interface FileRoutesByFullPath {
   '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
   '/journal/$date': typeof JournalDateRoute
-  '/chill': typeof ChillIndexRoute
-  '/goal': typeof GoalIndexRoute
-  '/journal': typeof JournalIndexRoute
+  '/chill/': typeof ChillIndexRoute
+  '/goal/': typeof GoalIndexRoute
+  '/journal/': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
@@ -272,9 +272,9 @@ export interface FileRouteTypes {
     | '/app/rewards'
     | '/app/wellness'
     | '/journal/$date'
-    | '/chill'
-    | '/goal'
-    | '/journal'
+    | '/chill/'
+    | '/goal/'
+    | '/journal/'
     | '/app/actions/flexx'
     | '/app/communities/my'
     | '/app/community/$communityId'
@@ -405,21 +405,21 @@ declare module '@tanstack/react-router' {
     '/journal/': {
       id: '/journal/'
       path: '/journal'
-      fullPath: '/journal'
+      fullPath: '/journal/'
       preLoaderRoute: typeof JournalIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/goal/': {
       id: '/goal/'
       path: '/goal'
-      fullPath: '/goal'
+      fullPath: '/goal/'
       preLoaderRoute: typeof GoalIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chill/': {
       id: '/chill/'
       path: '/chill'
-      fullPath: '/chill'
+      fullPath: '/chill/'
       preLoaderRoute: typeof ChillIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
