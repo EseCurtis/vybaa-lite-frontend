@@ -13,8 +13,8 @@ const config: Config = {
         ...colors
       },
       spacing: {
-        'mg': '24px',
-        '05-mg': '12px',
+        'mg': '17px',
+        '05-mg': '7px',
       },
       fontFamily: {
         'mona': ['Mona Sans', 'sans-serif'],

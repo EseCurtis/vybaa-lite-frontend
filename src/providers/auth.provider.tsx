@@ -3,8 +3,12 @@ import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
 import type {
   AuthContextValue,
+  AuthResponse,
   AuthState,
   AuthUser,
+  LoginRequest,
+  RegisterRequest,
+  RegisterConfirmationResponse,
   SessionResponse,
 } from '@/shared/types/auth.types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -111,6 +115,40 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     },
   })
 
+  const persistTokens = useCallback((data: AuthResponse['data']) => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem('authToken', data.token)
+    localStorage.setItem('refreshToken', data.refreshToken)
+  }, [])
+
+  const loginWithEmail = useCallback(
+    async (credentials: LoginRequest) => {
+      const res = await authAPI.login(credentials)
+      persistTokens(res.data)
+      await handleAuthSuccess()
+    },
+    [handleAuthSuccess, persistTokens],
+  )
+
+  const registerWithEmail = useCallback(
+    async (
+      payload: RegisterRequest,
+    ): Promise<AuthResponse | RegisterConfirmationResponse> => {
+      const res = await authAPI.register(payload)
+
+      // If the backend ever returns tokens on register, auto-login.
+      if ('data' in res && (res as AuthResponse).data?.token) {
+        const authRes = res as AuthResponse
+        persistTokens(authRes.data)
+        await handleAuthSuccess()
+        return authRes
+      }
+
+      return res as RegisterConfirmationResponse
+    },
+    [handleAuthSuccess, persistTokens],
+  )
+
   const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
       // Best-effort logout: if push token management is added later we can
@@ -152,6 +190,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       isLoading:
         state.isLoading || google.isLoading || logoutMutation.isPending,
       loginWithGoogle,
+      loginWithEmail,
+      registerWithEmail,
       logout,
       refreshSession,
     }),

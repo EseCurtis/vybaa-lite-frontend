@@ -47,12 +47,12 @@ const button = tv({
     },
     size: {
       default: {
-        container: 'h-[50px] px-10',
-        label: 'text-xl',
+        container: 'h-[44px] px-7',
+        label: 'text-[15px]',
       },
       lg: {
-        container: 'h-16 px-10',
-        label: 'text-xl',
+        container: 'h-[52px] px-10',
+        label: 'text-base',
       },
       sm: {
         container: 'h-10 px-4',

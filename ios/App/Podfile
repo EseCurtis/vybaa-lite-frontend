@@ -19,7 +19,6 @@ def capacitor_pods
   pod 'CapacitorShare', :path => '../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@7.6.0/node_modules/@capacitor/share'
   pod 'CapacitorStatusBar', :path => '../../node_modules/.pnpm/@capacitor+status-bar@7.0.5_@capacitor+core@7.6.0/node_modules/@capacitor/status-bar'
   pod 'CapgoCapacitorSocialLogin', :path => '../../node_modules/.pnpm/@capgo+capacitor-social-login@8.3.9_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-social-login'
-  pod 'CapgoCapacitorUpdater', :path => '../../node_modules/.pnpm/@capgo+capacitor-updater@7.43.3_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-updater'
   pod 'RevenuecatPurchasesCapacitor', :path => '../../node_modules/.pnpm/@revenuecat+purchases-capacitor@9.2.2_@capacitor+core@7.6.0/node_modules/@revenuecat/purchases-capacitor'
   pod 'CapacitorPluginSafeArea', :path => '../../node_modules/.pnpm/capacitor-plugin-safe-area@5.0.0_@capacitor+core@7.6.0/node_modules/capacitor-plugin-safe-area'
 end

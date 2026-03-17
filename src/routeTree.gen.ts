@@ -17,6 +17,10 @@ import { Route as JournalIndexRouteImport } from './routes/journal/index'
 import { Route as GoalIndexRouteImport } from './routes/goal/index'
 import { Route as ChillIndexRouteImport } from './routes/chill/index'
 import { Route as JournalDateRouteImport } from './routes/journal/$date'
+import { Route as AuthSignupRouteImport } from './routes/auth/signup'
+import { Route as AuthLoginRouteImport } from './routes/auth/login'
+import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
+import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
@@ -74,6 +78,26 @@ const ChillIndexRoute = ChillIndexRouteImport.update({
 const JournalDateRoute = JournalDateRouteImport.update({
   id: '/journal/$date',
   path: '/journal/$date',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthSignupRoute = AuthSignupRouteImport.update({
+  id: '/auth/signup',
+  path: '/auth/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthLoginRoute = AuthLoginRouteImport.update({
+  id: '/auth/login',
+  path: '/auth/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthForgotPasswordRoute = AuthForgotPasswordRouteImport.update({
+  id: '/auth/forgot-password',
+  path: '/auth/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthConfirmRoute = AuthConfirmRouteImport.update({
+  id: '/auth/confirm',
+  path: '/auth/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppWellnessRoute = AppWellnessRouteImport.update({
@@ -184,6 +208,10 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill/': typeof ChillIndexRoute
   '/goal/': typeof GoalIndexRoute
@@ -212,6 +240,10 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill': typeof ChillIndexRoute
   '/goal': typeof GoalIndexRoute
@@ -241,6 +273,10 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/wellness': typeof AppWellnessRoute
+  '/auth/confirm': typeof AuthConfirmRoute
+  '/auth/forgot-password': typeof AuthForgotPasswordRoute
+  '/auth/login': typeof AuthLoginRoute
+  '/auth/signup': typeof AuthSignupRoute
   '/journal/$date': typeof JournalDateRoute
   '/chill/': typeof ChillIndexRoute
   '/goal/': typeof GoalIndexRoute
@@ -271,6 +307,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/wellness'
+    | '/auth/confirm'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/signup'
     | '/journal/$date'
     | '/chill/'
     | '/goal/'
@@ -299,6 +339,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/wellness'
+    | '/auth/confirm'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/signup'
     | '/journal/$date'
     | '/chill'
     | '/goal'
@@ -327,6 +371,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/wellness'
+    | '/auth/confirm'
+    | '/auth/forgot-password'
+    | '/auth/login'
+    | '/auth/signup'
     | '/journal/$date'
     | '/chill/'
     | '/goal/'
@@ -356,6 +404,10 @@ export interface RootRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppWellnessRoute: typeof AppWellnessRoute
+  AuthConfirmRoute: typeof AuthConfirmRoute
+  AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthSignupRoute: typeof AuthSignupRoute
   JournalDateRoute: typeof JournalDateRoute
   ChillIndexRoute: typeof ChillIndexRoute
   GoalIndexRoute: typeof GoalIndexRoute
@@ -428,6 +480,34 @@ declare module '@tanstack/react-router' {
       path: '/journal/$date'
       fullPath: '/journal/$date'
       preLoaderRoute: typeof JournalDateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/signup': {
+      id: '/auth/signup'
+      path: '/auth/signup'
+      fullPath: '/auth/signup'
+      preLoaderRoute: typeof AuthSignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/login': {
+      id: '/auth/login'
+      path: '/auth/login'
+      fullPath: '/auth/login'
+      preLoaderRoute: typeof AuthLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/forgot-password': {
+      id: '/auth/forgot-password'
+      path: '/auth/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/confirm': {
+      id: '/auth/confirm'
+      path: '/auth/confirm'
+      fullPath: '/auth/confirm'
+      preLoaderRoute: typeof AuthConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/wellness': {
@@ -583,6 +663,10 @@ const rootRouteChildren: RootRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppWellnessRoute: AppWellnessRoute,
+  AuthConfirmRoute: AuthConfirmRoute,
+  AuthForgotPasswordRoute: AuthForgotPasswordRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthSignupRoute: AuthSignupRoute,
   JournalDateRoute: JournalDateRoute,
   ChillIndexRoute: ChillIndexRoute,
   GoalIndexRoute: GoalIndexRoute,

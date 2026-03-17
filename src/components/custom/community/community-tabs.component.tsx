@@ -3,18 +3,25 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { cn } from '@/shared/utils/helpers.util'
 
-type Tab = 'templates' | 'activity' | 'members'
+export type CommunityTabKey = 'templates' | 'activity' | 'members' | 'moderation'
 
 interface CommunityTabsProps {
-  activeTab: Tab
-  onTabChange: (tab: Tab) => void
+  activeTab: CommunityTabKey
+  onTabChange: (tab: CommunityTabKey) => void
+  showModeration?: boolean
 }
 
-export function CommunityTabs({ activeTab, onTabChange }: CommunityTabsProps) {
-  const tabs: Tab[] = ['templates', 'activity', 'members']
+export function CommunityTabs({
+  activeTab,
+  onTabChange,
+  showModeration = false,
+}: CommunityTabsProps) {
+  const tabs: CommunityTabKey[] = showModeration
+    ? ['templates', 'activity', 'members', 'moderation']
+    : ['templates', 'activity', 'members']
 
   return (
-    <View className="flex-row gap-3 mb-4 p-2 bg-card-lighter-2/5 rounded-full max-w-full overflow-x-auto no-scrollbar">
+    <View className="flex-row pl-mg gap-3 mb-2 p-2 max-w-full overflow-x-auto no-scrollbar">
       {tabs.map((tab) => (
         <Pressable
           key={tab}
@@ -26,7 +33,9 @@ export function CommunityTabs({ activeTab, onTabChange }: CommunityTabsProps) {
               : 'bg-card-light/30 text-white',
           )}
         >
-          <Text className="text-xs font-bold font-bbh capitalize">{tab}</Text>
+          <Text className="text-sm font-bold font-bbh capitalize">
+            {tab === 'moderation' ? 'moderation' : tab}
+          </Text>
         </Pressable>
       ))}
     </View>

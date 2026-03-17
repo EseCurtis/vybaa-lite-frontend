@@ -11,6 +11,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 
@@ -23,6 +24,7 @@ type BottomSheetContextType = {
   present: (content: React.ReactNode, options?: BottomSheetOptions) => void
   update: (options: BottomSheetOptions) => void
   dismiss: () => void
+  dismissAll: () => void
 }
 
 const BottomSheetContext = createContext<BottomSheetContextType | null>(null)
@@ -38,17 +40,24 @@ export const BottomSheetProvider = ({
 }: {
   children: React.ReactNode
 }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [content, setContent] = useState<React.ReactNode>(null)
-  const [title, setTitle] = useState<string | undefined>()
-  const [elevation, setElevation] = useState<number>(12)
+  const [stack, setStack] = useState<
+    Array<{ id: string; content: React.ReactNode; title?: string; elevation: number }>
+  >([])
+  const idRef = useRef(0)
 
   const present = useCallback(
     (node: React.ReactNode, opts?: BottomSheetOptions) => {
-      setContent(node)
-      setTitle(opts?.title)
-      setElevation(opts?.elevation ?? 12)
-      setIsOpen(true)
+      idRef.current += 1
+      const id = `sheet_${Date.now()}_${idRef.current}`
+      setStack((prev) => [
+        ...prev,
+        {
+          id,
+          content: node,
+          title: opts?.title,
+          elevation: opts?.elevation ?? 12,
+        },
+      ])
       // subtle haptic on open
       try {
         hapticFeedback?.light && hapticFeedback.light()
@@ -58,53 +67,57 @@ export const BottomSheetProvider = ({
   )
 
   const update = useCallback((opts: BottomSheetOptions) => {
-    if (opts.title !== undefined) setTitle(opts.title)
-    if (opts.elevation !== undefined) setElevation(opts.elevation)
+    setStack((prev) => {
+      if (prev.length === 0) return prev
+      const next = [...prev]
+      const top = next[next.length - 1]
+      next[next.length - 1] = {
+        ...top,
+        title: opts.title !== undefined ? opts.title : top.title,
+        elevation:
+          opts.elevation !== undefined ? opts.elevation : top.elevation,
+      }
+      return next
+    })
   }, [])
 
   const dismiss = useCallback(() => {
-    setIsOpen(false)
+    // Capture which sheet we intend to dismiss *now*.
+    // This prevents "present then dismiss" in the same tick from closing the newly presented sheet.
+    const idToRemove = stack[stack.length - 1]?.id
+    if (!idToRemove) return
     setTimeout(
       () => {
-        setContent(null)
-        setTitle(undefined)
+        setStack((prev) => prev.filter((s) => s.id !== idToRemove))
+      },
+      shouldAnimate ? 200 : 0,
+    )
+  }, [stack])
+
+  const dismissAll = useCallback(() => {
+    setTimeout(
+      () => {
+        setStack([])
       },
       shouldAnimate ? 200 : 0,
     )
   }, [])
 
-  const shadow =
-    elevation > 0
-      ? {
-          boxShadow: `0 -${Math.max(2, elevation)}px ${Math.max(8, elevation * 4)}px rgba(0,0,0,0.4)`,
-        }
-      : undefined
+  const isOpen = stack.length > 0
 
   const value = useMemo(
-    () => ({ present, update, dismiss }),
-    [present, update, dismiss],
+    () => ({ present, update, dismiss, dismissAll }),
+    [present, update, dismiss, dismissAll],
   )
 
-  const sheetContent = (
-    <>
-      {/* <View className="items-center mb-4">
-        <View className="w-12 h-1.5 bg-card-light-50 rounded-full" />
-      </View> */}
-      <View className="flex-row items-center justify-between mb-7">
-        {title ? (
-          <Text className="text-white text-lg font-bold font-bbh">{title}</Text>
-        ) : (
-          <View />
-        )}
-        {title && (
-          <TouchableOpacity onPress={dismiss}>
-            <RiCloseCircleFill size={27} color="#ffffff" />
-          </TouchableOpacity>
-        )}
-      </View>
-      <View className="max-h-[70vh] overflow-y-auto pr-1">{content}</View>
-    </>
-  )
+  const top = stack[stack.length - 1]
+  const topElevation = top?.elevation ?? 12
+  const shadow =
+    topElevation > 0
+      ? {
+          boxShadow: `0 -${Math.max(2, topElevation)}px ${Math.max(8, topElevation * 4)}px rgba(0,0,0,0.4)`,
+        }
+      : undefined
 
   return (
     <BottomSheetContext.Provider value={value}>
@@ -114,7 +127,7 @@ export const BottomSheetProvider = ({
           {isOpen && (
             <motion.div
               className="absolute inset-0 "
-              style={{ zIndex: Math.max(2, elevation) }}
+              style={{ zIndex: Math.max(2, topElevation) }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -139,7 +152,25 @@ export const BottomSheetProvider = ({
                   mass: 0.8,
                 }}
               >
-                {sheetContent}
+                <>
+                  <View className="flex-row items-center justify-between mb-7">
+                    {top?.title ? (
+                      <Text className="text-white text-lg font-bold font-bbh">
+                        {top.title}
+                      </Text>
+                    ) : (
+                      <View />
+                    )}
+                    {top?.title && (
+                      <TouchableOpacity onPress={dismiss}>
+                        <RiCloseCircleFill size={27} color="#ffffff" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <View className="max-h-[70vh] overflow-y-auto pr-1">
+                    {top?.content}
+                  </View>
+                </>
                 <BottomNotchPadd />
               </motion.div>
             </motion.div>
@@ -150,14 +181,32 @@ export const BottomSheetProvider = ({
           {isOpen && (
             <div
               className="absolute inset-0"
-              style={{ zIndex: Math.max(2, elevation) }}
+              style={{ zIndex: Math.max(2, topElevation) }}
             >
               <div className="absolute inset-0 bg-black/60" onClick={dismiss} />
               <div
                 className="bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0"
                 style={shadow}
               >
-                {sheetContent}
+                <>
+                  <View className="flex-row items-center justify-between mb-7">
+                    {top?.title ? (
+                      <Text className="text-white text-lg font-bold font-bbh">
+                        {top.title}
+                      </Text>
+                    ) : (
+                      <View />
+                    )}
+                    {top?.title && (
+                      <TouchableOpacity onPress={dismiss}>
+                        <RiCloseCircleFill size={27} color="#ffffff" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <View className="max-h-[70vh] overflow-y-auto pr-1">
+                    {top?.content}
+                  </View>
+                </>
               </div>
             </div>
           )}

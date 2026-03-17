@@ -89,7 +89,7 @@ export function TemplatesTab({
               className="snap-center ml-2 text-card-lighter-3 bg-card-light/20 rounded-full flex-row gap-2 items-center justify-center px-7 mx-auto py-3 font-bold"
             >
               <Text className="whitespace-nowrap text-sm">
-                Show all goals
+                Show all templates
               </Text>
             </Pressable>
           </View>
