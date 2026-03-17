@@ -33,6 +33,7 @@ import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-prof
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
+import { Route as AppAdminFeatureFlagsRouteImport } from './routes/app/admin.feature-flags'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
 import { Route as AppCommunityTemplatesTemplateIdRouteImport } from './routes/app/community/templates/$templateId'
@@ -160,6 +161,11 @@ const AppCommunitiesMyRoute = AppCommunitiesMyRouteImport.update({
   path: '/my',
   getParentRoute: () => AppCommunitiesRoute,
 } as any)
+const AppAdminFeatureFlagsRoute = AppAdminFeatureFlagsRouteImport.update({
+  id: '/app/admin/feature-flags',
+  path: '/app/admin/feature-flags',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppActionsFlexxRoute = AppActionsFlexxRouteImport.update({
   id: '/app/actions/flexx',
   path: '/app/actions/flexx',
@@ -217,6 +223,7 @@ export interface FileRoutesByFullPath {
   '/goal/': typeof GoalIndexRoute
   '/journal/': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
@@ -249,6 +256,7 @@ export interface FileRoutesByTo {
   '/goal': typeof GoalIndexRoute
   '/journal': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
@@ -282,6 +290,7 @@ export interface FileRoutesById {
   '/goal/': typeof GoalIndexRoute
   '/journal/': typeof JournalIndexRoute
   '/app/actions/flexx': typeof AppActionsFlexxRoute
+  '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
     | '/goal/'
     | '/journal/'
     | '/app/actions/flexx'
+    | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/goal'
     | '/journal'
     | '/app/actions/flexx'
+    | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
@@ -380,6 +391,7 @@ export interface FileRouteTypes {
     | '/goal/'
     | '/journal/'
     | '/app/actions/flexx'
+    | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
@@ -413,6 +425,7 @@ export interface RootRouteChildren {
   GoalIndexRoute: typeof GoalIndexRoute
   JournalIndexRoute: typeof JournalIndexRoute
   AppActionsFlexxRoute: typeof AppActionsFlexxRoute
+  AppAdminFeatureFlagsRoute: typeof AppAdminFeatureFlagsRoute
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppInviteCodeRoute: typeof AppInviteCodeRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
@@ -594,6 +607,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunitiesMyRouteImport
       parentRoute: typeof AppCommunitiesRoute
     }
+    '/app/admin/feature-flags': {
+      id: '/app/admin/feature-flags'
+      path: '/app/admin/feature-flags'
+      fullPath: '/app/admin/feature-flags'
+      preLoaderRoute: typeof AppAdminFeatureFlagsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/actions/flexx': {
       id: '/app/actions/flexx'
       path: '/app/actions/flexx'
@@ -672,6 +692,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoalIndexRoute: GoalIndexRoute,
   JournalIndexRoute: JournalIndexRoute,
   AppActionsFlexxRoute: AppActionsFlexxRoute,
+  AppAdminFeatureFlagsRoute: AppAdminFeatureFlagsRoute,
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppInviteCodeRoute: AppInviteCodeRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,

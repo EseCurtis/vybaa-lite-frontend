@@ -1,0 +1,176 @@
+import { Input } from '@/components/common/input.component'
+import { NoiseComponent } from '@/components/common/noise.component'
+import { Spinner } from '@/components/common/spinner.component'
+import { TabHeader } from '@/components/common/tab-header.component'
+import { Button } from '@/components/layout/button.component'
+import { Pressable } from '@/components/layout/pressables.component'
+import { Text } from '@/components/layout/text.component'
+import { View } from '@/components/layout/view.component'
+import { useToast } from '@/providers/toast.provider'
+import { adminAPI, type FeatureFlag } from '@/shared/api/admin.api'
+import { cn } from '@/shared/utils/helpers.util'
+import { RiCheckLine, RiToggleFill } from '@remixicon/react'
+import { useEffect, useState } from 'react'
+
+export default function AdminFeatureFlagsScreen() {
+  const toast = useToast()
+  const [secret, setSecret] = useState('')
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [flags, setFlags] = useState<FeatureFlag[] | null>(null)
+  const [loadingFlags, setLoadingFlags] = useState(false)
+
+  const loadFlags = async (currentSecret: string) => {
+    setLoadingFlags(true)
+    try {
+      const res = await adminAPI.listFeatureFlags(currentSecret)
+      setFlags(res.data)
+      setIsAuthed(true)
+    } catch (err: any) {
+      setIsAuthed(false)
+      setFlags(null)
+      toast.error(err?.response?.data?.msg || 'Invalid admin secret')
+    } finally {
+      setLoadingFlags(false)
+    }
+  }
+
+  const handleSubmitSecret = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!secret.trim()) return
+    setIsAuthenticating(true)
+    await loadFlags(secret.trim())
+    setIsAuthenticating(false)
+  }
+
+  const handleToggle = async (flagKey: string, enabled: boolean) => {
+    if (!secret.trim()) return
+    try {
+      const res = await adminAPI.upsertFeatureFlag(secret.trim(), {
+        key: flagKey,
+        enabled,
+      })
+      setFlags((prev) =>
+        prev
+          ? prev.map((f) => (f.key === flagKey ? res.data : f))
+          : [res.data],
+      )
+      toast.success('Feature flag updated')
+    } catch (err: any) {
+      toast.error(err?.response?.data?.msg || 'Failed to update flag')
+    }
+  }
+
+  // Ensure REAL_WALLET appears even if not yet created
+  useEffect(() => {
+    if (!flags || !isAuthed) return
+    if (!flags.find((f) => f.key === 'REAL_WALLET')) {
+      setFlags([...flags, {
+        id: 'virtual-REAL_WALLET',
+        key: 'REAL_WALLET',
+        enabled: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }])
+    }
+  }, [flags, isAuthed])
+
+  const realWalletFlag = flags?.find((f) => f.key === 'REAL_WALLET')
+
+  return (
+    <View className="flex-1 bg-cardd overflow-y-auto">
+      <NoiseComponent>
+        <TabHeader title="Admin · Feature Flags" canGoBack>
+          {/* no actions */}
+        </TabHeader>
+
+        <View className="px-mg py-4 space-y-6">
+          <form
+            onSubmit={handleSubmitSecret}
+            className="flex flex-col gap-3 rounded-2xl bg-card-light/10 p-4"
+          >
+            <Text className="text-white/80 text-sm font-bbh">
+              Admin Secret Phrase
+            </Text>
+            <Input
+              type="password"
+              value={secret}
+              onChange={(e) => setSecret(e.target.value)}
+              placeholder="Enter admin secret"
+            />
+            <Button
+              type="submit"
+              label={isAuthed ? 'Re-authenticate' : 'Authenticate'}
+              size="sm"
+              loading={isAuthenticating}
+              disabled={isAuthenticating || !secret.trim()}
+              className="w-fit mt-1"
+            />
+          </form>
+
+          {isAuthed && (
+            <View className="space-y-4">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-white/70 text-sm font-bbh">
+                  Feature Flags
+                </Text>
+                {loadingFlags && (
+                  <View className="flex-row items-center gap-1">
+                    <Spinner size={34} />
+                    <Text className="text-white/50 text-xs font-bbh">
+                      Loading…
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <View className="space-y-3">
+                <View className="rounded-2xl bg-card-light/10 p-4 flex-row items-center justify-between gap-4">
+                  <View className="flex-1">
+                    <Text className="text-white text-sm font-bbh font-semibold">
+                      REAL_WALLET
+                    </Text>
+                    <Text className="text-white/50 text-xs font-bbh mt-1">
+                      Enables the Main Wallet (real points). Keep off in
+                      production until ready.
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    onPress={() =>
+                      handleToggle('REAL_WALLET', !realWalletFlag?.enabled)
+                    }
+                    className={cn(
+                      'flex-row items-center gap-2 px-3 py-2 rounded-full border border-card-light/40',
+                      realWalletFlag?.enabled
+                        ? 'bg-emerald-500/20 border-emerald-400/60'
+                        : 'bg-card-light/10',
+                    )}
+                  >
+                    {realWalletFlag?.enabled && (
+                      <RiCheckLine
+                        size={14}
+                        className="text-emerald-400"
+                      />
+                    )}
+                    <Text className="text-xs font-bbh text-white">
+                      {realWalletFlag?.enabled ? 'Enabled' : 'Disabled'}
+                    </Text>
+                    <RiToggleFill
+                      size={18}
+                      className={cn(
+                        'text-white/40',
+                        realWalletFlag?.enabled && 'text-emerald-400',
+                      )}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+      </NoiseComponent>
+    </View>
+  )
+}
+
