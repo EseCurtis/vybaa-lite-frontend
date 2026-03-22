@@ -2,8 +2,8 @@ import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
-import { VitePWA } from 'vite-plugin-pwa'
 import { fileURLToPath, URL } from 'node:url'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -16,7 +16,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'Vybaa',
         short_name: 'Vybaa',
@@ -27,17 +27,17 @@ export default defineConfig({
         theme_color: '#020617',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/assets/icons/icon-192.webp',
             sizes: '192x192',
             type: 'image/png',
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/assets/icons/icon-512.webp',
             sizes: '512x512',
             type: 'image/png',
           },
           {
-            src: '/pwa-512x512-maskable.png',
+            src: '/assets/icons/icon-512.webp',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable',
