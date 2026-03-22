@@ -7,6 +7,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
+import { IS_MOBILE } from '@/shared/constants.shared'
 import { RiArrowLeftLine, RiGoogleFill } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -51,12 +52,11 @@ export default function LoginScreen() {
       enableOnWeb
       keyboardVerticalOffset={24}
       className="flex-1 bg-black relative pt-32 "
-       style={{
-          background: 'url(/assets/onboarding-bg.png)',
-          backgroundSize: 'contain',
-        }}
+      style={{
+        background: 'url(/assets/onboarding-bg.png)',
+        backgroundSize: 'contain',
+      }}
     >
-  
       <View className="absolute top-0 left-0 w-full  z-10 px-05-mg ">
         <TopNotch />
         <View className="flex-row items-center gap-3 mb-2">
@@ -77,7 +77,7 @@ export default function LoginScreen() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@example.com"
-           // className="rounded-lg"
+            // className="rounded-lg"
           />
           <View className="flex flex-col">
             <Input
@@ -86,7 +86,7 @@ export default function LoginScreen() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-             // className="rounded-lg py-0 "
+              // className="rounded-lg py-0 "
             />
             <TouchableOpacity
               onPress={() => navigate({ to: '/auth/forgot-password' })}
@@ -125,19 +125,20 @@ export default function LoginScreen() {
         </View>
 
         <View className="flex-row gap-3 mt-2">
-          <TouchableOpacity
-            className="flex-1 py-4 rounded-full bg-cardd flex items-center justify-between px-4"
-            disabled={isLoading}
-            onPress={handleGoogle}
-          >
+          {IS_MOBILE && (
+            <TouchableOpacity
+              className="flex-1 py-4 rounded-full bg-cardd flex items-center justify-between px-4"
+              disabled={isLoading}
+              onPress={handleGoogle}
+            >
               <RiGoogleFill className="text-white" size={18} />
-            <View className="flex-row items-center gap-2 mx-auto">
-            
-              <Text className="text-white text-sm font-bbh font-bold">
-                Continue with Google
-              </Text>
-            </View>
-          </TouchableOpacity>
+              <View className="flex-row items-center gap-2 mx-auto">
+                <Text className="text-white text-sm font-bbh font-bold">
+                  Continue with Google
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         <View className="mt-auto">
