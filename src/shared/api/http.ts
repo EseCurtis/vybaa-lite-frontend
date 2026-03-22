@@ -97,13 +97,44 @@ const processQueue = (token?: string) => {
   requestQueue = []
 }
 
+export const extractError = (data: unknown): string => {
+  if (typeof data === 'string') {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    const messages = data.map((item) => {
+      return `  ${extractError(item)}`;
+    });
+
+    return `${messages.join('')}`;
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    const messages = Object.entries(data).map((item) => {
+      const [key, value] = item;
+      const separator = Array.isArray(value) ? ':\n ' : ': ';
+
+      return `- ${key}${separator}${extractError(value)} \n `;
+    });
+    return `${messages.join('')} `;
+  }
+  return 'Something went wrong ';
+};
+
+
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<any>) => {
     const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
     const status = error.response?.status
 
+    
+
     const message = error?.response?.data?.msg || error?.message || 'Request failed'
+    const properMessage =  extractError(
+    (error?.response?.data as any)?.msg || error?.response?.data
+  ).trimEnd();
+
 
     if ((status === 401 || status === 403) && !original?._retry) {
       original._retry = true
@@ -140,7 +171,7 @@ http.interceptors.response.use(
         processQueue(undefined)
         localStorage.removeItem('authToken')
         localStorage.removeItem('refreshToken')
-        return Promise.reject(new Error('Session expired'))
+        return Promise.reject(new Error(properMessage ||'Session expired'))
       }
     }
 
