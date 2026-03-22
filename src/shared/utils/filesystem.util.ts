@@ -24,11 +24,11 @@ export async function shareImageBlob(blob: Blob, fileName = 'image.jpg') {
 
     // 4. Share it
     await Share.share({
-      title: 'Check out this image',
-      text: 'Shared from my app',
+      title: 'Check out my flexx card',
+      text: 'Shared from vybaa.app',
       url: fileUri,                    // single file
       // OR for multiple files: files: [fileUri, anotherUri]
-      dialogTitle: 'Share this image',
+      dialogTitle:'Check out my flexx card',
     });
 
     // Optional: clean up after sharing (good practice)

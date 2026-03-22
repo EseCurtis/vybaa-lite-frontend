@@ -126,7 +126,7 @@ export const BottomSheetProvider = ({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="absolute inset-0 "
+              className="absolute inset-0  max-w-[400px] flex-1 mx-auto"
               style={{ zIndex: Math.max(2, topElevation) }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

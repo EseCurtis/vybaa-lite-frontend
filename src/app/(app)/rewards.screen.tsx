@@ -11,7 +11,12 @@ import { rewardsQueryKeys, useRewards } from '@/hooks/use-rewards.hook'
 import { useWallet, walletQueryKeys } from '@/hooks/use-wallet.hook'
 import { walletAPI } from '@/shared/api/wallet.api'
 import { cn } from '@/shared/utils/helpers.util'
-import { RiBankCardLine, RiCoinsLine, RiRefreshLine, RiTrophyLine } from '@remixicon/react'
+import {
+  RiBankCardLine,
+  RiCoinsLine,
+  RiRefreshLine,
+  RiTrophyLine,
+} from '@remixicon/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -19,8 +24,14 @@ type WalletTab = 'MAIN' | 'PLAY'
 
 export default function RewardsScreen() {
   const queryClient = useQueryClient()
-  const { data: rewards, isLoading, refetch } = useRewards()
-  const { data: wallet, isLoading: isLoadingWallet, refetch: refetchWallet } = useWallet()
+  const { data: $rewards, isLoading, refetch } = useRewards()
+  const {
+    data: $wallet,
+    isLoading: isLoadingWallet,
+    refetch: refetchWallet,
+  } = useWallet()
+  const wallet = $wallet as any
+  const rewards = $rewards as any
   const [tab, setTab] = useState<WalletTab>('MAIN')
   const [fundAmount, setFundAmount] = useState<string>('5000')
   const [isFunding, setIsFunding] = useState(false)
@@ -151,74 +162,88 @@ export default function RewardsScreen() {
 
         <View className="px-mg py-6 space-y-6">
           {tab === 'MAIN' ? (
-            <>
-              {isLoadingWallet ? (
-                <View className="flex-1 items-center justify-center py-10">
-                  <Spinner />
-                </View>
-              ) : (
-                <>
-                  <View className="rounded-2xl bg-card-light/10 p-6 space-y-2">
-                    <View className="flex-row items-center gap-2">
-                      <RiCoinsLine size={24} className="text-accent-400" />
-                      <Text className="text-white/60 text-sm font-bbh">
-                        Main Wallet Balance
+            wallet?.realWalletEnabled ? (
+              <>
+                {isLoadingWallet ? (
+                  <View className="flex-1 items-center justify-center py-10">
+                    <Spinner />
+                  </View>
+                ) : (
+                  <>
+                    <View className="rounded-2xl bg-card-light/10 p-6 space-y-2">
+                      <View className="flex-row items-center gap-2">
+                        <RiCoinsLine size={24} className="text-accent-400" />
+                        <Text className="text-white/60 text-sm font-bbh">
+                          Main Wallet Balance
+                        </Text>
+                      </View>
+                      <Text className="text-white text-4xl font-bold font-bbh">
+                        {(wallet?.mainWalletBalance ?? 0).toLocaleString()}
+                      </Text>
+                      <Text className="text-white/40 text-xs font-bbh">
+                        Real points (funding via Paystack/Polar coming next)
                       </Text>
                     </View>
-                    <Text className="text-white text-4xl font-bold font-bbh">
-                      {(wallet?.mainWalletBalance ?? 0).toLocaleString()}
-                    </Text>
-                    <Text className="text-white/40 text-xs font-bbh">
-                      Real points (funding via Paystack/Polar coming next)
-                    </Text>
-                  </View>
 
-                  <View className="rounded-2xl bg-card-light/10 p-4 space-y-3">
-                    <Text className="text-white/70 text-sm font-bbh mb-1">
-                      Fund Main Wallet
-                    </Text>
-                    <View className="flex-row items-center gap-3">
-                      <Input
-                        type="number"
-                        value={fundAmount}
-                        onChange={(e) => setFundAmount(e.target.value)}
-                        placeholder="Amount"
-                        className="flex-1"
-                      />
+                    <View className="rounded-2xl bg-card-light/10 p-4 space-y-3">
+                      <Text className="text-white/70 text-sm font-bbh mb-1">
+                        Fund Main Wallet
+                      </Text>
+                      <View className="flex-row items-center gap-3">
+                        <Input
+                          type="number"
+                          value={fundAmount}
+                          onChange={(e) => setFundAmount(e.target.value)}
+                          placeholder="Amount"
+                          className="flex-1"
+                        />
+                      </View>
+                      <View className="flex-row gap-3">
+                        <Button
+                          size="sm"
+                          fullWidth
+                          loading={isFunding}
+                          disabled={isFunding}
+                          onClick={handleFundWithPaystack}
+                          leftIcon={<RiBankCardLine size={16} />}
+                          label="Paystack"
+                        />
+                        <Button
+                          size="sm"
+                          fullWidth
+                          loading={isFunding}
+                          disabled={isFunding}
+                          onClick={handleFundWithPolar}
+                          label="Polar.sh"
+                        />
+                      </View>
                     </View>
-                    <View className="flex-row gap-3">
-                      <Button
-                        size="sm"
-                        fullWidth
-                        loading={isFunding}
-                        disabled={isFunding}
-                        onClick={handleFundWithPaystack}
-                        leftIcon={<RiBankCardLine size={16} />}
-                        label="Paystack"
-                      />
-                      <Button
-                        size="sm"
-                        fullWidth
-                        loading={isFunding}
-                        disabled={isFunding}
-                        onClick={handleFundWithPolar}
-                        label="Polar.sh"
-                      />
-                    </View>
-                  </View>
 
-                  {!wallet?.realWalletEnabled && (
-                    <View className="rounded-2xl bg-card-light/10 p-6">
-                      <EmptyList
-                        icon={<RiCoinsLine size={48} className="text-white/40" />}
-                        title="Main Wallet is not enabled yet"
-                        description="We’ll roll this out gradually. Your Play Wallet is still active."
-                      />
-                    </View>
-                  )}
-                </>
-              )}
-            </>
+                    {!wallet?.realWalletEnabled && (
+                      <View className="rounded-2xl bg-card-light/10 p-6">
+                        <EmptyList
+                          icon={
+                            <RiCoinsLine size={48} className="text-white/40" />
+                          }
+                          title="Main Wallet is not enabled yet"
+                          description="We’ll roll this out gradually. Your Play Wallet is still active."
+                        />
+                      </View>
+                    )}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <View className="rounded-2xl bg-card-light/10 p-6">
+                  <EmptyList
+                    icon={<RiCoinsLine size={48} className="text-white/40" />}
+                    title="Main Wallet - Coming soon"
+                    description="We’ll roll this out soon."
+                  />
+                </View>
+              </>
+            )
           ) : (
             <>
               {/* Play Wallet (existing system) */}
@@ -251,7 +276,8 @@ export default function RewardsScreen() {
                     </Text>
                   </View>
                   <Text className="text-white/50 text-xs font-bbh">
-                    These Play Points will be added to your balance when you complete your goals
+                    These Play Points will be added to your balance when you
+                    complete your goals
                   </Text>
 
                   {rewards.pendingBreakdown.length > 0 && (
@@ -259,7 +285,7 @@ export default function RewardsScreen() {
                       <Text className="text-white/60 text-xs font-bbh mb-2">
                         Pending from:
                       </Text>
-                      {rewards.pendingBreakdown.map((item) => (
+                      {rewards.pendingBreakdown.map((item: any) => (
                         <View
                           key={item.goalId}
                           className="rounded-xl bg-card-light/5 p-3 space-y-1"

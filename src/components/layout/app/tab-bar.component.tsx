@@ -18,12 +18,12 @@ import { TouchableOpacity } from '../pressables.component'
 import { Text } from '../text.component'
 import { View } from '../view.component'
 
-export const TabBar = memo(() => {
+export const TabBar = memo(({ className }: { className?: string }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { data: unreadCount } = useUnreadCount()
   const { isVisible } = useTabBarController()
-  const { user } = useAuth();
+  const { user } = useAuth()
 
   const tabs = useMemo(
     () =>
@@ -77,7 +77,7 @@ export const TabBar = memo(() => {
         {
           id: 'profile',
           route: '/app/profile',
-          icon: user?.avatarUrl  ? () => <Avatar user={user}/>:Icons.User,
+          icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
           label: 'Me',
           isSpecial: false,
           badge: null,
@@ -123,7 +123,7 @@ export const TabBar = memo(() => {
   return (
     <AnimatePresence>
       <Moti.div
-        className="bottom-0 left-0 fixed w-full z-50 "
+        className={cn(className, 'bottom-0 left-0 fixed w-full z-50 ')}
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -142,49 +142,73 @@ export const TabBar = memo(() => {
             mask: 'linear-gradient(transparent , #000 30%)',
           }}
         />
-        
-      <View className="p-mg py-0 z-10 relative">
-        <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
-          {tabs.map((tab) => {
-            const isActive = isActiveTab(
-              tab.route,
-              tab?.matchAllRoot,
-              tab?.matchAlso,
-            )
 
-            return (
-              <Moti.div
-                key={tab.id}
-                className="relative rounded-full py-1"
-                whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
-                transition={
-                  shouldAnimate
-                    ? { type: 'spring', stiffness: 400, damping: 17 }
-                    : { duration: 0 }
-                }
-              >
-                <TouchableOpacity
-                  className={cn(
-                    isActive ? '  ' : '',
-                    ` px-4 items-center flex trasnition-all  justify-center flex-row  rounded-full py-2 `,
-                  )}
-                  onPress={() => handleTabPress(tab.route)}
-                  accessibilityLabel={`Navigate to ${tab.label || tab.id} tab`}
-                  accessibilityRole="button"
-                  accessibilityHint={`Double tap to switch to ${tab.label || tab.id} screen`}
-                  testID={`tab-${tab.id}`}
+        <View className="p-mg py-0 z-10 relative">
+          <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
+            {tabs.map((tab) => {
+              const isActive = isActiveTab(
+                tab.route,
+                tab?.matchAllRoot,
+                tab?.matchAlso,
+              )
+
+              return (
+                <Moti.div
+                  key={tab.id}
+                  className="relative rounded-full py-1"
+                  whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
+                  transition={
+                    shouldAnimate
+                      ? { type: 'spring', stiffness: 400, damping: 17 }
+                      : { duration: 0 }
+                  }
                 >
-                  <>
-                    {/* Active indicator background */}
-                    {isActive && (
+                  <TouchableOpacity
+                    className={cn(
+                      isActive ? '  ' : '',
+                      ` px-4 items-center flex trasnition-all  justify-center flex-row  rounded-full py-2 `,
+                    )}
+                    onPress={() => handleTabPress(tab.route)}
+                    accessibilityLabel={`Navigate to ${tab.label || tab.id} tab`}
+                    accessibilityRole="button"
+                    accessibilityHint={`Double tap to switch to ${tab.label || tab.id} screen`}
+                    testID={`tab-${tab.id}`}
+                  >
+                    <>
+                      {/* Active indicator background */}
+                      {isActive && (
+                        <Moti.div
+                          className="absolute  inset-0   flex items-end justify-center mt-full rounded-full "
+                          layoutId={shouldAnimate ? 'activeTab' : undefined}
+                          initial={false}
+                          animate={
+                            shouldAnimate
+                              ? {
+                                  //  backgroundColor: colors.white,
+                                }
+                              : false
+                          }
+                          transition={
+                            shouldAnimate
+                              ? {
+                                  type: 'spring',
+                                  stiffness: 300,
+                                  damping: 30,
+                                }
+                              : { duration: 0 }
+                          }
+                        >
+                          <View className="w-4 text-white bg-accent-500 rounded-full h-1 shadow-lg shadow-accent-500"></View>
+                        </Moti.div>
+                      )}
+
+                      {/* Icon with animation */}
                       <Moti.div
-                        className="absolute  inset-0   flex items-end justify-center mt-full rounded-full "
-                        layoutId={shouldAnimate ? 'activeTab' : undefined}
-                        initial={false}
                         animate={
                           shouldAnimate
                             ? {
-                                //  backgroundColor: colors.white,
+                                opacity: isActive ? 1 : 0.7,
+                                scale: isActive ? 1.1 : 1,
                               }
                             : false
                         }
@@ -193,83 +217,58 @@ export const TabBar = memo(() => {
                             ? {
                                 type: 'spring',
                                 stiffness: 300,
-                                damping: 30,
+                                damping: 20,
                               }
                             : { duration: 0 }
                         }
+                        className="relative flex items-center justify-center flex-col"
+                        style={
+                          !shouldAnimate
+                            ? {
+                                opacity: isActive ? 1 : 0.7,
+                                scale: isActive ? 1.1 : 1,
+                              }
+                            : undefined
+                        }
                       >
-                        <View className="w-4 text-white bg-accent-500 rounded-full h-1 shadow-lg shadow-accent-500"></View>
+                        <tab.icon
+                          color={
+                            isActive
+                              ? colors.accent[400]
+                              : colors['card-lighter-3']
+                          }
+                          size={27}
+                          fill={
+                            isActive ? colors.accent[700] + '7a' : 'transparent'
+                          }
+                          className="relative z-10"
+                        />
+                        {/* Notification Badge */}
+                        {tab.badge && tab.badge > 0 && (
+                          <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                            <Text className="text-white text-[10px] font-bbh font-bold">
+                              {tab.badge > 99 ? '99+' : tab.badge}
+                            </Text>
+                          </View>
+                        )}
+                        <Text
+                          style={{
+                            color: isActive ? 'transparent' : colors.card[100],
+                          }}
+                          className="text-white hidden text-[0.6rem] font-bold"
+                        >
+                          {tab.label.toUpperCase()}
+                        </Text>
                       </Moti.div>
-                    )}
+                    </>
+                  </TouchableOpacity>
+                </Moti.div>
+              )
+            })}
+          </Moti.div>
 
-                    {/* Icon with animation */}
-                    <Moti.div
-                      animate={
-                        shouldAnimate
-                          ? {
-                              opacity: isActive ? 1 : 0.7,
-                              scale: isActive ? 1.1 : 1,
-                            }
-                          : false
-                      }
-                      transition={
-                        shouldAnimate
-                          ? {
-                              type: 'spring',
-                              stiffness: 300,
-                              damping: 20,
-                            }
-                          : { duration: 0 }
-                      }
-                      className="relative flex items-center justify-center flex-col"
-                      style={
-                        !shouldAnimate
-                          ? {
-                              opacity: isActive ? 1 : 0.7,
-                              scale: isActive ? 1.1 : 1,
-                            }
-                          : undefined
-                      }
-                    >
-                      <tab.icon
-                        color={
-                          isActive
-                            ? colors.accent[400]
-                            : colors['card-lighter-3']
-                        }
-                        size={27}
-                        fill={
-                          isActive ? colors.accent[700] + '7a' : 'transparent'
-                        }
-                        className="relative z-10"
-                      />
-                      {/* Notification Badge */}
-                      {tab.badge && tab.badge > 0 && (
-                        <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                          <Text className="text-white text-[10px] font-bbh font-bold">
-                            {tab.badge > 99 ? '99+' : tab.badge}
-                          </Text>
-                        </View>
-                      )}
-                      <Text
-                        style={{
-                          color: isActive ? 'transparent' : colors.card[100],
-                        }}
-                        className="text-white hidden text-[0.6rem] font-bold"
-                      >
-                        {tab.label.toUpperCase()}
-                      </Text>
-                    </Moti.div>
-                  </>
-                </TouchableOpacity>
-              </Moti.div>
-            )
-          })}
-        </Moti.div>
-
-        <BottomNotch />
-      </View>
-
+          <BottomNotch />
+        </View>
       </Moti.div>
     </AnimatePresence>
   )
