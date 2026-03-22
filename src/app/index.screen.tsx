@@ -7,6 +7,7 @@ import { RiAppleFill, RiGoogleFill } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
+import { IS_MOBILE } from '@/shared/constants.shared'
 import { LineWobble } from 'ldrs/react'
 import 'ldrs/react/LineWobble.css'
 
@@ -104,19 +105,23 @@ export default function AppScreen() {
                 Get Started
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
-              disabled={isLoading}
-              onPress={handleGoogle}
-            >
-              <RiGoogleFill className="text-white" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
-              disabled={isLoading}
-            >
-              <RiAppleFill className="text-white" />
-            </TouchableOpacity>
+            {IS_MOBILE && (
+              <>
+                <TouchableOpacity
+                  className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
+                  disabled={isLoading}
+                  onPress={handleGoogle}
+                >
+                  <RiGoogleFill className="text-white" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
+                  disabled={isLoading}
+                >
+                  <RiAppleFill className="text-white" />
+                </TouchableOpacity>
+              </>
+            )}
           </View>
 
           {(loginError || error) && (
