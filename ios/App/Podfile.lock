@@ -10,7 +10,6 @@ PODS:
     - GoogleUtilities/Environment (~> 8.0)
     - GoogleUtilities/UserDefaults (~> 8.0)
     - PromisesObjC (~> 2.4)
-  - BigInt (5.2.0)
   - Capacitor (7.6.0):
     - CapacitorCordova
   - CapacitorApp (7.1.2):
@@ -37,12 +36,6 @@ PODS:
     - FBSDKCoreKit (~> 18.0)
     - FBSDKLoginKit (~> 18.0)
     - GoogleSignIn (~> 9.0.0)
-  - CapgoCapacitorUpdater (7.43.3):
-    - Alamofire (= 5.10.2)
-    - BigInt (= 5.2.0)
-    - Capacitor
-    - Version (= 0.8.0)
-    - ZIPFoundation (~> 0.9)
   - FBAEMKit (18.0.3):
     - FBSDKCoreKit_Basics (= 18.0.3)
   - FBSDKCoreKit (18.0.3):
@@ -120,8 +113,6 @@ PODS:
   - RevenuecatPurchasesCapacitor (9.2.2):
     - Capacitor
     - PurchasesHybridCommon (= 13.26.0)
-  - Version (0.8.0)
-  - ZIPFoundation (0.9.20)
 
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.6.0_@capacitor+core@7.6.0/node_modules/@capacitor/ios`)"
@@ -135,7 +126,6 @@ DEPENDENCIES:
   - "CapacitorShare (from `../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@7.6.0/node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/.pnpm/@capacitor+status-bar@7.0.5_@capacitor+core@7.6.0/node_modules/@capacitor/status-bar`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/.pnpm/@capgo+capacitor-social-login@8.3.9_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-social-login`)"
-  - "CapgoCapacitorUpdater (from `../../node_modules/.pnpm/@capgo+capacitor-updater@7.43.3_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-updater`)"
   - FirebaseMessaging
   - "RevenuecatPurchasesCapacitor (from `../../node_modules/.pnpm/@revenuecat+purchases-capacitor@9.2.2_@capacitor+core@7.6.0/node_modules/@revenuecat/purchases-capacitor`)"
 
@@ -144,7 +134,6 @@ SPEC REPOS:
     - Alamofire
     - AppAuth
     - AppCheckCore
-    - BigInt
     - FBAEMKit
     - FBSDKCoreKit
     - FBSDKCoreKit_Basics
@@ -163,8 +152,6 @@ SPEC REPOS:
     - PromisesObjC
     - PurchasesHybridCommon
     - RevenueCat
-    - Version
-    - ZIPFoundation
 
 EXTERNAL SOURCES:
   Capacitor:
@@ -189,8 +176,6 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+status-bar@7.0.5_@capacitor+core@7.6.0/node_modules/@capacitor/status-bar"
   CapgoCapacitorSocialLogin:
     :path: "../../node_modules/.pnpm/@capgo+capacitor-social-login@8.3.9_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-social-login"
-  CapgoCapacitorUpdater:
-    :path: "../../node_modules/.pnpm/@capgo+capacitor-updater@7.43.3_@capacitor+core@7.6.0/node_modules/@capgo/capacitor-updater"
   RevenuecatPurchasesCapacitor:
     :path: "../../node_modules/.pnpm/@revenuecat+purchases-capacitor@9.2.2_@capacitor+core@7.6.0/node_modules/@revenuecat/purchases-capacitor"
 
@@ -198,7 +183,6 @@ SPEC CHECKSUMS:
   Alamofire: 7193b3b92c74a07f85569e1a6c4f4237291e7496
   AppAuth: 1c1a8afa7e12f2ec3a294d9882dfa5ab7d3cb063
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
-  BigInt: f668a80089607f521586bbe29513d708491ef2f7
   Capacitor: 6e644e9e3369368ac601c77a0fad57f34b78aaa6
   CapacitorApp: f01a913211780e0718dae9750442c3e23f96e106
   CapacitorCordova: f163aa2e84b79efc54d6a75b305bc7e05fb80c5d
@@ -210,7 +194,6 @@ SPEC CHECKSUMS:
   CapacitorShare: 0c58305114538568059bfc07111f22dcb9cb2a82
   CapacitorStatusBar: 6de542f202c0dd3f9d0a73b240d4c9d3dddc49b4
   CapgoCapacitorSocialLogin: 40f5e338f45d95f2e33c9fb224ad4c00471de816
-  CapgoCapacitorUpdater: da7d18b310f35e6d022fe63417b8e5c18b40cd24
   FBAEMKit: 2a6b529993713c185b02bc36f8c91129bf78dfb0
   FBSDKCoreKit: 65d7f7a7d6fcc3aa6eb6e093ec737a4184fc6049
   FBSDKCoreKit_Basics: 7bc9d8fde8f70985fba2ed7c1d07e319f969a991
@@ -230,9 +213,7 @@ SPEC CHECKSUMS:
   PurchasesHybridCommon: fa166fc8b385cf80f581f923c91d8ccffe5dd7f8
   RevenueCat: e47ff90dfd271fde155a4befe48e8fc02e8281e4
   RevenuecatPurchasesCapacitor: 6727a4dc1455bdf2374259420719ce5dfbe957fa
-  Version: de5907f2c5d0f3cf21708db7801d1d5401139486
-  ZIPFoundation: dfd3d681c4053ff7e2f7350bc4e53b5dba3f5351
 
-PODFILE CHECKSUM: 8b1f2b61bb8521862938af7fb15f299de5b20949
+PODFILE CHECKSUM: c6b5dd082272eb6268e87df5f9e5ad0bbadf236c
 
 COCOAPODS: 1.16.2

@@ -36,7 +36,7 @@ export default function CommunityGoalsScreen() {
   }
 
   const handleBack = () => {
-    router.navigate({ to: `/app/community/${communityId}` })
+   history.back()
   }
 
   const handleStartGoal = async (template: any) => {

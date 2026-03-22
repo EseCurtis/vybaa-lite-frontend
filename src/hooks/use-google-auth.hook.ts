@@ -89,6 +89,9 @@ export function useGoogleAuth(options?: UseGoogleAuthOptions): UseGoogleAuthResu
         provider: 'google',
         options: {
           scopes: ["profile", "email"],
+          forceRefreshToken: true,
+          autoSelectEnabled: false,
+          filterByAuthorizedAccounts: false
         },
       }))
 

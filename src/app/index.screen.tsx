@@ -21,7 +21,7 @@ import 'ldrs/react/LineWobble.css'
  */
 export default function AppScreen() {
   const navigate = useNavigate()
-  const { isAuthenticated, isLoading, loginWithGoogle, error, stale } =
+  const { isAuthenticated, isLoading, error, stale, loginWithGoogle } =
     useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
 
@@ -32,15 +32,20 @@ export default function AppScreen() {
     }
   }, [isAuthenticated, isLoading, navigate])
 
-  const handleGoogleLogin = async () => {
+  const handleGetStarted = () => {
+    setLoginError(null)
+    navigate({ to: '/auth/login' })
+  }
+
+  const handleGoogle = async () => {
     try {
       setLoginError(null)
       await loginWithGoogle()
-      // Navigation will happen automatically via useEffect when isAuthenticated becomes true
-    } catch (err) {
-      const errorMessage =
+      // navigation happens via isAuthenticated effect
+    } catch (err: any) {
+      const msg =
         err instanceof Error ? err.message : 'Failed to sign in with Google'
-      setLoginError(errorMessage)
+      setLoginError(msg)
       console.error('Google login error:', err)
     }
   }
@@ -93,7 +98,7 @@ export default function AppScreen() {
             <TouchableOpacity
               className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
               disabled={isLoading}
-              onPress={handleGoogleLogin}
+              onPress={handleGetStarted}
             >
               <Text className="text-black text-md  font-semibold">
                 Get Started
@@ -102,14 +107,13 @@ export default function AppScreen() {
             <TouchableOpacity
               className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
               disabled={isLoading}
-              onPress={handleGoogleLogin}
+              onPress={handleGoogle}
             >
               <RiGoogleFill className="text-white" />
             </TouchableOpacity>
             <TouchableOpacity
               className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
               disabled={isLoading}
-              onPress={handleGoogleLogin}
             >
               <RiAppleFill className="text-white" />
             </TouchableOpacity>

@@ -3,8 +3,8 @@
   "appName": "Vybaa",
   "webDir": "dist",
   "server": {
-    "androidScheme": "https",
-    "url": "https://tryvybaa.vercel.app"
+    "androidScheme": "http",
+    "url": "http://10.132.50.79:3005/"
   },
   "plugins": {
     "PushNotifications": {
@@ -23,11 +23,7 @@
         "apple": true
       },
       "logLevel": 1
-    },
-    "CapacitorUpdater": {
-      "version": "1.0.0",
-      "appId": "com.vybaa.app",
-      "autoUpdate": true
     }
+   
   }
 }

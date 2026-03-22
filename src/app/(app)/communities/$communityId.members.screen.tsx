@@ -4,15 +4,14 @@ import { TabHeader } from '@/components/common/tab-header.component'
 import { MembersTab } from '@/components/custom/community/members-tab.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import {
-  useCommunity,
-  useCommunityMembers,
-} from '@/hooks/use-communities.hook'
+import { useCommunity, useCommunityMembers } from '@/hooks/use-communities.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
 
 export default function CommunityMembersScreen() {
   const router = useRouter()
-  const { communityId } = useParams({ from: '/app/community/members/$communityId' })
+  const { communityId } = useParams({
+    from: '/app/community/members/$communityId',
+  })
 
   const { data: community, isLoading: isLoadingCommunity } =
     useCommunity(communityId)
@@ -33,7 +32,7 @@ export default function CommunityMembersScreen() {
   }
 
   const handleBack = () => {
-    router.navigate({ to: `/app/community/${communityId}` })
+    history.back()
   }
 
   if (isLoadingCommunity) {
@@ -81,4 +80,3 @@ export default function CommunityMembersScreen() {
     </View>
   )
 }
-

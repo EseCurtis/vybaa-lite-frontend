@@ -1,20 +1,17 @@
+import { installServerConsoleBridge } from '@/utils/server-console-bridge'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
-import { ToastProvider } from './providers/toast.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
-import { installServerConsoleBridge } from '@/utils/server-console-bridge'
+import { ToastProvider } from './providers/toast.provider.tsx'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
 
 import { CapacitorPlugin } from './plugins/capacitor/capacitor-plugin.tsx'
 import reportWebVitals from './reportWebVitals.ts'
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
-
-CapacitorUpdater.notifyAppReady();
 
 import './styles.css'
 

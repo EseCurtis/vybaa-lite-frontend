@@ -1,3 +1,4 @@
+import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
@@ -22,8 +23,9 @@ export function useGoals(page: number = 1, limit: number = 10, canCheckIn?: bool
  * Hook to fetch goals with infinite scrolling and optional canCheckIn filter
  */
 export function useInfiniteGoals({ limit = 10, canCheckIn }: { limit?: number; canCheckIn?: boolean } = {}) {
+  const { user } = useAuth();
   return useInfiniteQuery({
-    queryKey: [...goalQueryKeys.infinite(limit), { canCheckIn }],
+    queryKey: [user?.id, ...goalQueryKeys.infinite(limit), { canCheckIn }],
     queryFn: async ({ pageParam = 1 }) => {
       const response = await goalAPI.getAllGoals(pageParam, limit, canCheckIn)
       return response

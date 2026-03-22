@@ -252,6 +252,19 @@ export interface AuthContextValue extends AuthState {
   loginWithGoogle: () => Promise<void>
 
   /**
+   * Email/password login for web and native.
+   */
+  loginWithEmail: (data: LoginRequest) => Promise<void>
+
+  /**
+   * Email/password signup for web and native.
+   * Returns the raw API response so callers can branch on confirmation state.
+   */
+  registerWithEmail: (
+    data: RegisterRequest,
+  ) => Promise<AuthResponse | RegisterConfirmationResponse>
+
+  /**
    * Clear all auth state and tokens and notify the backend if needed.
    */
   logout: () => Promise<void>

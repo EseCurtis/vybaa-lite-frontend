@@ -41,9 +41,6 @@ dependencies:
   '@capgo/capacitor-social-login':
     specifier: ^8.3.9
     version: 8.3.9(@capacitor/core@7.6.0)
-  '@capgo/capacitor-updater':
-    specifier: ^7.43.3
-    version: 7.43.3(@capacitor/core@7.6.0)
   '@iconify-icons/twemoji':
     specifier: ^1.2.8
     version: 1.2.8
@@ -1494,14 +1491,6 @@ packages:
     resolution: {integrity: sha512-JhLf24vk1BlUsMLSTWgv0ebJTtN9JS6pxM4YfaaX5nEldJWWb6qirbJwr32t4rCSbM4iyA6KqWYxfH6u2T9Gwg==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
-    dependencies:
-      '@capacitor/core': 7.6.0
-    dev: false
-
-  /@capgo/capacitor-updater@7.43.3(@capacitor/core@7.6.0):
-    resolution: {integrity: sha512-vKBDRwqnQv500rlaBPhlVJGDR/J6qiOS/YRQQLJkRNg803ZnSmAw+YHZckNfRkt2Bpplt4SK6Glf860DEgSadg==}
-    peerDependencies:
-      '@capacitor/core': '>=7.0.0'
     dependencies:
       '@capacitor/core': 7.6.0
     dev: false

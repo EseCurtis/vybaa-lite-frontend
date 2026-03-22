@@ -4,7 +4,11 @@ import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import type { Goal } from '@/shared/api/goal.api'
-import { normalizePages, seededColor, smartTruncate } from '@/shared/utils/helpers.util'
+import {
+  normalizePages,
+  seededColor,
+  smartTruncate,
+} from '@/shared/utils/helpers.util'
 import { RiArrowRightUpLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { GoalDurationPill } from '../goal/duration-pill.component'
@@ -14,7 +18,7 @@ function HomeGoalItem({
   title,
   currentDay,
   targetDays,
-  onOpen
+  onOpen,
 }: {
   title: string
   currentDay: number
@@ -31,7 +35,9 @@ function HomeGoalItem({
       className=" snap-center  max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
       <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
-      <Text className="text-black/40 limit-text-to-two-lines  leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden  text-left ">{smartTruncate(title,23)}</Text>
+      <Text className="text-black/40 limit-text-to-two-lines  leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden  text-left ">
+        {smartTruncate(title, 23)}
+      </Text>
       <View className="">
         <RiArrowRightUpLine size={27} />
       </View>
@@ -42,7 +48,7 @@ function HomeGoalItem({
 export function HomeGoals() {
   const bottomSheet = useBottomSheet()
   const navigate = useNavigate()
-  const { hasNextPage, data } = useInfiniteGoals({ canCheckIn: true })
+  const { data } = useInfiniteGoals({ canCheckIn: true })
   const goals = normalizePages(data?.pages || [])
   const noGoals = goals.length == 0
 
@@ -54,7 +60,7 @@ export function HomeGoals() {
   }
 
   return (
-    <View className="overflow-x-scroll snap-x snap-mandatory flex-row px-mg shrink-0 no-scrollbar ">
+    <View className="overflow-x-scroll snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar ">
       {goals.map((goal, index) => {
         return (
           <HomeGoalItem
@@ -82,7 +88,9 @@ export function HomeGoals() {
 
       {noGoals && (
         <View className="flex-row w-full items-center">
-          <Text className="text-card-lighter-2/50 font-medium">You cleared it all! 🎊</Text>
+          <Text className="text-card-lighter-2/50 font-medium">
+            You cleared it all! 🎊
+          </Text>
           <Pressable
             onPress={() => {
               navigate({ to: '/app/goal' })

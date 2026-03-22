@@ -1,37 +1,42 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { TopNotch } from '@/components/common/notch.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ActivityTab } from '@/components/custom/community/activity-tab.component'
 import { CommunityBackground } from '@/components/custom/community/community-background.component'
-import { CommunityHeaderActions } from '@/components/custom/community/community-header-actions.component'
+import { CommunityHeaderMenuSheet } from '@/components/custom/community/community-header-menu.sheet'
 import { CommunityHeader } from '@/components/custom/community/community-header.component'
 import { CommunitySettingsSheet } from '@/components/custom/community/community-settings-sheet.component'
 import { CommunityTabs } from '@/components/custom/community/community-tabs.component'
 import { CreateTemplateSheet } from '@/components/custom/community/create-template-sheet.component'
 import { InviteSheet } from '@/components/custom/community/invite-sheet.component'
 import { MembersTab } from '@/components/custom/community/members-tab.component'
+import { ModerationTab } from '@/components/custom/community/moderation-tab.component'
 import { StartGoalConfirmationSheet } from '@/components/custom/community/start-goal-confirmation-sheet.component'
 import { TemplatesTab } from '@/components/custom/community/templates-tab.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
   useActivityFeed,
   useCommunity,
   useCommunityMembers,
-  useCommunityStats, useJoinCommunity,
+  useCommunityStats,
+  useJoinCommunity,
   useLeaveCommunity,
   useReactToActivity,
   useStartGoalFromTemplate,
-  useTemplates
+  useTemplates,
 } from '@/hooks/use-communities.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
+import { RiMore2Fill } from '@remixicon/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
-type Tab = 'templates' | 'activity' | 'members'
+type Tab = 'templates' | 'activity' | 'members' | 'moderation'
 
 export default function CommunityDetailScreen() {
   const router = useRouter()
@@ -70,7 +75,7 @@ export default function CommunityDetailScreen() {
     useStartGoalFromTemplate()
   const { mutateAsync: reactToActivity } = useReactToActivity(communityId)
 
-  useEffect(()=> {
+  useEffect(() => {
     hapticFeedback.light()
   }, [activeTab])
 
@@ -79,6 +84,7 @@ export default function CommunityDetailScreen() {
   const members = membersData?.pages.flatMap((page) => page.data) || []
   const isMember = community?.isMember || false
   const userRole = community?.userRole
+  const isOwner = userRole === 'OWNER'
 
   const handleJoin = async () => {
     try {
@@ -115,11 +121,38 @@ export default function CommunityDetailScreen() {
 
   const handleRefreshCommunity = () => {
     // Invalidate all community-related queries for this community
-    queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
-    queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(communityId) })
-    queryClient.invalidateQueries({ queryKey: communityQueryKeys.templates(communityId) })
-    queryClient.invalidateQueries({ queryKey: communityQueryKeys.activity(communityId) })
-    queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(communityId) })
+    queryClient.invalidateQueries({
+      queryKey: communityQueryKeys.detail(communityId),
+    })
+    queryClient.invalidateQueries({
+      queryKey: communityQueryKeys.members(communityId),
+    })
+    queryClient.invalidateQueries({
+      queryKey: communityQueryKeys.templates(communityId),
+    })
+    queryClient.invalidateQueries({
+      queryKey: communityQueryKeys.activity(communityId),
+    })
+    queryClient.invalidateQueries({
+      queryKey: communityQueryKeys.stats(communityId),
+    })
+  }
+
+  const handleOpenHeaderMenu = () => {
+    bottomSheet.present(
+      <CommunityHeaderMenuSheet
+        isMember={isMember}
+        userRole={userRole}
+        onJoin={handleJoin}
+        onLeave={handleLeave}
+        onCreateTemplate={handleCreateTemplate}
+        onOpenSettings={handleOpenSettings}
+        onRefresh={handleRefreshCommunity}
+        onInvite={handleInvite}
+        onClose={bottomSheet.dismiss}
+      />,
+      { title: 'Actions', elevation: 9999 },
+    )
   }
 
   const handleOpenSettings = () => {
@@ -169,10 +202,8 @@ export default function CommunityDetailScreen() {
 
   const handleReact = async (activityId: string) => {
     try {
-     
       setReactingActivityId(activityId)
       await reactToActivity(activityId)
-
     } catch (error) {
       // Error handled in hook
     } finally {
@@ -251,29 +282,34 @@ export default function CommunityDetailScreen() {
 
   return (
     <View className="flex-1 bg-cardd overflow-y-auto ">
+      <View className="absolute top-0 left-0 w-full z-[999] backdrop-blur-xl bg-cardd/30">
+        <TabHeader
+          title={"Community"}
+          children={
+            <Pressable
+              onPress={handleOpenHeaderMenu}
+              className="w-12 h-12 rounded-full bg-card-light/20 flex items-center justify-center"
+            >
+              <RiMore2Fill size={22} className="text-white" />
+            </Pressable>
+          }
+        />
+      </View>
+
       <CommunityBackground communityName={community.name} />
       <NoiseComponent>
-        <View className="z-10 relative">
-          <TabHeader
-            title={community.name}
-            children={
-              <CommunityHeaderActions
-                isMember={isMember}
-                userRole={userRole}
-                onJoin={handleJoin}
-                onLeave={handleLeave}
-                onCreateTemplate={handleCreateTemplate}
-                onOpenSettings={handleOpenSettings}
-                onRefresh={handleRefreshCommunity}
-                onInvite={handleInvite}
-              />
-            }
-          />
+        <View className="z-10 relative ">
+          <TopNotch />
+          <View className="mt-24" />
 
           <CommunityHeader community={community} stats={stats} />
 
-          <View className="px-mg">
-            <CommunityTabs activeTab={activeTab} onTabChange={setActiveTab} />
+          <View className="">
+            <CommunityTabs
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              showModeration={isOwner}
+            />
           </View>
 
           <View className="flex-1 px-mg pb-20">
@@ -317,6 +353,8 @@ export default function CommunityDetailScreen() {
                 onShowAll={handleShowAllMembers}
               />
             )}
+
+            {activeTab === 'moderation' && isOwner && <ModerationTab />}
           </View>
         </View>
       </NoiseComponent>

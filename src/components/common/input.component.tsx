@@ -46,8 +46,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         
         <View
           className={cn(
-            'relative flex flex-row items-center  bg-card-600 border rounded-full px-1 overflow-hidden transition-all',
-            error ? 'border-danger-500' : 'border-card-lighter',
+            'relative flex flex-row items-center bg-cardd border border-card-light-50 rounded-full px-1 overflow-hidden transition-all',
             disabled && 'opacity-50 cursor-not-allowed',
             className
           )}
@@ -63,7 +62,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={inputType}
             disabled={disabled}
             className={cn(
-              'w-full px-4 py-4  bg-transparent text-white font-bbh text-[17px] outline-none',
+              'w-full px-4 py-3  bg-transparent text-white font-bbh text-[17px] outline-none',
               'placeholder:text-card-lighter-3/40',
               leftIcon && 'pl-10',
               (rightIcon || isPassword) && 'pr-10',
