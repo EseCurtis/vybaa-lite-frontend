@@ -47,6 +47,7 @@ export interface User {
   avatarUrl?: string
   currentMood?: string
   lifeGoal?: string
+  rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
   // OAuth fields
   googleId?: string
   // Timestamps
@@ -274,5 +275,4 @@ export interface AuthContextValue extends AuthState {
    */
   refreshSession: () => Promise<void>
 }
-
 

@@ -19,6 +19,8 @@ import star from '@iconify-icons/twemoji/star'
 import sunrise from '@iconify-icons/twemoji/sunrise'
 import superhero from '@iconify-icons/twemoji/superhero'
 import trophy from '@iconify-icons/twemoji/trophy'
+import cherryBlossom from '@iconify-icons/twemoji/cherry-blossom'
+import waterWave from '@iconify-icons/twemoji/water-wave'
 import warning from '@iconify-icons/twemoji/warning'
 
 // Map emoji text to iconify icons
@@ -43,6 +45,8 @@ export const EMOJI_ICONS = {
   '🦅': eagle,
   '🌅': sunrise,
   '🌙': crescentMoon,
+  '🌸': cherryBlossom,
+  '🌊': waterWave,
   
   // Notifications
   '⏰': alarmClock,

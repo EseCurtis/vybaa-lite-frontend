@@ -8,6 +8,7 @@ import {
   RiEmotionLaughLine,
   RiFileMarkedLine,
   RiFireLine,
+  RiRewindLine,
   RiTempColdLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
@@ -73,6 +74,16 @@ export function HomeActions() {
       onAction() {
         navigate({
           to: '/app/actions/flexx',
+        })
+      },
+    },
+    {
+      name: 'Rewind',
+      description: 'Chat with your Rewind partner',
+      icon: RiRewindLine,
+      onAction() {
+        navigate({
+          to: '/app/rewind',
         })
       },
     },

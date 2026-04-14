@@ -5,9 +5,10 @@ import { View } from '../view.component'
 
 export function AppLayout() {
   const location = useLocation()
+  const tabBarHideMatches = location.pathname.match(/\/app\/(home|goal|communities|rewards|profile)(\/.*)?$/)
 
   // Only show tab bar on app routes
-  const shouldShowTabBar = location.pathname.startsWith('/app/')
+  const shouldShowTabBar = location.pathname.startsWith('/app/') && tabBarHideMatches
   const onATab = location.pathname.split('/').length < 4
 
   return (

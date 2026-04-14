@@ -22,6 +22,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
+import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
@@ -104,6 +105,11 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
 const AppWellnessRoute = AppWellnessRouteImport.update({
   id: '/app/wellness',
   path: '/app/wellness',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindRoute = AppRewindRouteImport.update({
+  id: '/app/rewind',
+  path: '/app/rewind',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRewardsRoute = AppRewardsRouteImport.update({
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/app/rewind': typeof AppRewindRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -246,6 +253,7 @@ export interface FileRoutesByTo {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/app/rewind': typeof AppRewindRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
+  '/app/rewind': typeof AppRewindRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -315,6 +324,7 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/rewards'
+    | '/app/rewind'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -348,6 +358,7 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/rewards'
+    | '/app/rewind'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/app/insights'
     | '/app/profile'
     | '/app/rewards'
+    | '/app/rewind'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -415,6 +427,7 @@ export interface RootRouteChildren {
   AppInsightsRoute: typeof AppInsightsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
+  AppRewindRoute: typeof AppRewindRoute
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -528,6 +541,13 @@ declare module '@tanstack/react-router' {
       path: '/app/wellness'
       fullPath: '/app/wellness'
       preLoaderRoute: typeof AppWellnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind': {
+      id: '/app/rewind'
+      path: '/app/rewind'
+      fullPath: '/app/rewind'
+      preLoaderRoute: typeof AppRewindRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/rewards': {
@@ -682,6 +702,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppInsightsRoute: AppInsightsRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
+  AppRewindRoute: AppRewindRoute,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
