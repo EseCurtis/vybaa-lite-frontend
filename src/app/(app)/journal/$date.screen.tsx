@@ -10,8 +10,21 @@ import {
   useJournalByDate,
   useUpdateJournal,
 } from '@/hooks/use-journal.hook'
+import { useToast } from '@/providers/toast.provider'
+import {
+  getVoiceRecordingStatus,
+  startVoiceRecording,
+  stopVoiceRecording,
+  type VoiceRecordingResult,
+} from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { getDailyPrompt } from '@/shared/data/journal-prompts'
-import { RiDeleteBin6Line, RiMicLine, RiSaveLine } from '@remixicon/react'
+import {
+  RiDeleteBin6Line,
+  RiMicFill,
+  RiMicLine,
+  RiSaveLine,
+  RiStopCircleLine,
+} from '@remixicon/react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import moment from 'moment'
@@ -20,6 +33,7 @@ import { useEffect, useState } from 'react'
 export default function JournalEditorScreen() {
   const { date } = useParams({ from: '/journal/$date' })
   const navigate = useNavigate()
+  const toast = useToast()
 
   const { data: journalData, isLoading } = useJournalByDate(date)
   const { mutateAsync: createJournal, isPending: isCreating } =
@@ -32,9 +46,11 @@ export default function JournalEditorScreen() {
   const [content, setContent] = useState('')
   const [mood, setMood] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false)
+  const [voiceNote, setVoiceNote] = useState<VoiceRecordingResult | null>(null)
 
   const journal = journalData?.data?.journal
-  const isToday = moment(date).isSame(moment(), 'day')
   const prompt = getDailyPrompt(new Date(date))
 
   // Load existing journal data
@@ -49,14 +65,30 @@ export default function JournalEditorScreen() {
   useEffect(() => {
     if (!journal) {
       // For new entries, any content means there are changes
-      setHasChanges(content.trim().length > 0 || mood !== null)
+      setHasChanges(content.trim().length > 0 || mood !== null || voiceNote !== null)
     } else {
       // For existing entries, check if different from saved
       const changed =
         content !== (journal?.entry || '') || mood !== (journal.mood || null)
-      setHasChanges(changed)
+      setHasChanges(changed || voiceNote !== null)
     }
-  }, [content, mood, journal])
+  }, [content, mood, journal, voiceNote])
+
+  useEffect(() => {
+    let isMounted = true
+
+    void getVoiceRecordingStatus()
+      .then((result) => {
+        if (isMounted) {
+          setIsRecording(result.status === 'RECORDING')
+        }
+      })
+      .catch(() => {})
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const handleSave = async () => {
     if (!content.trim()) {
@@ -109,9 +141,38 @@ export default function JournalEditorScreen() {
     }
   }
 
-  const handleVoiceRecord = () => {
-    // TODO: Implement voice recording
-    alert('Voice recording coming soon!')
+  const handleVoiceRecord = async () => {
+    if (isProcessingVoice) return
+
+    setIsProcessingVoice(true)
+
+    try {
+      if (isRecording) {
+        const recordedAudio = await stopVoiceRecording()
+        setVoiceNote(recordedAudio)
+        setIsRecording(false)
+        toast.success('Voice note recorded')
+        return
+      }
+
+      await startVoiceRecording()
+      setVoiceNote(null)
+      setIsRecording(true)
+      toast.info('Recording started')
+    } catch (error) {
+      console.error('Voice recording error:', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to record voice note',
+      )
+      setIsRecording(false)
+    } finally {
+      setIsProcessingVoice(false)
+    }
+  }
+
+  const discardVoiceNote = () => {
+    setVoiceNote(null)
+    toast.info('Voice note discarded')
   }
 
   return (
@@ -177,11 +238,61 @@ export default function JournalEditorScreen() {
                   </Text>
                   <button
                     onClick={handleVoiceRecord}
-                    className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                    disabled={isProcessingVoice}
+                    className={`p-2 rounded-full transition-colors disabled:opacity-60 ${
+                      isRecording
+                        ? 'bg-danger-500/20 hover:bg-danger-500/30'
+                        : 'bg-white/10 hover:bg-white/20'
+                    }`}
                   >
-                    <RiMicLine size={16} className="text-white/70" />
+                    {isRecording ? (
+                      <RiStopCircleLine size={16} className="text-danger-300" />
+                    ) : (
+                      <RiMicLine size={16} className="text-white/70" />
+                    )}
                   </button>
                 </View>
+
+                {isRecording && (
+                  <View className="rounded-2xl border border-danger-400/20 bg-danger-500/10 px-4 py-3">
+                    <View className="flex flex-row items-center gap-2">
+                      <RiMicFill size={16} className="text-danger-300" />
+                      <Text className="text-danger-100 text-sm font-bbh">
+                        Recording voice note... tap the mic again to stop.
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {voiceNote && (
+                  <View className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-3">
+                    <View className="flex flex-row items-center justify-between gap-3">
+                      <View>
+                        <Text className="text-white/90 text-sm font-bbh">
+                          Voice note preview
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          {Math.max(1, Math.round(voiceNote.durationMs / 1000))}s
+                          {' • '}
+                          {voiceNote.mimeType}
+                        </Text>
+                      </View>
+
+                      <button
+                        onClick={discardVoiceNote}
+                        className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                      >
+                        <RiDeleteBin6Line size={16} className="text-white/70" />
+                      </button>
+                    </View>
+
+                    <audio controls src={voiceNote.audioUrl} className="w-full" />
+
+                    <Text className="text-white/45 text-xs font-bbh">
+                      This voice note stays local for now and is not saved with the journal entry yet.
+                    </Text>
+                  </View>
+                )}
 
                 <TextArea
                   value={content}

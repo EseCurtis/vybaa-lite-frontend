@@ -1,5 +1,5 @@
-<!DOCTYPE html>
-<html lang="en" style=" background-color: #000000;">
+<!doctype html>
+<html lang="en" style="background-color: #000000">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -14,7 +14,62 @@
     <title>Vybaa - Catch the Vybe</title>
   </head>
   <body class="font-bbh">
-    <div id="app"></div>
+    <style>
+      .loader {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translate(-50%, -50%);
+        transition: all 0.5s ease;
+        background: linear-gradient(180deg, transparent 30%, #e809d532 120%);
+      }
+
+      .loaded .loader {
+        opacity: 0;
+      }
+
+      body.loaded #app {
+        opacity: 1;
+      }
+
+      #app {
+        opacity: 0;
+        transition: all 1s ease;
+      }
+    </style>
+    <div class="loader">
+      <svg
+        width="58"
+        height="63"
+        viewBox="0 0 58 63"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M21.4091 -4.75192e-06C28.2754 3.79872 33.463 10.043 35.9361 17.4927L37.3434 21.7329L40.4504 18.523C42.5934 16.3096 44.3689 13.768 45.7123 10.9965C50.5693 14.5956 54.1663 19.6397 55.9837 25.4074L56.149 25.9524C57.7523 31.4181 57.6907 37.2387 55.9713 42.6687L55.7938 43.2096C53.9029 48.7926 50.3374 53.6527 45.5897 57.1315L45.1266 57.4638C40.3035 60.8525 34.5562 62.6686 28.6708 62.6721L28.1006 62.6663C22.2069 62.5525 16.4958 60.6243 11.7443 57.1513L11.2877 56.8102C6.5993 53.2378 3.13009 48.3087 1.34685 42.7L1.17963 42.1553C-0.548131 36.3211 -0.374262 30.0872 1.67685 24.3586L1.87434 23.8241C3.96824 18.3238 7.70789 13.5962 12.5891 10.2913L12.6245 10.2672L12.6588 10.2423C16.3476 7.57101 19.3458 4.05887 21.4091 -4.75192e-06ZM20.9581 21.385C17.8467 22.9045 15.2436 25.2838 13.431 28.2431L13.0785 28.8435C11.3734 31.878 10.5491 35.3437 10.6788 38.8471L10.7179 39.5482C10.9923 43.2877 12.345 46.8855 14.6015 49.8891L15.0342 50.4437C17.244 53.1747 20.147 55.2593 23.4304 56.4499L24.0909 56.6758C27.4069 57.7406 30.9419 57.8581 34.2978 56.9961L34.9644 56.8114C38.2754 55.8245 41.2321 53.9099 43.5005 51.281L43.9441 50.7478C46.1058 48.0418 47.4691 44.7633 47.8871 41.2818L47.9579 40.5852C48.2478 37.0984 47.5814 33.5756 46.0346 30.408L44.8469 27.9745L42.4135 29.1631L30.5895 34.9368L24.5792 22.6299L23.3915 20.1964L20.9581 21.385Z"
+          fill="url(#paint0_linear_278_178)"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_278_178"
+            x1="32.0851"
+            y1="65.745"
+            x2="19.9539"
+            y2="-3.2116"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stop-color="#E809D5" />
+            <stop offset="1" stop-color="#FF2A2E" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+    <div id="app" ></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

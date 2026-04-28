@@ -1,13 +1,20 @@
 import viteReact from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+// import outray from '@outray/vite'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { fileURLToPath, URL } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    allowedHosts: ['vybaa-lite.outray.app', 'localhost'],
+  },
   plugins: [
+    // outray({
+    //   subdomain: 'vybaa-lite',
+    // }),
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,

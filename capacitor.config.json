@@ -3,8 +3,8 @@
   "appName": "Vybaa",
   "webDir": "dist",
   "server": {
-    "androidScheme": "http",
-    "url": "http://10.132.50.79:3005/"
+    "androidScheme": "https",
+    "url": "https://vybaa-lite.outray.app/"
   },
   "plugins": {
     "PushNotifications": {

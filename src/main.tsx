@@ -49,20 +49,25 @@ declare module '@tanstack/react-router' {
 const rootElement = document.getElementById('app')
 if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ToastProvider>
-            <NotificationProvider>
-              <CapacitorPlugin />
-              <RouterProvider router={router} />
-            </NotificationProvider>
-          </ToastProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </StrictMode>,
-  )
+  const loadBody = () => {
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ToastProvider>
+              <NotificationProvider>
+                <CapacitorPlugin />
+                <RouterProvider router={router} />
+              </NotificationProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </StrictMode>,
+    )
+  }
+
+  document.body.classList.add('loaded')
+  loadBody()
 }
 
 // If you want to start measuring performance in your app, pass a function
