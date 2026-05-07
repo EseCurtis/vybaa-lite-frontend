@@ -1,0 +1,1 @@
+import{O as e}from"./index-BIhJpcLM.js";const o="/api/v1";class s{async uploadImage(a){const{data:t}=await e.post(`${o}/upload/image`,a);return t}async deleteImage(a){const{data:t}=await e.delete(`${o}/upload/image`,{data:{publicId:a}});return t}}const n=new s;export{n as u};

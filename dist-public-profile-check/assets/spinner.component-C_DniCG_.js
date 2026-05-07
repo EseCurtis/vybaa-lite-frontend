@@ -1,0 +1,1 @@
+import{j as e,V as t}from"./index-BkaM79nh.js";function a({size:r=10}){return e.jsx(t,{style:{width:r,height:r},className:"border-2 border-card-lighter-3 border-t-transparent animate-spin rounded-full"})}export{a as S};

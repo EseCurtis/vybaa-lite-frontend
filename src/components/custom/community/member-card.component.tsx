@@ -3,6 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityMember } from '@/shared/api/community.api'
 import { RiCoinsLine, RiShieldLine, RiShieldStarLine, RiUserLine } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
 import moment from 'moment'
 
 interface MemberCardProps {
@@ -25,6 +26,7 @@ const roleLabels = {
 }
 
 export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: MemberCardProps) {
+  const navigate = useNavigate()
   const RoleIcon = roleIcons[member.role] || RiUserLine
   const roleLabel = roleLabels[member.role] || 'Member'
   const canManageRoles = currentUserRole === 'OWNER' || (currentUserRole === 'MOD' && member.role === 'MEMBER')
@@ -33,7 +35,14 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
     'User'
 
   const handlePress = () => {
-    onPress?.(member)
+    if (onPress) {
+      onPress(member)
+      return
+    }
+
+    if (member.user.username) {
+      navigate({ to: '/app/u/$username', params: { username: member.user.username } })
+    }
   }
 
   return (

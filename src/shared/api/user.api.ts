@@ -18,6 +18,25 @@ export interface UsernameAvailability {
   currentUsername?: string
 }
 
+export interface PublicProfileStats {
+  achievementCount: number
+  communityCount: number
+  goalCount: number
+  journalCount: number
+}
+
+export interface PublicProfile {
+  id: string
+  username: string | null
+  firstName: string | null
+  lastName: string | null
+  avatarUrl: string | null
+  currentMood: string | null
+  joinedAt: string
+  playPoints: number
+  stats: PublicProfileStats
+}
+
 class UserAPI {
   async registerFCMToken(fcmToken: string): Promise<{ msg: string }> {
     const { data: res } = await http.post<{ msg: string }>(
@@ -69,7 +88,17 @@ class UserAPI {
     )
     return res
   }
+
+  async getPublicProfile(username: string): Promise<{
+    msg: string
+    data: PublicProfile
+  }> {
+    const { data: res } = await http.get<{
+      msg: string
+      data: PublicProfile
+    }>(`${API_V1}/users/public/${username}`)
+    return res
+  }
 }
 
 export const userAPI = new UserAPI()
-

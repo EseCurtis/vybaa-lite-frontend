@@ -46,7 +46,6 @@ export interface User {
   username?: string
   avatarUrl?: string
   currentMood?: string
-  lifeGoal?: string
   rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
   // OAuth fields
   googleId?: string
@@ -131,8 +130,6 @@ export interface AISuggestion {
 
 export interface OnboardingRequest {
   answers: Array<OnboardingAnswer>
-  currentMood: string
-  lifeGoal: string
   username?: string
   selectedTasks?: Array<AISuggestion>
 }
@@ -275,4 +272,3 @@ export interface AuthContextValue extends AuthState {
    */
   refreshSession: () => Promise<void>
 }
-

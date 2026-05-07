@@ -1,10 +1,15 @@
-import { ImagePicker } from '@/components/common/image-picker.component'
-import { Input } from '@/components/common/input.component'
+import {
+  ProfileActionButtons,
+} from '@/app/(app)/components/profile/profile-action-buttons.component'
+import { ProfileHeader } from '@/app/(app)/components/profile/profile-header.component'
+import { ProfileInfoSection } from '@/app/(app)/components/profile/profile-info-section.component'
+import { ProfileQuickActions } from '@/app/(app)/components/profile/profile-quick-actions.component'
+import type {
+  ProfileFormData,
+  ProfileQuickAction,
+} from '@/app/(app)/components/profile/profile.types'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
-import { Button } from '@/components/layout/button.component'
-import { Pressable } from '@/components/layout/pressables.component'
-import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useTabBar } from '@/hooks/use-tab-bar.hook'
@@ -13,49 +18,93 @@ import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
 import {
-  RiArrowRightSLine,
   RiBarChartBoxLine,
-  RiEmotionLine,
   RiSettings3Line,
   RiTrophyLine,
 } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
+
+function createProfileFormData(user: ReturnType<typeof useAuth>['user']): ProfileFormData {
+  return {
+    firstName: user?.firstName ?? '',
+    lastName: user?.lastName ?? '',
+    username: user?.username ?? '',
+    profileImageId: user?.avatarUrl ?? '',
+  }
+}
+
+function getProfileDisplayName(user: ReturnType<typeof useAuth>['user']): string {
+  if (!user) {
+    return 'User'
+  }
+
+  return [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
+}
+
+function getProfileInitials(user: ReturnType<typeof useAuth>['user']): string {
+  if (!user) {
+    return 'U'
+  }
+
+  return (
+    [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('').toUpperCase() ||
+    user.username?.[0]?.toUpperCase() ||
+    user.email[0].toUpperCase()
+  )
+}
+
+function validateProfileFormData(formData: ProfileFormData): string | null {
+  if (formData.username && formData.username.length < 3) {
+    return 'Username must be at least 3 characters'
+  }
+
+  if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
+    return 'Username can only contain letters, numbers, and underscores'
+  }
+
+  return null
+}
+
+const profileQuickActions: ProfileQuickAction[] = [
+  {
+    title: 'Achievements',
+    description: 'View your earned badges',
+    to: '/achievements',
+    icon: <RiTrophyLine size={20} className="text-white" />,
+    iconContainerClassName:
+      'bg-gradient-to-br from-primary-500/60 to-accent-500/60',
+  },
+  {
+    title: 'Metric',
+    description: 'View progress stats',
+    to: '/app/sub-profile/insights',
+    icon: <RiBarChartBoxLine size={20} className="text-white" />,
+  },
+  {
+    title: 'Settings',
+    description: 'App preferences',
+    to: '/app/sub-profile/settings',
+    icon: <RiSettings3Line size={20} className="text-white" />,
+  },
+]
 
 export default function ProfileScreen() {
   const { user, refreshSession } = useAuth()
   const toast = useToast()
-  const navigate = useNavigate()
-  const { goals } = useGoalOperations(1, 100)
+  useGoalOperations(1, 100)
   const [updatedProfileImage, setUpdatedProfileImage] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '',
-    currentMood: '',
-    lifeGoal: '',
-    profileImageId: '',
-  })
+  const [formData, setFormData] = useState<ProfileFormData>(createProfileFormData(user))
   const [formError, setFormError] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const { hide, show } = useTabBar()
 
-  // Initialize form data from user
   useEffect(() => {
     if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: user.username || '',
-        currentMood: user.currentMood || '',
-        lifeGoal: user.lifeGoal || '',
-        profileImageId: user.avatarUrl || '',
-      })
-      setImagePreview(user.avatarUrl || null)
+      setFormData(createProfileFormData(user))
+      setImagePreview(user.avatarUrl ?? null)
     }
   }, [user])
 
@@ -73,42 +122,33 @@ export default function ProfileScreen() {
       setFormError(null)
       await refreshSession()
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       const errorMsg =
-        error.response?.data?.msg || error.message || 'Failed to update profile'
+        error instanceof Error ? error.message : 'Failed to update profile'
       toast.error(errorMsg)
       setFormError(errorMsg)
     },
   })
 
-  const handleImageSelect = (imageDataUrl: string) => {
+  function handleImageSelect(imageDataUrl: string): void {
     setImagePreview(imageDataUrl)
     setFormData({ ...formData, profileImageId: imageDataUrl })
     setUpdatedProfileImage(true)
   }
 
-  const handleSave = async () => {
+  async function handleSave(): Promise<void> {
     setFormError(null)
 
-    if (formData.username && formData.username.length < 3) {
-      const errorMsg = 'Username must be at least 3 characters'
-      setFormError(errorMsg)
-      toast.warning(errorMsg)
-      return
-    }
-
-    if (formData.username && !/^[a-zA-Z0-9_]+$/.test(formData.username)) {
-      const errorMsg =
-        'Username can only contain letters, numbers, and underscores'
-      setFormError(errorMsg)
-      toast.warning(errorMsg)
+    const validationError = validateProfileFormData(formData)
+    if (validationError) {
+      setFormError(validationError)
+      toast.warning(validationError)
       return
     }
 
     try {
       let cloudinaryUrl = formData.profileImageId
 
-      // If image is base64 (new upload), upload to Cloudinary first
       if (
         formData.profileImageId &&
         formData.profileImageId.startsWith('data:image/') &&
@@ -120,68 +160,46 @@ export default function ProfileScreen() {
           folder: 'profile-images',
         })
         cloudinaryUrl = uploadResponse.data.url
-        //@ts-ignore
+        // @ts-ignore
         toast.dismiss(loadingToast)
       }
 
-      // Update profile with Cloudinary URL
       updateProfileMutation.mutate({
         ...formData,
         profileImageId: cloudinaryUrl,
       })
-    } catch (error: any) {
-      //@ts-ignore
+    } catch (error: unknown) {
+      // @ts-ignore
       toast.dismiss()
-      const errorMsg = error.message || 'Failed to upload image'
+      const errorMsg = error instanceof Error ? error.message : 'Failed to upload image'
       setFormError(errorMsg)
+      toast.warning(errorMsg)
       toast.error(errorMsg)
     }
   }
 
-  const handleCancel = () => {
+  function handleCancel(): void {
     if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        username: user.username || '',
-        currentMood: user.currentMood || '',
-        lifeGoal: user.lifeGoal || '',
-        profileImageId: user.avatarUrl || '',
-      })
-      setImagePreview(user.avatarUrl || null)
+      setFormData(createProfileFormData(user))
+      setImagePreview(user.avatarUrl ?? null)
     }
     setIsEditing(false)
     setFormError(null)
   }
 
-  const displayName = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') ||
-      user.username ||
-      user.email
-    : 'User'
+  function handleFieldChange(
+    field: keyof Pick<ProfileFormData, 'firstName' | 'lastName' | 'username'>,
+    value: string,
+  ): void {
+    setFormData({
+      ...formData,
+      [field]: value,
+    })
+    setFormError(null)
+  }
 
-  const initials = user
-    ? [user.firstName?.[0], user.lastName?.[0]]
-        .filter(Boolean)
-        .join('')
-        .toUpperCase() ||
-      user.username?.[0]?.toUpperCase() ||
-      user.email[0].toUpperCase()
-    : 'U'
-
-  // Calculate overall progress for ring
-  const overallProgress = useMemo(() => {
-    if (!goals.length) return 0
-    const totalProgress = goals.reduce((sum, goal) => {
-      return sum + (goal.currentDay / goal.targetDays) * 100
-    }, 0)
-    return Math.round(totalProgress / goals.length)
-  }, [goals])
-
-  const hasProgress = goals.length > 0
-  const radius = 60
-  const circumference = 2 * Math.PI * radius
-  const strokeDashoffset = circumference * (1 - overallProgress / 100)
+  const displayName = getProfileDisplayName(user)
+  const initials = getProfileInitials(user)
 
   useEffect(() => {
     if (isEditing) {
@@ -189,276 +207,41 @@ export default function ProfileScreen() {
     } else {
       show()
     }
-  }, [isEditing])
+  }, [hide, isEditing, show])
 
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
       <NoiseComponent>
-        {/* Header */}
         <TopNotchPadd />
 
         <View className="flex-1 px-mg pb-[170px] pt-4 space-y-8">
-          {/* Profile Header with Progress Ring */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <View className="items-center space-y-4">
-              {/* Avatar with Progress Ring */}
-              <View className="relative ">
-                {isEditing ? (
-                  <ImagePicker
-                    currentImageUrl={imagePreview || undefined}
-                    onImageSelect={handleImageSelect}
-                    size="lg"
-                    initials={initials}
-                  />
-                ) : (
-                  <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
-                    {imagePreview || user?.avatarUrl ? (
-                      <img
-                        src={imagePreview || user?.avatarUrl}
-                        alt={displayName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Text className="text-white text-4xl font-bbh font-bold">
-                        {initials}
-                      </Text>
-                    )}
-                  </View>
-                )}
-              </View>
+          <ProfileHeader
+            displayName={displayName}
+            imagePreview={imagePreview}
+            initials={initials}
+            isEditing={isEditing}
+            onImageSelect={handleImageSelect}
+            user={user}
+          />
 
-              {/* Name and Email */}
-              <View className="items-center space-y-1">
-                <Text className="text-white text-2xl font-bbh font-bold">
-                  {displayName}
-                </Text>
-                <Text className="text-white/50 text-sm font-bbh">
-                  @{user?.username}
-                </Text>
-              </View>
-            </View>
-          </motion.div>
+          <ProfileActionButtons
+            isEditing={isEditing}
+            isSaving={updateProfileMutation.isPending}
+            onCancel={handleCancel}
+            onEdit={() => setIsEditing(true)}
+            onSave={handleSave}
+          />
 
-          {/* Edit/Save Buttons */}
-          <View className="flex flex-row gap-3">
-            {!isEditing ? (
-              <Button
-                label="Edit Profile"
-                variant="default"
-                fullWidth
-                onClick={() => setIsEditing(true)}
-                textClassName="text-sm"
-                style={{
-                  width: '100%',
-                }}
-              />
-            ) : (
-              <>
-                <Button
-                  label="Cancel"
-                  variant="outline"
-                  fullWidth
-                  onClick={handleCancel}
-                  disabled={updateProfileMutation.isPending}
-                  textClassName="text-sm"
-                  style={{
-                    width: '100%',
-                  }}
-                />
-                <Button
-                  label="Save"
-                  variant="default"
-                  fullWidth
-                  onClick={handleSave}
-                  disabled={updateProfileMutation.isPending}
-                  loading={updateProfileMutation.isPending}
-                  textClassName="text-sm"
-                  style={{
-                    width: '100%',
-                  }}
-                />
-              </>
-            )}
-          </View>
-
-          {/* Personal Information Cards */}
-          <View className="space-y-3">
-            {!isEditing ? (
-              // Display Mode - Grid Cards with Icons
-              <View className="space-y-3">
-                <View className="grid grid-cols-2 gap-3">
-                  {/* Current Mood */}
-                  <View className="col-span-2">
-                    <View className="bg-card-light/40 rounded-2xl p-4 flex-row items-start gap-4">
-                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center shrink-0">
-                        <RiEmotionLine size={20} className="text-white" />
-                      </View>
-                      <View className="flex-1 min-w-0">
-                        <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-1">
-                          Current Mood
-                        </Text>
-                        <Text
-                          className={
-                            user?.currentMood
-                              ? 'text-white text-base font-bbh font-semibold'
-                              : 'text-white/40 text-base font-bbh'
-                          }
-                        >
-                          {user?.currentMood || 'Not set'}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            ) : (
-              // Edit Mode - Form Fields
-              <View className="space-y-3">
-                {/* First Name */}
-                <View className="bg-card-light/40 rounded-2xl p-4">
-                  <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
-                    First Name
-                  </Text>
-                  <Input
-                    type="text"
-                    placeholder="First name"
-                    value={formData.firstName}
-                    onChange={(e) => {
-                      setFormData({ ...formData, firstName: e.target.value })
-                      setFormError(null)
-                    }}
-                    className="bg-card-light/40 border-white/10 text-white"
-                  />
-                </View>
-
-                {/* Last Name */}
-                <View className="bg-card-light/40 rounded-2xl p-4">
-                  <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
-                    Last Name
-                  </Text>
-                  <Input
-                    type="text"
-                    placeholder="Last name"
-                    value={formData.lastName}
-                    onChange={(e) => {
-                      setFormData({ ...formData, lastName: e.target.value })
-                      setFormError(null)
-                    }}
-                    className="bg-card-light/40 border-white/10 text-white"
-                  />
-                </View>
-
-                {/* Username */}
-                <View className="bg-card-light/40 rounded-2xl p-4">
-                  <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
-                    Username
-                  </Text>
-                  <Input
-                    type="text"
-                    placeholder="Username"
-                    value={formData.username}
-                    onChange={(e) => {
-                      setFormData({ ...formData, username: e.target.value })
-                      setFormError(null)
-                    }}
-                    className="bg-card-light/40 border-white/10 text-white"
-                  />
-                </View>
-
-                {/* Error Display */}
-                {formError && (
-                  <View className="bg-danger-500/20 rounded-xl p-4">
-                    <Text className="text-danger-500 text-sm font-bbh">
-                      {formError}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            )}
-          </View>
+          <ProfileInfoSection
+            formData={formData}
+            formError={formError}
+            isEditing={isEditing}
+            onFieldChange={handleFieldChange}
+            user={user}
+          />
 
           {!isEditing && (
-            <>
-              {/* Quick Access Actions */}
-              <View className="space-y-3 pb-[200px]">
-                <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-                  Quick Access
-                </Text>
-
-                <View className="grid grid-cols-2 gap-3">
-                  {/* Achievements */}
-                  <Pressable
-                    onPress={() => navigate({ to: '/achievements' })}
-                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-                  >
-                    <View className="flex-row items-center text-left gap-4">
-                      <View className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/60 to-accent-500/60 flex items-center justify-center">
-                        <RiTrophyLine size={20} className="text-white" />
-                      </View>
-                      <View>
-                        <Text className="text-white text-sm font-bbh font-semibold">
-                          Achievements
-                        </Text>
-                        <Text className="text-white/50 text-xs font-bbh">
-                          View your earned badges
-                        </Text>
-                      </View>
-                    </View>
-                    <RiArrowRightSLine size={20} className="text-white/40" />
-                  </Pressable>
-
-                  {/* Insights */}
-                  <Pressable
-                    onPress={() =>
-                      navigate({ to: '/app/sub-profile/insights' })
-                    }
-                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-                  >
-                    <View className="flex-row items-center text-left gap-4">
-                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                        <RiBarChartBoxLine size={20} className="text-white" />
-                      </View>
-                      <View>
-                        <Text className="text-white text-sm font-bbh font-semibold">
-                          Metric
-                        </Text>
-                        <Text className="text-white/50 text-xs font-bbh">
-                          View progress stats
-                        </Text>
-                      </View>
-                    </View>
-                    <RiArrowRightSLine size={20} className="text-white/40" />
-                  </Pressable>
-
-                  {/* Settings */}
-                  <Pressable
-                    onPress={() =>
-                      navigate({ to: '/app/sub-profile/settings' })
-                    }
-                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-                  >
-                    <View className="flex-row items-center text-left gap-4">
-                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                        <RiSettings3Line size={20} className="text-white" />
-                      </View>
-                      <View>
-                        <Text className="text-white text-sm font-bbh font-semibold">
-                          Settings
-                        </Text>
-                        <Text className="text-white/50 text-xs font-bbh">
-                          App preferences
-                        </Text>
-                      </View>
-                    </View>
-                    <RiArrowRightSLine size={20} className="text-white/40" />
-                  </Pressable>
-                </View>
-              </View>
-            </>
+            <ProfileQuickActions actions={profileQuickActions} />
           )}
         </View>
       </NoiseComponent>

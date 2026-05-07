@@ -29,6 +29,7 @@ import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
+import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
@@ -142,6 +143,11 @@ const AppCommunitiesRoute = AppCommunitiesRouteImport.update({
   path: '/app/communities',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppUUsernameRoute = AppUUsernameRouteImport.update({
+  id: '/app/u/$username',
+  path: '/app/u/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppSubProfileSettingsRoute = AppSubProfileSettingsRouteImport.update({
   id: '/app/sub-profile/settings',
   path: '/app/sub-profile/settings',
@@ -236,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/u/$username': typeof AppUUsernameRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -270,6 +277,7 @@ export interface FileRoutesByTo {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/u/$username': typeof AppUUsernameRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
+  '/app/u/$username': typeof AppUUsernameRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/u/$username'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -375,6 +385,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/u/$username'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -409,6 +420,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
+    | '/app/u/$username'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -443,6 +455,7 @@ export interface RootRouteChildren {
   AppInviteCodeRoute: typeof AppInviteCodeRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
+  AppUUsernameRoute: typeof AppUUsernameRoute
   AppCommunityActivityCommunityIdRoute: typeof AppCommunityActivityCommunityIdRoute
   AppCommunityGoalsCommunityIdRoute: typeof AppCommunityGoalsCommunityIdRoute
   AppCommunityMembersCommunityIdRoute: typeof AppCommunityMembersCommunityIdRoute
@@ -592,6 +605,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/u/$username': {
+      id: '/app/u/$username'
+      path: '/app/u/$username'
+      fullPath: '/app/u/$username'
+      preLoaderRoute: typeof AppUUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/sub-profile/settings': {
       id: '/app/sub-profile/settings'
       path: '/app/sub-profile/settings'
@@ -718,6 +738,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppInviteCodeRoute: AppInviteCodeRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
+  AppUUsernameRoute: AppUUsernameRoute,
   AppCommunityActivityCommunityIdRoute: AppCommunityActivityCommunityIdRoute,
   AppCommunityGoalsCommunityIdRoute: AppCommunityGoalsCommunityIdRoute,
   AppCommunityMembersCommunityIdRoute: AppCommunityMembersCommunityIdRoute,

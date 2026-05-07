@@ -33,17 +33,49 @@ import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { RiMore2Fill } from '@remixicon/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useParams, useRouter } from '@tanstack/react-router'
+import {
+  useNavigate,
+  useParams,
+  useRouter,
+  useRouterState,
+} from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
 type Tab = 'templates' | 'activity' | 'members' | 'moderation'
 
+const defaultCommunityTab: Tab = 'templates'
+
+function getCommunityTabFromHash(hash: string, showModeration: boolean): Tab {
+  const normalizedHash = hash.startsWith('#') ? hash.slice(1) : hash
+
+  if (normalizedHash === 'activity') {
+    return 'activity'
+  }
+
+  if (normalizedHash === 'members') {
+    return 'members'
+  }
+
+  if (normalizedHash === 'moderation' && showModeration) {
+    return 'moderation'
+  }
+
+  return defaultCommunityTab
+}
+
+function getCommunityTabHash(tab: Tab): string {
+  return tab === defaultCommunityTab ? '' : tab
+}
+
 export default function CommunityDetailScreen() {
   const router = useRouter()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { communityId } = useParams({ from: '/app/community/$communityId' })
+  const locationHash = useRouterState({
+    select: (state) => state.location.hash,
+  })
   const bottomSheet = useBottomSheetController()
-  const [activeTab, setActiveTab] = useState<Tab>('templates')
   const [reactingActivityId, setReactingActivityId] = useState<string | null>(
     null,
   )
@@ -74,17 +106,40 @@ export default function CommunityDetailScreen() {
   const { mutateAsync: startGoal, isPending: isStartingGoal } =
     useStartGoalFromTemplate()
   const { mutateAsync: reactToActivity } = useReactToActivity(communityId)
-
-  useEffect(() => {
-    hapticFeedback.light()
-  }, [activeTab])
-
   const templates = templatesData?.pages.flatMap((page) => page.data) || []
   const activities = activityData?.pages.flatMap((page) => page.data) || []
   const members = membersData?.pages.flatMap((page) => page.data) || []
   const isMember = community?.isMember || false
   const userRole = community?.userRole
   const isOwner = userRole === 'OWNER'
+  const activeTab = getCommunityTabFromHash(locationHash, isOwner)
+
+
+
+  useEffect(() => {
+    const normalizedTab = getCommunityTabFromHash(locationHash, isOwner)
+    const normalizedHash = getCommunityTabHash(normalizedTab)
+    const currentHash = locationHash.startsWith('#')
+      ? locationHash.slice(1)
+      : locationHash
+
+    if (currentHash === normalizedHash) {
+      return
+    }
+
+    void navigate({
+      to: '/app/community/$communityId',
+      params: { communityId },
+      hash: normalizedHash,
+      replace: true,
+    })
+  }, [communityId, isOwner, locationHash, navigate])
+
+
+
+    useEffect(() => {
+    hapticFeedback.light()
+  }, [activeTab])
 
   const handleJoin = async () => {
     try {
@@ -252,6 +307,15 @@ export default function CommunityDetailScreen() {
     })
   }
 
+  const handleTabChange = (nextTab: Tab) => {
+    void navigate({
+      to: '/app/community/$communityId',
+      params: { communityId },
+      hash: getCommunityTabHash(nextTab),
+      replace: false,
+    })
+  }
+
   if (isLoadingCommunity) {
     return (
       <View className="flex-1 bg-cardd">
@@ -307,7 +371,7 @@ export default function CommunityDetailScreen() {
           <View className="">
             <CommunityTabs
               activeTab={activeTab}
-              onTabChange={setActiveTab}
+              onTabChange={handleTabChange}
               showModeration={isOwner}
             />
           </View>

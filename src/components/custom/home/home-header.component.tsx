@@ -13,7 +13,13 @@ export function HomeHeader({ user }: { user: User }) {
 
   return (
     <View className="flex-row items-center justify-between w-full pt-mg px-mg">
-      <Avatar user={user!} size={40} />
+      <Pressable
+        onPress={() => {
+          navigate({ to: '/app/profile' })
+        }}
+      >
+        <Avatar user={user!} size={40} />
+      </Pressable>
 
       <Pressable
         onPress={() => {
@@ -22,7 +28,7 @@ export function HomeHeader({ user }: { user: User }) {
         className="relative"
       >
         <RiNotificationLine className="text-card-lighter-3" />
-        
+
         {/* Unread Badge */}
         {unreadCount !== undefined && unreadCount > 0 && (
           <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">

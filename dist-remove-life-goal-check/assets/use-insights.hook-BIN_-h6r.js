@@ -1,0 +1,1 @@
+import{O as e,Q as n}from"./index-C2kqmnlB.js";import{i as r}from"./insights.query-keys-DhsEaXWE.js";const a="/api/v1";class i{async getInsights(){const{data:t}=await e.get(`${a}/insights`);return t}}const o=new i;function y(){return n({queryKey:r.summary(),queryFn:async()=>(await o.getInsights()).data,staleTime:1e3*60*5})}export{y as u};

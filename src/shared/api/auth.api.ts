@@ -102,8 +102,6 @@ class AuthAPI {
     lastName?: string
     username?: string
     profileImageId?: string
-    currentMood?: string
-    lifeGoal?: string
     rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | null
   }): Promise<{ msg: string; data: any }> {
     const { data: res } = await http.put<{ msg: string; data: any }>(`${API_V1}/users/me`, data)

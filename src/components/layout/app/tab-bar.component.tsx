@@ -1,5 +1,4 @@
 import { BottomNotch } from '@/components/common/notch.component'
-import { Avatar } from '@/components/user/avatar.component'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
@@ -74,15 +73,15 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           matchAllRoot: true,
           enabled: featureFlags.insights, // Hide wellness tab when insights is disabled
         },
-        {
-          id: 'profile',
-          route: '/app/profile',
-          icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
-          label: 'Me',
-          isSpecial: false,
-          badge: null,
-          matchAllRoot: true,
-        },
+        // {
+        //   id: 'profile',
+        //   route: '/app/profile',
+        //   icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
+        //   label: 'Me',
+        //   isSpecial: false,
+        //   badge: null,
+        //   matchAllRoot: true,
+        // },
       ].filter((tab) => tab.enabled !== false), // Filter out disabled tabs
     [unreadCount],
   )
@@ -123,7 +122,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   return (
     <AnimatePresence>
       <Moti.div
-        className={cn(className, 'bottom-0 left-0 fixed w-full z-50 ')}
+        className={cn(className, 'bottom-0 left-0 fixed w-full z-50 p-3')}
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -143,7 +142,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           }}
         />
 
-        <View className="p-mg py-0 z-10 relative">
+        <View className="p-mg py-0 z-10 relative  rounded-[500px] border border-card-lighter/10">
           <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
             {tabs.map((tab) => {
               const isActive = isActiveTab(
