@@ -2,7 +2,6 @@ import { ImagePicker } from '@/components/common/image-picker.component'
 import { Input } from '@/components/common/input.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
-import { TextArea } from '@/components/common/textarea.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -18,7 +17,6 @@ import {
   RiBarChartBoxLine,
   RiEmotionLine,
   RiSettings3Line,
-  RiTargetLine,
   RiTrophyLine,
 } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
@@ -209,38 +207,6 @@ export default function ProfileScreen() {
             <View className="items-center space-y-4">
               {/* Avatar with Progress Ring */}
               <View className="relative ">
-                {hasProgress && !isEditing && (
-                  <svg className="absolute scale-[1.2] -inset-2 w-36 h-36 z-[999]">
-                    <circle
-                      cx="72"
-                      cy="72"
-                      r={radius}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="5"
-                      className="text-white/10"
-                    />
-                    <motion.circle
-                      cx="72"
-                      cy="72"
-                      r={radius}
-                      fill="none"
-                      stroke="#cc004a"
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      className="transform -rotate-90 origin-center"
-                      strokeDasharray={circumference}
-                      initial={{ strokeDashoffset: circumference }}
-                      animate={{ strokeDashoffset }}
-                      transition={{ duration: 1.2, ease: 'easeOut' }}
-                      style={{
-                        transform: 'rotate(-90deg)',
-                        transformOrigin: '72px 72px',
-                      }}
-                    />
-                  </svg>
-                )}
-
                 {isEditing ? (
                   <ImagePicker
                     currentImageUrl={imagePreview || undefined}
@@ -261,14 +227,6 @@ export default function ProfileScreen() {
                         {initials}
                       </Text>
                     )}
-                  </View>
-                )}
-
-                {hasProgress && !isEditing && (
-                  <View className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-accent-700 rounded-full px-3 py-1.5 shadow-lg">
-                    <Text className="text-white text-sm font-bbh font-bold">
-                      {overallProgress}%
-                    </Text>
                   </View>
                 )}
               </View>
@@ -356,29 +314,6 @@ export default function ProfileScreen() {
                     </View>
                   </View>
                 </View>
-
-                {/* Life Goal - Full Width */}
-                <View className="col-span-2">
-                  <View className="bg-card-light/40 gap-4 flex flex-col items-start rounded-2xl p-4 space-y-2">
-                    <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                      <RiTargetLine size={20} className="text-white" />
-                    </View>
-                    <View className="flex-1 min-w-0 ">
-                      <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-1">
-                        Life Goal
-                      </Text>
-                      <Text
-                        className={
-                          user?.lifeGoal
-                            ? 'text-white text-base font-bbh font-semibold leading-relaxed'
-                            : 'text-white/40 text-base font-bbh'
-                        }
-                      >
-                        {user?.lifeGoal || 'Not set'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
               </View>
             ) : (
               // Edit Mode - Form Fields
@@ -434,41 +369,6 @@ export default function ProfileScreen() {
                   />
                 </View>
 
-                {/* Current Mood */}
-                <View className="bg-card-light/40 rounded-2xl p-4">
-                  <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
-                    Current Mood
-                  </Text>
-                  <Input
-                    type="text"
-                    placeholder="How are you feeling?"
-                    value={formData.currentMood}
-                    onChange={(e) => {
-                      setFormData({ ...formData, currentMood: e.target.value })
-                      setFormError(null)
-                    }}
-                    className="bg-card-light/40 border-white/10 text-white"
-                    maxLength={200}
-                  />
-                </View>
-
-                {/* Life Goal */}
-                <View className="bg-card-light/40 rounded-2xl p-4">
-                  <Text className="text-white/60 text-xs font-bbh mb-2 uppercase tracking-wide">
-                    Life Goal
-                  </Text>
-                  <TextArea
-                    placeholder="What is your life goal?"
-                    value={formData.lifeGoal}
-                    onChange={(e) => {
-                      setFormData({ ...formData, lifeGoal: e.target.value })
-                      setFormError(null)
-                    }}
-                    className="min-h-[100px] bg-card-light/40 border-white/10 text-white p-3"
-                    maxLength={500}
-                  />
-                </View>
-
                 {/* Error Display */}
                 {formError && (
                   <View className="bg-danger-500/20 rounded-xl p-4">
@@ -481,77 +381,85 @@ export default function ProfileScreen() {
             )}
           </View>
 
-          {/* Quick Access Actions */}
-          <View className="space-y-3 pb-[200px]">
-            <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-              Quick Access
-            </Text>
+          {!isEditing && (
+            <>
+              {/* Quick Access Actions */}
+              <View className="space-y-3 pb-[200px]">
+                <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
+                  Quick Access
+                </Text>
 
-            <View className="grid grid-cols-2 gap-3">
-              {/* Achievements */}
-              <Pressable
-                onPress={() => navigate({ to: '/achievements' })}
-                className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center text-left gap-4">
-                  <View className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/60 to-accent-500/60 flex items-center justify-center">
-                    <RiTrophyLine size={20} className="text-white" />
-                  </View>
-                  <View>
-                    <Text className="text-white text-sm font-bbh font-semibold">
-                      Achievements
-                    </Text>
-                    <Text className="text-white/50 text-xs font-bbh">
-                      View your earned badges
-                    </Text>
-                  </View>
-                </View>
-                <RiArrowRightSLine size={20} className="text-white/40" />
-              </Pressable>
+                <View className="grid grid-cols-2 gap-3">
+                  {/* Achievements */}
+                  <Pressable
+                    onPress={() => navigate({ to: '/achievements' })}
+                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center text-left gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/60 to-accent-500/60 flex items-center justify-center">
+                        <RiTrophyLine size={20} className="text-white" />
+                      </View>
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Achievements
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          View your earned badges
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
 
-              {/* Insights */}
-              <Pressable
-                onPress={() => navigate({ to: '/app/sub-profile/insights' })}
-                className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center text-left gap-4">
-                  <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                    <RiBarChartBoxLine size={20} className="text-white" />
-                  </View>
-                  <View>
-                    <Text className="text-white text-sm font-bbh font-semibold">
-                      Metric
-                    </Text>
-                    <Text className="text-white/50 text-xs font-bbh">
-                      View progress stats
-                    </Text>
-                  </View>
-                </View>
-                <RiArrowRightSLine size={20} className="text-white/40" />
-              </Pressable>
+                  {/* Insights */}
+                  <Pressable
+                    onPress={() =>
+                      navigate({ to: '/app/sub-profile/insights' })
+                    }
+                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center text-left gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                        <RiBarChartBoxLine size={20} className="text-white" />
+                      </View>
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Metric
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          View progress stats
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
 
-              {/* Settings */}
-              <Pressable
-                onPress={() => navigate({ to: '/app/sub-profile/settings' })}
-                className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
-              >
-                <View className="flex-row items-center text-left gap-4">
-                  <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
-                    <RiSettings3Line size={20} className="text-white" />
-                  </View>
-                  <View>
-                    <Text className="text-white text-sm font-bbh font-semibold">
-                      Settings
-                    </Text>
-                    <Text className="text-white/50 text-xs font-bbh">
-                      App preferences
-                    </Text>
-                  </View>
+                  {/* Settings */}
+                  <Pressable
+                    onPress={() =>
+                      navigate({ to: '/app/sub-profile/settings' })
+                    }
+                    className="bg-card-light/40 col-span-2 rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                  >
+                    <View className="flex-row items-center text-left gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                        <RiSettings3Line size={20} className="text-white" />
+                      </View>
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Settings
+                        </Text>
+                        <Text className="text-white/50 text-xs font-bbh">
+                          App preferences
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
                 </View>
-                <RiArrowRightSLine size={20} className="text-white/40" />
-              </Pressable>
-            </View>
-          </View>
+              </View>
+            </>
+          )}
         </View>
       </NoiseComponent>
     </View>

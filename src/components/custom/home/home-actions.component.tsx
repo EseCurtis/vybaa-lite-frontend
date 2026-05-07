@@ -3,7 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { featureFlags } from '@/shared/config/feature-flags.config'
-import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
+import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiEmotionLaughLine,
   RiFileMarkedLine,
@@ -20,18 +20,20 @@ function HomeActionCard({
   description,
   icon,
   onAction = () => {},
+  filled = false,
 }: {
   name: string
   description: string
   icon: RemixiconComponentType
-  onAction?: () => void
+  onAction?: () => void,
+  filled?: boolean
 }) {
   const Icon = icon
   const color = seededColor(name, description, icon.displayName!)
   const darkColor = adjustColor(color, { lightness: -5 })
 
   return (
-    <View className="col-span-1 text-center ">
+    <View className={cn(" text-center ", filled ? "col-span-2" : "col-span-1")}>
       <Pressable
         onPress={onAction}
         className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-[50px] p-mg"
@@ -122,6 +124,7 @@ export function HomeActions() {
             description={item.description}
             onAction={item?.onAction}
             icon={item.icon}
+            filled={actions.length % 2 !== 0 && index === actions.length - 1}
           />
         )
       })}

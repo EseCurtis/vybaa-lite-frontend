@@ -38,10 +38,11 @@ export interface FeatureFlags {
  * Set to true to enable a feature, false to disable it.
  * When disabled, routes and UI elements related to that feature will be hidden.
  */
+const journalChillEnabled = false
 export const featureFlags: FeatureFlags = {
-  journal: false,
-  chill: false,
-  insights: true,
+  journal: journalChillEnabled,
+  chill: journalChillEnabled,
+  insights: journalChillEnabled,
 }
 
 /**

@@ -12,6 +12,15 @@ import { Icon } from '@iconify/react'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 
+const formatDate = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+  }
+
 function BadgeCard({
   badge,
   isEarned,
@@ -21,14 +30,7 @@ function BadgeCard({
   isEarned: boolean
   earnedDate?: string
 }) {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
+  
 
   return (
     <motion.div
@@ -36,10 +38,20 @@ function BadgeCard({
       animate={{ opacity: 1, scale: 1 }}
       className={`rounded-2xl p-6 ${
         isEarned
-          ? 'bg-gradient-to-br from-primary-500/20 to-accent-500/20 border-2 border-primary-500/30'
-          : 'bg-card-700/40 border-2 border-white/5'
+          ? 'bg-gradient-to-br flex flex-col items-center justify-center from-primary-500/20 to-accent-500/20 bg-black/10'
+          : 'bg-card-700/40 border-2 border-card-lighter/5'
       }`}
     >
+      <View className=" flex flex-col items-center justify-center">
+        {' '}
+        <Text
+          className={`font-bbh flex mx-auto w-full font-bold !text-center ${
+            isEarned ? 'text-card-lighter' : 'text-card-lighter/40'
+          }`}
+        >
+          {badge.title}
+        </Text>
+      </View>
       {/* Badge Icon */}
       <View className="flex items-center justify-center mb-4">
         <View
@@ -51,7 +63,7 @@ function BadgeCard({
         >
           <Icon
             icon={getEmojiIcon(badge.badgeIcon)}
-            className={`text-white ${!isEarned && 'opacity-30 grayscale'}`}
+            className={`text-card-lighter ${!isEarned && 'opacity-30 grayscale'}`}
             style={{ fontSize: '48px' }}
           />
         </View>
@@ -60,15 +72,8 @@ function BadgeCard({
       {/* Badge Info */}
       <View className="items-center space-y-2">
         <Text
-          className={`font-bbh font-bold text-center ${
-            isEarned ? 'text-white' : 'text-white/40'
-          }`}
-        >
-          {badge.title}
-        </Text>
-        <Text
-          className={`text-sm text-center font-bbh ${
-            isEarned ? 'text-white/70' : 'text-white/30'
+          className={`text-xs text-center font-bbh ${
+            isEarned ? 'text-card-lighter/70' : 'text-card-lighter/30'
           }`}
         >
           {badge.description}
@@ -76,15 +81,18 @@ function BadgeCard({
 
         {/* Earned Date */}
         {isEarned && earnedDate && (
-          <Text className="text-xs text-primary-400 font-bbh mt-2">
-            Earned {formatDate(earnedDate)}
+          <Text className="text-xs text-warning-yellow font-bbh mt-2">
+            @{formatDate(earnedDate)}
           </Text>
         )}
 
         {/* Locked Indicator */}
         {!isEarned && (
-          <View className="mt-2 px-3 py-1 bg-white/5 rounded-full">
-            <Text className="text-xs text-white/40 font-bbh"> Locked</Text>
+          <View className="mt-2 px-3 py-1 bg-card-lighter/5 rounded-full">
+            <Text className="text-xs text-card-lighter/40 font-bbh">
+              {' '}
+              Locked
+            </Text>
           </View>
         )}
       </View>
@@ -140,10 +148,10 @@ export default function AchievementsScreen() {
     <View className="flex-1 bg-cardd">
       <TabHeader
         title={
-          <View >
+          <View>
             Achievements
             {stats && (
-              <Text className="!text-white/20 text-sm font-bbh mb-2">
+              <Text className="!text-card-lighter/70 text-sm font-bbh mb-2">
                 {stats.totalBadges}{' '}
                 {stats.totalBadges === 1 ? 'badge' : 'badges'} earned
               </Text>
@@ -156,7 +164,7 @@ export default function AchievementsScreen() {
         {/* Stats Cards */}
         {stats && stats.totalBadges > 0 && (
           <View className="mb-8">
-            <Text className="text-white text-xl font-bbh font-bold mb-4">
+            <Text className="text-card-lighter text-xl font-bbh font-bold mb-4">
               Recent Achievements
             </Text>
             <View className="flex flex-row gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -168,18 +176,20 @@ export default function AchievementsScreen() {
                   transition={{ delay: index * 0.1 }}
                   className="shrink-0"
                 >
-                  <View className="bg-card-700/80 rounded-2xl p-4 flex items-center gap-3 min-w-[200px]">
-                    <Icon
+                  <View className="bg-black/20 rounded-2xl p-4 flex flex-row  items-center gap-3 min-w-[200px]">
+                    <View className="p-1">
+                      <Icon
                       icon={getEmojiIcon(badge.badgeIcon)}
-                      className="text-white"
+                      className="text-card-lighter"
                       style={{ fontSize: '36px' }}
                     />
+                    </View>
                     <View>
-                      <Text className="text-white font-bbh font-bold text-sm">
+                      <Text className="text-card-lighter font-bbh font-bold text-sm">
                         {badge.title}
                       </Text>
-                      <Text className="text-white/50 text-xs font-bbh">
-                        {new Date(badge.earnedAt).toLocaleDateString()}
+                      <Text className="text-warning-yellow text-xs font-bbh">
+                           @{formatDate(badge.earnedAt)}
                       </Text>
                     </View>
                   </View>
@@ -192,7 +202,7 @@ export default function AchievementsScreen() {
         {/* All Badges */}
         {loading ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Text className="text-white/60 text-lg font-bbh">
+            <Text className="text-card-lighter/60 text-lg font-bbh">
               Loading achievements...
             </Text>
           </View>
@@ -200,13 +210,13 @@ export default function AchievementsScreen() {
           <View className="flex-1 items-center justify-center py-20">
             <Icon
               icon={getEmojiIcon('🏆')}
-              className="text-white/60 mb-4"
+              className="text-card-lighter/60 mb-4"
               style={{ fontSize: '64px' }}
             />
-            <Text className="text-white/60 text-lg font-bbh text-center">
+            <Text className="text-card-lighter/60 text-lg font-bbh text-center">
               No achievements yet
             </Text>
-            <Text className="text-white/40 text-sm font-bbh text-center mt-2">
+            <Text className="text-card-lighter/40 text-sm font-bbh text-center mt-2">
               Start checking in on your goals to earn badges!
             </Text>
           </View>
@@ -215,14 +225,10 @@ export default function AchievementsScreen() {
             {Object.entries(badgesByType).map(([type, badges]) => {
               const typeInfo = getTypeInfo(type)
               return (
-                <View key={type}>
-                  <View className="flex flex-row items-center gap-2 mb-4">
-                    <Icon
-                      icon={getEmojiIcon(typeInfo.icon)}
-                      className="text-white"
-                      style={{ fontSize: '24px' }}
-                    />
-                    <Text className="text-white text-xl font-bbh font-bold">
+                <View key={type} className='border-b border-card-light/20'>
+                  <View className="flex flex-row items-center justify-center gap-2 mb-4">
+                    
+                    <Text className="text-card-lighter text-xl font-bbh font-bold">
                       {typeInfo.title}
                     </Text>
                   </View>

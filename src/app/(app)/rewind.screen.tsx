@@ -5,6 +5,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
@@ -35,9 +36,11 @@ type RewindSocketMessage =
   | {
       type: 'ready'
       sessionId?: string
+      sessionDateKey?: string
       restored?: boolean
       historyCount?: number
       guidedFlow?: RewindGuidedFlowState
+      previousSession?: RewindSessionSnapshot | null
     }
   | { type: 'text'; content: string }
   | { type: 'audio'; data: string; mimeType: string }
@@ -67,6 +70,13 @@ type RewindGuidedFlowState = {
   currentQuestionIndex: number
   completed: boolean
   responses: Partial<Record<RewindGuidedQuestionId, RewindGuidedResponse>>
+}
+
+type RewindSessionSnapshot = {
+  sessionId: string
+  sessionDateKey: string
+  guidedFlow: RewindGuidedFlowState
+  updatedAt: number
 }
 
 type RewindTimelineMessage = {
@@ -194,17 +204,105 @@ function PersonaCard({
   )
 }
 
+function SessionHistorySheet({
+  previousPreview,
+  currentPreview,
+  previousItems,
+  currentItems,
+}: {
+  previousPreview: string | null
+  currentPreview: string | null
+  previousItems: string[]
+  currentItems: Array<{ role: RewindTimelineMessage['role']; content: string }>
+}) {
+  return (
+    <View className="flex flex-col gap-5">
+      <View className="rounded-[28px] bg-card-light/[0.1] p-4">
+        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
+          Current
+        </Text>
+
+        <View className="mt-3 flex flex-col gap-2">
+          {currentItems.length > 0 ? (
+            currentItems.map((item, index) => (
+              <View
+                key={`current_${index}`}
+                className={cn(
+                  'rounded-2xl px-3 py-3',
+                  item.role === 'assistant'
+                    ? 'bg-white/[0.14]'
+                    : item.role === 'user'
+                      ? 'bg-white/[0.09]'
+                      : 'bg-white/[0.07]',
+                )}
+              >
+                <Text className="text-[10px] uppercase tracking-[0.22em] text-white/50 font-bbh">
+                  {item.role}
+                </Text>
+                <Text className="mt-1 text-white/85 font-bbh text-sm">
+                  {item.content}
+                </Text>
+              </View>
+            ))
+          ) : (
+            <View className="rounded-2xl bg-card-light/[0.08] px-3 py-3">
+              <Text className="text-white/45 font-bbh text-sm">
+                No live session messages yet.
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+
+      <View className="rounded-[28px] bg-card-light/[0.075] p-4">
+        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
+          Last
+        </Text>
+
+        <View className="mt-3 flex flex-col gap-2">
+          {previousItems.length > 0 ? (
+            previousItems.map((item, index) => (
+              <View
+                key={`previous_${index}`}
+                className="rounded-2xl bg-card-light/[0.07] px-3 py-3"
+              >
+                <Text className="text-white/85 font-bbh text-sm">{item}</Text>
+              </View>
+            ))
+          ) : (
+            <View className="rounded-2xl bg-card-light/[0.07] px-3 py-3">
+              <Text className="text-white/45 font-bbh text-sm">
+                Nothing stored from an earlier rewind yet.
+              </Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </View>
+  )
+}
+
 export default function RewindScreen() {
   const { user, refreshSession } = useAuth()
+  const bottomSheet = useBottomSheet()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [statusText, setStatusText] = useState('Idle')
   const [isConversationPaused, setIsConversationPaused] = useState(false)
   const [rewindSessionId, setRewindSessionId] = useState<string | null>(null)
-  const [requestedSessionId, setRequestedSessionId] = useState<string | null>(null)
+  const [rewindSessionDateKey, setRewindSessionDateKey] = useState<
+    string | null
+  >(null)
+  const [requestedSessionId, setRequestedSessionId] = useState<string | null>(
+    null,
+  )
   const [isSessionRestored, setIsSessionRestored] = useState(false)
   const [timeline, setTimeline] = useState<RewindTimelineMessage[]>([])
-  const [guidedFlow, setGuidedFlow] = useState<RewindGuidedFlowState | null>(null)
+  const [guidedFlow, setGuidedFlow] = useState<RewindGuidedFlowState | null>(
+    null,
+  )
+  const [previousSession, setPreviousSession] =
+    useState<RewindSessionSnapshot | null>(null)
 
   const liveSessionRef = useRef<WebSocket | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
@@ -251,9 +349,11 @@ export default function RewindScreen() {
   useEffect(() => {
     if (!personaId) return
     setRewindSessionId(null)
+    setRewindSessionDateKey(null)
     setRequestedSessionId(null)
     setTimeline([])
     setGuidedFlow(null)
+    setPreviousSession(null)
     setIsSessionRestored(false)
   }, [personaId])
 
@@ -279,9 +379,11 @@ export default function RewindScreen() {
   const clearPersona = async () => {
     setPersonaId(null)
     setRewindSessionId(null)
+    setRewindSessionDateKey(null)
     setRequestedSessionId(null)
     setTimeline([])
     setGuidedFlow(null)
+    setPreviousSession(null)
     setIsSessionRestored(false)
     await persistPersonaMutation.mutateAsync(null)
   }
@@ -600,7 +702,7 @@ export default function RewindScreen() {
     setTimeline([
       createTimelineMessage(
         'system',
-        `New ${persona?.name ?? 'Rewind'} session started.`,
+        `Reopening today's ${persona?.name ?? 'Rewind'} session.`,
       ),
     ])
     setGuidedFlow(null)
@@ -685,8 +787,10 @@ export default function RewindScreen() {
               if (payload.sessionId) {
                 setRewindSessionId(payload.sessionId)
               }
+              setRewindSessionDateKey(payload.sessionDateKey ?? null)
               setIsSessionRestored(Boolean(payload.restored))
               setGuidedFlow(payload.guidedFlow ?? null)
+              setPreviousSession(payload.previousSession ?? null)
               pushTimelineMessage(
                 'system',
                 payload.restored
@@ -839,6 +943,55 @@ export default function RewindScreen() {
     return statusText
   }, [isConversationPaused, persona?.name, statusText])
 
+  const previousSessionItems = useMemo(() => {
+    if (!previousSession?.guidedFlow) return []
+
+    const labels: Record<RewindGuidedQuestionId, string> = {
+      meaningful: 'Meaningful',
+      draining: 'Draining',
+      progress: 'Progress',
+      different: 'Different',
+      tomorrow_need: 'Tomorrow',
+    }
+
+    return Object.values(previousSession.guidedFlow.responses)
+      .filter((entry): entry is RewindGuidedResponse =>
+        Boolean(entry?.shortSummary),
+      )
+      .sort((a, b) => a.updatedAt - b.updatedAt)
+      .map((entry) => `${labels[entry.questionId]}: ${entry.shortSummary}`)
+  }, [previousSession])
+
+  const previousSessionPreview = useMemo(() => {
+    return previousSessionItems[previousSessionItems.length - 1] ?? null
+  }, [previousSessionItems])
+
+  const currentSessionItems = useMemo(() => {
+    return timeline.filter((item) => item.role !== 'system').slice(-6)
+  }, [timeline])
+
+  const currentSessionPreview = useMemo(() => {
+    return currentSessionItems[currentSessionItems.length - 1]?.content ?? null
+  }, [currentSessionItems])
+
+  const openSessionHistory = useCallback(() => {
+    bottomSheet.present(
+      <SessionHistorySheet
+        previousPreview={previousSessionPreview}
+        currentPreview={currentSessionPreview}
+        previousItems={previousSessionItems}
+        currentItems={currentSessionItems}
+      />,
+      { title: 'Session History' },
+    )
+  }, [
+    bottomSheet,
+    currentSessionItems,
+    currentSessionPreview,
+    previousSessionItems,
+    previousSessionPreview,
+  ])
+
   if (!persona) {
     return (
       <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
@@ -878,20 +1031,26 @@ export default function RewindScreen() {
     )
   }
 
+  const opaqueColor = adjustColor(personaTheme?.darkColor || '', {
+    alpha: -0.6,
+  })
+
   return (
     <View
       className="flex-1 bg-cardd overflow-hidden"
-      style={
-        personaTheme
+      style={{
+        ...(personaTheme
           ? {
-              background: `radial-gradient(circle at top, ${personaTheme.color}33 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
+              '--theme': personaTheme.color,
+              '--theme-opaque': opaqueColor,
+              background: `radial-gradient(circle at top, ${opaqueColor} 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
             }
-          : undefined
-      }
+          : undefined),
+      }}
     >
       <NoiseComponent>
         <TabHeader
-          title="Rewind"
+          title=""
           children={
             <View className="flex-row items-center gap-2">
               <Pressable
@@ -932,58 +1091,109 @@ export default function RewindScreen() {
           }
         />
 
-        <View className="flex-1 min-h-0 px-mg pb-xl">
-          <View className="items-center pt-6">
+        <View className="flex-1 min-h-0 h-full px-mg pb-xl">
+          <View className="items-center h-full  pt-6">
             <View className="px-3 py-2 rounded-full ">
               <Text className="text-white/65 font-bbh text-xs uppercase tracking-[0.28em]">
                 {isSessionRestored ? 'Restored Session' : ''}
               </Text>
             </View>
-            <Text className="mt-6 text-white font-bbh text-4xl font-extrabold">
-              {persona.name}
+            <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
+              <Text className="">
+                <Text className="text-[var(--theme)]">@</Text>
+                {persona.name}
+              </Text>
             </Text>
-            <motion.div
-              initial={{ opacity: 0.6, scale: 0.94 }}
-              animate={{
-                opacity: isConversationPaused ? 0.65 : 1,
-                scale: isConversationPaused ? 0.98 : 1.04,
-              }}
-              transition={{
-                duration: 1.8,
-                repeat: Infinity,
-                repeatType: 'mirror',
-              }}
-              className="mt-6 relative"
-            >
-              <View className="items-center justify-center pt-6">
-                <Mirage
-                  size="120"
-                  speed="2.2"
-                  color={
-                    isConversationPaused
-                      ? 'rgba(255,255,255,0.22)'
-                      : personaTheme?.color || '#ffffff'
-                  }
-                />
-           
-              </View>
-            </motion.div>
 
-            
-
-            <Text className="mt-2 text-white/65 font-bbh text-sm text-center max-w-[280px]">
-              {conversationSummary}
+            <Text className="mt-5 text-white font-bbh text-2xl font-extrabold">
+              <Text className="text-card-lighter-3">Rewinding W/</Text>{' '}
+              <Text className="text-accent-400">@</Text>
+              <Text className="opacity-40">{user?.username}</Text>
             </Text>
 
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
               <View className="px-3 py-2 rounded-full bg-white/6">
-                <Text className="text-white/80 font-bbh text-xs">
-                  {rewindSessionId
-                    ? `Session ${rewindSessionId.slice(-6)}`
-                    : 'Starting'}
+                <Text className="text-white/80 font-bold font-bbh text-xs">
+                  {rewindSessionDateKey
+                    ? `Daily Rewind ${rewindSessionDateKey.slice(5)}`
+                    : conversationSummary.toLowerCase() == 'failed'
+                      ? 'Unavailable'
+                      : 'Starting'}{' '}
+                  -{' '}
+                  <Text
+                    className={cn(
+                      ['connected', 'listening'].includes(
+                        conversationSummary.toLowerCase(),
+                      )
+                        ? 'bg-success-green/70 text-white p-0.5 rounded-full px-2'
+                        : ['ended'].includes(conversationSummary.toLowerCase())
+                          ? 'bg-red-500/70 text-white p-0.5 rounded-full px-2'
+                          : 'bg-orange-500/70 text-white p-0.5 rounded-full px-2',
+                    )}
+                  >
+                    {conversationSummary}
+                  </Text>
                 </Text>
               </View>
             </View>
+
+            <View
+              className={cn(
+                isConversationPaused && 'saturate-0 opacity-50',
+                'bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full  mt-auto',
+              )}
+            >
+              <motion.div
+                initial={{ scale: 0.94 }}
+                animate={{
+                  scale: isConversationPaused ? 0.98 : 1.04,
+                }}
+                transition={{
+                  duration: 1.8,
+                  repeat: Infinity,
+                  repeatType: 'mirror',
+                }}
+                className=" flex items-center justify-center relative"
+              >
+                <View className="items-center scale-[2.2] justify-center">
+                  <Mirage
+                    size="130"
+                    speed={isConversationPaused ? '10' : '4.2'}
+                    color={personaTheme?.color}
+                  />
+                </View>
+              </motion.div>
+            </View>
+
+            <Pressable
+              onPress={openSessionHistory}
+              className="mt-auto relative mb-mg  flex flex-col w-full max-w-[340px] rounded-[30px]  p-3"
+            >
+              <View
+                style={{
+                  maskImage:
+                    'linear-gradient(to top, transparent 70%, white 90%)',
+                }}
+                className="-top-[2vh] -translate-x-1/2 left-1/2 w-[100vw] aspect-[1.7/1] border absolute rounded-[300px] border-[var(--theme)]"
+              ></View>
+
+              <View className="mt-3 flex-col gap-2">
+                <View className="flex-1 min-w-0 rounded-[22px] bg-card-light/[0.14] px-3 py-3">
+                  <Text className="mt-1 text-white font-bold font-bbh text-xs line-clamp-2">
+                    " {currentSessionPreview || 'Live session just started'}"
+                  </Text>
+                </View>
+
+                <View className="flex-1 min-w-0 rounded-[22px] bg-card-light-50 px-3 py-3">
+                  <Text className="text-white/45 font-bbh text-[10px] uppercase tracking-[0.18em]">
+                    Last Session
+                  </Text>
+                  <Text className="mt-1 text-white/80 font-bbh text-xs line-clamp-2">
+                    {previousSessionPreview || 'No saved rewind yet'}
+                  </Text>
+                </View>
+              </View>
+            </Pressable>
           </View>
         </View>
       </NoiseComponent>
