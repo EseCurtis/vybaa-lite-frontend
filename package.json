@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --port 3005 --host",
+    "dev": "vite  --mode base --port 3005 --host",
     "devs": "HTTPS=true SSL_CRT_FILE=localhost.pem SSL_KEY_FILE=localhost-key.pem vite --port 3005 --host",
     "prod": "vite --mode production --port 3005 --host -- ",
     "build": "vite build",

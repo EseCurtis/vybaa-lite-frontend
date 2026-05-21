@@ -84,10 +84,10 @@ export function GoalCard({
   }
 
   return (
-    <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3">
+    <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3 ">
       <Pressable
         onPress={handleCardClick}
-        className={`p-2 flex flex-col w-full shrink-0 rounded-3xl relative snap-center transition-all ${
+        className={`p-2 border-b border-b-red-500 flex flex-col w-full shrink-0 rounded-3xl relative snap-center transition-all ${
           isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-cardd' : ''
         }`}
         style={{
