@@ -22,6 +22,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
+import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-history'
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
@@ -106,6 +107,11 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
 const AppWellnessRoute = AppWellnessRouteImport.update({
   id: '/app/wellness',
   path: '/app/wellness',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindHistoryRoute = AppRewindHistoryRouteImport.update({
+  id: '/app/rewind-history',
+  path: '/app/rewind-history',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRewindRoute = AppRewindRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -261,6 +268,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -297,6 +305,7 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -334,6 +343,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-history'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-history'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -404,6 +415,7 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-history'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -440,6 +452,7 @@ export interface RootRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
+  AppRewindHistoryRoute: typeof AppRewindHistoryRoute
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -554,6 +567,13 @@ declare module '@tanstack/react-router' {
       path: '/app/wellness'
       fullPath: '/app/wellness'
       preLoaderRoute: typeof AppWellnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-history': {
+      id: '/app/rewind-history'
+      path: '/app/rewind-history'
+      fullPath: '/app/rewind-history'
+      preLoaderRoute: typeof AppRewindHistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/rewind': {
@@ -723,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,
+  AppRewindHistoryRoute: AppRewindHistoryRoute,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,

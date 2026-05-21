@@ -27,6 +27,7 @@ import {
   RiRefreshLine,
 } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { Mirage } from 'ldrs/react'
 import 'ldrs/react/Mirage.css'
@@ -284,7 +285,7 @@ function SessionHistorySheet({
 
 export default function RewindScreen() {
   const { user, refreshSession } = useAuth()
-  const bottomSheet = useBottomSheet()
+  useBottomSheet()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [statusText, setStatusText] = useState('Idle')
@@ -317,6 +318,7 @@ export default function RewindScreen() {
   const isConversationPausedRef = useRef(false)
   const lastInputTranscriptRef = useRef('')
   const lastOutputTranscriptRef = useRef('')
+  const navigate = useNavigate()
 
   useEffect(() => {
     isConversationPausedRef.current = isConversationPaused
@@ -355,6 +357,7 @@ export default function RewindScreen() {
     setGuidedFlow(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
+    setStatusText('Ready')
   }, [personaId])
 
   const persona = useMemo(() => {
@@ -377,6 +380,16 @@ export default function RewindScreen() {
   }
 
   const clearPersona = async () => {
+    liveSessionRef.current?.close()
+    liveSessionRef.current = null
+    cleanupAudioPipeline()
+    audioQueueRef.current = []
+    activeAudioSourcesRef.current.clear()
+    isPlayingAudioQueueRef.current = false
+    nextStartTimeRef.current = 0
+    lastInputTranscriptRef.current = ''
+    lastOutputTranscriptRef.current = ''
+    setIsConversationPaused(false)
     setPersonaId(null)
     setRewindSessionId(null)
     setRewindSessionDateKey(null)
@@ -385,6 +398,7 @@ export default function RewindScreen() {
     setGuidedFlow(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
+    setStatusText('Idle')
     await persistPersonaMutation.mutateAsync(null)
   }
 
@@ -632,6 +646,13 @@ export default function RewindScreen() {
   }, [])
 
   const togglePauseConversation = useCallback(async () => {
+    if (
+      !liveSessionRef.current ||
+      liveSessionRef.current.readyState !== WebSocket.OPEN
+    ) {
+      return
+    }
+
     if (isConversationPausedRef.current) {
       await resumeConversation()
       return
@@ -697,18 +718,24 @@ export default function RewindScreen() {
   )
 
   const resetRewindSession = useCallback(() => {
+    liveSessionRef.current?.close()
+    liveSessionRef.current = null
+    cleanupAudioPipeline()
+    audioQueueRef.current = []
+    activeAudioSourcesRef.current.clear()
+    isPlayingAudioQueueRef.current = false
+    nextStartTimeRef.current = 0
+    lastInputTranscriptRef.current = ''
+    lastOutputTranscriptRef.current = ''
+    setIsConversationPaused(false)
     setRewindSessionId(null)
+    setRewindSessionDateKey(null)
     setRequestedSessionId(createConnectionId())
-    setTimeline([
-      createTimelineMessage(
-        'system',
-        `Reopening today's ${persona?.name ?? 'Rewind'} session.`,
-      ),
-    ])
+    setTimeline([])
     setGuidedFlow(null)
     setIsSessionRestored(false)
-    liveSessionRef.current?.close()
-  }, [persona?.id, persona?.name])
+    setStatusText('Ready')
+  }, [cleanupAudioPipeline])
 
   useEffect(() => {
     if (!persona) {
@@ -726,194 +753,10 @@ export default function RewindScreen() {
       return
     }
 
-    liveSessionRef.current?.close()
-    liveSessionRef.current = null
-    cleanupAudioPipeline()
-    audioQueueRef.current = []
-    activeAudioSourcesRef.current.clear()
-    isPlayingAudioQueueRef.current = false
-    nextStartTimeRef.current = 0
-    lastInputTranscriptRef.current = ''
-    lastOutputTranscriptRef.current = ''
-    setIsConversationPaused(false)
-
-    let isCancelled = false
-
-    const start = async () => {
-      if (isConnectingRef.current) return
-      isConnectingRef.current = true
-
-      const connectionId = createConnectionId()
-
-      try {
-        setStatusText('Connecting')
-
-        const liveToken = await rewindAPI.createLiveToken(
-          persona.id,
-          requestedSessionId,
-        )
-        const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
-        const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
-        setRewindSessionId(liveToken.data.sessionId)
-
-        console.info('[Rewind] Opening live websocket', {
-          connectionId,
-          personaId: persona.id,
-          sessionId: liveToken.data.sessionId,
-          wsUrl,
-        })
-
-        const ws = new WebSocket(wsUrl)
-        liveSessionRef.current = ws
-
-        ws.onopen = async () => {
-          if (isCancelled) return
-          console.info('[Rewind] WebSocket opened', {
-            connectionId,
-            personaId: persona.id,
-          })
-          isConnectingRef.current = false
-          setStatusText('Connected')
-          await connectMicrophone(ws, connectionId, persona)
-        }
-
-        ws.onmessage = (event) => {
-          if (isCancelled) return
-
-          try {
-            const payload = JSON.parse(event.data) as RewindSocketMessage
-
-            if (payload.type === 'ready') {
-              if (payload.sessionId) {
-                setRewindSessionId(payload.sessionId)
-              }
-              setRewindSessionDateKey(payload.sessionDateKey ?? null)
-              setIsSessionRestored(Boolean(payload.restored))
-              setGuidedFlow(payload.guidedFlow ?? null)
-              setPreviousSession(payload.previousSession ?? null)
-              pushTimelineMessage(
-                'system',
-                payload.restored
-                  ? `Restored your last ${persona.name} rewind session.`
-                  : `Connected to ${persona.name}. Start talking when you’re ready.`,
-              )
-              if (isConversationPausedRef.current) return
-              return
-            }
-
-            if (payload.type === 'text') {
-              //   pushTimelineMessage('assistant', payload.content)
-              return
-            }
-
-            if (payload.type === 'audio') {
-              if (isConversationPausedRef.current) return
-              audioQueueRef.current.push({
-                data: payload.data,
-                mimeType: payload.mimeType,
-              })
-              if (!isPlayingAudioQueueRef.current) {
-                void playNextAudioChunk()
-              }
-              return
-            }
-
-            if (payload.type === 'input_transcription') {
-              if (isConversationPausedRef.current) return
-              if (payload.content !== lastInputTranscriptRef.current) {
-                lastInputTranscriptRef.current = payload.content
-                pushTimelineMessage('user', payload.content)
-              }
-              setStatusText('Listening')
-              return
-            }
-
-            if (payload.type === 'output_transcription') {
-              if (isConversationPausedRef.current) return
-              if (payload.content !== lastOutputTranscriptRef.current) {
-                lastOutputTranscriptRef.current = payload.content
-                upsertTimelineMessage('assistant', payload.content)
-              }
-              setStatusText('Speaking')
-              return
-            }
-
-            if (payload.type === 'guided_flow_state') {
-              setGuidedFlow(payload.guidedFlow)
-              return
-            }
-
-            if (payload.type === 'turn_complete') {
-              lastInputTranscriptRef.current = ''
-              lastOutputTranscriptRef.current = ''
-              if (isConversationPausedRef.current) return
-              setStatusText('Listening')
-              return
-            }
-
-            if (payload.type === 'error') {
-              console.error('[Rewind] Server error', payload.message)
-              setStatusText('Error')
-              return
-            }
-          } catch (error) {
-            console.error('[Rewind] Failed to parse websocket message', {
-              connectionId,
-              personaId: persona.id,
-              error,
-              raw: event.data,
-            })
-          }
-        }
-
-        ws.onerror = (event) => {
-          console.error('[Rewind] WebSocket error', {
-            connectionId,
-            personaId: persona.id,
-            event,
-          })
-          isConnectingRef.current = false
-          if (isCancelled) return
-          setStatusText('Error')
-        }
-
-        ws.onclose = (event) => {
-          console.info('[Rewind] WebSocket closed', {
-            connectionId,
-            personaId: persona.id,
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean,
-            isCancelled,
-          })
-
-          isConnectingRef.current = false
-          cleanupAudioPipeline()
-          if (liveSessionRef.current === ws) {
-            liveSessionRef.current = null
-          }
-          if (isCancelled) return
-          setStatusText('Disconnected')
-        }
-      } catch (error) {
-        isConnectingRef.current = false
-        console.error('[Rewind] Failed to start live session', {
-          connectionId,
-          personaId: persona.id,
-          error,
-        })
-        if (isCancelled) return
-        setStatusText('Failed')
-      }
-    }
-
-    void start()
-
     return () => {
       console.info('[Rewind] Cleaning up live session', {
         personaId: persona.id,
       })
-      isCancelled = true
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
@@ -922,6 +765,168 @@ export default function RewindScreen() {
       isPlayingAudioQueueRef.current = false
       nextStartTimeRef.current = 0
     }
+  }, [cleanupAudioPipeline, persona])
+
+  const startSession = useCallback(async () => {
+    if (!persona) return
+    if (isConnectingRef.current) return
+    if (liveSessionRef.current?.readyState === WebSocket.OPEN) return
+
+    isConnectingRef.current = true
+    const connectionId = createConnectionId()
+
+    try {
+      setIsConversationPaused(false)
+      setStatusText('Connecting')
+
+      const liveToken = await rewindAPI.createLiveToken(
+        persona.id,
+        requestedSessionId,
+      )
+      const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
+      const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
+      setRewindSessionId(liveToken.data.sessionId)
+
+      console.info('[Rewind] Opening live websocket', {
+        connectionId,
+        personaId: persona.id,
+        sessionId: liveToken.data.sessionId,
+        wsUrl,
+      })
+
+      const ws = new WebSocket(wsUrl)
+      liveSessionRef.current = ws
+
+      ws.onopen = async () => {
+        console.info('[Rewind] WebSocket opened', {
+          connectionId,
+          personaId: persona.id,
+        })
+        isConnectingRef.current = false
+        setStatusText('Connected')
+        await connectMicrophone(ws, connectionId, persona)
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data) as RewindSocketMessage
+
+          if (payload.type === 'ready') {
+            if (payload.sessionId) {
+              setRewindSessionId(payload.sessionId)
+            }
+            setRewindSessionDateKey(payload.sessionDateKey ?? null)
+            setIsSessionRestored(Boolean(payload.restored))
+            setGuidedFlow(payload.guidedFlow ?? null)
+            setPreviousSession(payload.previousSession ?? null)
+            pushTimelineMessage(
+              'system',
+              payload.restored
+                ? `Restored your last ${persona.name} rewind session.`
+                : `Connected to ${persona.name}. Start talking when you’re ready.`,
+            )
+            if (isConversationPausedRef.current) return
+            return
+          }
+
+          if (payload.type === 'text') {
+            return
+          }
+
+          if (payload.type === 'audio') {
+            if (isConversationPausedRef.current) return
+            audioQueueRef.current.push({
+              data: payload.data,
+              mimeType: payload.mimeType,
+            })
+            if (!isPlayingAudioQueueRef.current) {
+              void playNextAudioChunk()
+            }
+            return
+          }
+
+          if (payload.type === 'input_transcription') {
+            if (isConversationPausedRef.current) return
+            if (payload.content !== lastInputTranscriptRef.current) {
+              lastInputTranscriptRef.current = payload.content
+              pushTimelineMessage('user', payload.content)
+            }
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'output_transcription') {
+            if (isConversationPausedRef.current) return
+            if (payload.content !== lastOutputTranscriptRef.current) {
+              lastOutputTranscriptRef.current = payload.content
+              upsertTimelineMessage('assistant', payload.content)
+            }
+            setStatusText('Speaking')
+            return
+          }
+
+          if (payload.type === 'guided_flow_state') {
+            setGuidedFlow(payload.guidedFlow)
+            return
+          }
+
+          if (payload.type === 'turn_complete') {
+            lastInputTranscriptRef.current = ''
+            lastOutputTranscriptRef.current = ''
+            if (isConversationPausedRef.current) return
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'error') {
+            console.error('[Rewind] Server error', payload.message)
+            setStatusText('Error')
+          }
+        } catch (error) {
+          console.error('[Rewind] Failed to parse websocket message', {
+            connectionId,
+            personaId: persona.id,
+            error,
+            raw: event.data,
+          })
+        }
+      }
+
+      ws.onerror = (event) => {
+        console.error('[Rewind] WebSocket error', {
+          connectionId,
+          personaId: persona.id,
+          event,
+        })
+        isConnectingRef.current = false
+        setStatusText('Error')
+      }
+
+      ws.onclose = (event) => {
+        console.info('[Rewind] WebSocket closed', {
+          connectionId,
+          personaId: persona.id,
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+        })
+
+        isConnectingRef.current = false
+        cleanupAudioPipeline()
+        if (liveSessionRef.current === ws) {
+          liveSessionRef.current = null
+        }
+        setStatusText('Disconnected')
+      }
+    } catch (error) {
+      isConnectingRef.current = false
+      console.error('[Rewind] Failed to start live session', {
+        connectionId,
+        personaId: persona.id,
+        error,
+      })
+      setStatusText('Failed')
+    }
   }, [
     cleanupAudioPipeline,
     connectMicrophone,
@@ -929,6 +934,7 @@ export default function RewindScreen() {
     playNextAudioChunk,
     pushTimelineMessage,
     requestedSessionId,
+    upsertTimelineMessage,
   ])
 
   const conversationSummary = useMemo(() => {
@@ -975,22 +981,20 @@ export default function RewindScreen() {
   }, [currentSessionItems])
 
   const openSessionHistory = useCallback(() => {
-    bottomSheet.present(
-      <SessionHistorySheet
-        previousPreview={previousSessionPreview}
-        currentPreview={currentSessionPreview}
-        previousItems={previousSessionItems}
-        currentItems={currentSessionItems}
-      />,
-      { title: 'Session History' },
-    )
-  }, [
-    bottomSheet,
-    currentSessionItems,
-    currentSessionPreview,
-    previousSessionItems,
-    previousSessionPreview,
-  ])
+    navigate({
+      to: '/app/rewind-history',
+    })
+  }, [navigate])
+
+  const hasActiveSession =
+    liveSessionRef.current?.readyState === WebSocket.OPEN ||
+    isConnectingRef.current
+
+  const startSessionLabel = useMemo(() => {
+    if (isConnectingRef.current) return 'Starting...'
+    if (rewindSessionId || requestedSessionId) return 'Begin'
+    return 'Begin'
+  }, [requestedSessionId, rewindSessionId])
 
   if (!persona) {
     return (
@@ -1007,11 +1011,11 @@ export default function RewindScreen() {
                   Pick a custom-tuned persona to start your live rewind
                   conversations.
                 </Text>
-                {persistPersonaMutation.isPending && (
+                {/* {persistPersonaMutation.isPending && (
                   <Text className="mt-2 text-white/40 font-bbh text-sm text-center">
                     Saving...
                   </Text>
-                )}
+                )} */}
               </View>
 
               <View className="grid grid-cols-2 h-[calc(100%-40vh)] items-center [&>div]:shrink-0 overflow-y-auto gap-3 mt-mg">
@@ -1055,8 +1059,10 @@ export default function RewindScreen() {
             <View className="flex-row items-center gap-2">
               <Pressable
                 onPress={togglePauseConversation}
+                disabled={!hasActiveSession}
                 className={cn(
                   'w-11 h-11 rounded-full items-center justify-center',
+                  !hasActiveSession && 'opacity-40',
                   isConversationPaused
                     ? 'bg-white'
                     : 'bg-white/8 backdrop-blur-md',
@@ -1118,7 +1124,7 @@ export default function RewindScreen() {
                     ? `Daily Rewind ${rewindSessionDateKey.slice(5)}`
                     : conversationSummary.toLowerCase() == 'failed'
                       ? 'Unavailable'
-                      : 'Starting'}{' '}
+                      : 'Ready'}{' '}
                   -{' '}
                   <Text
                     className={cn(
@@ -1138,6 +1144,7 @@ export default function RewindScreen() {
             </View>
 
             <View
+            onClick={startSession}
               className={cn(
                 isConversationPaused && 'saturate-0 opacity-50',
                 'bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full  mt-auto',
@@ -1165,6 +1172,15 @@ export default function RewindScreen() {
               </motion.div>
             </View>
 
+            {hasActiveSession ? (
+              ''
+            ) : (
+              <Pressable onPress={startSession} className="flex mt-5 flex-row items-center gap-3">
+                <Text className="text-white font-bold">Ready? tap to begin</Text>
+
+                
+              </Pressable>
+            )}
             <Pressable
               onPress={openSessionHistory}
               className="mt-auto relative mb-mg  flex flex-col w-full max-w-[340px] rounded-[30px]  p-3"
