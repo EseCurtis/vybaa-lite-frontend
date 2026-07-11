@@ -27,10 +27,12 @@
         transform: translate(-50%, -50%);
         transition: all 0.5s ease;
         background: linear-gradient(180deg, transparent 30%, #e809d532 120%);
+        border-color: transparent;
       }
 
       .loaded .loader {
         opacity: 0;
+        border-color: transparent;
       }
 
       body.loaded #app {
@@ -39,7 +41,22 @@
 
       #app {
         opacity: 0;
+        border-color: transparent;
+      }
+
+      .transit {
+
         transition: all 1s ease;
+        animation: transit 0.4s ease;
+      }
+
+      @keyframes transit {
+        0% {
+          opacity: 0;
+        }
+        100% {
+          opacity: 1;
+        }
       }
     </style>
     <div class="loader">
@@ -69,7 +86,7 @@
         </defs>
       </svg>
     </div>
-    <div id="app" ></div>
+    <div id="app"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

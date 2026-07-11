@@ -4,18 +4,59 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
-import { publicUrls, openPublicUrl } from '@/shared/config/public-urls.config'
-import { RiLogoutBoxRLine, RiArrowRightSLine, RiFileTextLine, RiShieldCheckLine } from '@remixicon/react'
+import { useToast } from '@/providers/toast.provider'
+import { openPublicUrl, publicUrls } from '@/shared/config/public-urls.config'
+import {
+  RiArrowRightSLine,
+  RiDeleteBinLine,
+  RiFileTextLine,
+  RiLogoutBoxRLine,
+  RiShieldCheckLine,
+} from '@remixicon/react'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 
 export default function SettingsScreen() {
-  const { user, logout } = useAuth()
+  const { user, logout, deleteAccount } = useAuth()
+  const toast = useToast()
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
+  const handleDeleteAccount = async () => {
+    const confirmed = confirm(
+      'Delete your account permanently? This will remove your profile, goals, journals, achievements, communities, wallet history, and settings. This cannot be undone.',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    const typedConfirmation = prompt(
+      'Type DELETE to permanently delete your account.',
+    )
+
+    if (typedConfirmation !== 'DELETE') {
+      toast.error('Account deletion cancelled')
+      return
+    }
+
+    try {
+      setIsDeletingAccount(true)
+      await deleteAccount()
+      toast.success('Account deleted')
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to delete account'
+      toast.error(message)
+    } finally {
+      setIsDeletingAccount(false)
+    }
+  }
 
   return (
     <View className="flex-1 bg-cardd ">
       <NoiseComponent>
         {/* Header */}
-       <TabHeader title="Settings"/>
+        <TabHeader title="Settings" />
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           <View className=" px-mg pb-[120px] space-y-6">
@@ -152,6 +193,41 @@ export default function SettingsScreen() {
                     </View>
                   </View>
                   <RiArrowRightSLine size={20} className="text-white/40" />
+                </Pressable>
+              </motion.div>
+            </View>
+
+            <View className="space-y-3">
+              <Text className="text-danger-400 text-sm font-bbh font-semibold px-1">
+                Danger Zone
+              </Text>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.45 }}
+              >
+                <Pressable
+                  onPress={handleDeleteAccount}
+                  disabled={isDeletingAccount}
+                  className="bg-danger-500/15 border border-danger-500/40 rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
+                >
+                  <View className="flex-row items-center text-left gap-4 w-full">
+                    <View className="w-10 h-10 rounded-xl bg-danger-500/15 flex items-center justify-center">
+                      <RiDeleteBinLine size={20} className="text-danger-400" />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-danger-400 text-sm font-bbh font-semibold">
+                        {isDeletingAccount
+                          ? 'Deleting account...'
+                          : 'Delete account'}
+                      </Text>
+                      <Text className="text-white/50 text-xs font-bbh">
+                        Permanently remove your account and data
+                      </Text>
+                    </View>
+                  </View>
+                  <RiArrowRightSLine size={20} className="text-danger-400/70" />
                 </Pressable>
               </motion.div>
             </View>

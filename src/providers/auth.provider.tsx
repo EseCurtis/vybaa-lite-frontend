@@ -1,6 +1,7 @@
 import { useGoogleAuth } from '@/hooks/use-google-auth.hook'
 import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
+import { userAPI } from '@/shared/api/user.api'
 import type {
   AuthContextValue,
   AuthResponse,
@@ -121,6 +122,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem('refreshToken', data.refreshToken)
   }, [])
 
+  const clearAuthState = useCallback(() => {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
+    resetTimezoneTracking()
+    queryClient.removeQueries({ queryKey: SESSION_QUERY_KEY })
+    setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      stale: false,
+    })
+  }, [queryClient])
+
   const loginWithEmail = useCallback(
     async (credentials: LoginRequest) => {
       const res = await authAPI.login(credentials)
@@ -155,19 +170,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // wire it in here. For now we simply notify the backend and clear state.
       await authAPI.logout({ fcmToken: '' })
     },
-    onSettled: () => {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('refreshToken')
-      resetTimezoneTracking()
-      queryClient.removeQueries({ queryKey: SESSION_QUERY_KEY })
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        stale: false,
-      })
+    onSettled: clearAuthState,
+  })
+
+  const deleteAccountMutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      await userAPI.deleteAccount()
     },
+    onSuccess: clearAuthState,
   })
 
   const loginWithGoogle = useCallback(async () => {
@@ -178,6 +188,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await logoutMutation.mutateAsync()
   }, [logoutMutation])
 
+  const deleteAccount = useCallback(async () => {
+    await deleteAccountMutation.mutateAsync()
+  }, [deleteAccountMutation])
+
   const refreshSession = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
   }, [queryClient])
@@ -186,9 +200,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       ...state,
       error:
-        state.error ?? google.error ?? logoutMutation.error?.message ?? null,
+        state.error ??
+        google.error ??
+        logoutMutation.error?.message ??
+        deleteAccountMutation.error?.message ??
+        null,
       isLoading:
-        state.isLoading || google.isLoading || logoutMutation.isPending,
+        state.isLoading ||
+        google.isLoading ||
+        logoutMutation.isPending ||
+        deleteAccountMutation.isPending,
+      deleteAccount,
       loginWithGoogle,
       loginWithEmail,
       registerWithEmail,
@@ -198,6 +220,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [
       google.error,
       google.isLoading,
+      deleteAccount,
+      deleteAccountMutation.error?.message,
+      deleteAccountMutation.isPending,
       loginWithGoogle,
       logout,
       logoutMutation.error?.message,

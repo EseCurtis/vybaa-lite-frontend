@@ -46,7 +46,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         
         <View
           className={cn(
-            'relative flex flex-row items-center bg-cardd border border-card-light-50 rounded-full px-1 overflow-hidden transition-all',
+            'relative flex flex-row items-center bg-cardd border-4 border-card-light-50/5 rounded-xl px-1 overflow-hidden transition-all',
             disabled && 'opacity-50 cursor-not-allowed',
             className
           )}

@@ -72,7 +72,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
           ) : null}
         </View>
       ) : (
-        <View className="rounded-2xl bg-card-light/10 p-6">
+        <View className="rounded-2xl bg-card-light/10  p-6">
           <EmptyList
             icon={<RiTrophyLine size={48} className="text-white/40" />}
             title="No pending Play Points"

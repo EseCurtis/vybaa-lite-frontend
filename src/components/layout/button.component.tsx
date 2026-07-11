@@ -47,7 +47,7 @@ const button = tv({
     },
     size: {
       default: {
-        container: 'h-[44px] px-7',
+        container: 'h-[52px] px-7',
         label: 'text-[15px]',
       },
       lg: {

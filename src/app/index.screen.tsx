@@ -1,4 +1,5 @@
 import { TopNotch } from '@/components/common/notch.component'
+import { OnboardingBackground } from '@/components/common/onboarding-background.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -56,22 +57,18 @@ export default function AppScreen() {
   }
 
   return (
-    <View
-      className="flex-1 bg-black p-4"
-      style={{
-        background: 'url(./assets/onboarding-bg.png)',
-        backgroundSize: 'cover',
-      }}
-    >
+    <View className="flex-1 bg-black p-4 relative overflow-hidden">
+      <OnboardingBackground />
       <TopNotch />
 
-      <View className="flex-1 max-w-3xl mx-auto flex flex-col gap-8 justify-between py-8">
+      <View className="flex-1 z-[100] max-w-3xl mx-auto flex flex-col gap-8 justify-between py-8">
         <View className="space-y-4 my-auto">
-          <View className="items-center justify-end gap-1">
+          <View className="items-center transit justify-end gap-1">
             <div className="size-[120px]">
               <img
                 src={'./assets/glass-icon.png'}
-                className="size-full rotate-[5deg] object-cover"
+                loading="eager"
+                className="size-full bg-burnt-coffee-900 rounded-[32px] rotate-[5deg] object-cover"
               />
             </div>
             <Text className="whitespace-nowrap mt-3 leading-tight text-center text-[30px] font-black text-white">
@@ -95,7 +92,7 @@ export default function AppScreen() {
               />
             </View>
           )}
-          <View className="flex-row p-1 gap-2 mx-auto bg-card-light/50 rounded-full">
+          <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto bg-card-light/50 rounded-full">
             <TouchableOpacity
               className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
               disabled={isLoading}
@@ -114,12 +111,14 @@ export default function AppScreen() {
                 >
                   <RiGoogleFill className="text-white" />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
-                  disabled={isLoading}
-                >
-                  <RiAppleFill className="text-white" />
-                </TouchableOpacity>
+                {false && (
+                  <TouchableOpacity
+                    className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
+                    disabled={isLoading}
+                  >
+                    <RiAppleFill className="text-white" />
+                  </TouchableOpacity>
+                )}
               </>
             )}
           </View>

@@ -10,6 +10,7 @@ export interface RegisterRequest {
   firstName: string
   lastName: string
   role?: string
+  username?: string
 }
 
 export interface ForgotPasswordRequest {
@@ -266,6 +267,11 @@ export interface AuthContextValue extends AuthState {
    * Clear all auth state and tokens and notify the backend if needed.
    */
   logout: () => Promise<void>
+
+  /**
+   * Permanently delete the current account and clear local auth state.
+   */
+  deleteAccount: () => Promise<void>
 
   /**
    * Force a re-fetch of the current session from the backend.
