@@ -1,6 +1,6 @@
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
-export const GEMINI_LIVE_TEXT_MODEL = 'gemini-2.5-flash-native-audio-preview-09-2025'
+export const GEMINI_LIVE_TEXT_MODEL = 'gemini-3.1-flash-live-preview'
 
 export function getRewindSystemInstruction(personaId: RewindPersonaId) {
   switch (personaId) {

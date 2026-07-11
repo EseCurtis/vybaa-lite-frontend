@@ -17,6 +17,10 @@ import {
   type RewindPersonaId,
   getRewindPersona,
 } from '@/shared/rewind/rewind-personas'
+import {
+  applyAdaptiveGain,
+  floatTo16BitPcmBase64,
+} from '@/shared/rewind/audio-processing'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import { Icon } from '@iconify/react'
@@ -46,6 +50,7 @@ type RewindSocketMessage =
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
   | { type: 'turn_complete' }
+  | { type: 'interrupted' }
   | { type: 'session_ended' }
   | { type: 'open_history' }
   | { type: 'error'; message: string }
@@ -91,24 +96,6 @@ function createTimelineMessage(
     role,
     content,
   }
-}
-
-function floatTo16BitPcmBase64(input: Float32Array): string {
-  let offset = 0
-  const buffer = new ArrayBuffer(input.length * 2)
-  const view = new DataView(buffer)
-
-  for (let i = 0; i < input.length; i++, offset += 2) {
-    const sample = Math.max(-1, Math.min(1, input[i]))
-    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
-  }
-
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
 }
 
 async function getRealtimeMicrophoneStream(
@@ -205,7 +192,7 @@ export default function RewindScreen() {
   const liveSessionRef = useRef<WebSocket | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const inputAudioContextRef = useRef<AudioContext | null>(null)
-  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const processorRef = useRef<AudioNode | null>(null)
   const playbackContextRef = useRef<AudioContext | null>(null)
   const audioQueueRef = useRef<Array<{ data: string; mimeType: string }>>([])
   const activeAudioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set())
@@ -441,6 +428,7 @@ export default function RewindScreen() {
             channelCount: 1,
             echoCancellation: true,
             noiseSuppression: true,
+            autoGainControl: true,
           },
         })
         mediaStreamRef.current = stream
@@ -451,16 +439,16 @@ export default function RewindScreen() {
         inputAudioContextRef.current = context
 
         const source = context.createMediaStreamSource(stream)
-        const processor = context.createScriptProcessor(4096, 1, 1)
-        processorRef.current = processor
-
-        processor.onaudioprocess = (event) => {
+        const compressor = context.createDynamicsCompressor()
+        compressor.threshold.value = -30
+        compressor.knee.value = 18
+        compressor.ratio.value = 4
+        compressor.attack.value = 0.005
+        compressor.release.value = 0.2
+        const sendAudio = (inputData: Float32Array): void => {
           if (isConversationPausedRef.current) return
           if (ws.readyState !== WebSocket.OPEN) return
-
-          const inputData = event.inputBuffer.getChannelData(0)
-          const data = floatTo16BitPcmBase64(inputData)
-
+          const data = floatTo16BitPcmBase64(applyAdaptiveGain(inputData))
           ws.send(
             JSON.stringify({
               type: 'realtime_audio',
@@ -470,7 +458,40 @@ export default function RewindScreen() {
           )
         }
 
-        source.connect(processor)
+        let processor: AudioNode
+        if (context.audioWorklet) {
+          const workletSource = `class RewindCaptureProcessor extends AudioWorkletProcessor {
+            process(inputs) {
+              const channel = inputs[0] && inputs[0][0]
+              if (channel) this.port.postMessage(channel.slice())
+              return true
+            }
+          }
+          registerProcessor('rewind-capture', RewindCaptureProcessor)`
+          const workletUrl = URL.createObjectURL(
+            new Blob([workletSource], { type: 'text/javascript' }),
+          )
+          try {
+            await context.audioWorklet.addModule(workletUrl)
+          } finally {
+            URL.revokeObjectURL(workletUrl)
+          }
+          const worklet = new AudioWorkletNode(context, 'rewind-capture')
+          worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
+            sendAudio(event.data)
+          }
+          processor = worklet
+        } else {
+          const fallbackProcessor = context.createScriptProcessor(4096, 1, 1)
+          fallbackProcessor.onaudioprocess = (event) => {
+            sendAudio(event.inputBuffer.getChannelData(0))
+          }
+          processor = fallbackProcessor
+        }
+        processorRef.current = processor
+
+        source.connect(compressor)
+        compressor.connect(processor)
         processor.connect(context.destination)
 
         console.info('[Rewind] Microphone connected', {
@@ -493,6 +514,9 @@ export default function RewindScreen() {
 
   const pauseConversation = useCallback(async () => {
     setIsConversationPaused(true)
+    if (liveSessionRef.current?.readyState === WebSocket.OPEN) {
+      liveSessionRef.current.send(JSON.stringify({ type: 'audio_stream_end' }))
+    }
     audioQueueRef.current = []
     isPlayingAudioQueueRef.current = false
 
@@ -756,6 +780,16 @@ export default function RewindScreen() {
             lastInputTranscriptRef.current = ''
             lastOutputTranscriptRef.current = ''
             if (isConversationPausedRef.current) return
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'interrupted') {
+            audioQueueRef.current = []
+            nextStartTimeRef.current = 0
+            for (const source of activeAudioSourcesRef.current) source.stop()
+            activeAudioSourcesRef.current.clear()
+            isPlayingAudioQueueRef.current = false
             setStatusText('Listening')
             return
           }
