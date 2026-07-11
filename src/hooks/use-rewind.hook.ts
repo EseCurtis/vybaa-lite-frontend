@@ -1,23 +1,35 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 
+import type { RewindSessionsFilters } from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 
 export function usePaginatedRewindSessions(
   page: number = 1,
   limit: number = 10,
+  filters?: RewindSessionsFilters,
 ) {
   return useInfiniteQuery({
-    queryKey: rewindQueryKeys.paginatedSessions(page, limit),
+    queryKey: rewindQueryKeys.paginatedSessions(page, limit, filters),
     initialPageParam: page,
     queryFn: async ({ pageParam }) => {
       const currentPage =
         typeof pageParam === 'number' && pageParam > 0 ? pageParam : page
-      const response = await rewindAPI.getPaginatedSessions(currentPage, limit)
-      const { pagination, sessions } = response.data
+      const response = await rewindAPI.getPaginatedSessions(
+        currentPage,
+        limit,
+        filters,
+      )
+      const {
+        filters: responseFilters,
+        pagination,
+        sessions,
+        summary,
+      } = response.data
 
       return {
         data: sessions,
+        filters: responseFilters,
         pagination: {
           page: pagination.page,
           limit: pagination.limit,
@@ -26,6 +38,7 @@ export function usePaginatedRewindSessions(
           hasNextPage: pagination.hasMore,
           hasPrevPage: pagination.page > 1,
         },
+        summary,
       }
     },
     getNextPageParam: (lastPage) => {

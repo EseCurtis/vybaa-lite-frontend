@@ -3,36 +3,13 @@ import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 const API_V1 = '/api/v1'
 
-export type RewindGuidedQuestionId =
-  | 'meaningful'
-  | 'draining'
-  | 'progress'
-  | 'different'
-  | 'tomorrow_need'
-
-export type RewindGuidedResponse = {
-  questionId: RewindGuidedQuestionId
-  shortSummary: string
-  score: number | null
-  updatedAt: number
-}
-
-export type RewindGuidedFlowState = {
-  openingAnswered: boolean
-  currentQuestionIndex: number
-  completed: boolean
-  responses: Partial<Record<RewindGuidedQuestionId, RewindGuidedResponse>>
-}
-
 export type RewindSession = {
   id: string
   userId: string
   personaId: RewindPersonaId
   sessionDateKey: string | null
-  openingAnswered: boolean
-  currentQuestionIndex: number
   completed: boolean
-  responses: RewindGuidedFlowState['responses']
+  summary: string | null
   createdAt: string
   updatedAt: string
 }
@@ -44,12 +21,37 @@ export type RewindLiveTokenResponse = {
     wsUrl: string
     personaId: RewindPersonaId
     sessionId: string
+    sessionDateKey: string
   }
+}
+
+export type RewindSessionsFilters = {
+  day?: string
+  personaId?: RewindPersonaId
+}
+
+export type RewindSessionsFacets = {
+  days: Array<{
+    count: number
+    key: string
+  }>
+  partners: Array<{
+    count: number
+    id: RewindPersonaId
+  }>
+}
+
+export type RewindSessionsSummary = {
+  completed: number
+  open: number
+  total: number
 }
 
 export type PaginatedRewindSessionsResponse = {
   msg: string
   data: {
+    filters: RewindSessionsFacets
+    summary: RewindSessionsSummary
     sessions: RewindSession[]
     pagination: {
       page: number
@@ -76,11 +78,17 @@ class RewindAPI {
   async getPaginatedSessions(
     page: number = 1,
     limit: number = 10,
+    filters?: RewindSessionsFilters,
   ): Promise<PaginatedRewindSessionsResponse> {
     const { data: res } = await http.get<PaginatedRewindSessionsResponse>(
       `${API_V1}/rewind/sessions`,
       {
-        params: { page, limit },
+        params: {
+          day: filters?.day,
+          limit,
+          page,
+          personaId: filters?.personaId,
+        },
       },
     )
     return res

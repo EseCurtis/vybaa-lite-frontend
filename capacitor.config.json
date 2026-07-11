@@ -2,9 +2,9 @@
   "appId": "com.vybaa.app",
   "appName": "Vybaa",
   "webDir": "dist",
-  "server": {
+  "serverx": {
     "androidScheme": "https",
-    "url": "https://vybaa-lite.outray.app/"
+    "url": "https://app.vybaa.app/"
   },
   "plugins": {
     "PushNotifications": {

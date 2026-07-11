@@ -39,44 +39,23 @@ type RewindSocketMessage =
       sessionId?: string
       sessionDateKey?: string
       restored?: boolean
-      historyCount?: number
-      guidedFlow?: RewindGuidedFlowState
       previousSession?: RewindSessionSnapshot | null
     }
   | { type: 'text'; content: string }
   | { type: 'audio'; data: string; mimeType: string }
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
-  | { type: 'guided_flow_state'; guidedFlow: RewindGuidedFlowState }
   | { type: 'turn_complete' }
+  | { type: 'session_ended' }
+  | { type: 'open_history' }
   | { type: 'error'; message: string }
   | { type: 'debug'; content: unknown }
-
-type RewindGuidedQuestionId =
-  | 'meaningful'
-  | 'draining'
-  | 'progress'
-  | 'different'
-  | 'tomorrow_need'
-
-type RewindGuidedResponse = {
-  questionId: RewindGuidedQuestionId
-  shortSummary: string
-  score: number | null
-  updatedAt: number
-}
-
-type RewindGuidedFlowState = {
-  openingAnswered: boolean
-  currentQuestionIndex: number
-  completed: boolean
-  responses: Partial<Record<RewindGuidedQuestionId, RewindGuidedResponse>>
-}
 
 type RewindSessionSnapshot = {
   sessionId: string
   sessionDateKey: string
-  guidedFlow: RewindGuidedFlowState
+  completed: boolean
+  summary: string | null
   updatedAt: number
 }
 
@@ -205,84 +184,6 @@ function PersonaCard({
   )
 }
 
-function SessionHistorySheet({
-  previousPreview,
-  currentPreview,
-  previousItems,
-  currentItems,
-}: {
-  previousPreview: string | null
-  currentPreview: string | null
-  previousItems: string[]
-  currentItems: Array<{ role: RewindTimelineMessage['role']; content: string }>
-}) {
-  return (
-    <View className="flex flex-col gap-5">
-      <View className="rounded-[28px] bg-card-light/[0.1] p-4">
-        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
-          Current
-        </Text>
-
-        <View className="mt-3 flex flex-col gap-2">
-          {currentItems.length > 0 ? (
-            currentItems.map((item, index) => (
-              <View
-                key={`current_${index}`}
-                className={cn(
-                  'rounded-2xl px-3 py-3',
-                  item.role === 'assistant'
-                    ? 'bg-white/[0.14]'
-                    : item.role === 'user'
-                      ? 'bg-white/[0.09]'
-                      : 'bg-white/[0.07]',
-                )}
-              >
-                <Text className="text-[10px] uppercase tracking-[0.22em] text-white/50 font-bbh">
-                  {item.role}
-                </Text>
-                <Text className="mt-1 text-white/85 font-bbh text-sm">
-                  {item.content}
-                </Text>
-              </View>
-            ))
-          ) : (
-            <View className="rounded-2xl bg-card-light/[0.08] px-3 py-3">
-              <Text className="text-white/45 font-bbh text-sm">
-                No live session messages yet.
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-
-      <View className="rounded-[28px] bg-card-light/[0.075] p-4">
-        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
-          Last
-        </Text>
-
-        <View className="mt-3 flex flex-col gap-2">
-          {previousItems.length > 0 ? (
-            previousItems.map((item, index) => (
-              <View
-                key={`previous_${index}`}
-                className="rounded-2xl bg-card-light/[0.07] px-3 py-3"
-              >
-                <Text className="text-white/85 font-bbh text-sm">{item}</Text>
-              </View>
-            ))
-          ) : (
-            <View className="rounded-2xl bg-card-light/[0.07] px-3 py-3">
-              <Text className="text-white/45 font-bbh text-sm">
-                Nothing stored from an earlier rewind yet.
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </View>
-  )
-}
-
 export default function RewindScreen() {
   const { user, refreshSession } = useAuth()
   useBottomSheet()
@@ -290,7 +191,6 @@ export default function RewindScreen() {
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [statusText, setStatusText] = useState('Idle')
   const [isConversationPaused, setIsConversationPaused] = useState(false)
-  const [rewindSessionId, setRewindSessionId] = useState<string | null>(null)
   const [rewindSessionDateKey, setRewindSessionDateKey] = useState<
     string | null
   >(null)
@@ -299,9 +199,6 @@ export default function RewindScreen() {
   )
   const [isSessionRestored, setIsSessionRestored] = useState(false)
   const [timeline, setTimeline] = useState<RewindTimelineMessage[]>([])
-  const [guidedFlow, setGuidedFlow] = useState<RewindGuidedFlowState | null>(
-    null,
-  )
   const [previousSession, setPreviousSession] =
     useState<RewindSessionSnapshot | null>(null)
 
@@ -350,11 +247,9 @@ export default function RewindScreen() {
 
   useEffect(() => {
     if (!personaId) return
-    setRewindSessionId(null)
     setRewindSessionDateKey(null)
     setRequestedSessionId(null)
     setTimeline([])
-    setGuidedFlow(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setStatusText('Ready')
@@ -391,11 +286,9 @@ export default function RewindScreen() {
     lastOutputTranscriptRef.current = ''
     setIsConversationPaused(false)
     setPersonaId(null)
-    setRewindSessionId(null)
     setRewindSessionDateKey(null)
     setRequestedSessionId(null)
     setTimeline([])
-    setGuidedFlow(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setStatusText('Idle')
@@ -728,11 +621,9 @@ export default function RewindScreen() {
     lastInputTranscriptRef.current = ''
     lastOutputTranscriptRef.current = ''
     setIsConversationPaused(false)
-    setRewindSessionId(null)
     setRewindSessionDateKey(null)
     setRequestedSessionId(createConnectionId())
     setTimeline([])
-    setGuidedFlow(null)
     setIsSessionRestored(false)
     setStatusText('Ready')
   }, [cleanupAudioPipeline])
@@ -785,7 +676,7 @@ export default function RewindScreen() {
       )
       const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
       const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
-      setRewindSessionId(liveToken.data.sessionId)
+      setRewindSessionDateKey(liveToken.data.sessionDateKey ?? null)
 
       console.info('[Rewind] Opening live websocket', {
         connectionId,
@@ -812,12 +703,8 @@ export default function RewindScreen() {
           const payload = JSON.parse(event.data) as RewindSocketMessage
 
           if (payload.type === 'ready') {
-            if (payload.sessionId) {
-              setRewindSessionId(payload.sessionId)
-            }
             setRewindSessionDateKey(payload.sessionDateKey ?? null)
             setIsSessionRestored(Boolean(payload.restored))
-            setGuidedFlow(payload.guidedFlow ?? null)
             setPreviousSession(payload.previousSession ?? null)
             pushTimelineMessage(
               'system',
@@ -865,16 +752,22 @@ export default function RewindScreen() {
             return
           }
 
-          if (payload.type === 'guided_flow_state') {
-            setGuidedFlow(payload.guidedFlow)
-            return
-          }
-
           if (payload.type === 'turn_complete') {
             lastInputTranscriptRef.current = ''
             lastOutputTranscriptRef.current = ''
             if (isConversationPausedRef.current) return
             setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'session_ended') {
+            toast.success('Session completed!')
+            navigate({ to: '/app/rewind-history' })
+            return
+          }
+
+          if (payload.type === 'open_history') {
+            navigate({ to: '/app/rewind-history' })
             return
           }
 
@@ -949,28 +842,9 @@ export default function RewindScreen() {
     return statusText
   }, [isConversationPaused, persona?.name, statusText])
 
-  const previousSessionItems = useMemo(() => {
-    if (!previousSession?.guidedFlow) return []
-
-    const labels: Record<RewindGuidedQuestionId, string> = {
-      meaningful: 'Meaningful',
-      draining: 'Draining',
-      progress: 'Progress',
-      different: 'Different',
-      tomorrow_need: 'Tomorrow',
-    }
-
-    return Object.values(previousSession.guidedFlow.responses)
-      .filter((entry): entry is RewindGuidedResponse =>
-        Boolean(entry?.shortSummary),
-      )
-      .sort((a, b) => a.updatedAt - b.updatedAt)
-      .map((entry) => `${labels[entry.questionId]}: ${entry.shortSummary}`)
-  }, [previousSession])
-
   const previousSessionPreview = useMemo(() => {
-    return previousSessionItems[previousSessionItems.length - 1] ?? null
-  }, [previousSessionItems])
+    return previousSession?.summary ?? null
+  }, [previousSession])
 
   const currentSessionItems = useMemo(() => {
     return timeline.filter((item) => item.role !== 'system').slice(-6)
@@ -989,12 +863,6 @@ export default function RewindScreen() {
   const hasActiveSession =
     liveSessionRef.current?.readyState === WebSocket.OPEN ||
     isConnectingRef.current
-
-  const startSessionLabel = useMemo(() => {
-    if (isConnectingRef.current) return 'Starting...'
-    if (rewindSessionId || requestedSessionId) return 'Begin'
-    return 'Begin'
-  }, [requestedSessionId, rewindSessionId])
 
   if (!persona) {
     return (
