@@ -1,5 +1,6 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
+import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { CreateGoalSheet } from '@/components/custom/goal/create-goal-sheet.component'
 import { GoalDetailsSheet } from '@/components/custom/goal/goal-details-sheet.component'
 import { GoalList } from '@/components/custom/goal/goal-list.component'
@@ -8,16 +9,20 @@ import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { goalAPI } from '@/shared/api/goal.api'
+import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 export default function GoalsAppScreen() {
   const bottomSheet = useBottomSheetController()
+  const queryClient = useQueryClient()
   const toast = useToast()
 
-  const [refreshKey, setRefreshKey] = useState(0)
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
@@ -49,9 +54,16 @@ export default function GoalsAppScreen() {
     }
   }
 
-  const handleRefresh = () => {
-    setRefreshKey((prev) => prev + 1)
-    toast.success('Goals refreshed!')
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: goalQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all }),
+      ])
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const toggleBulkMode = () => {
@@ -82,7 +94,7 @@ export default function GoalsAppScreen() {
       // Reset state
       setSelectedGoals(new Set())
       setBulkMode(false)
-      setRefreshKey((prev) => prev + 1)
+      await handleRefresh()
     } catch (error: any) {
       toast.error(error.response?.data?.msg || 'Failed to delete goals')
     } finally {
@@ -91,36 +103,41 @@ export default function GoalsAppScreen() {
   }
 
   return (
-    <View className=" flex-1 bg-cardd overflow-y-auto no-scrollbar">
+    <View className=" flex-1 bg-cardd">
       <TopNotch/>
       <NoiseComponent>
-        <GoalList
-          key={refreshKey}
-          onGoalClick={handleGoalClick}
-          onCreateGoal={handleCreateGoal}
-          bulkMode={bulkMode}
-          selectedGoals={selectedGoals}
-          actions={{
-            handleRefresh,
-            handleBulkDelete,
-            handleCreateGoal,
-            toggleBulkMode,
-          }}
-          states={{
-            isDeleting,
-          }}
-          onToggleSelection={(goalId) => {
-            setSelectedGoals((prev) => {
-              const next = new Set(prev)
-              if (next.has(goalId)) {
-                next.delete(goalId)
-              } else {
-                next.add(goalId)
-              }
-              return next
-            })
-          }}
-        />
+        <PullToRefresh
+          className="flex-1 overflow-y-auto no-scrollbar"
+          onRefresh={handleRefresh}
+          refreshing={isRefreshing}
+        >
+          <GoalList
+            onGoalClick={handleGoalClick}
+            onCreateGoal={handleCreateGoal}
+            bulkMode={bulkMode}
+            selectedGoals={selectedGoals}
+            actions={{
+              handleRefresh,
+              handleBulkDelete,
+              handleCreateGoal,
+              toggleBulkMode,
+            }}
+            states={{
+              isDeleting,
+            }}
+            onToggleSelection={(goalId) => {
+              setSelectedGoals((prev) => {
+                const next = new Set(prev)
+                if (next.has(goalId)) {
+                  next.delete(goalId)
+                } else {
+                  next.add(goalId)
+                }
+                return next
+              })
+            }}
+          />
+        </PullToRefresh>
       </NoiseComponent>
     </View>
   )

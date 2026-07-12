@@ -1,5 +1,6 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
+import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
@@ -14,9 +15,11 @@ import { View } from '@/components/layout/view.component'
 import { useCommunities } from '@/hooks/use-communities.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { RiGroup2Line, RiKeyLine, RiMore2Fill } from '@remixicon/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
@@ -25,9 +28,11 @@ type CommunitySubTab = 'ALL' | 'MINE' | 'JOINED'
 export default function CommunitiesScreen() {
   const router = useRouter()
   const bottomSheet = useBottomSheetController()
+  const queryClient = useQueryClient()
   const { user } = useAuth()
   const [page, setPage] = useState(1)
   const [tab, setTab] = useState<CommunitySubTab>('ALL')
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const { data, isLoading, refetch, isFetching } = useCommunities(page, 10)
 
   const communities = data?.data || []
@@ -80,7 +85,17 @@ export default function CommunitiesScreen() {
   }
 
   const handleRefresh = async () => {
-    await refetch()
+    setIsRefreshing(true)
+    setPage(1)
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() }),
+      ])
+      await refetch()
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const handleOpenHeaderMenu = () => {
@@ -133,63 +148,69 @@ export default function CommunitiesScreen() {
           </View>
         </View>
 
-        <View className="flex-1 px-mg mt-7 pb-20">
-          {isLoading ? (
-            <View className="flex-1 items-center justify-center">
-              <Spinner />
-            </View>
-          ) : filtered.length === 0 ? (
-            <EmptyList
-              icon={<RiGroup2Line size={128} className="text-warning-yellow" />}
-              title={
-                tab === 'MINE'
-                  ? 'No owned communities yet'
-                  : tab === 'JOINED'
-                    ? 'No joined communities yet'
-                    : 'No communities yet'
-              }
-              description={
-                tab === 'MINE'
-                  ? 'Create a community to get started.'
-                  : 'Create a community or join one using an invite code.'
-              }
-              action={{
-                label: tab === 'MINE' ? 'Create community' : 'Join by code',
-                onPress: tab === 'MINE' ? handleCreateCommunity : handleJoinByCode,
-              }}
-            />
-          ) : (
-            <VirtualList
-              items={filtered}
-              estimateSize={120}
-              height={520}
-              renderItem={(community, index) => (
-                <>
-                  {!(index === 0) && <hr className="border-card-lighter/20" />}
-                  <CommunityCard
-                    key={community.id}
-                    community={community}
-                    onPress={handleCommunityPress}
-                  />
-                </>
-              )}
-              footer={
-                hasMore ? (
-                  <View className="py-4">
-                    <Button
-                      label={isFetching ? 'Loading...' : 'Load More'}
-                      variant="default"
-                      fullWidth
-                      onClick={() => setPage((p) => p + 1)}
-                      disabled={isFetching}
-                      textClassName="text-sm"
+        <PullToRefresh
+          className="flex-1 overflow-y-auto no-scrollbar"
+          onRefresh={handleRefresh}
+          refreshing={isRefreshing}
+        >
+          <View className="flex-1 px-mg mt-7 pb-20">
+            {isLoading ? (
+              <View className="flex-1 items-center justify-center">
+                <Spinner />
+              </View>
+            ) : filtered.length === 0 ? (
+              <EmptyList
+                icon={<RiGroup2Line size={128} className="text-warning-yellow" />}
+                title={
+                  tab === 'MINE'
+                    ? 'No owned communities yet'
+                    : tab === 'JOINED'
+                      ? 'No joined communities yet'
+                      : 'No communities yet'
+                }
+                description={
+                  tab === 'MINE'
+                    ? 'Create a community to get started.'
+                    : 'Create a community or join one using an invite code.'
+                }
+                action={{
+                  label: tab === 'MINE' ? 'Create community' : 'Join by code',
+                  onPress: tab === 'MINE' ? handleCreateCommunity : handleJoinByCode,
+                }}
+              />
+            ) : (
+              <VirtualList
+                items={filtered}
+                estimateSize={120}
+                height={520}
+                renderItem={(community, index) => (
+                  <>
+                    {!(index === 0) && <hr className="border-card-lighter/20" />}
+                    <CommunityCard
+                      key={community.id}
+                      community={community}
+                      onPress={handleCommunityPress}
                     />
-                  </View>
-                ) : null
-              }
-            />
-          )}
-        </View>
+                  </>
+                )}
+                footer={
+                  hasMore ? (
+                    <View className="py-4">
+                      <Button
+                        label={isFetching ? 'Loading...' : 'Load More'}
+                        variant="default"
+                        fullWidth
+                        onClick={() => setPage((p) => p + 1)}
+                        disabled={isFetching}
+                        textClassName="text-sm"
+                      />
+                    </View>
+                  ) : null
+                }
+              />
+            )}
+          </View>
+        </PullToRefresh>
 
         {/* Bottom hint for joining */}
         {communities.length > 0 && (

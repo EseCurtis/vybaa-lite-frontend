@@ -1,6 +1,7 @@
 import { useToast } from '@/providers/toast.provider'
 import {
   communityAPI,
+  type ActivityFeedResponse,
   type CreateCommentRequest,
   type CreateCommunityRequest,
   type CreateInviteRequest,
@@ -12,7 +13,51 @@ import {
 } from '@/shared/api/community.api'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+function invalidateCommunityCollections(queryClient: QueryClient, communityId: string) {
+  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
+  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.membersRoot(communityId) })
+  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.templatesRoot(communityId) })
+  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.activityRoot(communityId) })
+  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(communityId) })
+}
+
+function updateActivityReactionCache(
+  oldData: InfiniteData<ActivityFeedResponse> | undefined,
+  activityId: string,
+  reacted: boolean,
+): InfiniteData<ActivityFeedResponse> | undefined {
+  if (!oldData) {
+    return oldData
+  }
+
+  const delta = reacted ? 1 : -1
+
+  return {
+    ...oldData,
+    pages: oldData.pages.map((page) => ({
+      ...page,
+      data: page.data.map((activity) => {
+        if (activity.id !== activityId) {
+          return activity
+        }
+
+        const currentCount = activity._count?.reactions || 0
+        return {
+          ...activity,
+          hasUserReacted: reacted,
+          _count: {
+            ...activity._count,
+            comments: activity._count?.comments ?? 0,
+            reactions: Math.max(0, currentCount + delta),
+          },
+        }
+      }),
+    })),
+  }
+}
 
 // ==================== Communities ====================
 
@@ -75,7 +120,7 @@ export function useUpdateCommunity() {
   return useMutation({
     mutationFn: ({ communityId, data }: { communityId: string; data: UpdateCommunityRequest }) =>
       communityAPI.updateCommunity(communityId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(variables.communityId) })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
@@ -114,7 +159,7 @@ export function useJoinCommunity() {
 
   return useMutation({
     mutationFn: (communityId: string) => communityAPI.joinCommunity(communityId),
-    onSuccess: (response, communityId) => {
+    onSuccess: (_response, communityId) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
@@ -134,7 +179,7 @@ export function useLeaveCommunity() {
 
   return useMutation({
     mutationFn: (communityId: string) => communityAPI.leaveCommunity(communityId),
-    onSuccess: (response, communityId) => {
+    onSuccess: (_response, communityId) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
@@ -151,7 +196,7 @@ export function useLeaveCommunity() {
 export function useCommunityMembers(communityId: string, limit: number = 20) {
   return useInfiniteQuery({
     initialPageParam: 1,
-    queryKey: [...communityQueryKeys.detail(communityId), 'members', { limit }],
+    queryKey: communityQueryKeys.members(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await communityAPI.getCommunityMembers(communityId, pageParam, limit)
       return response
@@ -174,7 +219,7 @@ export function useUpdateMemberRole() {
   return useMutation({
     mutationFn: ({ communityId, data }: { communityId: string; data: UpdateMemberRoleRequest }) =>
       communityAPI.updateMemberRole(communityId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(variables.communityId) })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(variables.communityId) })
       toast.success('Member role updated successfully!')
@@ -191,7 +236,7 @@ export function useUpdateMemberRole() {
 export function useTemplates(communityId: string, limit: number = 20) {
   return useInfiniteQuery({
     initialPageParam: 1,
-    queryKey: [...communityQueryKeys.detail(communityId), 'templates', { limit }],
+    queryKey: communityQueryKeys.templates(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await communityAPI.getTemplates(communityId, pageParam, limit)
       return response
@@ -226,11 +271,8 @@ export function useCreateTemplate() {
   return useMutation({
     mutationFn: ({ communityId, data }: { communityId: string; data: CreateTemplateRequest }) =>
       communityAPI.createTemplate(communityId, data),
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.templates(variables.communityId) })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(variables.communityId) })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.activity(variables.communityId) })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(variables.communityId) })
+    onSuccess: (_response, variables) => {
+      invalidateCommunityCollections(queryClient, variables.communityId)
       toast.success('Template created successfully!')
     },
     onError: (error: any) => {
@@ -247,7 +289,7 @@ export function useUpdateTemplate() {
   return useMutation({
     mutationFn: ({ templateId, data }: { templateId: string; data: UpdateTemplateRequest }) =>
       communityAPI.updateTemplate(templateId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       // Refresh this template
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
       // Refresh all community details and lists that might include this template
@@ -287,9 +329,10 @@ export function useStartGoalFromTemplate() {
   return useMutation({
     mutationFn: ({ templateId, data }: { templateId: string; data?: StartGoalFromTemplateRequest }) =>
       communityAPI.startGoalFromTemplate(templateId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       // Invalidate goals list to show new goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Invalidate template to update startedGoals count
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
       // Invalidate template participants
@@ -305,10 +348,10 @@ export function useStartGoalFromTemplate() {
   })
 }
 
-export function useTemplateParticipants(templateId: string, page: number = 1, limit: number = 20) {
+export function useTemplateParticipants(templateId: string, _page: number = 1, limit: number = 20) {
   return useInfiniteQuery({
    initialPageParam: 1,
-    queryKey: communityQueryKeys.templateParticipants(templateId, page, limit),
+    queryKey: communityQueryKeys.templateParticipants(templateId, limit),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await communityAPI.getTemplateParticipants(templateId, pageParam, limit)
       return response
@@ -329,7 +372,7 @@ export function useTemplateParticipants(templateId: string, page: number = 1, li
 export function useActivityFeed(communityId: string, limit: number = 20) {
   return useInfiniteQuery({
     initialPageParam: 1,
-    queryKey: [...communityQueryKeys.detail(communityId), 'activity', { limit }],
+    queryKey: communityQueryKeys.activity(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await communityAPI.getActivityFeed(communityId, pageParam, limit)
       return response
@@ -356,30 +399,10 @@ export function useReactToActivity(communityId?: string) {
       if (communityId) {
         queryClient.setQueriesData(
           {
-            queryKey: [...communityQueryKeys.detail(communityId), 'activity'],
+            queryKey: communityQueryKeys.activityRoot(communityId),
           },
-          (oldData: any) => {
-            if (!oldData || !oldData.data) return oldData
-
-            const delta = response.data.reacted ? 1 : -1
-
-            return {
-              ...oldData,
-              data: oldData.data.map((activity: any) => {
-                if (activity.id !== activityId) return activity
-                const currentCount = activity._count?.reactions || 0
-                const nextCount = Math.max(0, currentCount + delta)
-                return {
-                  ...activity,
-                  hasUserReacted: response.data.reacted,
-                  _count: {
-                    ...activity._count,
-                    reactions: nextCount,
-                  },
-                }
-              }),
-            }
-          },
+          (oldData: InfiniteData<ActivityFeedResponse> | undefined) =>
+            updateActivityReactionCache(oldData, activityId, response.data.reacted),
         )
       }
 
@@ -404,7 +427,7 @@ export function useCreateComment() {
   return useMutation({
     mutationFn: ({ activityId, data }: { activityId: string; data: CreateCommentRequest }) =>
       communityAPI.createComment(activityId, data),
-    onSuccess: (response, variables) => {
+    onSuccess: (_response, variables) => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.comments(variables.activityId) })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('Comment added!')
@@ -475,7 +498,7 @@ export function useCreateInvite() {
 
 export function useInviteByCode(code: string) {
   return useQuery({
-    queryKey: ['invite', code.toUpperCase()],
+    queryKey: communityQueryKeys.invite(code),
     queryFn: async () => {
       const response = await communityAPI.getInviteByCode(code)
       return response.data
@@ -505,7 +528,7 @@ export function useJoinByInviteCode() {
 
 export function useCommunityInvites(communityId: string) {
   return useQuery({
-    queryKey: ['communityInvites', communityId],
+    queryKey: communityQueryKeys.invites(communityId),
     queryFn: async () => {
       const response = await communityAPI.getCommunityInvites(communityId)
       return response.data
@@ -521,7 +544,7 @@ export function useRevokeInvite() {
   return useMutation({
     mutationFn: (inviteId: string) => communityAPI.revokeInvite(inviteId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['communityInvites'] })
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.invitesRoot() })
       toast.success('Invite revoked')
     },
     onError: (error: any) => {

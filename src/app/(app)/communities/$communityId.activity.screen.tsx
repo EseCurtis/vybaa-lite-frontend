@@ -1,4 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ActivityTab } from '@/components/custom/community/activity-tab.component'
@@ -9,12 +10,18 @@ import {
   useCommunity,
 } from '@/hooks/use-communities.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export default function CommunityActivityScreen() {
   const router = useRouter()
   const { communityId } = useParams({ from: '/app/community/activity/$communityId' })
 
-  const { data: community, isLoading: isLoadingCommunity } =
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const {
+    data: community,
+    isLoading: isLoadingCommunity,
+    refetch: refetchCommunity,
+  } =
     useCommunity(communityId)
   const {
     data: activityData,
@@ -22,6 +29,7 @@ export default function CommunityActivityScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchActivity,
   } = useActivityFeed(communityId,20)
 
   const activities = activityData?.pages.flatMap((page) => page.data) || []
@@ -38,6 +46,15 @@ export default function CommunityActivityScreen() {
       replace: true,
       to: '/app/community/$communityId',
     })
+  }
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([refetchCommunity(), refetchActivity()])
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   if (isLoadingCommunity) {
@@ -72,17 +89,23 @@ export default function CommunityActivityScreen() {
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
         <TabHeader canGoBack title="Community activity" onBack={handleBack} />
-        <View className="flex-1 px-mg ">
-          <ActivityTab
-            activities={activities}
-            isLoading={isLoadingActivity || isFetchingNextPage}
-            onReact={() => {}}
-            onComment={() => {}}
-            reactingActivityId={null}
-            hasNextPage={hasNextPage}
-            onLoadMore={handleLoadMoreActivity}
-          />
-        </View>
+        <PullToRefresh
+          className="flex-1 overflow-y-auto no-scrollbar"
+          onRefresh={handleRefresh}
+          refreshing={isRefreshing}
+        >
+          <View className="flex-1 px-mg ">
+            <ActivityTab
+              activities={activities}
+              isLoading={isLoadingActivity || isFetchingNextPage}
+              onReact={() => {}}
+              onComment={() => {}}
+              reactingActivityId={null}
+              hasNextPage={hasNextPage}
+              onLoadMore={handleLoadMoreActivity}
+            />
+          </View>
+        </PullToRefresh>
       </NoiseComponent>
     </View>
   )

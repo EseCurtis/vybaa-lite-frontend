@@ -1,5 +1,6 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
+import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ActivityTab } from '@/components/custom/community/activity-tab.component'
@@ -76,6 +77,7 @@ export default function CommunityDetailScreen() {
     select: (state) => state.location.hash,
   })
   const bottomSheet = useBottomSheetController()
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [reactingActivityId, setReactingActivityId] = useState<string | null>(
     null,
   )
@@ -174,23 +176,29 @@ export default function CommunityDetailScreen() {
     )
   }
 
-  const handleRefreshCommunity = () => {
-    // Invalidate all community-related queries for this community
-    queryClient.invalidateQueries({
-      queryKey: communityQueryKeys.detail(communityId),
-    })
-    queryClient.invalidateQueries({
-      queryKey: communityQueryKeys.members(communityId),
-    })
-    queryClient.invalidateQueries({
-      queryKey: communityQueryKeys.templates(communityId),
-    })
-    queryClient.invalidateQueries({
-      queryKey: communityQueryKeys.activity(communityId),
-    })
-    queryClient.invalidateQueries({
-      queryKey: communityQueryKeys.stats(communityId),
-    })
+  const handleRefreshCommunity = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.detail(communityId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.membersRoot(communityId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.templatesRoot(communityId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.activityRoot(communityId),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: communityQueryKeys.stats(communityId),
+        }),
+      ])
+    } finally {
+      setIsRefreshing(false)
+    }
   }
 
   const handleOpenHeaderMenu = () => {
@@ -345,7 +353,7 @@ export default function CommunityDetailScreen() {
   }
 
   return (
-    <View className="flex-1 bg-cardd overflow-y-auto ">
+    <View className="flex-1 bg-cardd">
       <View className="absolute top-0 left-0 w-full z-[999] backdrop-blur-xl bg-cardd/30">
         <TabHeader
           title={"Community"}
@@ -361,67 +369,73 @@ export default function CommunityDetailScreen() {
       </View>
 
       <CommunityBackground communityName={community.name} />
-      <NoiseComponent>
-        <View className="z-10 relative ">
-          <TopNotch />
-          <View className="mt-24" />
+      <PullToRefresh
+        className="flex-1 overflow-y-auto no-scrollbar"
+        onRefresh={handleRefreshCommunity}
+        refreshing={isRefreshing}
+      >
+        <NoiseComponent>
+          <View className="z-10 relative ">
+            <TopNotch />
+            <View className="mt-24" />
 
-          <CommunityHeader community={community} stats={stats} />
+            <CommunityHeader community={community} stats={stats} />
 
-          <View className="">
-            <CommunityTabs
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-              showModeration={isOwner}
-            />
+            <View className="">
+              <CommunityTabs
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                showModeration={isOwner}
+              />
+            </View>
+
+            <View className="flex-1 px-mg pb-20">
+              {activeTab === 'templates' && (
+                <TemplatesTab
+                  templates={templates.slice(0, 4)}
+                  isLoading={isLoadingTemplates}
+                  isMember={isMember}
+                  userRole={userRole}
+                  onCreateTemplate={handleCreateTemplate}
+                  onStartGoal={handleStartGoal}
+                  hasNextPage={hasNextTemplates}
+                  onLoadMore={handleLoadMoreTemplates}
+                  isPreview
+                  onShowAll={handleShowAllGoals}
+                />
+              )}
+
+              {activeTab === 'activity' && (
+                <ActivityTab
+                  activities={activities.slice(0, 4)}
+                  isLoading={isLoadingActivity}
+                  onReact={handleReact}
+                  onComment={handleComment}
+                  reactingActivityId={reactingActivityId}
+                  hasNextPage={hasNextActivity}
+                  onLoadMore={handleLoadMoreActivity}
+                  isPreview
+                  onShowAll={handleShowAllActivity}
+                />
+              )}
+
+              {activeTab === 'members' && (
+                <MembersTab
+                  members={members.slice(0, 4)}
+                  isLoading={isLoadingMembers}
+                  currentUserRole={userRole}
+                  hasNextPage={hasNextMembers}
+                  onLoadMore={handleLoadMoreMembers}
+                  isPreview
+                  onShowAll={handleShowAllMembers}
+                />
+              )}
+
+              {activeTab === 'moderation' && isOwner && <ModerationTab />}
+            </View>
           </View>
-
-          <View className="flex-1 px-mg pb-20">
-            {activeTab === 'templates' && (
-              <TemplatesTab
-                templates={templates.slice(0, 4)}
-                isLoading={isLoadingTemplates}
-                isMember={isMember}
-                userRole={userRole}
-                onCreateTemplate={handleCreateTemplate}
-                onStartGoal={handleStartGoal}
-                hasNextPage={hasNextTemplates}
-                onLoadMore={handleLoadMoreTemplates}
-                isPreview
-                onShowAll={handleShowAllGoals}
-              />
-            )}
-
-            {activeTab === 'activity' && (
-              <ActivityTab
-                activities={activities.slice(0, 4)}
-                isLoading={isLoadingActivity}
-                onReact={handleReact}
-                onComment={handleComment}
-                reactingActivityId={reactingActivityId}
-                hasNextPage={hasNextActivity}
-                onLoadMore={handleLoadMoreActivity}
-                isPreview
-                onShowAll={handleShowAllActivity}
-              />
-            )}
-
-            {activeTab === 'members' && (
-              <MembersTab
-                members={members.slice(0, 4)}
-                isLoading={isLoadingMembers}
-                currentUserRole={userRole}
-                hasNextPage={hasNextMembers}
-                onLoadMore={handleLoadMoreMembers}
-                isPreview
-                onShowAll={handleShowAllMembers}
-              />
-            )}
-
-            {activeTab === 'moderation' && isOwner && <ModerationTab />}
-          </View>
-        </View>
-      </NoiseComponent>
+        </NoiseComponent>
+      </PullToRefresh>
     </View>
   )
 }

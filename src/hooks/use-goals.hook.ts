@@ -3,14 +3,22 @@ import { useToast } from '@/providers/toast.provider'
 import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
+import type { QueryClient } from '@tanstack/react-query'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+
+function invalidateGoalCollections(queryClient: QueryClient) {
+  void queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
+  void queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
+  void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+  void queryClient.invalidateQueries({ queryKey: ['rewards'] })
+}
 
 /**
  * Hook to fetch all goals with pagination and optional canCheckIn filter
  */
 export function useGoals(page: number = 1, limit: number = 10, canCheckIn?: boolean) {
   return useQuery({
-    queryKey: [...goalQueryKeys.list(page, limit), { canCheckIn }],
+    queryKey: goalQueryKeys.list(page, limit, canCheckIn),
     queryFn: async () => {
       const response = await goalAPI.getAllGoals(page, limit, canCheckIn)
       return response
@@ -25,7 +33,7 @@ export function useGoals(page: number = 1, limit: number = 10, canCheckIn?: bool
 export function useInfiniteGoals({ limit = 10, canCheckIn }: { limit?: number; canCheckIn?: boolean } = {}) {
   const { user } = useAuth();
   return useInfiniteQuery({
-    queryKey: [user?.id, ...goalQueryKeys.infinite(limit), { canCheckIn }],
+    queryKey: goalQueryKeys.infinite(limit, canCheckIn, user?.id),
     queryFn: async ({ pageParam = 1 }) => {
       const response = await goalAPI.getAllGoals(pageParam, limit, canCheckIn)
       return response
@@ -70,10 +78,7 @@ export function useCreateGoal() {
   return useMutation({
     mutationFn: (data: CreateGoalRequest) => goalAPI.createGoal(data),
     onSuccess: (response) => {
-      // Invalidate all goals lists (paginated and infinite)
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
-      // Invalidate insights to refresh stats
-      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      invalidateGoalCollections(queryClient)
       // Update current goal if created
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
@@ -104,16 +109,10 @@ export function useCheckIn() {
       attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
     } = {}) => goalAPI.checkIn(goalId, notes, attachments),
     onSuccess: (response) => {
-      // Invalidate and refetch current goal
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
-      // Invalidate insights to refresh stats
-      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
-      // Invalidate rewards to refresh balance and pending points
-      queryClient.invalidateQueries({ queryKey: ['rewards'] })
+      invalidateGoalCollections(queryClient)
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       }
       toast.success('Check-in successful! Keep it up!')
     },
@@ -132,16 +131,10 @@ export function useResetGoal() {
   return useMutation({
     mutationFn: () => goalAPI.resetGoal(),
     onSuccess: (response) => {
-      // Invalidate and refetch current goal
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
-      // Invalidate insights to refresh stats
-      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
-      // Invalidate rewards to refresh balance and pending points (reset clears pending points)
-      queryClient.invalidateQueries({ queryKey: ['rewards'] })
+      invalidateGoalCollections(queryClient)
       // Update goals list if needed
       if (response.data) {
         queryClient.setQueryData(goalQueryKeys.current(), response.data)
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       }
     },
   })
@@ -158,13 +151,9 @@ export function useUpdateGoal() {
     mutationFn: ({ goalId, data }: { goalId: string; data: UpdateGoalRequest }) =>
       goalAPI.updateGoal(goalId, data),
     onSuccess: (response) => {
-      // Invalidate all goals lists (paginated and infinite)
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
-      // Invalidate insights to refresh stats
-      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      invalidateGoalCollections(queryClient)
       // Update current goal if it was the one updated
       if (response.data) {
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
         queryClient.invalidateQueries({ queryKey: goalQueryKeys.detail(response.data.id) })
       }
       toast.success('Goal updated successfully!')
@@ -185,14 +174,7 @@ export function useDeleteGoal() {
   return useMutation({
     mutationFn: (goalId: string) => goalAPI.deleteGoal(goalId),
     onSuccess: (_, goalId) => {
-      // Invalidate and refetch goals list
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.list() })
-      // Invalidate insights to refresh stats
-      queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
-      // Invalidate rewards to refresh balance and pending points
-      queryClient.invalidateQueries({ queryKey: ['rewards'] })
-      // Invalidate current goal if it was deleted
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
+      invalidateGoalCollections(queryClient)
       // Remove from cache
       queryClient.removeQueries({ queryKey: goalQueryKeys.detail(goalId) })
       toast.success('Goal deleted successfully')

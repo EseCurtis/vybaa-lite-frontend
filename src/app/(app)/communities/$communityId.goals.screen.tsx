@@ -1,4 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { TemplatesTab } from '@/components/custom/community/templates-tab.component'
@@ -10,12 +11,18 @@ import {
   useTemplates,
 } from '@/hooks/use-communities.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export default function CommunityGoalsScreen() {
   const router = useRouter()
   const { communityId } = useParams({ from: '/app/community/goals/$communityId' })
 
-  const { data: community, isLoading: isLoadingCommunity } =
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const {
+    data: community,
+    isLoading: isLoadingCommunity,
+    refetch: refetchCommunity,
+  } =
     useCommunity(communityId)
   const {
     data: templatesData,
@@ -23,6 +30,7 @@ export default function CommunityGoalsScreen() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch: refetchTemplates,
   } = useTemplates(communityId, 20)
   const { mutateAsync: startGoal } = useStartGoalFromTemplate()
 
@@ -48,6 +56,15 @@ export default function CommunityGoalsScreen() {
       router.navigate({ replace: true, to: '/app/goal' })
     } catch {
       // errors handled in hook
+    }
+  }
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      await Promise.all([refetchCommunity(), refetchTemplates()])
+    } finally {
+      setIsRefreshing(false)
     }
   }
 
@@ -83,18 +100,24 @@ export default function CommunityGoalsScreen() {
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
         <TabHeader canGoBack title="Community goals" onBack={handleBack} />
-        <View className="flex-1 px-mg  ">
-          <TemplatesTab
-            templates={templates}
-            isLoading={isLoadingTemplates || isFetchingNextPage}
-            isMember={community.isMember || false}
-            userRole={community.userRole}
-            onCreateTemplate={() => {}}
-            onStartGoal={handleStartGoal}
-            hasNextPage={hasNextPage}
-            onLoadMore={handleLoadMoreTemplates}
-          />
-        </View>
+        <PullToRefresh
+          className="flex-1 overflow-y-auto no-scrollbar"
+          onRefresh={handleRefresh}
+          refreshing={isRefreshing}
+        >
+          <View className="flex-1 px-mg  ">
+            <TemplatesTab
+              templates={templates}
+              isLoading={isLoadingTemplates || isFetchingNextPage}
+              isMember={community.isMember || false}
+              userRole={community.userRole}
+              onCreateTemplate={() => {}}
+              onStartGoal={handleStartGoal}
+              hasNextPage={hasNextPage}
+              onLoadMore={handleLoadMoreTemplates}
+            />
+          </View>
+        </PullToRefresh>
       </NoiseComponent>
     </View>
   )
