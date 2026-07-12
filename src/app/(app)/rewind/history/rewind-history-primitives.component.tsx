@@ -1,4 +1,8 @@
-import { RiCloseLine, RiRefreshLine, RiUserVoiceLine } from '@remixicon/react'
+import {
+  RiCloseLine,
+  RiRefreshLine,
+  RiUserVoiceLine
+} from '@remixicon/react'
 import type { ReactElement } from 'react'
 
 import { Button } from '@/components/layout/button.component'
@@ -38,27 +42,35 @@ export function RewindSkeletonRow(): ReactElement {
 export function RewindFilterPill({
   active,
   count,
+  disabled = false,
   label,
   onPress,
 }: {
   active: boolean
   count?: number
+  disabled?: boolean
   label: string
   onPress: () => void
 }): ReactElement {
+  const countLabel = typeof count === 'number' ? `, ${count} rewinds` : ''
+  const selectedLabel = active ? ', selected' : ''
+
   return (
     <Pressable
       onPress={onPress}
-      className="min-h-[40px] flex-row items-center gap-2 rounded-full px-3.5 py-2"
+      disabled={disabled}
+      accessibilityLabel={`${label}${countLabel}${selectedLabel}`}
+      className="min-h-[44px] flex-row items-center gap-2 rounded-full  px-5 py-2"
       style={{
-        backgroundColor: active
-          ? colors['card-light']
-          : colors['card-light-50'],
+        backgroundColor: active ? colors.white : colors['card-light-50'],
+        borderColor: active ? colors.white : colors['card-light'],
+        opacity: disabled ? 0.42 : 1,
       }}
     >
+
       <Text
-        className="font-bbh text-xs font-bold uppercase tracking-[0.12em]"
-        style={{ color: active ? colors.white : colors['card-lighter-2'] }}
+        className="font-bbh text-xs font-bold  tracking-[0.1em]"
+        style={{ color: active ? colors.black : colors.white }}
       >
         {label}
       </Text>
@@ -66,8 +78,8 @@ export function RewindFilterPill({
         <Text
           className="font-bbh text-[11px] font-bold"
           style={{
-            color: active ? colors.white : colors['card-lighter-3'],
-            opacity: active ? 0.88 : 1,
+            color: active ? colors.black : colors['card-lighter-3'],
+            opacity: active ? 0.68 : 1,
           }}
         >
           {count}

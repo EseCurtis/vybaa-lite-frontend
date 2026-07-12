@@ -20,10 +20,6 @@ import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import { normalizePages } from '@/shared/utils/helpers.util'
 
-import {
-  ALL_DAYS_FILTER,
-  ALL_PARTNERS_FILTER,
-} from './history/rewind-history.constants'
 import { RewindFilterSheet } from './history/rewind-filter-sheet.component'
 import {
   RewindDaySection,
@@ -31,13 +27,17 @@ import {
   RewindErrorState,
   RewindSkeletonRow,
 } from './history/rewind-history-primitives.component'
+import {
+  ALL_DAYS_FILTER,
+  ALL_PARTNERS_FILTER,
+} from './history/rewind-history.constants'
 import type { DayFilter, PartnerFilter } from './history/rewind-history.types'
-import { RewindSessionDetailSheet } from './history/rewind-session-detail-sheet.component'
-import { RewindSessionRow } from './history/rewind-session-row.component'
 import {
   formatDayLabel,
   groupSessionsByDay,
 } from './history/rewind-history.utils'
+import { RewindSessionDetailSheet } from './history/rewind-session-detail-sheet.component'
+import { RewindSessionRow } from './history/rewind-session-row.component'
 
 export default function RewindHistoryScreen(): ReactElement {
   const [partnerFilter, setPartnerFilter] =
@@ -140,7 +140,7 @@ export default function RewindHistoryScreen(): ReactElement {
         onDismiss={bottomSheet.dismiss}
         partnerCounts={partnerCounts}
       />,
-      { title: 'Filters' },
+      { title: 'Filter rewinds' },
     )
   }
 
@@ -183,19 +183,19 @@ export default function RewindHistoryScreen(): ReactElement {
               </View>
 
               <View className="flex-row items-center gap-2">
+                <Text
+                  className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em]"
+                  style={{ color: colors['card-lighter-3'] }}
+                >
+                  Filter by:
+                </Text>
                 <Pressable
                   onPress={openFilters}
                   accessibilityLabel="Filter Rewind history"
-                  className="min-h-12 min-w-0 flex-1 flex-row items-center justify-between rounded-lg px-4"
+                  className="py-3 min-w-0 flex-1 flex-row items-center justify-between rounded-lg px-4"
                   style={{ backgroundColor: colors['card-light-50'] }}
                 >
                   <View className="min-w-0 flex-1 gap-0.5 text-left">
-                    <Text
-                      className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em]"
-                      style={{ color: colors['card-lighter-3'] }}
-                    >
-                      Showing
-                    </Text>
                     <Text
                       className="truncate font-bbh text-sm font-bold"
                       style={{ color: colors.white }}

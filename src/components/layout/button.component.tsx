@@ -93,6 +93,7 @@ interface ButtonProps
   label?: string | number
   loading?: boolean
   className?: string
+  buttonClassName?: string
   textClassName?: string
   withIcon?: boolean
   leftIcon?: React.ReactNode
@@ -110,6 +111,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       size = 'default',
       fullWidth = false,
       className = '',
+      buttonClassName = '',
       textClassName = '',
       withIcon = false,
       bgColor,
@@ -158,7 +160,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'cursor-pointer',
           disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
           loading ? '!pr-0' : '',
-        // className
+        buttonClassName
         )}
         {...props}
       >
