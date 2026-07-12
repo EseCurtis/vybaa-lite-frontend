@@ -126,6 +126,12 @@ export function storePendingDeepLink(target: DeepLinkTarget): void {
   localStorage.setItem(PENDING_DEEP_LINK_KEY, JSON.stringify(target))
 }
 
+export function getUnauthenticatedDeepLinkEntryPath(
+  target: DeepLinkTarget,
+): '/' | '/auth/signup' {
+  return target.route === 'invite' ? '/auth/signup' : '/'
+}
+
 export function consumePendingDeepLink(): DeepLinkTarget | null {
   if (typeof window === 'undefined') {
     return null

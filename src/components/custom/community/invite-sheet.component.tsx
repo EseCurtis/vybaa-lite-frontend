@@ -25,8 +25,8 @@ interface InviteSheetProps {
 }
 
 export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
-  const [tab, setTab] = useState<'share' | 'username'>('share')
-  const [usernameInput, setUsernameInput] = useState('')
+  const [tab, setTab] = useState<'share' | 'direct'>('share')
+  const [recipientInput, setRecipientInput] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
 
   const { data: invites, isLoading: isLoadingInvites, refetch } = useCommunityInvites(communityId)
@@ -53,11 +53,17 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
     refetch()
   }
 
-  const handleInviteByUsername = async () => {
-    const trimmed = usernameInput.trim().replace(/^@/, '')
+  const handleDirectInvite = async () => {
+    const trimmed = recipientInput.trim()
     if (!trimmed) return
-    await createInvite({ communityId, data: { inviteeUsername: trimmed } })
-    setUsernameInput('')
+
+    const isEmail = trimmed.includes('@') && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)
+    const payload = isEmail
+      ? { inviteeEmail: trimmed.toLowerCase() }
+      : { inviteeUsername: trimmed.replace(/^@/, '') }
+
+    await createInvite({ communityId, data: payload })
+    setRecipientInput('')
     refetch()
     setTab('share')
   }
@@ -81,11 +87,11 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => setTab('username')}
-          className={`flex-1 py-2 flex   justify-center rounded-full text-center ${tab === 'username' ? 'bg-accent-500' : 'bg-card-light/20'}`}
+          onPress={() => setTab('direct')}
+          className={`flex-1 py-2 flex   justify-center rounded-full text-center ${tab === 'direct' ? 'bg-accent-500' : 'bg-card-light/20'}`}
         >
-          <Text className={`text-xs font-bbh text-center ${tab === 'username' ? 'text-white font-bold' : 'text-white/70'}`}>
-            Invite by Username
+          <Text className={`text-xs font-bbh text-center ${tab === 'direct' ? 'text-white font-bold' : 'text-white/70'}`}>
+            Invite someone
           </Text>
         </Pressable>
       </View>
@@ -183,6 +189,7 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
                     </Text>
                     <Pressable
                       onPress={() => handleRevoke(inv.id)}
+                      disabled={isRevoking}
                       className="p-1 rounded-full bg-card-light/20"
                     >
                       <RiDeleteBinLine size={12} className="text-danger-400" />
@@ -195,13 +202,13 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
       ) : (
         <View className="space-y-4">
           <Text className="text-white/60 text-sm font-bbh">
-            Invite someone by their username. They'll receive a notification with the invite code.
+            Invite by username or email. Email invites open signup first, then continue into this community.
           </Text>
           <Input
-            placeholder="@username"
-            value={usernameInput}
+            placeholder="@username or email@example.com"
+            value={recipientInput}
             onChange={(e) => {
-              setUsernameInput(e.target.value)
+              setRecipientInput(e.target.value)
             }}
             autoCapitalize="none"
             className='bg-card-lighter/10 border-0'
@@ -211,9 +218,9 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
             label="Send invite"
             variant="default"
             fullWidth
-            onClick={handleInviteByUsername}
+            onClick={handleDirectInvite}
             loading={isCreating}
-            disabled={isCreating || !usernameInput.trim()}
+            disabled={isCreating || !recipientInput.trim()}
             textClassName="text-sm"
           />
         </View>

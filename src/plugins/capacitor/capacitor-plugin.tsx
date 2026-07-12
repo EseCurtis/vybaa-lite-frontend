@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/providers/auth.provider'
 import {
   consumePendingDeepLink,
+  getUnauthenticatedDeepLinkEntryPath,
   type DeepLinkTarget,
   normalizeDeepLink,
   storePendingDeepLink,
@@ -51,7 +52,10 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
 
       if (target.requiresAuth && !isAuthenticated) {
         storePendingDeepLink(target)
-        await router.navigate({ replace: true, to: '/' })
+        await router.navigate({
+          replace: true,
+          to: getUnauthenticatedDeepLinkEntryPath(target),
+        })
         return
       }
 

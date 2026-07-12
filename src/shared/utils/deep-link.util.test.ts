@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeDeepLink } from './deep-link.util'
+import {
+  getUnauthenticatedDeepLinkEntryPath,
+  normalizeDeepLink,
+} from './deep-link.util'
 
 describe('normalizeDeepLink', () => {
   it('normalizes invite links from web and native schemes', () => {
@@ -27,5 +30,12 @@ describe('normalizeDeepLink', () => {
     })
 
     expect(normalizeDeepLink('https://example.com/app/profile')).toBeNull()
+  })
+
+  it('sends signed-out invite links to signup before resuming', () => {
+    const target = normalizeDeepLink('https://vybaa.app/invite/ab12cd')
+
+    expect(target).not.toBeNull()
+    expect(getUnauthenticatedDeepLinkEntryPath(target!)).toBe('/auth/signup')
   })
 })
