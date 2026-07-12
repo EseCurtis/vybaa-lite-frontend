@@ -13,6 +13,7 @@ import type { RewindSession } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
+import { cn } from '@/shared/utils/helpers.util'
 import {
   createAccentStyle,
   formatSessionDate,
@@ -42,10 +43,9 @@ export function RewindSessionRow({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.035, 0.16), duration: 0.22 }}
-        className="rounded-[24px] px-4 py-4 w-full"
+        className="border-b border-card-light/30 pb-7 py-4 w-full"
         style={{
           ...createAccentStyle(accent, accentSoft),
-          backgroundColor: colors['card-light-50'],
         }}
       >
         <View className="flex-row items-start gap-3">
@@ -67,22 +67,26 @@ export function RewindSessionRow({
                     {persona.name}
                   </Text>
                   <View
-                    className="rounded-full px-2.5 py-1"
+                    className={cn(
+                      'rounded-full px-2.5 py-1',
+                      session.completed
+                        ? 'var(--accent-soft)'
+                        : 'bg-warning-yellow/10',
+                    )}
                     style={{
-                      backgroundColor: session.completed
-                        ? accentSoft
-                        : colors.card[500],
+                      //@ts-ignore
+                      '--accent-soft': accentSoft,
                     }}
                   >
                     <Text
-                      className="font-bbh text-[10px] font-bold uppercase tracking-[0.14em]"
+                      className="font-bbh text-[10px] font-bold  tracking-[0.14em]"
                       style={{
                         color: session.completed
                           ? accent
-                          : colors['card-lighter-3'],
+                          : colors['warning-yellow'],
                       }}
                     >
-                      {session.completed ? 'Complete' : 'In progress'}
+                      {session.completed ? 'Complete' : 'Pending'}
                     </Text>
                   </View>
                 </View>

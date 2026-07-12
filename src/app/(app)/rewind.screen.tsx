@@ -61,6 +61,7 @@ type RewindSocketMessage =
   | { type: 'audio'; data: string; mimeType: string }
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
+  | { type: 'conversation_state'; content: string }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
   | { type: 'session_ended'; summary: string }
@@ -76,12 +77,6 @@ type RewindSessionSnapshot = {
   updatedAt: number
 }
 
-type RewindTimelineMessage = {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-}
-
 type LegacyNavigator = Navigator & {
   getUserMedia?: (
     constraints: MediaStreamConstraints,
@@ -93,17 +88,6 @@ type LegacyNavigator = Navigator & {
     success: (stream: MediaStream) => void,
     failure?: (error: unknown) => void,
   ) => void
-}
-
-function createTimelineMessage(
-  role: RewindTimelineMessage['role'],
-  content: string,
-): RewindTimelineMessage {
-  return {
-    id: `${role}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    role,
-    content,
-  }
 }
 
 function getMutationErrorMessage(error: unknown): string {
@@ -203,7 +187,9 @@ export default function RewindScreen(): ReactElement {
   >(null)
   const [isSessionRestored, setIsSessionRestored] = useState(false)
   const [isFinishingSession, setIsFinishingSession] = useState(false)
-  const [timeline, setTimeline] = useState<RewindTimelineMessage[]>([])
+  const [conversationStateNote, setConversationStateNote] = useState<
+    string | null
+  >(null)
   const [previousSession, setPreviousSession] =
     useState<RewindSessionSnapshot | null>(null)
 
@@ -219,8 +205,6 @@ export default function RewindScreen(): ReactElement {
   const isConnectingRef = useRef(false)
   const isConversationPausedRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
-  const lastInputTranscriptRef = useRef('')
-  const lastOutputTranscriptRef = useRef('')
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -251,7 +235,7 @@ export default function RewindScreen(): ReactElement {
   useEffect(() => {
     if (!personaId) return
     setRewindSessionDateKey(null)
-    setTimeline([])
+    setConversationStateNote(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setIsFinishingSession(false)
@@ -286,12 +270,10 @@ export default function RewindScreen(): ReactElement {
     activeAudioSourcesRef.current.clear()
     isPlayingAudioQueueRef.current = false
     nextStartTimeRef.current = 0
-    lastInputTranscriptRef.current = ''
-    lastOutputTranscriptRef.current = ''
     setIsConversationPaused(false)
     setPersonaId(null)
     setRewindSessionDateKey(null)
-    setTimeline([])
+    setConversationStateNote(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setIsFinishingSession(false)
@@ -605,62 +587,6 @@ export default function RewindScreen(): ReactElement {
     liveSession.send(JSON.stringify({ type: 'finish_session' }))
   }, [cleanupAudioPipeline, isFinishingSession])
 
-  const pushTimelineMessage = useCallback(
-    (role: RewindTimelineMessage['role'], content: string) => {
-      const nextContent = content.trim()
-      if (!nextContent) return
-
-      setTimeline((current) => {
-        const lastMessage = current[current.length - 1]
-        if (
-          lastMessage &&
-          lastMessage.role === role &&
-          lastMessage.content === nextContent
-        ) {
-          return current
-        }
-
-        const nextTimeline = [
-          ...current,
-          createTimelineMessage(role, nextContent),
-        ]
-        return nextTimeline.slice(-10)
-      })
-    },
-    [],
-  )
-
-  const upsertTimelineMessage = useCallback(
-    (role: RewindTimelineMessage['role'], content: string) => {
-      const nextContent = content.trim()
-      if (!nextContent) return
-
-      setTimeline((current) => {
-        const lastMessage = current[current.length - 1]
-
-        if (lastMessage?.role === role) {
-          if (lastMessage.content === nextContent) {
-            return current
-          }
-
-          const nextTimeline = [...current]
-          nextTimeline[nextTimeline.length - 1] = {
-            ...lastMessage,
-            content: nextContent,
-          }
-          return nextTimeline
-        }
-
-        const nextTimeline = [
-          ...current,
-          createTimelineMessage(role, nextContent),
-        ]
-        return nextTimeline.slice(-10)
-      })
-    },
-    [],
-  )
-
   useEffect(() => {
     if (!persona) {
       liveSessionRef.current?.close()
@@ -670,8 +596,6 @@ export default function RewindScreen(): ReactElement {
       activeAudioSourcesRef.current.clear()
       isPlayingAudioQueueRef.current = false
       nextStartTimeRef.current = 0
-      lastInputTranscriptRef.current = ''
-      lastOutputTranscriptRef.current = ''
       setIsConversationPaused(false)
       setIsFinishingSession(false)
       isSessionCompleteRef.current = false
@@ -724,12 +648,6 @@ export default function RewindScreen(): ReactElement {
             setRewindSessionDateKey(payload.sessionDateKey ?? null)
             setIsSessionRestored(Boolean(payload.restored))
             setPreviousSession(payload.previousSession ?? null)
-            pushTimelineMessage(
-              'system',
-              payload.restored
-                ? `Restored your last ${persona.name} rewind session.`
-                : `Connected to ${persona.name}. Start talking when you’re ready.`,
-            )
             if (isConversationPausedRef.current) return
             return
           }
@@ -752,27 +670,26 @@ export default function RewindScreen(): ReactElement {
 
           if (payload.type === 'input_transcription') {
             if (isConversationPausedRef.current) return
-            if (payload.content !== lastInputTranscriptRef.current) {
-              lastInputTranscriptRef.current = payload.content
-              pushTimelineMessage('user', payload.content)
-            }
             setStatusText('Listening')
             return
           }
 
           if (payload.type === 'output_transcription') {
             if (isConversationPausedRef.current) return
-            if (payload.content !== lastOutputTranscriptRef.current) {
-              lastOutputTranscriptRef.current = payload.content
-              upsertTimelineMessage('assistant', payload.content)
-            }
             setStatusText('Speaking')
             return
           }
 
+          if (payload.type === 'conversation_state') {
+            if (isConversationPausedRef.current) return
+            const nextConversationState = payload.content.trim()
+            if (nextConversationState) {
+              setConversationStateNote(nextConversationState)
+            }
+            return
+          }
+
           if (payload.type === 'turn_complete') {
-            lastInputTranscriptRef.current = ''
-            lastOutputTranscriptRef.current = ''
             if (isConversationPausedRef.current) return
             setStatusText('Listening')
             return
@@ -844,11 +761,9 @@ export default function RewindScreen(): ReactElement {
     connectMicrophone,
     persona,
     playNextAudioChunk,
-    pushTimelineMessage,
     queryClient,
     navigate,
     toast,
-    upsertTimelineMessage,
   ])
 
   const conversationSummary = useMemo(() => {
@@ -867,13 +782,7 @@ export default function RewindScreen(): ReactElement {
     return previousSession?.summary ?? null
   }, [previousSession])
 
-  const currentSessionItems = useMemo(() => {
-    return timeline.filter((item) => item.role !== 'system').slice(-6)
-  }, [timeline])
-
-  const currentSessionPreview = useMemo(() => {
-    return currentSessionItems[currentSessionItems.length - 1]?.content ?? null
-  }, [currentSessionItems])
+  const currentSessionPreview = conversationStateNote
 
   const openSessionHistory = useCallback(() => {
     navigate({
@@ -1002,18 +911,18 @@ export default function RewindScreen(): ReactElement {
                 {isSessionRestored ? 'Restored Session' : ''}
               </Text>
             </View>
-           <View className="items-center justify-center ">
-             <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
-              <Text className="text-[var(--theme)]">@</Text>
-              {persona.name}
-            </Text>
+            <View className="items-center justify-center ">
+              <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
+                <Text className="text-[var(--theme)]">@</Text>
+                {persona.name}
+              </Text>
 
-            <Text className="mt-3 text-white font-bbh text-2xl font-extrabold">
-              <Text className="text-card-lighter-3">Rewinding W/</Text>{' '}
-              <Text className="text-accent-400">@</Text>
-              <Text className="">{user?.username}</Text>
-            </Text>
-           </View>
+              <Text className="mt-3 text-white font-bbh text-2xl font-extrabold">
+                <Text className="text-card-lighter-3">Rewinding W/</Text>{' '}
+                <Text className="text-accent-400">@</Text>
+                <Text className="">{user?.username}</Text>
+              </Text>
+            </View>
 
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
               <View className="px-3 py-2 rounded-full bg-white/6">
@@ -1069,10 +978,7 @@ export default function RewindScreen(): ReactElement {
             </Pressable>
 
             {!hasActiveSession ? (
-              <Pressable
-              
-                className="flex mt-5 flex-row items-center gap-3"
-              >
+              <Pressable className="flex mt-5 flex-row items-center gap-3">
                 <Text className="text-white font-bold">
                   {statusText === 'Failed' || statusText === 'Disconnected'
                     ? 'Reconnect and continue'

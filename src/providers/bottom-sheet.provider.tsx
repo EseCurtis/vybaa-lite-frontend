@@ -10,6 +10,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -41,9 +42,19 @@ export const BottomSheetProvider = ({
   children: React.ReactNode
 }) => {
   const [stack, setStack] = useState<
-    Array<{ id: string; content: React.ReactNode; title?: string; elevation: number }>
+    Array<{
+      id: string
+      content: React.ReactNode
+      title?: string
+      elevation: number
+    }>
   >([])
   const idRef = useRef(0)
+  const stackRef = useRef(stack)
+
+  useEffect(() => {
+    stackRef.current = stack
+  }, [stack])
 
   const present = useCallback(
     (node: React.ReactNode, opts?: BottomSheetOptions) => {
@@ -84,7 +95,8 @@ export const BottomSheetProvider = ({
   const dismiss = useCallback(() => {
     // Capture which sheet we intend to dismiss *now*.
     // This prevents "present then dismiss" in the same tick from closing the newly presented sheet.
-    const idToRemove = stack[stack.length - 1]?.id
+    const currentStack = stackRef.current
+    const idToRemove = currentStack[currentStack.length - 1]?.id
     if (!idToRemove) return
     setTimeout(
       () => {
@@ -92,7 +104,7 @@ export const BottomSheetProvider = ({
       },
       shouldAnimate ? 200 : 0,
     )
-  }, [stack])
+  }, [])
 
   const dismissAll = useCallback(() => {
     setTimeout(

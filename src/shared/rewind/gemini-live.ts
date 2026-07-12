@@ -35,6 +35,7 @@ export type GeminiLiveServerMessage = {
     | 'ready'
     | 'text'
     | 'audio'
+    | 'conversation_state'
     | 'input_transcription'
     | 'output_transcription'
     | 'turn_complete'

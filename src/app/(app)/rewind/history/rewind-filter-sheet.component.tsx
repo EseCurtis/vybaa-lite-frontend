@@ -1,6 +1,6 @@
 import { RiCalendarLine, RiUserVoiceLine } from '@remixicon/react'
 import type { ReactElement } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
@@ -48,37 +48,6 @@ function getActiveFilterCount(partner: PartnerFilter, day: DayFilter): number {
   }
 
   return count
-}
-
-function RewindFilterSummaryChip({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}): ReactElement {
-  return (
-    <View
-      className="min-w-0 flex-1 gap-1 rounded-[18px] border px-3 py-3"
-      style={{
-        backgroundColor: colors['card-light-50'],
-        borderColor: colors['card-light'],
-      }}
-    >
-      <Text
-        className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em]"
-        style={{ color: colors['card-lighter-3'] }}
-      >
-        {label}
-      </Text>
-      <Text
-        className="truncate font-bbh text-sm font-bold"
-        style={{ color: colors.white }}
-      >
-        {value}
-      </Text>
-    </View>
-  )
 }
 
 function RewindFilterSectionHeader({
@@ -149,21 +118,52 @@ export function RewindFilterSheet({
 }): ReactElement {
   const [draftPartner, setDraftPartner] = useState<PartnerFilter>(activePartner)
   const [draftDay, setDraftDay] = useState<DayFilter>(activeDay)
+  const [isApplying, setIsApplying] = useState(false)
+  const applyTimeoutRef = useRef<number | undefined>(undefined)
+  const dismissTimeoutRef = useRef<number | undefined>(undefined)
   const activeFilterCount = getActiveFilterCount(draftPartner, draftDay)
   const hasDraftFilters = activeFilterCount > 0
   const hasDraftChanges =
     draftPartner !== activePartner || draftDay !== activeDay
+  const isApplyDisabled = isApplying || (!hasDraftFilters && !hasDraftChanges)
   const partnerLabel = getPartnerFilterLabel(draftPartner)
   const dayLabel = getDayFilterLabel(draftDay)
 
+  useEffect(() => {
+    return () => {
+      if (typeof applyTimeoutRef.current === 'number') {
+        window.clearTimeout(applyTimeoutRef.current)
+      }
+
+      if (typeof dismissTimeoutRef.current === 'number') {
+        window.clearTimeout(dismissTimeoutRef.current)
+      }
+    }
+  }, [])
+
   function handleClear(): void {
+    if (isApplying) {
+      return
+    }
+
     setDraftPartner(ALL_PARTNERS_FILTER)
     setDraftDay(ALL_DAYS_FILTER)
   }
 
   function handleApply(): void {
-    onApply({ day: draftDay, partner: draftPartner })
-    onDismiss()
+    if (isApplying || isApplyDisabled) {
+      return
+    }
+
+    setIsApplying(true)
+
+    applyTimeoutRef.current = window.setTimeout(() => {
+      onApply({ day: draftDay, partner: draftPartner })
+
+      dismissTimeoutRef.current = window.setTimeout(() => {
+        onDismiss()
+      }, 120)
+    }, 80)
   }
 
   return (
@@ -187,7 +187,9 @@ export function RewindFilterSheet({
               label="All"
               count={allPartnerCount}
               onPress={() => {
-                setDraftPartner(ALL_PARTNERS_FILTER)
+                if (!isApplying) {
+                  setDraftPartner(ALL_PARTNERS_FILTER)
+                }
               }}
             />
             {REWIND_PERSONAS.map((persona) => (
@@ -201,7 +203,9 @@ export function RewindFilterSheet({
                   draftPartner !== persona.id
                 }
                 onPress={() => {
-                  setDraftPartner(persona.id)
+                  if (!isApplying) {
+                    setDraftPartner(persona.id)
+                  }
                 }}
               />
             ))}
@@ -226,7 +230,9 @@ export function RewindFilterSheet({
               label="All days"
               count={allDayCount}
               onPress={() => {
-                setDraftDay(ALL_DAYS_FILTER)
+                if (!isApplying) {
+                  setDraftDay(ALL_DAYS_FILTER)
+                }
               }}
             />
             {dayOptions.map((dayKey) => (
@@ -239,7 +245,9 @@ export function RewindFilterSheet({
                   (dayCounts.get(dayKey) ?? 0) === 0 && draftDay !== dayKey
                 }
                 onPress={() => {
-                  setDraftDay(dayKey)
+                  if (!isApplying) {
+                    setDraftDay(dayKey)
+                  }
                 }}
               />
             ))}
@@ -264,7 +272,8 @@ export function RewindFilterSheet({
             <View className="w-full">
               <Button
                 label={'Apply filters'}
-                disabled={!hasDraftFilters}
+                loading={isApplying}
+                disabled={isApplyDisabled}
                 fullWidth
                 buttonClassName="flex-1"
                 onClick={handleApply}
@@ -274,7 +283,7 @@ export function RewindFilterSheet({
           <Button
             label="Clear"
             variant="secondary"
-            disabled={!hasDraftFilters}
+            disabled={isApplying || !hasDraftFilters}
             buttonClassName="flex-1"
             onClick={handleClear}
           />
