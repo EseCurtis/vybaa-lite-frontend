@@ -126,6 +126,59 @@ export function RewindSessionDetailSheet({
             {session.summary}
           </Text>
         </View>
+
+        {session.emotionalInsight ? (
+          <View className="gap-2">
+            <Text
+              className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: colors['card-lighter-3'] }}
+            >
+              Emotional insight
+            </Text>
+            <Text
+              className="font-bbh text-sm leading-7"
+              style={{ color: colors.neutral[100] }}
+            >
+              {session.emotionalInsight}
+            </Text>
+          </View>
+        ) : null}
+
+        {session.nextStepNote ? (
+          <View className="gap-2">
+            <Text
+              className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em]"
+              style={{ color: colors['card-lighter-3'] }}
+            >
+              Check-in note
+            </Text>
+            <Text
+              className="font-bbh text-sm leading-7"
+              style={{ color: colors['card-lighter-2'] }}
+            >
+              {session.nextStepNote}
+            </Text>
+          </View>
+        ) : null}
+
+        {session.emotionalTags.length ? (
+          <View className="flex-row flex-wrap gap-2">
+            {session.emotionalTags.map((tag) => (
+              <View
+                key={tag}
+                className="rounded-full px-3 py-1"
+                style={{ backgroundColor: accentSoft }}
+              >
+                <Text
+                  className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em]"
+                  style={{ color: accent }}
+                >
+                  {tag}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
     </View>
   )

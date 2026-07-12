@@ -66,7 +66,7 @@ type RewindSocketMessage =
   | { type: 'reconnecting' }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
-  | { type: 'session_ended'; summary: string }
+  | { type: 'session_ended'; emotionalInsight?: string; summary: string }
   | { type: 'open_history' }
   | { type: 'error'; message: string }
   | { type: 'debug'; content: unknown }
