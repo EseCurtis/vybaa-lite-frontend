@@ -9,7 +9,7 @@ export type RewindSession = {
   personaId: RewindPersonaId
   sessionDateKey: string | null
   completed: boolean
-  summary: string | null
+  summary: string
   createdAt: string
   updatedAt: string
 }

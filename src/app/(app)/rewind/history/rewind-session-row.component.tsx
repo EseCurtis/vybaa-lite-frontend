@@ -82,15 +82,15 @@ export function RewindSessionRow({
                           : colors['card-lighter-3'],
                       }}
                     >
-                      {session.completed ? 'Complete' : 'Open'}
+                      {session.completed ? 'Complete' : 'In progress'}
                     </Text>
                   </View>
                 </View>
                 <Text
-                   className="line-clamp-2 font-bbh text-[13px] leading-5"
-                   style={{ color: colors.neutral[100] }}
+                  className="line-clamp-2 font-bbh text-[13px] leading-5"
+                  style={{ color: colors.neutral[100] }}
                 >
-                  {session.summary ?? 'No summary yet.'}
+                  {session.summary}
                 </Text>
               </View>
 

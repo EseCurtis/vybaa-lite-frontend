@@ -30,7 +30,6 @@ import {
   RewindEmptyState,
   RewindErrorState,
   RewindSkeletonRow,
-  RewindSummaryMetric,
 } from './history/rewind-history-primitives.component'
 import type { DayFilter, PartnerFilter } from './history/rewind-history.types'
 import { RewindSessionDetailSheet } from './history/rewind-session-detail-sheet.component'
@@ -155,111 +154,80 @@ export default function RewindHistoryScreen(): ReactElement {
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
       <NoiseComponent>
-        <TabHeader title="Rewind History" />
+        <TabHeader title="Rewind" />
 
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-1">
           <View className="mx-auto w-full max-w-3xl">
-            <View className="gap-4">
-              <View
-                className="gap-3 rounded-[28px] px-1 py-1"
-                style={{ backgroundColor: 'transparent' }}
-              >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="min-w-0 flex-1 gap-1">
-                    <Text
-                      className="font-bbh text-lg font-bold"
-                      style={{ color: colors.white }}
-                    >
-                      Rewind archive
-                    </Text>
-                    <Text
-                      className="font-bbh text-sm"
-                      style={{ color: colors['card-lighter-2'] }}
-                    >
-                      {summary.total} sessions across {facets.days.length} days
-                    </Text>
-                  </View>
-
-                  {hasActiveFilters ? (
-                    <Pressable
-                      onPress={resetFilters}
-                      className="min-h-[40px] flex-row items-center gap-1.5 rounded-full px-3 py-2"
-                      style={{ backgroundColor: colors['card-light-50'] }}
-                    >
-                      <RiCloseLine
-                        size={14}
-                        style={{ color: colors['card-lighter-2'] }}
-                      />
-                      <Text
-                        className="font-bbh text-xs font-bold uppercase tracking-[0.12em]"
-                        style={{ color: colors['card-lighter-2'] }}
-                      >
-                        Reset
-                      </Text>
-                    </Pressable>
-                  ) : null}
-                </View>
-
-                <View
-                  className="flex-row gap-2 rounded-[24px] px-2 py-2"
-                  style={{ backgroundColor: colors['card-light-50'] }}
+            <View className="gap-5">
+              <View className="gap-2 px-1 pb-1">
+                <Text
+                  className="font-bbh text-2xl font-bold"
+                  style={{ color: colors.white }}
                 >
-                  <RewindSummaryMetric label="Matching" value={summary.total} />
-                  <RewindSummaryMetric
-                    label="Completed"
-                    value={summary.completed}
-                  />
-                  <RewindSummaryMetric label="Open" value={summary.open} />
-                </View>
+                  Your reflections
+                </Text>
+                <Text
+                  className="max-w-xl font-bbh text-sm leading-6"
+                  style={{ color: colors['card-lighter-2'] }}
+                >
+                  Every partner remembers your conversations through their own
+                  perspective. Open a Rewind to revisit what they heard.
+                </Text>
+                <Text
+                  className="font-bbh text-xs"
+                  style={{ color: colors['card-lighter-3'] }}
+                >
+                  {summary.total} {summary.total === 1 ? 'rewind' : 'rewinds'} ·{' '}
+                  {summary.completed} complete · {summary.open} open
+                </Text>
               </View>
 
-              <View className="gap-3 py-1">
-                <View className="flex-row flex-wrap items-center gap-2">
-                  <Pressable
-                    onPress={openFilters}
-                    className="min-h-[40px] flex-row items-center gap-2 rounded-full px-3.5 py-2"
-                    style={{ backgroundColor: colors['card-light-50'] }}
-                  >
+              <View className="flex-row items-center gap-2">
+                <Pressable
+                  onPress={openFilters}
+                  accessibilityLabel="Filter Rewind history"
+                  className="min-h-12 min-w-0 flex-1 flex-row items-center justify-between rounded-lg px-4"
+                  style={{ backgroundColor: colors['card-light-50'] }}
+                >
+                  <View className="min-w-0 flex-1 gap-0.5 text-left">
                     <Text
-                      className="font-bbh text-xs font-bold uppercase tracking-[0.12em]"
+                      className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em]"
+                      style={{ color: colors['card-lighter-3'] }}
+                    >
+                      Showing
+                    </Text>
+                    <Text
+                      className="truncate font-bbh text-sm font-bold"
                       style={{ color: colors.white }}
                     >
-                      Filters
+                      {partnerFilter === ALL_PARTNERS_FILTER
+                        ? 'All partners'
+                        : getRewindPersona(partnerFilter).name}
+                      {' · '}
+                      {dayFilter === ALL_DAYS_FILTER
+                        ? 'All days'
+                        : formatDayLabel(dayFilter)}
                     </Text>
-                    <RiArrowDownSLine
-                      size={16}
+                  </View>
+                  <RiArrowDownSLine
+                    size={20}
+                    style={{ color: colors['card-lighter-2'] }}
+                  />
+                </Pressable>
+
+                {hasActiveFilters ? (
+                  <Pressable
+                    onPress={resetFilters}
+                    accessibilityLabel="Clear Rewind filters"
+                    className="h-12 w-12 shrink-0 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: colors['card-light-50'] }}
+                  >
+                    <RiCloseLine
+                      size={18}
                       style={{ color: colors['card-lighter-2'] }}
                     />
                   </Pressable>
-
-                  {partnerFilter !== ALL_PARTNERS_FILTER ? (
-                    <View
-                      className="rounded-full px-3 py-2"
-                      style={{ backgroundColor: colors['card-light-50'] }}
-                    >
-                      <Text
-                        className="font-bbh text-[11px] font-bold uppercase tracking-[0.12em]"
-                        style={{ color: colors['card-lighter-2'] }}
-                      >
-                        {getRewindPersona(partnerFilter).name}
-                      </Text>
-                    </View>
-                  ) : null}
-
-                  {dayFilter !== ALL_DAYS_FILTER ? (
-                    <View
-                      className="rounded-full px-3 py-2"
-                      style={{ backgroundColor: colors['card-light-50'] }}
-                    >
-                      <Text
-                        className="font-bbh text-[11px] font-bold uppercase tracking-[0.12em]"
-                        style={{ color: colors['card-lighter-2'] }}
-                      >
-                        {formatDayLabel(dayFilter)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
+                ) : null}
               </View>
 
               <View className="gap-3 py-2">
@@ -297,10 +265,7 @@ export default function RewindHistoryScreen(): ReactElement {
                     ))}
 
                     {hasNextPage && (
-                      <View
-                        className="mt-2 rounded-[22px] px-4 py-3"
-                        style={{ backgroundColor: colors['card-light-50'] }}
-                      >
+                      <View className="mt-2 px-1 py-2">
                         <Button
                           label={
                             isFetchingNextPage ? 'Loading...' : 'Load more'

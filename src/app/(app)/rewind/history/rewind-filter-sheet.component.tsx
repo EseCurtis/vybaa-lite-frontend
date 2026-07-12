@@ -135,7 +135,7 @@ export function RewindFilterSheet({
         </View>
       </View>
 
-      <View className="flex-row w-full bg-red-500 gap-3 pt-1">
+      <View className="flex-row w-full gap-3 pt-1">
         <Button
           label="Clear"
           variant="secondary"
@@ -145,7 +145,6 @@ export function RewindFilterSheet({
         />
         <Button
           label="Apply"
-          variant="secondary"
           fullWidth
           className="flex-1"
           onClick={handleApply}

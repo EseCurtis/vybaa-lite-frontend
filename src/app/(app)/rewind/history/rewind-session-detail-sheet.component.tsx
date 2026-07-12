@@ -59,7 +59,7 @@ export function RewindSessionDetailSheet({
                       : colors['card-lighter-3'],
                   }}
                 >
-                  {session.completed ? 'Complete' : 'Open'}
+                  {session.completed ? 'Complete' : 'In progress'}
                 </Text>
               </View>
             </View>
@@ -97,13 +97,33 @@ export function RewindSessionDetailSheet({
             className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em]"
             style={{ color: colors['card-lighter-3'] }}
           >
+            {persona.name}&apos;s perspective
+          </Text>
+          <Text
+            className="font-bbh text-sm leading-6"
+            style={{ color: colors['card-lighter-2'] }}
+          >
+            {persona.perspective}
+          </Text>
+        </View>
+
+        <View
+          className="h-px w-full"
+          style={{ backgroundColor: colors.card[300] }}
+        />
+
+        <View className="gap-2">
+          <Text
+            className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em]"
+            style={{ color: colors['card-lighter-3'] }}
+          >
             Session Summary
           </Text>
           <Text
             className="font-bbh text-sm leading-7"
             style={{ color: colors.neutral[100] }}
           >
-            {session.summary ?? 'No summary saved for this session.'}
+            {session.summary}
           </Text>
         </View>
       </View>
