@@ -56,7 +56,7 @@ if (rootElement && !rootElement.innerHTML) {
           <AuthProvider>
             <ToastProvider>
               <NotificationProvider>
-                <CapacitorPlugin />
+                <CapacitorPlugin router={router} />
                 <RouterProvider router={router} />
               </NotificationProvider>
             </ToastProvider>

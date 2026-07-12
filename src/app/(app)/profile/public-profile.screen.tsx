@@ -73,7 +73,7 @@ export default function PublicProfileScreen() {
             action={{
               label: 'Go back',
               onPress: () => {
-                history.back()
+                navigate({ replace: true, to: '/app/profile' })
               },
             }}
           />

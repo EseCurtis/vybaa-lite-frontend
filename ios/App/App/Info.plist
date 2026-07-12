@@ -32,7 +32,16 @@
 				<string>com.googleusercontent.apps.103411505324-tjiejrhppj1ua7mdm541fkdn9nqfd2go</string>
 			</array>
 		</dict>
-		<dict/>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>vybaa</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vybaa</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>

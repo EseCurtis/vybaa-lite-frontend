@@ -4,13 +4,16 @@ import androidConfig from './configurations/android';
 import iosConfig from './configurations/ios';
 import webConfig from './configurations/web';
 
+type CapacitorAppConfigOptions = {
+    onBack?: () => void;
+};
 
-const ConfigCapacitorApp = () => {
+const ConfigCapacitorApp = (options: CapacitorAppConfigOptions = {}) => {
     App.addListener('backButton', ({ canGoBack }: any) => {
         if (!canGoBack) {
             App.exitApp();
         } else {
-            window.history.back();
+            options.onBack?.();
         }
     });
     

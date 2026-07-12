@@ -37,9 +37,13 @@ export default function TemplateDetailScreen() {
 
   const handleBack = () => {
     if (template?.communityId) {
-     history.back()
+      router.navigate({
+        params: { communityId: template.communityId },
+        replace: true,
+        to: '/app/community/$communityId',
+      })
     } else {
-      router.navigate({ to: '/app/communities' })
+      router.navigate({ replace: true, to: '/app/communities' })
     }
   }
 

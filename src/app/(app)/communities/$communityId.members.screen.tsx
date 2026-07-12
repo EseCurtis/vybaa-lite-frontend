@@ -32,7 +32,11 @@ export default function CommunityMembersScreen() {
   }
 
   const handleBack = () => {
-    history.back()
+    router.navigate({
+      params: { communityId },
+      replace: true,
+      to: '/app/community/$communityId',
+    })
   }
 
   if (isLoadingCommunity) {

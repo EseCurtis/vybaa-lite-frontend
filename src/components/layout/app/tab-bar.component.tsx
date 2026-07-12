@@ -111,8 +111,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         // Provide haptic feedback
         await hapticFeedback.light()
 
-        // Navigate to the route
-        navigate({ to: route })
+        navigate({ replace: true, to: route })
       }
     },
     [location.pathname, navigate],

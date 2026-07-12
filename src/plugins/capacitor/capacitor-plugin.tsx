@@ -63,7 +63,7 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
   useEffect(() => {
     setQueryClientForNotifications(queryClient)
 
-    const configure = async (): Promise<void> => {
+    const configure = async (): Promise<() => void> => {
       const appUrlOpenListener = await App.addListener('appUrlOpen', (event) => {
         void handleDeepLink(event.url)
       })

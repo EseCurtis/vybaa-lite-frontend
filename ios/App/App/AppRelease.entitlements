@@ -6,7 +6,8 @@
 	<string>development</string>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>webcredentials:example.com</string>
+		<string>applinks:vybaa.app</string>
+		<string>applinks:www.vybaa.app</string>
 	</array>
 </dict>
 </plist>

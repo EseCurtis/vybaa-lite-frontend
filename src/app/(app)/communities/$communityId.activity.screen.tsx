@@ -33,7 +33,11 @@ export default function CommunityActivityScreen() {
   }
 
   const handleBack = () => {
-   history.back()
+    router.navigate({
+      params: { communityId },
+      replace: true,
+      to: '/app/community/$communityId',
+    })
   }
 
   if (isLoadingCommunity) {
@@ -83,4 +87,3 @@ export default function CommunityActivityScreen() {
     </View>
   )
 }
-

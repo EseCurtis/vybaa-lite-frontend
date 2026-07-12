@@ -312,7 +312,7 @@ export default function CommunityDetailScreen() {
       to: '/app/community/$communityId',
       params: { communityId },
       hash: getCommunityTabHash(nextTab),
-      replace: false,
+      replace: true,
     })
   }
 

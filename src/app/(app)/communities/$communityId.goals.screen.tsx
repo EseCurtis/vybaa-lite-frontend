@@ -24,8 +24,7 @@ export default function CommunityGoalsScreen() {
     hasNextPage,
     isFetchingNextPage,
   } = useTemplates(communityId, 20)
-  const { mutateAsync: startGoal, isPending: isStartingGoal } =
-    useStartGoalFromTemplate()
+  const { mutateAsync: startGoal } = useStartGoalFromTemplate()
 
   const templates = templatesData?.pages.flatMap((page) => page.data) || []
 
@@ -36,13 +35,17 @@ export default function CommunityGoalsScreen() {
   }
 
   const handleBack = () => {
-   history.back()
+    router.navigate({
+      params: { communityId },
+      replace: true,
+      to: '/app/community/$communityId',
+    })
   }
 
   const handleStartGoal = async (template: any) => {
     try {
       await startGoal({ templateId: template.id })
-      router.navigate({ to: '/app/goal' })
+      router.navigate({ replace: true, to: '/app/goal' })
     } catch {
       // errors handled in hook
     }
@@ -96,4 +99,3 @@ export default function CommunityGoalsScreen() {
     </View>
   )
 }
-
