@@ -1,16 +1,15 @@
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
 import { useToast } from '@/providers/toast.provider'
 import { cn } from '@/shared/utils/helpers.util'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ImageCropper } from './image-cropper.component'
 
 interface ImagePickerProps {
   currentImageUrl?: string
   onImageSelect: (imageDataUrl: string) => void // Returns base64, parent handles upload
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | "xl"
   className?: string
   initials?: string
 }
@@ -31,6 +30,7 @@ export function ImagePicker({
     sm: 'w-16 h-16 text-xl',
     md: 'w-20 h-20 text-2xl',
     lg: 'w-24 h-24 text-3xl',
+    xl: 'w-32 h-32 text-4xl',
   }
 
   const compressImage = (file: File): Promise<string> => {
@@ -202,10 +202,11 @@ export function ImagePicker({
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={handleClick}
-          className="absolute -bottom-1 -right-1 bg-accent-500 rounded-full p-2 shadow-lg border-2 border-black z-10"
+          className="absolute flex flex-row items-center gap-3 text-white -bottom-1 -right-1/4 bg-accent-500 pr-3 rounded-full p-3 py-2 shadow-lg border-2 border-black z-10"
           type="button"
         >
           <Icons.Edit size="xs" color="#ffffff" />
+          <Text className="text-xs font-bold">Upload</Text>
         </motion.button>
 
         <input

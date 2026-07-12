@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react'
 import type { User } from '@/shared/types/auth.types'
+import type { ReactNode } from 'react'
 
 export interface ProfileFormData {
   firstName: string
@@ -12,6 +12,10 @@ export interface ProfileQuickAction {
   description: string
   icon: ReactNode
   iconContainerClassName?: string
+  colorScheme?: {
+    bg1: string
+    bg2: string
+  }
   title: string
   to: '/achievements' | '/app/sub-profile/insights' | '/app/sub-profile/settings'
 }

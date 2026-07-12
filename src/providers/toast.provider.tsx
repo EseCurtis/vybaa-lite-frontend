@@ -1,5 +1,5 @@
 import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
-import React from 'react'
+import React, { useEffect } from 'react'
 import { toast as sonnerToast, Toaster } from 'sonner'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
@@ -88,6 +88,10 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [showToast, success, error, warning, info, loading, dismiss]
   )
 
+  useEffect(() => {
+   showToast('Welcome to Vybaa! Your AI companion for self-reflection and personal growth.', 'success', 5000)
+  }, [top])
+
   //alert(top)
 
   return (
@@ -95,7 +99,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       <Toaster
         position="top-center"
-        expand={true}
+     
         richColors
         toastOptions={{
           className: 'rounded-full',
@@ -108,8 +112,8 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           },
         }}
         style={{
-          textAlign: "center"
-          
+          textAlign: "left",
+          fontWeight: "bold"
         }}
       />
     </ToastContext.Provider>

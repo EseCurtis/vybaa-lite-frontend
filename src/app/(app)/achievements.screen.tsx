@@ -13,13 +13,13 @@ import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 
 const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-  }
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
 
 function BadgeCard({
   badge,
@@ -30,35 +30,33 @@ function BadgeCard({
   isEarned: boolean
   earnedDate?: string
 }) {
-  
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
-      className={`rounded-2xl p-6 ${
+      className={`rounded-[40px] flex flex-col items-center justify-center from-primary-500/20 to-accent-500/20 bg-black/10 pb-5 pt-2  aspect-square ${
         isEarned
-          ? 'bg-gradient-to-br flex flex-col items-center justify-center from-primary-500/20 to-accent-500/20 bg-black/10'
-          : 'bg-card-700/40 border-2 border-card-lighter/5'
+          ? 'bg-cardx '
+          : 'bg-cardx'
       }`}
     >
-      <View className=" flex flex-col items-center justify-center">
-        {' '}
-        <Text
-          className={`font-bbh flex mx-auto w-full font-bold !text-center ${
-            isEarned ? 'text-card-lighter' : 'text-card-lighter/40'
-          }`}
-        >
-          {badge.title}
-        </Text>
-      </View>
+      {/* Locked Indicator */}
+      {!isEarned && (
+        <View className="flex items-center justify-center ">
+          <View className="mt-2 px-3 py-1 bg-warning-yellow/20 rounded-full">
+            <Text className="text-xs text-warning-yellow/70 font-bbh">
+              {' '}
+              Locked
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Badge Icon */}
-      <View className="flex items-center justify-center mb-4">
+      <View className="flex items-center justify-center mb-2">
         <View
           className={`w-20 h-20 rounded-full flex items-center justify-center ${
-            isEarned
-              ? 'bg-gradient-to-br from-primary-500/30 to-accent-500/30'
-              : 'bg-card-600/50'
+            isEarned ? '' : 'bg-cardx'
           }`}
         >
           <Icon
@@ -70,9 +68,19 @@ function BadgeCard({
       </View>
 
       {/* Badge Info */}
-      <View className="items-center space-y-2">
+      <View className="items-center w-full space-y-2">
+        <View className=" flex flex-col items-center justify-center">
+          {' '}
+          <Text
+            className={`font-bbh text-xs flex mx-auto w-full font-bold !text-center ${
+              isEarned ? 'text-card-lighter' : 'text-card-lighter/40'
+            }`}
+          >
+            {badge.title}
+          </Text>
+        </View>
         <Text
-          className={`text-xs text-center font-bbh ${
+          className={`text-xs hidden text-center font-bbh ${
             isEarned ? 'text-card-lighter/70' : 'text-card-lighter/30'
           }`}
         >
@@ -81,19 +89,9 @@ function BadgeCard({
 
         {/* Earned Date */}
         {isEarned && earnedDate && (
-          <Text className="text-xs text-warning-yellow font-bbh mt-2">
+          <Text className="text-xs hidden text-warning-yellow font-bbh mt-2">
             @{formatDate(earnedDate)}
           </Text>
-        )}
-
-        {/* Locked Indicator */}
-        {!isEarned && (
-          <View className="mt-2 px-3 py-1 bg-card-lighter/5 rounded-full">
-            <Text className="text-xs text-card-lighter/40 font-bbh">
-              {' '}
-              Locked
-            </Text>
-          </View>
         )}
       </View>
     </motion.div>
@@ -176,20 +174,20 @@ export default function AchievementsScreen() {
                   transition={{ delay: index * 0.1 }}
                   className="shrink-0"
                 >
-                  <View className="bg-black/20 rounded-2xl p-4 flex flex-row  items-center gap-3 min-w-[200px]">
+                  <View className="bg-cardx rounded-2xl p-4 flex flex-row  items-center gap-3 min-w-[200px]">
                     <View className="p-1">
                       <Icon
-                      icon={getEmojiIcon(badge.badgeIcon)}
-                      className="text-card-lighter"
-                      style={{ fontSize: '36px' }}
-                    />
+                        icon={getEmojiIcon(badge.badgeIcon)}
+                        className="text-card-lighter"
+                        style={{ fontSize: '36px' }}
+                      />
                     </View>
                     <View>
                       <Text className="text-card-lighter font-bbh font-bold text-sm">
                         {badge.title}
                       </Text>
-                      <Text className="text-warning-yellow text-xs font-bbh">
-                           @{formatDate(badge.earnedAt)}
+                      <Text className="text-warning-yellow hidden text-xs font-bbh">
+                        @{formatDate(badge.earnedAt)}
                       </Text>
                     </View>
                   </View>
@@ -225,9 +223,8 @@ export default function AchievementsScreen() {
             {Object.entries(badgesByType).map(([type, badges]) => {
               const typeInfo = getTypeInfo(type)
               return (
-                <View key={type} className='border-b border-card-light/20'>
+                <View key={type} className="border-b pb-3 border-card-light/20">
                   <View className="flex flex-row items-center justify-center gap-2 mb-4">
-                    
                     <Text className="text-card-lighter text-xl font-bbh font-bold">
                       {typeInfo.title}
                     </Text>

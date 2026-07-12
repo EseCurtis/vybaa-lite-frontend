@@ -62,6 +62,8 @@ type RewindSocketMessage =
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
   | { type: 'conversation_state'; content: string }
+  | { type: 'reconnected' }
+  | { type: 'reconnecting' }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
   | { type: 'session_ended'; summary: string }
@@ -205,6 +207,10 @@ export default function RewindScreen(): ReactElement {
   const isConnectingRef = useRef(false)
   const isConversationPausedRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
+  const shouldReconnectRef = useRef(false)
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startSessionRef = useRef<(() => Promise<void>) | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -263,6 +269,11 @@ export default function RewindScreen(): ReactElement {
   }
 
   const clearPersona = async () => {
+    shouldReconnectRef.current = false
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current)
+      reconnectTimeoutRef.current = null
+    }
     liveSessionRef.current?.close()
     liveSessionRef.current = null
     cleanupAudioPipeline()
@@ -457,9 +468,34 @@ export default function RewindScreen(): ReactElement {
         let processor: AudioNode
         if (context.audioWorklet) {
           const workletSource = `class RewindCaptureProcessor extends AudioWorkletProcessor {
+            constructor() {
+              super()
+              this.chunk = new Float32Array(1600)
+              this.offset = 0
+            }
+
             process(inputs) {
               const channel = inputs[0] && inputs[0][0]
-              if (channel) this.port.postMessage(channel.slice())
+              if (!channel) return true
+
+              let inputOffset = 0
+              while (inputOffset < channel.length) {
+                const remaining = this.chunk.length - this.offset
+                const sampleCount = Math.min(remaining, channel.length - inputOffset)
+                this.chunk.set(
+                  channel.subarray(inputOffset, inputOffset + sampleCount),
+                  this.offset,
+                )
+                this.offset += sampleCount
+                inputOffset += sampleCount
+
+                if (this.offset === this.chunk.length) {
+                  this.port.postMessage(this.chunk)
+                  this.chunk = new Float32Array(1600)
+                  this.offset = 0
+                }
+              }
+
               return true
             }
           }
@@ -604,6 +640,11 @@ export default function RewindScreen(): ReactElement {
     }
 
     return () => {
+      shouldReconnectRef.current = false
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
@@ -620,6 +661,7 @@ export default function RewindScreen(): ReactElement {
     if (liveSessionRef.current?.readyState === WebSocket.OPEN) return
 
     isConnectingRef.current = true
+    shouldReconnectRef.current = true
     try {
       setIsConversationPaused(false)
       setIsFinishingSession(false)
@@ -645,6 +687,7 @@ export default function RewindScreen(): ReactElement {
           const payload = JSON.parse(event.data) as RewindSocketMessage
 
           if (payload.type === 'ready') {
+            reconnectAttemptsRef.current = 0
             setRewindSessionDateKey(payload.sessionDateKey ?? null)
             setIsSessionRestored(Boolean(payload.restored))
             setPreviousSession(payload.previousSession ?? null)
@@ -689,6 +732,18 @@ export default function RewindScreen(): ReactElement {
             return
           }
 
+          if (payload.type === 'reconnecting') {
+            setStatusText('Reconnecting')
+            return
+          }
+
+          if (payload.type === 'reconnected') {
+            if (!isConversationPausedRef.current) {
+              setStatusText('Listening')
+            }
+            return
+          }
+
           if (payload.type === 'turn_complete') {
             if (isConversationPausedRef.current) return
             setStatusText('Listening')
@@ -707,6 +762,7 @@ export default function RewindScreen(): ReactElement {
 
           if (payload.type === 'session_ended') {
             isSessionCompleteRef.current = true
+            shouldReconnectRef.current = false
             setIsFinishingSession(false)
             setStatusText('Completed')
             cleanupAudioPipeline()
@@ -749,7 +805,20 @@ export default function RewindScreen(): ReactElement {
           liveSessionRef.current = null
         }
         if (!isSessionCompleteRef.current) {
+          if (shouldReconnectRef.current && reconnectAttemptsRef.current < 4) {
+            reconnectAttemptsRef.current += 1
+            setStatusText('Reconnecting')
+            const delay = 500 * 2 ** (reconnectAttemptsRef.current - 1)
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null
+              void startSessionRef.current?.()
+            }, delay)
+            return
+          }
+
+          shouldReconnectRef.current = false
           setStatusText('Disconnected')
+          toast.error('Rewind disconnected. Tap to reconnect and continue.')
         }
       }
     } catch {
@@ -766,12 +835,17 @@ export default function RewindScreen(): ReactElement {
     toast,
   ])
 
+  useEffect(() => {
+    startSessionRef.current = startSession
+  }, [startSession])
+
   const conversationSummary = useMemo(() => {
     if (isConversationPaused) return 'Conversation paused'
     if (statusText === 'Speaking')
       return `${persona?.name ?? 'Rewind'} is talking`
     if (statusText === 'Listening') return 'Listening'
     if (statusText === 'Connecting') return 'Connecting...'
+    if (statusText === 'Reconnecting') return 'Reconnecting...'
     if (statusText === 'Connected') return 'Connected'
     if (statusText === 'Disconnected') return 'Ended'
     if (statusText === 'Error') return 'Interrupted'
@@ -987,16 +1061,24 @@ export default function RewindScreen(): ReactElement {
               </Pressable>
             ) : null}
 
+            {currentSessionPreview && hasActiveSession && (
+              <View className="flex text-center mt-5 flex-row items-center gap-3 mx-auto">
+                <Text className="text-white/70 text-sm max-w-[70%] mx-auto font-bold">
+                  "{currentSessionPreview}"
+                </Text>
+              </View>
+            )}
+
             <View className="mt-auto mb-mg w-full max-w-[340px] gap-3">
               {hasActiveSession ? (
                 <Pressable
                   onPress={finishSession}
                   disabled={isFinishingSession}
-                  className="min-h-12 w-full flex-row items-center justify-center gap-2 rounded-lg bg-white px-4"
+                  className="min-h-12 w-full flex-row items-center justify-center gap-2 rounded-full bg-white px-4"
                 >
                   <RiStopCircleLine size={19} className="text-cardd" />
                   <Text className="font-bbh font-bold text-cardd">
-                    {isFinishingSession ? 'Saving summary...' : 'Finish rewind'}
+                    {isFinishingSession ? 'Saving summary...' : 'Conclude'}
                   </Text>
                 </Pressable>
               ) : null}
@@ -1007,13 +1089,10 @@ export default function RewindScreen(): ReactElement {
               >
                 <View className="min-w-0 flex-1 gap-1">
                   <Text className="text-white/45 font-bbh text-[10px] uppercase tracking-[0.18em]">
-                    {currentSessionPreview
-                      ? 'This conversation'
-                      : 'Last Session'}
+                    {'Last Session'}
                   </Text>
                   <Text className="text-white/80 font-bbh text-xs line-clamp-2">
-                    {currentSessionPreview ||
-                      previousSessionPreview ||
+                    {previousSessionPreview ||
                       'Your saved rewinds will appear here'}
                   </Text>
                 </View>

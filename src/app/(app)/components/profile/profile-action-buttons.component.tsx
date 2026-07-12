@@ -19,35 +19,32 @@ export function ProfileActionButtons({
   return (
     <View className="flex flex-row gap-3">
       {!isEditing ? (
-        <Button
-          label="Edit Profile"
-          variant="default"
-          fullWidth
-          onClick={onEdit}
-          textClassName="text-sm"
-          style={{ width: '100%' }}
-        />
+        <></>
       ) : (
         <>
-          <Button
-            label="Cancel"
-            variant="outline"
-            fullWidth
-            onClick={onCancel}
-            disabled={isSaving}
-            textClassName="text-sm"
-            style={{ width: '100%' }}
-          />
-          <Button
-            label="Save"
-            variant="default"
-            fullWidth
-            onClick={onSave}
-            disabled={isSaving}
-            loading={isSaving}
-            textClassName="text-sm"
-            style={{ width: '100%' }}
-          />
+          <View className="w-full">
+            <Button
+              label="Save changes"
+              variant="default"
+              fullWidth
+              onClick={onSave}
+              disabled={isSaving}
+              loading={isSaving}
+              textClassName="text-sm"
+              style={{ width: '100%' }}
+            />
+          </View>
+          <View className="">
+            <Button
+              label="Cancel"
+              variant="secondary"
+              fullWidth
+              onClick={onCancel}
+              disabled={isSaving}
+              textClassName="text-sm"
+              style={{ width: '100%' }}
+            />
+          </View>
         </>
       )}
     </View>

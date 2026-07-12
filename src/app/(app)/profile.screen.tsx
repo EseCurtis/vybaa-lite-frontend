@@ -1,6 +1,4 @@
-import {
-  ProfileActionButtons,
-} from '@/app/(app)/components/profile/profile-action-buttons.component'
+import { ProfileActionButtons } from '@/app/(app)/components/profile/profile-action-buttons.component'
 import { ProfileHeader } from '@/app/(app)/components/profile/profile-header.component'
 import { ProfileInfoSection } from '@/app/(app)/components/profile/profile-info-section.component'
 import { ProfileQuickActions } from '@/app/(app)/components/profile/profile-quick-actions.component'
@@ -10,6 +8,7 @@ import type {
 } from '@/app/(app)/components/profile/profile.types'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
+import { TabHeader } from '@/components/common/tab-header.component'
 import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useTabBar } from '@/hooks/use-tab-bar.hook'
@@ -17,15 +16,13 @@ import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
-import {
-  RiBarChartBoxLine,
-  RiSettings3Line,
-  RiTrophyLine,
-} from '@remixicon/react'
+import { RiHeart3Fill, RiSettings3Fill, RiTrophyFill } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
-function createProfileFormData(user: ReturnType<typeof useAuth>['user']): ProfileFormData {
+function createProfileFormData(
+  user: ReturnType<typeof useAuth>['user'],
+): ProfileFormData {
   return {
     firstName: user?.firstName ?? '',
     lastName: user?.lastName ?? '',
@@ -34,12 +31,18 @@ function createProfileFormData(user: ReturnType<typeof useAuth>['user']): Profil
   }
 }
 
-function getProfileDisplayName(user: ReturnType<typeof useAuth>['user']): string {
+function getProfileDisplayName(
+  user: ReturnType<typeof useAuth>['user'],
+): string {
   if (!user) {
     return 'User'
   }
 
-  return [user.firstName, user.lastName].filter(Boolean).join(' ') || user.username || user.email
+  return (
+    [user.firstName, user.lastName].filter(Boolean).join(' ') ||
+    user.username ||
+    user.email
+  )
 }
 
 function getProfileInitials(user: ReturnType<typeof useAuth>['user']): string {
@@ -48,7 +51,10 @@ function getProfileInitials(user: ReturnType<typeof useAuth>['user']): string {
   }
 
   return (
-    [user.firstName?.[0], user.lastName?.[0]].filter(Boolean).join('').toUpperCase() ||
+    [user.firstName?.[0], user.lastName?.[0]]
+      .filter(Boolean)
+      .join('')
+      .toUpperCase() ||
     user.username?.[0]?.toUpperCase() ||
     user.email[0].toUpperCase()
   )
@@ -71,21 +77,27 @@ const profileQuickActions: ProfileQuickAction[] = [
     title: 'Achievements',
     description: 'View your earned badges',
     to: '/achievements',
-    icon: <RiTrophyLine size={20} className="text-white" />,
-    iconContainerClassName:
-      'bg-gradient-to-br from-primary-500/60 to-accent-500/60',
+    icon: <RiTrophyFill size={20} className="text-white" />,
+    colorScheme: {
+      bg1: 'bg-[#cc5e0c]',
+      bg2: 'bg-rose-900/40',
+    },
   },
   {
-    title: 'Metric',
+    title: 'Wellbeing',
     description: 'View progress stats',
     to: '/app/sub-profile/insights',
-    icon: <RiBarChartBoxLine size={20} className="text-white" />,
+    icon: <RiHeart3Fill size={20} className="text-white" />,
+    colorScheme: {
+      bg1: 'bg-[#da2068]',
+      bg2: 'bg-rose-900/40',
+    },
   },
   {
     title: 'Settings',
     description: 'App preferences',
     to: '/app/sub-profile/settings',
-    icon: <RiSettings3Line size={20} className="text-white" />,
+    icon: <RiSettings3Fill size={20} className="text-white" />,
   },
 ]
 
@@ -95,7 +107,9 @@ export default function ProfileScreen() {
   useGoalOperations(1, 100)
   const [updatedProfileImage, setUpdatedProfileImage] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  const [formData, setFormData] = useState<ProfileFormData>(createProfileFormData(user))
+  const [formData, setFormData] = useState<ProfileFormData>(
+    createProfileFormData(user),
+  )
   const [formError, setFormError] = useState<string | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
@@ -171,7 +185,8 @@ export default function ProfileScreen() {
     } catch (error: unknown) {
       // @ts-ignore
       toast.dismiss()
-      const errorMsg = error instanceof Error ? error.message : 'Failed to upload image'
+      const errorMsg =
+        error instanceof Error ? error.message : 'Failed to upload image'
       setFormError(errorMsg)
       toast.warning(errorMsg)
       toast.error(errorMsg)
@@ -213,14 +228,31 @@ export default function ProfileScreen() {
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
       <NoiseComponent>
         <TopNotchPadd />
+        {isEditing && (
+          <TabHeader
+            onBack={() => {
+              setIsEditing(false)
+            }}
+            title="Edit Profile"
+          />
+        )}
 
-        <View className="flex-1 px-mg pb-[170px] pt-4 space-y-8">
+        <View className="flex-1 px-mg pb-[170px] pt-4 space-y-3">
           <ProfileHeader
             displayName={displayName}
             imagePreview={imagePreview}
             initials={initials}
             isEditing={isEditing}
+            onEdit={() => setIsEditing(true)}
             onImageSelect={handleImageSelect}
+            user={user}
+          />
+
+          <ProfileInfoSection
+            formData={formData}
+            formError={formError}
+            isEditing={isEditing}
+            onFieldChange={handleFieldChange}
             user={user}
           />
 
@@ -232,17 +264,7 @@ export default function ProfileScreen() {
             onSave={handleSave}
           />
 
-          <ProfileInfoSection
-            formData={formData}
-            formError={formError}
-            isEditing={isEditing}
-            onFieldChange={handleFieldChange}
-            user={user}
-          />
-
-          {!isEditing && (
-            <ProfileQuickActions actions={profileQuickActions} />
-          )}
+          {!isEditing && <ProfileQuickActions actions={profileQuickActions} />}
         </View>
       </NoiseComponent>
     </View>

@@ -36,7 +36,7 @@ function HomeActionCard({
     <View className={cn(" text-center ", filled ? "col-span-2" : "col-span-1")}>
       <Pressable
         onPress={onAction}
-        className="w-full flex-col items-center justify-center h-[140%] bg-card-light/20 rounded-[50px] p-mg"
+        className="w-full flex-col items-center justify-center h-[140%] bg-cardx rounded-[30px] p-mg"
       >
         <Icon color={darkColor} size={70} className="text-white" />
         <View className="mt-1 flex-col items-center justify-center">

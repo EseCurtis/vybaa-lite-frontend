@@ -17,13 +17,12 @@ export default function InsightsScreen() {
 
   const insights = insightsData?.summary
   const chartData = insightsData?.chartData || []
-
   const hasData = insights && insights.totalGoals > 0
 
   return (
     <View className="flex-1 bg-cardd ">
       <NoiseComponent>
-        <TabHeader title="Metrics">
+        <TabHeader title="Wellbeing">
           <Pressable
             onPress={() => navigate({ to: '/app/profile' })}
             className="text-white"

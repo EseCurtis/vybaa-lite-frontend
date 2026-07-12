@@ -60,40 +60,7 @@ export default function SettingsScreen() {
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           <View className=" px-mg pb-[120px] space-y-6">
-            {/* User Info Card */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <View className="bg-card-light/40 rounded-2xl p-5 flex-row items-center gap-4">
-                <View className="rounded-full w-16 h-16 bg-card-light/60 flex items-center justify-center overflow-hidden shrink-0">
-                  {user?.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.email}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <Text className="text-white text-xl font-bbh font-bold">
-                      {user?.email[0].toUpperCase()}
-                    </Text>
-                  )}
-                </View>
-                <View className="flex-1 min-w-0">
-                  <Text className="text-white text-lg font-bbh font-bold">
-                    {[user?.firstName, user?.lastName]
-                      .filter(Boolean)
-                      .join(' ') ||
-                      user?.username ||
-                      user?.email}
-                  </Text>
-                  <Text className="text-white/50 text-sm font-bbh truncate">
-                    {user?.email}
-                  </Text>
-                </View>
-              </View>
-            </motion.div>
+           
 
             {/* Legal Section */}
             <View className="space-y-3">
@@ -111,7 +78,7 @@ export default function SettingsScreen() {
                 >
                   <Pressable
                     onPress={() => openPublicUrl(publicUrls.termsOfService)}
-                    className="bg-card-light/40 w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                    className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
                     <View className="flex-row items-center gap-4">
                       <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
@@ -139,7 +106,7 @@ export default function SettingsScreen() {
                 >
                   <Pressable
                     onPress={() => openPublicUrl(publicUrls.privacyPolicy)}
-                    className="bg-card-light/40 w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                    className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
                     <View className="flex-row items-center gap-4">
                       <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
@@ -210,7 +177,7 @@ export default function SettingsScreen() {
                 <Pressable
                   onPress={handleDeleteAccount}
                   disabled={isDeletingAccount}
-                  className="bg-danger-500/15 border border-danger-500/40 rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
+                  className="bg-danger-500/15  rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
                 >
                   <View className="flex-row items-center text-left gap-4 w-full">
                     <View className="w-10 h-10 rounded-xl bg-danger-500/15 flex items-center justify-center">
