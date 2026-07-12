@@ -26,7 +26,6 @@ import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-histor
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
-import { Route as AppLegalRouteImport } from './routes/app/legal'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
@@ -34,6 +33,7 @@ import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
@@ -130,11 +130,6 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/app/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppLegalRoute = AppLegalRouteImport.update({
-  id: '/app/legal',
-  path: '/app/legal',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
   id: '/app/insights',
   path: '/app/insights',
@@ -168,6 +163,11 @@ const AppSubProfileSettingsRoute = AppSubProfileSettingsRouteImport.update({
 const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   id: '/app/sub-profile/insights',
   path: '/app/sub-profile/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
+  id: '/app/r/$sessionId',
+  path: '/app/r/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
@@ -235,7 +235,6 @@ export interface FileRoutesByFullPath {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -254,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -272,7 +272,6 @@ export interface FileRoutesByTo {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -291,6 +290,7 @@ export interface FileRoutesByTo {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -310,7 +310,6 @@ export interface FileRoutesById {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -329,6 +328,7 @@ export interface FileRoutesById {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -349,7 +349,6 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
-    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -368,6 +367,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -386,7 +386,6 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
-    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -405,6 +404,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -423,7 +423,6 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
-    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -442,6 +441,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -461,7 +461,6 @@ export interface RootRouteChildren {
   AppGoalRoute: typeof AppGoalRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
-  AppLegalRoute: typeof AppLegalRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
@@ -479,6 +478,7 @@ export interface RootRouteChildren {
   AppAdminFeatureFlagsRoute: typeof AppAdminFeatureFlagsRoute
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppInviteCodeRoute: typeof AppInviteCodeRoute
+  AppRSessionIdRoute: typeof AppRSessionIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
   AppUUsernameRoute: typeof AppUUsernameRoute
@@ -610,13 +610,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/app/legal': {
-      id: '/app/legal'
-      path: '/app/legal'
-      fullPath: '/app/legal'
-      preLoaderRoute: typeof AppLegalRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/app/insights': {
       id: '/app/insights'
       path: '/app/insights'
@@ -664,6 +657,13 @@ declare module '@tanstack/react-router' {
       path: '/app/sub-profile/insights'
       fullPath: '/app/sub-profile/insights'
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/r/$sessionId': {
+      id: '/app/r/$sessionId'
+      path: '/app/r/$sessionId'
+      fullPath: '/app/r/$sessionId'
+      preLoaderRoute: typeof AppRSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/invite/$code': {
@@ -760,7 +760,6 @@ const rootRouteChildren: RootRouteChildren = {
   AppGoalRoute: AppGoalRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
-  AppLegalRoute: AppLegalRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,
@@ -778,6 +777,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppAdminFeatureFlagsRoute: AppAdminFeatureFlagsRoute,
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppInviteCodeRoute: AppInviteCodeRoute,
+  AppRSessionIdRoute: AppRSessionIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
   AppUUsernameRoute: AppUUsernameRoute,

@@ -1,4 +1,5 @@
 import { RiArrowDownSLine, RiCloseLine } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useMemo, useState } from 'react'
 
@@ -36,7 +37,6 @@ import {
   formatDayLabel,
   groupSessionsByDay,
 } from './history/rewind-history.utils'
-import { RewindSessionDetailSheet } from './history/rewind-session-detail-sheet.component'
 import { RewindSessionRow } from './history/rewind-session-row.component'
 
 export default function RewindHistoryScreen(): ReactElement {
@@ -44,6 +44,7 @@ export default function RewindHistoryScreen(): ReactElement {
     useState<PartnerFilter>(ALL_PARTNERS_FILTER)
   const [dayFilter, setDayFilter] = useState<DayFilter>(ALL_DAYS_FILTER)
   const bottomSheet = useBottomSheet()
+  const navigate = useNavigate()
   const queryFilters = useMemo(() => {
     return {
       day: dayFilter !== ALL_DAYS_FILTER ? dayFilter : undefined,
@@ -145,9 +146,9 @@ export default function RewindHistoryScreen(): ReactElement {
   }
 
   function openSession(session: RewindSession): void {
-    const persona = getRewindPersona(session.personaId)
-    bottomSheet.present(<RewindSessionDetailSheet session={session} />, {
-      title: persona.name,
+    void navigate({
+      params: { sessionId: session.id },
+      to: '/app/r/$sessionId',
     })
   }
 

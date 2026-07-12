@@ -14,7 +14,30 @@ import {
   getSessionAccent,
 } from './rewind-history.utils'
 
-export function RewindSessionDetailSheet({
+function getTextBlocks(value: string): string[] {
+  return value
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+}
+
+function DetailText({ value }: { value: string }): ReactElement {
+  return (
+    <View className="gap-2">
+      {getTextBlocks(value).map((block, index) => (
+        <Text
+          key={`${index}-${block.slice(0, 16)}`}
+          className="font-bbh text-sm leading-7"
+          style={{ color: colors.neutral[100] }}
+        >
+          {block}
+        </Text>
+      ))}
+    </View>
+  )
+}
+
+export function RewindSessionDetail({
   session,
 }: {
   session: RewindSession
@@ -119,12 +142,7 @@ export function RewindSessionDetailSheet({
           >
             Session Summary
           </Text>
-          <Text
-            className="font-bbh text-sm leading-7"
-            style={{ color: colors.neutral[100] }}
-          >
-            {session.summary}
-          </Text>
+          <DetailText value={session.summary} />
         </View>
 
         {session.emotionalInsight ? (
@@ -135,12 +153,7 @@ export function RewindSessionDetailSheet({
             >
               Emotional insight
             </Text>
-            <Text
-              className="font-bbh text-sm leading-7"
-              style={{ color: colors.neutral[100] }}
-            >
-              {session.emotionalInsight}
-            </Text>
+            <DetailText value={session.emotionalInsight} />
           </View>
         ) : null}
 
@@ -183,3 +196,5 @@ export function RewindSessionDetailSheet({
     </View>
   )
 }
+
+export const RewindSessionDetailSheet = RewindSessionDetail

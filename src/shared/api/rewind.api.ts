@@ -68,6 +68,11 @@ export type PaginatedRewindSessionsResponse = {
   }
 }
 
+export type RewindSessionResponse = {
+  msg: string
+  data: RewindSession
+}
+
 class RewindAPI {
   async createLiveToken(
     personaId: RewindPersonaId,
@@ -95,6 +100,13 @@ class RewindAPI {
           personaId: filters?.personaId,
         },
       },
+    )
+    return res
+  }
+
+  async getSession(sessionId: string): Promise<RewindSessionResponse> {
+    const { data: res } = await http.get<RewindSessionResponse>(
+      `${API_V1}/rewind/sessions/${sessionId}`,
     )
     return res
   }

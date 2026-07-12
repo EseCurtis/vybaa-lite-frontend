@@ -4,6 +4,8 @@ import type { Community, CommunityStats } from '@/shared/api/community.api'
 import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
 import { RiFileList3Line, RiGroupLine, RiTimeLine } from '@remixicon/react'
 
+import { CommunityIllustration } from './community-illustration.component'
+
 interface CommunityHeaderProps {
   community: Community
   stats?: CommunityStats
@@ -19,15 +21,12 @@ export function CommunityHeader({ community, stats }: CommunityHeaderProps) {
     <View className="px-mg pb-4 gap-3">
       <View className="flex-row gap-3 items-center">
         <View className="">
-          {community.coverImage && (
-            <View className="h-36 aspect-square rounded-2xl mb-4 overflow-hidden">
-              <img
-                src={community.coverImage}
-                alt={community.name}
-                className="w-full h-full object-cover"
-              />
-            </View>
-          )}
+          <CommunityIllustration
+            className="mb-4 h-36 aspect-square rounded-2xl"
+            label={community.name}
+            seed={`${community.id}-${community.name}`}
+            value={community.coverImage}
+          />
         </View>
 
         <View className="">

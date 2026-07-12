@@ -1,10 +1,4 @@
-import { NoiseComponent } from '@/components/common/noise.component'
-import { TabHeader } from '@/components/common/tab-header.component'
-import { Pressable } from '@/components/layout/pressables.component'
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
-import { useAuth } from '@/providers/auth.provider'
-import { useToast } from '@/providers/toast.provider'
+import { Browser } from '@capacitor/browser'
 import {
   RiArrowRightSLine,
   RiDeleteBinLine,
@@ -14,13 +8,38 @@ import {
 } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+
+import { NoiseComponent } from '@/components/common/noise.component'
+import { TabHeader } from '@/components/common/tab-header.component'
+import { Pressable } from '@/components/layout/pressables.component'
+import { Text } from '@/components/layout/text.component'
+import { View } from '@/components/layout/view.component'
+import { useAuth } from '@/providers/auth.provider'
+import { useToast } from '@/providers/toast.provider'
+import {
+  publicUrls,
+  type LegalDocumentType,
+} from '@/shared/config/public-urls.config'
 
 export default function SettingsScreen() {
   const { logout, deleteAccount } = useAuth()
-  const navigate = useNavigate()
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+
+  const openLegalDocument = async (documentType: LegalDocumentType) => {
+    const url =
+      documentType === 'terms'
+        ? publicUrls.termsOfService
+        : publicUrls.privacyPolicy
+
+    try {
+      await Browser.open({ presentationStyle: 'fullscreen', url })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to open legal page'
+      toast.error(message)
+    }
+  }
 
   const handleDeleteAccount = async () => {
     const confirmed = confirm(
@@ -79,7 +98,7 @@ export default function SettingsScreen() {
                 >
                   <Pressable
                     onPress={() => {
-                      navigate({ to: '/app/legal', search: { document: 'terms' } })
+                      void openLegalDocument('terms')
                     }}
                     className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
@@ -109,7 +128,7 @@ export default function SettingsScreen() {
                 >
                   <Pressable
                     onPress={() => {
-                      navigate({ to: '/app/legal', search: { document: 'privacy' } })
+                      void openLegalDocument('privacy')
                     }}
                     className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >

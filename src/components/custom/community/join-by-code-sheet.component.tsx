@@ -3,9 +3,10 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useInviteByCode, useJoinByInviteCode } from '@/hooks/use-communities.hook'
-import { RiGroup2Line } from '@remixicon/react'
 import { useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
+
+import { CommunityIllustration } from './community-illustration.component'
 
 interface JoinByCodeSheetProps {
   initialCode?: string
@@ -86,17 +87,12 @@ export function JoinByCodeSheet({ initialCode = '', onSuccess, onClose }: JoinBy
             </Text>
           ) : invite ? (
             <View className="flex-row items-center gap-3">
-              {invite.community.coverImage ? (
-                <img
-                  src={invite.community.coverImage}
-                  alt={invite.community.name}
-                  className="w-12 h-12 rounded-xl object-cover shrink-0"
-                />
-              ) : (
-                <View className="w-12 h-12 rounded-xl bg-card-lighter flex items-center justify-center shrink-0">
-                  <RiGroup2Line size={22} className="text-white/60" />
-                </View>
-              )}
+              <CommunityIllustration
+                className="h-12 w-12 shrink-0 rounded-xl"
+                label={invite.community.name}
+                seed={invite.community.id}
+                value={invite.community.coverImage}
+              />
               <View className="flex-1">
                 <Text className="text-white font-bold font-bbh">{invite.community.name}</Text>
                 {invite.community.description && (

@@ -57,6 +57,7 @@ export function HomeActions() {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
       title: 'New Goal',
       elevation: 999,
+      size: 'semi-full',
     })
   }
 

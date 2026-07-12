@@ -3,6 +3,8 @@ import type { RewindSessionsFilters } from '@/shared/api/rewind.api'
 export const rewindQueryKeys = {
   all: ['rewind'] as const,
   sessions: () => [...rewindQueryKeys.all, 'sessions'] as const,
+  session: (sessionId: string) =>
+    [...rewindQueryKeys.sessions(), 'detail', sessionId] as const,
   paginatedSessions: (
     page: number,
     limit: number,

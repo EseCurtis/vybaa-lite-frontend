@@ -4,6 +4,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { RiCloseCircleFill } from '@remixicon/react'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -19,6 +20,7 @@ import {
 type BottomSheetOptions = {
   title?: string
   elevation?: number
+  size?: 'default' | 'semi-full'
 }
 
 type BottomSheetContextType = {
@@ -48,6 +50,7 @@ export const BottomSheetProvider = ({
       content: React.ReactNode
       title?: string
       elevation: number
+      size: 'default' | 'semi-full'
     }>
   >([])
   const idRef = useRef(0)
@@ -68,6 +71,7 @@ export const BottomSheetProvider = ({
           content: node,
           title: opts?.title,
           elevation: opts?.elevation ?? 12,
+          size: opts?.size ?? 'default',
         },
       ])
       // subtle haptic on open
@@ -88,6 +92,7 @@ export const BottomSheetProvider = ({
         title: opts.title !== undefined ? opts.title : top.title,
         elevation:
           opts.elevation !== undefined ? opts.elevation : top.elevation,
+        size: opts.size !== undefined ? opts.size : top.size,
       }
       return next
     })
@@ -125,6 +130,7 @@ export const BottomSheetProvider = ({
 
   const top = stack[stack.length - 1]
   const topElevation = top?.elevation ?? 12
+  const topSize = top?.size ?? 'default'
   const sheetZIndex = BOTTOM_SHEET_BASE_Z_INDEX + Math.max(2, topElevation)
   const shadow =
     topElevation > 0
@@ -154,7 +160,10 @@ export const BottomSheetProvider = ({
                 onClick={dismiss}
               />
               <motion.div
-                className="bg-cardd rounded-t-2xl p-5 w-full  absolute bottom-0 left-0 "
+                className={cn(
+                  'bg-cardd rounded-t-2xl p-5 w-full absolute bottom-0 left-0',
+                  topSize === 'semi-full' && 'min-h-[78dvh]',
+                )}
                 style={shadow}
                 initial={{ y: 40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -181,7 +190,14 @@ export const BottomSheetProvider = ({
                       </TouchableOpacity>
                     )}
                   </View>
-                  <View className="max-h-[70vh] overflow-y-auto pr-1">
+                  <View
+                    className={cn(
+                      'overflow-y-auto pr-1',
+                      topSize === 'semi-full'
+                        ? 'max-h-[calc(88dvh-112px)]'
+                        : 'max-h-[70vh]',
+                    )}
+                  >
                     {top?.content}
                   </View>
                 </>
@@ -199,7 +215,10 @@ export const BottomSheetProvider = ({
             >
               <div className="absolute inset-0 bg-black/60" onClick={dismiss} />
               <div
-                className="bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0"
+                className={cn(
+                  'bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0',
+                  topSize === 'semi-full' && 'min-h-[78dvh]',
+                )}
                 style={shadow}
               >
                 <>
@@ -217,7 +236,14 @@ export const BottomSheetProvider = ({
                       </TouchableOpacity>
                     )}
                   </View>
-                  <View className="max-h-[70vh] overflow-y-auto pr-1">
+                  <View
+                    className={cn(
+                      'overflow-y-auto pr-1',
+                      topSize === 'semi-full'
+                        ? 'max-h-[calc(88dvh-112px)]'
+                        : 'max-h-[70vh]',
+                    )}
+                  >
                     {top?.content}
                   </View>
                 </>

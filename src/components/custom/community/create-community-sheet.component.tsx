@@ -1,13 +1,20 @@
 import { Input } from '@/components/common/input.component'
+import { ImagePicker } from '@/components/common/image-picker.component'
 import { TextArea } from '@/components/common/textarea.component'
+import { CommunityIllustration } from '@/components/custom/community/community-illustration.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { ImagePicker } from '@/components/common/image-picker.component'
 import { useCreateCommunity } from '@/hooks/use-communities.hook'
-import { uploadAPI } from '@/shared/api/upload.api'
 import { useToast } from '@/providers/toast.provider'
+import { uploadAPI } from '@/shared/api/upload.api'
+import {
+  communityIllustrations,
+  getCommunityIllustrationToken,
+  isCommunityIllustrationToken,
+} from '@/shared/community/community-illustrations'
 import { cn } from '@/shared/utils/helpers.util'
+import { RiCheckLine, RiImageAddLine } from '@remixicon/react'
 import { useState } from 'react'
 
 interface CreateCommunitySheetProps {
@@ -17,29 +24,7 @@ interface CreateCommunitySheetProps {
 export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
   const toast = useToast()
   const { mutateAsync: createCommunity, isPending: isCreating } = useCreateCommunity()
-  
-  const predefinedCovers = [
-    {
-      id: 'focus',
-      label: 'Deep focus',
-      url: 'https://images.pexels.com/photos/4144595/pexels-photo-4144595.jpeg?auto=compress&cs=tinysrgb&w=800',
-    },
-    {
-      id: 'morning',
-      label: 'Calm mornings',
-      url: 'https://images.pexels.com/photos/3274822/pexels-photo-3274822.jpeg?auto=compress&cs=tinysrgb&w=800',
-    },
-    {
-      id: 'city',
-      label: 'Night city',
-      url: 'https://images.pexels.com/photos/316093/pexels-photo-316093.jpeg?auto=compress&cs=tinysrgb&w=800',
-    },
-    {
-      id: 'nature',
-      label: 'Nature walks',
-      url: 'https://images.pexels.com/photos/3404200/pexels-photo-3404200.jpeg?auto=compress&cs=tinysrgb&w=800',
-    },
-  ]
+  const defaultCover = getCommunityIllustrationToken(communityIllustrations[0]!.id)
 
   const [formData, setFormData] = useState({
     name: '',
@@ -48,8 +33,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
     isPublic: true,
   })
   const [formError, setFormError] = useState<string | null>(null)
-  const [selectedCoverId, setSelectedCoverId] = useState<string | null>(predefinedCovers[0]?.id ?? null)
-  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(predefinedCovers[0]?.url ?? null)
+  const [coverImage, setCoverImage] = useState<string>(defaultCover)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   const handleSubmit = async () => {
@@ -60,19 +44,17 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
 
     try {
       setFormError(null)
-      const payloadCoverImage = coverImageUrl || undefined
 
       await createCommunity({
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
-        coverImage: payloadCoverImage,
+        coverImage,
         category: formData.category.trim() || undefined,
         isPublic: formData.isPublic,
       })
       
       setFormData({ name: '', description: '', category: '', isPublic: true })
-      setSelectedCoverId(predefinedCovers[0]?.id ?? null)
-      setCoverImageUrl(predefinedCovers[0]?.url ?? null)
+      setCoverImage(defaultCover)
       onSuccess?.()
     } catch (err: any) {
       setFormError(err.message || 'Failed to create community')
@@ -107,33 +89,38 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
         />
       </View>
 
-      {/* Cover image selection */}
+      {/* Cover illustration selection */}
       <View className="space-y-2">
         <Text className="text-white/80 text-sm font-bbh">
-          Cover image
+          Cover illustration
         </Text>
         <View className="flex-row gap-3 overflow-x-auto no-scrollbar py-1">
-          {predefinedCovers.map((cover) => {
-            const isActive = selectedCoverId === cover.id
+          {communityIllustrations.map((cover) => {
+            const token = getCommunityIllustrationToken(cover.id)
+            const isActive = coverImage === token
             return (
               <button
                 key={cover.id}
                 type="button"
                 onClick={() => {
-                  setSelectedCoverId(cover.id)
-                  setCoverImageUrl(cover.url)
+                  setCoverImage(token)
                 }}
                 className={cn(
                   'relative w-28 h-20 rounded-2xl overflow-hidden border transition-all shrink-0',
                   isActive ? 'border-accent-500' : 'border-card-lighter',
                 )}
               >
-                <img
-                  src={cover.url}
-                  alt={cover.label}
-                  className="w-full h-full object-cover"
+                <CommunityIllustration
+                  className="h-full w-full"
+                  label={cover.label}
+                  seed={cover.id}
+                  value={token}
                 />
-                <div className="absolute inset-0 bg-black/30" />
+                {isActive ? (
+                  <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                    <RiCheckLine size={16} className="text-black" />
+                  </div>
+                ) : null}
                 <div className="absolute bottom-1 left-1 right-1">
                   <Text className="text-white/80 text-[10px] font-bbh truncate">
                     {cover.label}
@@ -142,43 +129,55 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
               </button>
             )
           })}
-
-          {/* Upload your own */}
           <View className="shrink-0">
             <ImagePicker
-              size="md"
-              currentImageUrl={coverImageUrl || undefined}
+              className={cn(
+                'border rounded-2xl bg-card-light',
+                coverImage && !isCommunityIllustrationToken(coverImage)
+                  ? 'border-accent-500'
+                  : 'border-card-lighter',
+              )}
+              currentImageUrl={
+                coverImage && !isCommunityIllustrationToken(coverImage)
+                  ? coverImage
+                  : undefined
+              }
               initials="C"
               onImageSelect={async (imageDataUrl) => {
+                const loadingToast = toast.loading('Uploading cover...')
+
                 try {
                   setIsUploadingImage(true)
-                  const loadingToast = toast.loading('Uploading cover...')
                   const res = await uploadAPI.uploadImage({
-                    image: imageDataUrl,
                     folder: 'community-covers',
+                    image: imageDataUrl,
                   })
-                  setCoverImageUrl(res.data.url)
-                  setSelectedCoverId('custom')
-                  //@ts-ignore
+                  setCoverImage(res.data.url)
                   toast.dismiss(loadingToast)
-                  toast.success('Cover image uploaded!')
-                } catch (error: any) {
-                  //@ts-ignore
-                  toast.dismiss()
-                  toast.error(error?.message || 'Failed to upload cover image')
+                  toast.success('Cover image uploaded')
+                } catch (error) {
+                  toast.dismiss(loadingToast)
+                  const message =
+                    error instanceof Error
+                      ? error.message
+                      : 'Failed to upload cover image'
+                  toast.error(message)
                 } finally {
                   setIsUploadingImage(false)
                 }
               }}
-              className="border border-card-lighter rounded-2xl bg-card-light"
+              size="md"
             />
-            <Text className="text-white/40 text-[10px] font-bbh mt-1 text-center">
-              Upload
-            </Text>
+            <View className="mt-1 flex-row items-center justify-center gap-1">
+              <RiImageAddLine size={12} className="text-white/40" />
+              <Text className="text-white/40 text-[10px] font-bbh">
+                Upload
+              </Text>
+            </View>
           </View>
         </View>
         <Text className="text-white/40 text-[11px] font-bbh">
-          Choose a calm background that fits the vibe of your community.
+          Choose a patterned mark or upload a custom cover image.
         </Text>
       </View>
 

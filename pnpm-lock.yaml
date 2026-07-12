@@ -17,6 +17,9 @@ importers:
       '@capacitor/assets':
         specifier: ^3.0.5
         version: 3.0.5(@types/node@22.19.17)(typescript@5.9.3)
+      '@capacitor/browser':
+        specifier: ^7.0.5
+        version: 7.0.5(@capacitor/core@7.6.2)
       '@capacitor/core':
         specifier: ^7.4.4
         version: 7.6.2
@@ -98,6 +101,9 @@ importers:
       capacitor-plugin-safe-area:
         specifier: ^5.0.0
         version: 5.0.0(@capacitor/core@7.6.2)
+      capacitor-voice-recorder:
+        specifier: ^7.0.6
+        version: 7.0.6(@capacitor/core@7.6.2)(@capacitor/filesystem@8.1.2(@capacitor/core@7.6.2))
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -729,6 +735,9 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0-0 || ^8.0.0-0 <8.0.0
 
+  '@babel/runtime@7.11.2':
+    resolution: {integrity: sha512-TeWkU52so0mPtDcaCTxNBI/IHiz0pZgr8VEFqXFtZWpYD08ZB6FaSwVAS8MKRQAP3bYKiVjwysOJgMFY28o6Tw==}
+
   '@babel/runtime@7.29.2':
     resolution: {integrity: sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g==}
     engines: {node: '>=6.9.0'}
@@ -759,6 +768,11 @@ packages:
     resolution: {integrity: sha512-ohz/OUq61Y1Fc6aVSt0uDrUdeOA7oTH4pkWDbv/8I3UrPjH7oPkzYhShuDRUjekNp9RBi198VSFdt0CetpEOzw==}
     engines: {node: '>=10.3.0'}
     hasBin: true
+
+  '@capacitor/browser@7.0.5':
+    resolution: {integrity: sha512-YF/kC1m1e6c81X/agtAnYItVlqiQ/nXLG+Q3QXNDuiMoRynqa3Guu8ZaV9kWvqQcHoE2w18xz7WGpPOuh+R1fA==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   '@capacitor/cli@5.7.8':
     resolution: {integrity: sha512-qN8LDlREMhrYhOvVXahoJVNkP8LP55/YPRJrzTAFrMqlNJC18L3CzgWYIblFPnuwfbH/RxbfoZT/ydkwgVpMrw==}
@@ -2306,10 +2320,21 @@ packages:
   caniuse-lite@1.0.30001788:
     resolution: {integrity: sha512-6q8HFp+lOQtcf7wBK+uEenxymVWkGKkjFpCvw5W25cmMwEDU45p1xQFBQv8JDlMMry7eNxyBaR+qxgmTUZkIRQ==}
 
+  capacitor-blob-writer@1.1.20:
+    resolution: {integrity: sha512-SxYR64Zzb4MB2Ntb0IXJFWlhX6YPTlHiOjXWLqv/pVpa6fU+xFwmGp8+KdDsWRzLAAF71QmTkpMoV0PcT3LgTw==}
+    peerDependencies:
+      '@capacitor/core': '>=3.0.0'
+      '@capacitor/filesystem': '>=1.0.0'
+
   capacitor-plugin-safe-area@5.0.0:
     resolution: {integrity: sha512-Q7+mV7oxGGDB4qPPGXFwS/dexR2/bo/uwkoBRTeR3d/rCzboi3Rnylw18MxSFx/mbQHD9BB7gSDWl+YnncJohQ==}
     peerDependencies:
       '@capacitor/core': '>=8.0.0'
+
+  capacitor-voice-recorder@7.0.6:
+    resolution: {integrity: sha512-WdFFzv5B++FhTifb+/NzYnup7NvTHLZxP8D20qtolr2lLgxnwI5aNSKc3r8HpVlZn04b+GWrmnLIJ6q5JU3h8w==}
+    peerDependencies:
+      '@capacitor/core': '>=7.0.0'
 
   chai@5.3.3:
     resolution: {integrity: sha512-4zNhdJD/iOjSH0A05ea+Ke6MU5mmpQcbQsSOkgdaUMJ9zTlDTD/GYlwohmIE2u0gaxHYiVHEn1Fw9mZ/ktJWgw==}
@@ -3066,6 +3091,9 @@ packages:
   gensync@1.0.0-beta.2:
     resolution: {integrity: sha512-3hN7NaskYvMDLQY55gnW3NQ+mesEAepTqlg+VEbj7zzqEMBVNhzcGYYeqFo/TlYz6eQiFcp1HcsCZO+nGgS8zg==}
     engines: {node: '>=6.9.0'}
+
+  get-blob-duration@1.2.0:
+    resolution: {integrity: sha512-2xNJa+oKznR21eC2ThMzw4a1931a3ogA8aHoY92xruZufc/02G7pl/P793GJZytkyI8xMJ2DepEQ7MWvg/tn/Q==}
 
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
@@ -4260,6 +4288,9 @@ packages:
 
   regenerate@1.4.2:
     resolution: {integrity: sha512-zrceR/XhGYU/d/opr2EKO7aRHUeiBI8qjtfHqADTwZd6Szfy16la6kqD0MIUs5z5hx6AaKa+PixpPrR289+I0A==}
+
+  regenerator-runtime@0.13.11:
+    resolution: {integrity: sha512-kY1AZVr2Ra+t+piVaJ4gxaFaReZVH40AKNo7UCX6W+dEwBo/2oZJzqfuN1qLq1oL45o56cPaTXELwrTh8Fpggg==}
 
   regexp-to-ast@0.5.0:
     resolution: {integrity: sha512-tlbJqcMHnPKI9zSrystikWKwHkBqu2a/Sgw01h3zFjvYrMxEDYHzzoMZnUrbIfpTFEsoRnnviOXNCzFiSc54Qw==}
@@ -5997,6 +6028,10 @@ snapshots:
       '@babel/types': 7.29.0
       esutils: 2.0.3
 
+  '@babel/runtime@7.11.2':
+    dependencies:
+      regenerator-runtime: 0.13.11
+
   '@babel/runtime@7.29.2': {}
 
   '@babel/template@7.28.6':
@@ -6054,6 +6089,10 @@ snapshots:
       - react-native-b4a
       - supports-color
       - typescript
+
+  '@capacitor/browser@7.0.5(@capacitor/core@7.6.2)':
+    dependencies:
+      '@capacitor/core': 7.6.2
 
   '@capacitor/cli@5.7.8':
     dependencies:
@@ -7662,9 +7701,22 @@ snapshots:
 
   caniuse-lite@1.0.30001788: {}
 
+  capacitor-blob-writer@1.1.20(@capacitor/core@7.6.2)(@capacitor/filesystem@8.1.2(@capacitor/core@7.6.2)):
+    dependencies:
+      '@capacitor/core': 7.6.2
+      '@capacitor/filesystem': 8.1.2(@capacitor/core@7.6.2)
+
   capacitor-plugin-safe-area@5.0.0(@capacitor/core@7.6.2):
     dependencies:
       '@capacitor/core': 7.6.2
+
+  capacitor-voice-recorder@7.0.6(@capacitor/core@7.6.2)(@capacitor/filesystem@8.1.2(@capacitor/core@7.6.2)):
+    dependencies:
+      '@capacitor/core': 7.6.2
+      capacitor-blob-writer: 1.1.20(@capacitor/core@7.6.2)(@capacitor/filesystem@8.1.2(@capacitor/core@7.6.2))
+      get-blob-duration: 1.2.0
+    transitivePeerDependencies:
+      - '@capacitor/filesystem'
 
   chai@5.3.3:
     dependencies:
@@ -8552,6 +8604,10 @@ snapshots:
   generator-function@2.0.1: {}
 
   gensync@1.0.0-beta.2: {}
+
+  get-blob-duration@1.2.0:
+    dependencies:
+      '@babel/runtime': 7.11.2
 
   get-caller-file@2.0.5: {}
 
@@ -9727,6 +9783,8 @@ snapshots:
       regenerate: 1.4.2
 
   regenerate@1.4.2: {}
+
+  regenerator-runtime@0.13.11: {}
 
   regexp-to-ast@0.5.0: {}
 

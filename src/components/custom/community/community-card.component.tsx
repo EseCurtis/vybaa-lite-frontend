@@ -6,6 +6,8 @@ import type { Community } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { RiArrowRightUpLine, RiFileList3Line, RiFireFill, RiGroupLine } from '@remixicon/react'
 
+import { CommunityIllustration } from './community-illustration.component'
+
 interface CommunityCardProps {
   community: Community
   onPress?: (community: Community) => void
@@ -17,7 +19,6 @@ export function CommunityCard({ community, onPress }: CommunityCardProps) {
   }
 
   const bgColor = seededColor(community.name)
-  const patternColor = seededColor(`${community.id}-${community.name}`)
 
   return (
     <Pressable
@@ -34,28 +35,14 @@ export function CommunityCard({ community, onPress }: CommunityCardProps) {
 
         <View
           className="size-full rounded-full overflow-hidden"
-          style={{
-            backgroundColor: bgColor,
-            backgroundImage: community.coverImage
-              ? undefined
-              : `linear-gradient(135deg, ${patternColor} 0 24%, transparent 24% 100%),
-                 radial-gradient(circle at 72% 28%, rgba(255,255,255,0.45) 0 12%, transparent 13%),
-                 repeating-linear-gradient(45deg, rgba(255,255,255,0.18) 0 4px, transparent 4px 10px)`,
-          }}
         >
-          {community.coverImage ? (
-            <img
-              src={community.coverImage}
-              alt={community.name}
-              className="size-full object-cover"
-            />
-          ) : (
-            <View className="size-full items-center justify-center">
-              <Text className="text-white text-sm font-bbh font-bold">
-                {community.name.slice(0, 2).toUpperCase()}
-              </Text>
-            </View>
-          )}
+          <CommunityIllustration
+            className="size-full rounded-full"
+            label={community.name}
+            seed={`${community.id}-${community.name}`}
+            showInitials
+            value={community.coverImage}
+          />
         </View>
       </View>
       <View className="flex flex-col gap-2 flex-1 min-w-0">
