@@ -25,11 +25,10 @@ const roleLabels = {
   MEMBER: 'Member',
 }
 
-export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: MemberCardProps) {
+export function MemberCard({ member, onPress }: MemberCardProps) {
   const navigate = useNavigate()
   const RoleIcon = roleIcons[member.role] || RiUserLine
   const roleLabel = roleLabels[member.role] || 'Member'
-  const canManageRoles = currentUserRole === 'OWNER' || (currentUserRole === 'MOD' && member.role === 'MEMBER')
   const displayName = member.user.username || 
     [member.user.firstName, member.user.lastName].filter(Boolean).join(' ') || 
     'User'
@@ -48,9 +47,9 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 w-full rounded-2xl bg-card-light/20 mb-3"
+      className="p-4 w-full rounded-2xl bg-card-light/20 mb-3 min-h-[88px]"
     >
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-3 w-full">
         {/* Avatar */}
         <View className="w-12 h-12 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
           {member.user.avatarUrl ? (
@@ -67,26 +66,26 @@ export function MemberCard({ member, currentUserRole, onPress, onRoleChange }: M
         </View>
 
         {/* Member Info */}
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2 mb-1">
-            <Text className="text-white text-base font-bold font-bbh">
+        <View className="flex-1 min-w-0">
+          <View className="flex-row items-start gap-2 mb-1 min-w-0">
+            <Text className="text-white text-base font-bold font-bbh flex-1 min-w-0 leading-tight break-words">
               {displayName}
             </Text>
-            <View className="flex-row items-center gap-1">
+            <View className="flex-row items-center gap-1 rounded-full bg-card-light/20 px-2 py-1 shrink-0">
               <RoleIcon size={14} className="text-white/40" />
-              <Text className="text-white/40 text-xs font-bbh">
+              <Text className="text-white/50 text-[11px] font-bbh whitespace-nowrap">
                 {roleLabel}
               </Text>
             </View>
           </View>
-          <View className="flex-row items-center gap-3">
-            <Text className="text-white/40 text-xs font-bbh">
+          <View className="flex-row items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
+            <Text className="text-white/40 text-xs font-bbh leading-snug">
               Joined {moment(member.joinedAt).fromNow()}
             </Text>
             {typeof member.totalRewards === 'number' && (
-              <View className="flex-row items-center gap-1">
+              <View className="flex-row items-center gap-1 min-w-0">
                 <RiCoinsLine size={12} className="text-accent-400" />
-                <Text className="text-accent-400 text-xs font-bbh">
+                <Text className="text-accent-400 text-xs font-bbh leading-snug break-words">
                   {member.totalRewards.toLocaleString()} Play Points
                 </Text>
               </View>

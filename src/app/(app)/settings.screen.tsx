@@ -5,7 +5,6 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { openPublicUrl, publicUrls } from '@/shared/config/public-urls.config'
 import {
   RiArrowRightSLine,
   RiDeleteBinLine,
@@ -15,9 +14,11 @@ import {
 } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 
 export default function SettingsScreen() {
-  const { user, logout, deleteAccount } = useAuth()
+  const { logout, deleteAccount } = useAuth()
+  const navigate = useNavigate()
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
@@ -77,7 +78,9 @@ export default function SettingsScreen() {
                   className="w-full"
                 >
                   <Pressable
-                    onPress={() => openPublicUrl(publicUrls.termsOfService)}
+                    onPress={() => {
+                      navigate({ to: '/app/legal', search: { document: 'terms' } })
+                    }}
                     className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
                     <View className="flex-row items-center gap-4">
@@ -105,7 +108,9 @@ export default function SettingsScreen() {
                   className="w-full"
                 >
                   <Pressable
-                    onPress={() => openPublicUrl(publicUrls.privacyPolicy)}
+                    onPress={() => {
+                      navigate({ to: '/app/legal', search: { document: 'privacy' } })
+                    }}
                     className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
                   >
                     <View className="flex-row items-center gap-4">

@@ -17,6 +17,8 @@ export interface PublicUrls {
   privacyPolicy: string
 }
 
+export type LegalDocumentType = 'privacy' | 'terms'
+
 /**
  * Public URLs configuration
  * 
@@ -25,13 +27,4 @@ export interface PublicUrls {
 export const publicUrls: PublicUrls = {
   termsOfService: 'https://vybaa.app/terms-of-service',
   privacyPolicy: 'https://vybaa.app/privacy-policy',
-}
-
-/**
- * Helper function to open a public URL in a new tab/window
- */
-export function openPublicUrl(url: string) {
-  if (typeof window !== 'undefined') {
-    window.open(url, '_blank', 'noopener,noreferrer')
-  }
 }

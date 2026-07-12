@@ -26,6 +26,7 @@ import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-histor
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppLegalRouteImport } from './routes/app/legal'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
@@ -129,6 +130,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/app/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppLegalRoute = AppLegalRouteImport.update({
+  id: '/app/legal',
+  path: '/app/legal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
   id: '/app/insights',
   path: '/app/insights',
@@ -229,6 +235,7 @@ export interface FileRoutesByFullPath {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -265,6 +272,7 @@ export interface FileRoutesByTo {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/legal': typeof AppLegalRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -340,6 +349,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -376,6 +386,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -412,6 +423,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/legal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -449,6 +461,7 @@ export interface RootRouteChildren {
   AppGoalRoute: typeof AppGoalRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
+  AppLegalRoute: typeof AppLegalRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
@@ -597,6 +610,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/legal': {
+      id: '/app/legal'
+      path: '/app/legal'
+      fullPath: '/app/legal'
+      preLoaderRoute: typeof AppLegalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/insights': {
       id: '/app/insights'
       path: '/app/insights'
@@ -740,6 +760,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppGoalRoute: AppGoalRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
+  AppLegalRoute: AppLegalRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,

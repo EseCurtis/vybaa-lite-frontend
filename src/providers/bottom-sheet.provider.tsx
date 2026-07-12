@@ -29,6 +29,7 @@ type BottomSheetContextType = {
 }
 
 const BottomSheetContext = createContext<BottomSheetContextType | null>(null)
+const BOTTOM_SHEET_BASE_Z_INDEX = 1000000
 
 export const useBottomSheetController = () => {
   const ctx = useContext(BottomSheetContext)
@@ -124,6 +125,7 @@ export const BottomSheetProvider = ({
 
   const top = stack[stack.length - 1]
   const topElevation = top?.elevation ?? 12
+  const sheetZIndex = BOTTOM_SHEET_BASE_Z_INDEX + Math.max(2, topElevation)
   const shadow =
     topElevation > 0
       ? {
@@ -138,8 +140,8 @@ export const BottomSheetProvider = ({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="absolute inset-0  max-w-[400px] flex-1 mx-auto"
-              style={{ zIndex: Math.max(2, topElevation) }}
+              className="fixed inset-0 max-w-[400px] flex-1 mx-auto"
+              style={{ zIndex: sheetZIndex }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -192,8 +194,8 @@ export const BottomSheetProvider = ({
         <>
           {isOpen && (
             <div
-              className="absolute inset-0"
-              style={{ zIndex: Math.max(2, topElevation) }}
+              className="fixed inset-0 max-w-[400px] flex-1 mx-auto"
+              style={{ zIndex: sheetZIndex }}
             >
               <div className="absolute inset-0 bg-black/60" onClick={dismiss} />
               <div

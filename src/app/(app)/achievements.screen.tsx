@@ -1,4 +1,5 @@
 import { TabHeader } from '@/components/common/tab-header.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
@@ -6,11 +7,23 @@ import {
   useAchievementStats,
   useBadgeDefinitions,
 } from '@/hooks/use-achievements.hook'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { Achievement, BadgeDefinition } from '@/shared/api/achievement.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { Icon } from '@iconify/react'
+import { RiFilter3Line } from '@remixicon/react'
 import { motion } from 'framer-motion'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+
+type BadgeStatusFilter = 'all' | 'earned' | 'locked'
+type BadgeQuickFilter = 'all' | 'recent' | 'locked'
+
+interface AchievementFilters {
+  quick: BadgeQuickFilter
+  status: BadgeStatusFilter
+  type: string
+}
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
@@ -19,6 +32,19 @@ const formatDate = (dateString: string) => {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function getTypeInfo(type: string): { icon: string; title: string } {
+  const typeInfo: Record<string, { icon: string; title: string }> = {
+    streak_milestone: { icon: '🔥', title: 'Streak Milestones' },
+    total_goals: { icon: '🎯', title: 'Goals Completed' },
+    total_checkins: { icon: '✨', title: 'Total Check-ins' },
+    perfect_week: { icon: '✨', title: 'Perfect Weeks' },
+    comeback: { icon: '🦅', title: 'Comeback Stories' },
+    early_bird: { icon: '🌅', title: 'Early Bird' },
+    night_owl: { icon: '🌙', title: 'Night Owl' },
+  }
+  return typeInfo[type] || { icon: '🏆', title: type }
 }
 
 function BadgeCard({
@@ -98,7 +124,126 @@ function BadgeCard({
   )
 }
 
+function FilterOption({
+  active,
+  label,
+  onPress,
+}: {
+  active: boolean
+  label: string
+  onPress: () => void
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={cn(
+        'px-4 py-2 rounded-full bg-card-light/20',
+        active && 'bg-white',
+      )}
+    >
+      <Text
+        className={cn(
+          'text-xs font-bbh',
+          active ? 'text-black font-bold' : 'text-white/70',
+        )}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  )
+}
+
+function AchievementsFilterSheet({
+  filters,
+  onChange,
+  onClear,
+  types,
+}: {
+  filters: AchievementFilters
+  onChange: (filters: AchievementFilters) => void
+  onClear: () => void
+  types: Array<{ label: string; value: string }>
+}) {
+  const [draftFilters, setDraftFilters] = useState(filters)
+  const updateFilters = (nextFilters: AchievementFilters) => {
+    setDraftFilters(nextFilters)
+    onChange(nextFilters)
+  }
+  const clearFilters = () => {
+    const nextFilters: AchievementFilters = { quick: 'all', status: 'all', type: 'all' }
+    setDraftFilters(nextFilters)
+    onClear()
+  }
+
+  return (
+    <View className="space-y-6">
+      <View className="space-y-3">
+        <Text className="text-white/70 text-xs font-bbh">View</Text>
+        <View className="flex-row flex-wrap gap-2">
+          {([
+            ['all', 'All'],
+            ['recent', 'Recent'],
+            ['locked', 'Locked'],
+          ] as const).map(([value, label]) => (
+            <FilterOption
+              key={value}
+              active={draftFilters.quick === value}
+              label={label}
+              onPress={() => updateFilters({ ...draftFilters, quick: value })}
+            />
+          ))}
+        </View>
+      </View>
+
+      <View className="space-y-3">
+        <Text className="text-white/70 text-xs font-bbh">Earned status</Text>
+        <View className="flex-row flex-wrap gap-2">
+          {([
+            ['all', 'All'],
+            ['earned', 'Earned'],
+            ['locked', 'Locked'],
+          ] as const).map(([value, label]) => (
+            <FilterOption
+              key={value}
+              active={draftFilters.status === value}
+              label={label}
+              onPress={() => updateFilters({ ...draftFilters, status: value })}
+            />
+          ))}
+        </View>
+      </View>
+
+      <View className="space-y-3">
+        <Text className="text-white/70 text-xs font-bbh">Badge type</Text>
+        <View className="flex-row flex-wrap gap-2">
+          <FilterOption
+            active={draftFilters.type === 'all'}
+            label="All"
+            onPress={() => updateFilters({ ...draftFilters, type: 'all' })}
+          />
+          {types.map((type) => (
+            <FilterOption
+              key={type.value}
+              active={draftFilters.type === type.value}
+              label={type.label}
+              onPress={() => updateFilters({ ...draftFilters, type: type.value })}
+            />
+          ))}
+        </View>
+      </View>
+
+      <Pressable
+        onPress={clearFilters}
+        className="w-full rounded-full bg-card-light/20 py-3 items-center justify-center"
+      >
+        <Text className="text-white text-sm font-bbh font-bold">Clear filters</Text>
+      </Pressable>
+    </View>
+  )
+}
+
 export default function AchievementsScreen() {
+  const bottomSheet = useBottomSheetController()
   const { data: achievements = [], isLoading: achievementsLoading } =
     useAchievements()
   const { data: stats, isLoading: statsLoading } = useAchievementStats()
@@ -115,31 +260,64 @@ export default function AchievementsScreen() {
     return map
   }, [achievements])
 
+  const recentKeys = useMemo(() => {
+    return new Set(
+      [...achievements]
+        .sort((a, b) => new Date(b.earnedAt).getTime() - new Date(a.earnedAt).getTime())
+        .slice(0, 8)
+        .map((badge) => `${badge.type}-${badge.milestone}`),
+    )
+  }, [achievements])
+
+  const [filters, setFilters] = useState<AchievementFilters>({
+    quick: 'all',
+    status: 'all',
+    type: 'all',
+  })
+
   // Group badges by type
   const badgesByType = useMemo(() => {
     const grouped: Record<string, BadgeDefinition[]> = {}
     definitions.forEach((def) => {
+      const key = `${def.type}-${def.milestone}`
+      const earned = earnedMap.has(key)
+      if (filters.type !== 'all' && filters.type !== def.type) return
+      if (filters.status === 'earned' && !earned) return
+      if (filters.status === 'locked' && earned) return
+      if (filters.quick === 'recent' && !recentKeys.has(key)) return
+      if (filters.quick === 'locked' && earned) return
+
       if (!grouped[def.type]) {
         grouped[def.type] = []
       }
       grouped[def.type].push(def)
     })
     return grouped
+  }, [definitions, earnedMap, filters, recentKeys])
+
+  const badgeTypes = useMemo(() => {
+    return Array.from(new Set(definitions.map((def) => def.type))).map((type) => ({
+      label: getTypeInfo(type).title,
+      value: type,
+    }))
   }, [definitions])
 
   const loading = achievementsLoading || statsLoading || defsLoading
 
-  const getTypeInfo = (type: string): { icon: string; title: string } => {
-    const typeInfo: Record<string, { icon: string; title: string }> = {
-      streak_milestone: { icon: '🔥', title: 'Streak Milestones' },
-      total_goals: { icon: '🎯', title: 'Goals Completed' },
-      total_checkins: { icon: '✨', title: 'Total Check-ins' },
-      perfect_week: { icon: '✨', title: 'Perfect Weeks' },
-      comeback: { icon: '🦅', title: 'Comeback Stories' },
-      early_bird: { icon: '🌅', title: 'Early Bird' },
-      night_owl: { icon: '🌙', title: 'Night Owl' },
-    }
-    return typeInfo[type] || { icon: '🏆', title: type }
+  const clearFilters = () => {
+    setFilters({ quick: 'all', status: 'all', type: 'all' })
+  }
+
+  const openFilters = () => {
+    bottomSheet.present(
+      <AchievementsFilterSheet
+        filters={filters}
+        onChange={setFilters}
+        onClear={clearFilters}
+        types={badgeTypes}
+      />,
+      { title: 'Filter badges', elevation: 9999 },
+    )
   }
 
   return (
@@ -156,7 +334,14 @@ export default function AchievementsScreen() {
             )}
           </View>
         }
-      />
+      >
+        <Pressable
+          onPress={openFilters}
+          className="w-12 h-12 rounded-full bg-card-light/20 items-center justify-center"
+        >
+          <RiFilter3Line size={20} className="text-white" />
+        </Pressable>
+      </TabHeader>
 
       <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
         {/* Stats Cards */}
@@ -212,10 +397,10 @@ export default function AchievementsScreen() {
               style={{ fontSize: '64px' }}
             />
             <Text className="text-card-lighter/60 text-lg font-bbh text-center">
-              No achievements yet
+              No badges match these filters
             </Text>
             <Text className="text-card-lighter/40 text-sm font-bbh text-center mt-2">
-              Start checking in on your goals to earn badges!
+              Clear filters or keep checking in to unlock more badges.
             </Text>
           </View>
         ) : (
