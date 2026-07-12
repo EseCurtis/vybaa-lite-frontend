@@ -1,4 +1,7 @@
-import { useGoogleAuth } from '@/hooks/use-google-auth.hook'
+import {
+  logoutGoogleNativeSession,
+  useGoogleAuth,
+} from '@/hooks/use-google-auth.hook'
 import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
 import { userAPI } from '@/shared/api/user.api'
@@ -125,8 +128,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearAuthState = useCallback(() => {
     localStorage.removeItem('authToken')
     localStorage.removeItem('refreshToken')
+    localStorage.removeItem('fcmToken')
     resetTimezoneTracking()
-    queryClient.removeQueries({ queryKey: SESSION_QUERY_KEY })
+    queryClient.clear()
     setState({
       user: null,
       isAuthenticated: false,
@@ -166,9 +170,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      // Best-effort logout: if push token management is added later we can
-      // wire it in here. For now we simply notify the backend and clear state.
-      await authAPI.logout({ fcmToken: '' })
+      const fcmToken =
+        typeof window !== 'undefined'
+          ? (localStorage.getItem('fcmToken') ?? '')
+          : ''
+
+      try {
+        await authAPI.logout({ fcmToken })
+      } finally {
+        await logoutGoogleNativeSession()
+      }
     },
     onSettled: clearAuthState,
   })
@@ -177,7 +188,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     mutationFn: async () => {
       await userAPI.deleteAccount()
     },
-    onSuccess: clearAuthState,
+    onSettled: async () => {
+      await logoutGoogleNativeSession()
+      clearAuthState()
+    },
   })
 
   const loginWithGoogle = useCallback(async () => {
