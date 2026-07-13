@@ -7,6 +7,8 @@ import { authAPI } from '@/shared/api/auth.api'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
+type ForgotPasswordAction = 'resetting-password' | 'sending-code' | null
+
 export default function ForgotPasswordScreen() {
   const navigate = useNavigate()
   const toast = useToast()
@@ -16,13 +18,21 @@ export default function ForgotPasswordScreen() {
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [activeAction, setActiveAction] = useState<ForgotPasswordAction>(null)
+
+  const loadingText =
+    activeAction === 'sending-code'
+      ? 'Sending a reset code to your email...'
+      : activeAction === 'resetting-password'
+        ? 'Updating your password...'
+        : null
+  const isLoading = activeAction !== null
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setMessage(null)
-    setLoading(true)
+    setActiveAction('sending-code')
     try {
       await authAPI.requestPasswordReset({ email })
       setMessage('We sent a reset code to your email.')
@@ -33,7 +43,7 @@ export default function ForgotPasswordScreen() {
       setError(msg)
       toast.error(msg)
     } finally {
-      setLoading(false)
+      setActiveAction(null)
     }
   }
 
@@ -41,7 +51,7 @@ export default function ForgotPasswordScreen() {
     e.preventDefault()
     setError(null)
     setMessage(null)
-    setLoading(true)
+    setActiveAction('resetting-password')
     try {
       await authAPI.resetPassword({
         email,
@@ -56,7 +66,7 @@ export default function ForgotPasswordScreen() {
       setError(msg)
       toast.error(msg)
     } finally {
-      setLoading(false)
+      setActiveAction(null)
     }
   }
 
@@ -74,6 +84,7 @@ export default function ForgotPasswordScreen() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            disabled={isLoading}
             placeholder="you@example.com"
           />
           {error && (
@@ -82,12 +93,17 @@ export default function ForgotPasswordScreen() {
           {message && (
             <Text className="text-green-400 text-sm font-bbh">{message}</Text>
           )}
+          {loadingText && (
+            <Text className="text-card-lighter-2 text-xs font-bbh">
+              {loadingText}
+            </Text>
+          )}
           <Button
             type="submit"
-            label="Send reset code"
+            label={isLoading ? 'Sending code...' : 'Send reset code'}
             fullWidth
-            loading={loading}
-            disabled={loading}
+            loading={activeAction === 'sending-code'}
+            disabled={isLoading}
             className="mt-4"
           />
         </form>
@@ -104,6 +120,7 @@ export default function ForgotPasswordScreen() {
             label="Reset code"
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
+            disabled={isLoading}
             placeholder="6‑digit code"
           />
           <Input
@@ -111,6 +128,7 @@ export default function ForgotPasswordScreen() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isLoading}
             placeholder="••••••••"
           />
           {error && (
@@ -119,12 +137,17 @@ export default function ForgotPasswordScreen() {
           {message && (
             <Text className="text-green-400 text-sm font-bbh">{message}</Text>
           )}
+          {loadingText && (
+            <Text className="text-card-lighter-2 text-xs font-bbh">
+              {loadingText}
+            </Text>
+          )}
           <Button
             type="submit"
-            label="Reset password"
+            label={isLoading ? 'Resetting password...' : 'Reset password'}
             fullWidth
-            loading={loading}
-            disabled={loading}
+            loading={activeAction === 'resetting-password'}
+            disabled={isLoading}
             className="mt-4"
           />
         </form>

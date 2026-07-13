@@ -86,13 +86,13 @@ export function CommunityCard({
 
         <View className="flex flex-row flex-wrap items-center justify-between mt-1 gap-3 min-w-0">
           <View className="flex flex-row flex-wrap items-center gap-3 min-w-0">
-            <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
+            <View className="flex whitespace-nowrap flex-row items-center gap-1.5">
               <RiGroupLine size={16} className="text-blue-400" />
               <Text className="text-white/70 text-[11px] font-bbh">
                 {community._count?.members || 0} 
               </Text>
             </View>
-           <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
+           <View className="flex whitespace-nowrap flex-row items-center gap-1.5">
               <RiTargetLine size={16} className="text-accent-400" />
               <Text className="text-white/70 text-[11px] font-bbh">
                 {community._count?.templates || 0} 

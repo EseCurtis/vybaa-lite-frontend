@@ -7,35 +7,16 @@ import { useAuth } from '@/providers/auth.provider'
 import {
   consumePendingDeepLink,
   getUnauthenticatedDeepLinkEntryPath,
-  type DeepLinkTarget,
   normalizeDeepLink,
   storePendingDeepLink,
 } from '@/shared/utils/deep-link.util'
+import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
 
 import ConfigCapacitorApp from './config'
 import { setQueryClientForNotifications } from './plugins/push-notification.plugin'
 
 type CapacitorPluginProps = {
   router: AnyRouter
-}
-
-async function navigateToDeepLink(
-  router: AnyRouter,
-  target: DeepLinkTarget,
-): Promise<void> {
-  if (target.route === 'invite' && target.code) {
-    await router.navigate({
-      params: { code: target.code },
-      replace: true,
-      to: '/app/invite/$code',
-    })
-    return
-  }
-
-  await router.navigate({
-    replace: true,
-    to: target.path,
-  })
 }
 
 export function CapacitorPlugin({ router }: CapacitorPluginProps) {
@@ -59,7 +40,7 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
         return
       }
 
-      await navigateToDeepLink(router, target)
+      await navigateToDeepLinkTarget(router, target)
     },
     [isAuthenticated, router],
   )
@@ -105,7 +86,7 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
 
     const target = consumePendingDeepLink()
     if (target) {
-      void navigateToDeepLink(router, target)
+      void navigateToDeepLinkTarget(router, target)
     }
   }, [isAuthenticated, isLoading, router])
 

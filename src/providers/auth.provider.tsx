@@ -224,6 +224,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         google.isLoading ||
         logoutMutation.isPending ||
         deleteAccountMutation.isPending,
+      googleAuthStatus: google.status,
       deleteAccount,
       loginWithGoogle,
       loginWithEmail,
@@ -234,6 +235,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [
       google.error,
       google.isLoading,
+      google.status,
       deleteAccount,
       deleteAccountMutation.error?.message,
       deleteAccountMutation.isPending,

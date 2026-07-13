@@ -7,41 +7,66 @@ import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { IS_MOBILE } from '@/shared/constants.shared'
-import { RiGoogleFill } from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
+import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
+import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 
+type LoginAction = 'email' | 'google' | null
+
 export default function LoginScreen() {
-  const { loginWithEmail, loginWithGoogle, isLoading } = useAuth()
+  const { googleAuthStatus, loginWithEmail, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
   const toast = useToast()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [activeAction, setActiveAction] = useState<LoginAction>(null)
+
+  const isEmailLoading = activeAction === 'email'
+  const isGoogleLoading = activeAction === 'google'
+  const isSubmitting = activeAction !== null
+  const loadingText =
+    activeAction === 'email'
+      ? 'Checking your email and password...'
+      : activeAction === 'google'
+        ? (getGoogleAuthStatusText(googleAuthStatus) ??
+          'Signing in with Google...')
+        : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setActiveAction('email')
 
     try {
       await loginWithEmail({ email, password })
       toast.success('Welcome back')
-      navigate({ to: '/app/home' })
+      await navigateAfterAuth(router)
     } catch (err: any) {
       const msg = err?.msg || err?.message || 'Login failed'
       setError(msg)
       toast.error(msg)
+    } finally {
+      setActiveAction(null)
     }
   }
 
   const handleGoogle = async () => {
+    setActiveAction('google')
     try {
       await loginWithGoogle()
+      await navigateAfterAuth(router)
     } catch (err: any) {
       const msg =
         err instanceof Error ? err.message : 'Failed to sign in with Google'
+      setError(msg)
       toast.error(msg)
+    } finally {
+      setActiveAction(null)
     }
   }
 
@@ -53,6 +78,7 @@ export default function LoginScreen() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isSubmitting}
           placeholder="you@example.com"
           // className="rounded-lg"
         />
@@ -62,6 +88,7 @@ export default function LoginScreen() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            disabled={isSubmitting}
             placeholder="••••••••"
             // className="rounded-lg py-0 "
           />
@@ -78,13 +105,18 @@ export default function LoginScreen() {
         {error && (
           <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
         )}
+        {loadingText && (
+          <Text className="text-card-lighter-2 text-xs font-bbh">
+            {loadingText}
+          </Text>
+        )}
 
         <Button
           type="submit"
-          label="Log in"
+          label={isEmailLoading ? 'Signing in...' : 'Log in'}
           fullWidth
-          loading={isLoading}
-          disabled={isLoading}
+          loading={isEmailLoading}
+          disabled={isSubmitting}
           className="mt-4"
         />
       </form>
@@ -105,13 +137,17 @@ export default function LoginScreen() {
         {IS_MOBILE && (
           <TouchableOpacity
             className="flex-1 py-4 rounded-full bg-cardd flex items-center justify-between px-4"
-            disabled={isLoading}
+            disabled={isSubmitting}
             onPress={handleGoogle}
           >
-            <RiGoogleFill className="text-white" size={18} />
+            {isGoogleLoading ? (
+              <RiLoader4Line className="text-white animate-spin" size={18} />
+            ) : (
+              <RiGoogleFill className="text-white" size={18} />
+            )}
             <View className="flex-row items-center gap-2 mx-auto">
               <Text className="text-white text-sm font-bbh font-bold">
-                Continue with Google
+                {isGoogleLoading ? 'Opening Google...' : 'Continue with Google'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -123,6 +159,7 @@ export default function LoginScreen() {
           variant="ghost"
           fullWidth
           label="Need an account? Sign up"
+          disabled={isSubmitting}
           onClick={() => navigate({ to: '/auth/signup' })}
         />
       </View>

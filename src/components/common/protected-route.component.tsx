@@ -1,7 +1,8 @@
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
-import { useNavigate } from '@tanstack/react-router'
+import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 type ProtectedRouteProps = {
@@ -26,6 +27,7 @@ export const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
 
   useEffect(() => {
     if (isLoading) return
@@ -39,9 +41,9 @@ export const ProtectedRoute = ({
     // If auth is NOT required but user is already authenticated,
     // keep them inside the app experience instead of auth screens.
     if (!requireAuth && isAuthenticated) {
-      navigate({ to: redirectTo, replace: true })
+      void navigateAfterAuth(router)
     }
-  }, [isAuthenticated, isLoading, navigate, redirectTo, requireAuth])
+  }, [isAuthenticated, isLoading, navigate, redirectTo, requireAuth, router])
 
   if (isLoading) {
     return (
@@ -62,4 +64,3 @@ export const ProtectedRoute = ({
 
   return <>{children}</>
 }
-

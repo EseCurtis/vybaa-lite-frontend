@@ -12,6 +12,8 @@ import { RiCheckLine, RiCloseLine, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
 
+type SignupAction = 'creating-account' | 'sending-code' | null
+
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
 
@@ -29,7 +31,7 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function SignupScreen() {
-  const { registerWithEmail, isLoading } = useAuth()
+  const { registerWithEmail } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -41,6 +43,7 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [step, setStep] = useState<1 | 2>(1)
   const [error, setError] = useState<string | null>(null)
+  const [activeAction, setActiveAction] = useState<SignupAction>(null)
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [isUsernameAvailable, setIsUsernameAvailable] = useState<
     boolean | null
@@ -119,6 +122,16 @@ export default function SignupScreen() {
     usernameError,
   ])
 
+  const isSubmitting = activeAction !== null
+  const loadingText =
+    activeAction === 'creating-account'
+      ? 'Creating your account...'
+      : activeAction === 'sending-code'
+        ? 'Sending your confirmation code...'
+        : isCheckingUsername
+          ? 'Checking username availability...'
+          : null
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -165,6 +178,7 @@ export default function SignupScreen() {
     }
 
     try {
+      setActiveAction('creating-account')
       const res = await registerWithEmail({
         email,
         password,
@@ -175,6 +189,7 @@ export default function SignupScreen() {
 
       if ('data' in res && (res as any).data?.confirmationRequired) {
         // Trigger confirmation code email and go to confirmation screen
+        setActiveAction('sending-code')
         await authAPI.requestConfirmation(email)
         toast.success('We sent you a confirmation code')
         navigate({
@@ -193,6 +208,8 @@ export default function SignupScreen() {
     } catch (err: any) {
       setError(err?.msg || err?.message || 'Sign up failed')
       toast.error(err?.msg || err?.message || 'Sign up failed')
+    } finally {
+      setActiveAction(null)
     }
   }
 
@@ -215,6 +232,7 @@ export default function SignupScreen() {
               label="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              disabled={isSubmitting}
               placeholder="vybee"
               leftIcon={<Text className={cn("text-white text-lg font-bbh font-bold", isCheckingUsername ? "text-white/70  animate-pulse":(isUsernameAvailable ? " text-green-400": "text-rose-500"))}>@</Text>}
               error={usernameError || undefined}
@@ -241,12 +259,14 @@ export default function SignupScreen() {
                 label="First name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
+                disabled={isSubmitting}
                 placeholder="Jane"
               />
               <Input
                 label="Last name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
+                disabled={isSubmitting}
                 placeholder="Doe"
               />
             </View>
@@ -255,6 +275,7 @@ export default function SignupScreen() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
               placeholder="you@example.com"
             />
           </>
@@ -265,6 +286,7 @@ export default function SignupScreen() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
               placeholder="••••••••"
             />
             <Input
@@ -272,6 +294,7 @@ export default function SignupScreen() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={isSubmitting}
               placeholder="••••••••"
             />
           </>
@@ -280,16 +303,29 @@ export default function SignupScreen() {
         {error && (
           <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
         )}
+        {loadingText && (
+          <Text className="text-card-lighter-2 text-xs font-bbh">
+            {loadingText}
+          </Text>
+        )}
         {/* {message && (
             <Text className="text-green-400 text-sm font-bbh">{message}</Text>
           )} */}
 
         <Button
           type="submit"
-          label={step === 1 ? 'Continue' : 'Sign up'}
+          label={
+            activeAction === 'creating-account'
+              ? 'Creating account...'
+              : activeAction === 'sending-code'
+                ? 'Sending code...'
+                : step === 1
+                  ? 'Continue'
+                  : 'Sign up'
+          }
           fullWidth
-          loading={isLoading}
-          disabled={isLoading || (step === 1 && !canContinue)}
+          loading={isSubmitting}
+          disabled={isSubmitting || (step === 1 && !canContinue)}
           className={cn('mt-4', step === 1 && !canContinue && 'opacity-70')}
         />
       </form>
@@ -299,6 +335,7 @@ export default function SignupScreen() {
           variant="ghost"
           fullWidth
           label="Already have an account? Log in"
+          disabled={isSubmitting}
           onClick={() => navigate({ to: '/auth/login' })}
         />
       </View>

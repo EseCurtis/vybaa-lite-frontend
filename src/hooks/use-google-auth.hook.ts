@@ -1,9 +1,14 @@
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { useMutation } from '@tanstack/react-query'
+import { useState } from 'react'
 
 import ENV from '@/env'
 import { authAPI } from '@/shared/api/auth.api'
-import type { AuthResponse, GoogleAuthRequest } from '@/shared/types/auth.types'
+import type {
+  AuthResponse,
+  GoogleAuthRequest,
+  GoogleAuthStatus,
+} from '@/shared/types/auth.types'
 
 type UseGoogleAuthOptions = {
   onSuccess?: (response: AuthResponse) => void
@@ -13,6 +18,7 @@ type UseGoogleAuthResult = {
   error: string | null
   isLoading: boolean
   signInWithGoogle: () => Promise<void>
+  status: GoogleAuthStatus
 }
 
 type GoogleLoginResponse = {
@@ -66,6 +72,7 @@ export async function logoutGoogleNativeSession(): Promise<void> {
 export function useGoogleAuth(
   options?: UseGoogleAuthOptions,
 ): UseGoogleAuthResult {
+  const [status, setStatus] = useState<GoogleAuthStatus>('idle')
   const mutation = useMutation<AuthResponse, Error, GoogleAuthRequest>({
     mutationFn: (payload: GoogleAuthRequest) => authAPI.googleAuth(payload),
     onSuccess: (response) => {
@@ -80,9 +87,11 @@ export function useGoogleAuth(
 
   async function signInWithGoogle(): Promise<void> {
     try {
+      setStatus('preparing')
       await ensureGoogleInitialized()
       await logoutGoogleNativeSession()
 
+      setStatus('opening-google')
       const response = await SocialLogin.login({
         provider: 'google',
         options: {
@@ -92,6 +101,7 @@ export function useGoogleAuth(
           scopes: ['profile', 'email'],
         },
       })
+      setStatus('verifying-google')
       const result = response.result as GoogleLoginResponse | undefined
       const token = getGoogleToken(result)
 
@@ -99,11 +109,14 @@ export function useGoogleAuth(
         throw new Error('Google login did not return a valid token')
       }
 
+      setStatus('creating-session')
       await mutation.mutateAsync({ token })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to sign in with Google'
       throw new Error(message)
+    } finally {
+      setStatus('idle')
     }
   }
 
@@ -114,7 +127,8 @@ export function useGoogleAuth(
 
   return {
     error: errorMessage,
-    isLoading: mutation.isPending,
+    isLoading: status !== 'idle' || mutation.isPending,
     signInWithGoogle,
+    status,
   }
 }

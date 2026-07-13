@@ -7,6 +7,8 @@ import { authAPI } from '@/shared/api/auth.api'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 
+type ConfirmAccountAction = 'confirming-account' | null
+
 export default function ConfirmAccountScreen() {
   const navigate = useNavigate()
   const search = useSearch({ from: '/auth/confirm' }) as { email?: string }
@@ -16,13 +18,14 @@ export default function ConfirmAccountScreen() {
   const [code, setCode] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [activeAction, setActiveAction] = useState<ConfirmAccountAction>(null)
+  const isConfirming = activeAction === 'confirming-account'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setMessage(null)
-    setLoading(true)
+    setActiveAction('confirming-account')
 
     try {
       await authAPI.confirmAccount({
@@ -39,7 +42,7 @@ export default function ConfirmAccountScreen() {
       setError(msg)
       toast.error(msg)
     } finally {
-      setLoading(false)
+      setActiveAction(null)
     }
   }
 
@@ -54,12 +57,14 @@ export default function ConfirmAccountScreen() {
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={isConfirming}
           placeholder="you@example.com"
         />
         <Input
           label="Confirmation code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
+          disabled={isConfirming}
           placeholder="6‑digit code"
         />
 
@@ -69,13 +74,18 @@ export default function ConfirmAccountScreen() {
         {message && (
           <Text className="text-green-400 text-sm font-bbh">{message}</Text>
         )}
+        {isConfirming && (
+          <Text className="text-card-lighter-2 text-xs font-bbh">
+            Checking your confirmation code...
+          </Text>
+        )}
 
         <Button
           type="submit"
-          label="Confirm account"
+          label={isConfirming ? 'Confirming...' : 'Confirm account'}
           fullWidth
-          loading={loading}
-          disabled={loading}
+          loading={isConfirming}
+          disabled={isConfirming}
           className="mt-4"
         />
       </form>
