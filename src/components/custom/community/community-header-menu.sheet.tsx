@@ -13,6 +13,7 @@ import {
 type Role = 'OWNER' | 'MOD' | 'MEMBER' | null | undefined
 
 export function CommunityHeaderMenuSheet({
+  canJoinDirectly = true,
   isMember,
   userRole,
   onJoin,
@@ -23,6 +24,7 @@ export function CommunityHeaderMenuSheet({
   onInvite,
   onClose,
 }: {
+  canJoinDirectly?: boolean
   isMember: boolean
   userRole?: Role
   onJoin: () => void
@@ -38,20 +40,27 @@ export function CommunityHeaderMenuSheet({
     label,
     onPress,
     destructive,
+    disabled,
   }: {
     icon: React.ReactNode
     label: string
     onPress: () => void
     destructive?: boolean
+    disabled?: boolean
   }) => (
     <Pressable
       onPress={() => {
+        if (disabled) {
+          return
+        }
         onPress()
         onClose()
       }}
+      disabled={disabled}
       className={cn(
         'flex-row items-center gap-3 px-4 py-3 rounded-2xl bg-card-light/10',
         destructive && 'bg-danger-500/10',
+        disabled && 'opacity-60',
       )}
     >
       <View
@@ -66,6 +75,7 @@ export function CommunityHeaderMenuSheet({
         className={cn(
           'text-white text-sm font-bbh font-semibold',
           destructive && 'text-danger-500',
+          disabled && 'text-white/60',
         )}
       >
         {label}
@@ -73,7 +83,8 @@ export function CommunityHeaderMenuSheet({
     </Pressable>
   )
 
-  const canCreateTemplate = isMember && (userRole === 'OWNER' || userRole === 'MOD')
+  const canCreateTemplate =
+    isMember && (userRole === 'OWNER' || userRole === 'MOD')
   const canLeave = isMember && userRole !== 'OWNER'
 
   return (
@@ -81,8 +92,9 @@ export function CommunityHeaderMenuSheet({
       {!isMember ? (
         <Item
           icon={<RiUserAddLine size={18} className="text-white" />}
-          label="Join community"
+          label={canJoinDirectly ? 'Join community' : 'Invite required'}
           onPress={onJoin}
+          disabled={!canJoinDirectly}
         />
       ) : (
         <>
@@ -125,4 +137,3 @@ export function CommunityHeaderMenuSheet({
     </View>
   )
 }
-

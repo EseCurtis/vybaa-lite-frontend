@@ -193,7 +193,9 @@ export function useLeaveCommunity() {
   })
 }
 
-export function useCommunityMembers(communityId: string, limit: number = 20) {
+export function useCommunityMembers(communityId: string, limit: number = 20, enabled: boolean | number = true) {
+  const isEnabled = typeof enabled === 'boolean' ? enabled : true
+
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.members(communityId, limit),
@@ -207,7 +209,7 @@ export function useCommunityMembers(communityId: string, limit: number = 20) {
       }
       return undefined
     },
-    enabled: !!communityId,
+    enabled: !!communityId && isEnabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
@@ -233,7 +235,7 @@ export function useUpdateMemberRole() {
 
 // ==================== Templates ====================
 
-export function useTemplates(communityId: string, limit: number = 20) {
+export function useTemplates(communityId: string, limit: number = 20, enabled: boolean = true) {
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.templates(communityId, limit),
@@ -247,7 +249,7 @@ export function useTemplates(communityId: string, limit: number = 20) {
       }
       return undefined
     },
-    enabled: !!communityId,
+    enabled: !!communityId && enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }
@@ -369,7 +371,7 @@ export function useTemplateParticipants(templateId: string, _page: number = 1, l
 
 // ==================== Activity ====================
 
-export function useActivityFeed(communityId: string, limit: number = 20) {
+export function useActivityFeed(communityId: string, limit: number = 20, enabled: boolean = true) {
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.activity(communityId, limit),
@@ -383,7 +385,7 @@ export function useActivityFeed(communityId: string, limit: number = 20) {
       }
       return undefined
     },
-    enabled: !!communityId,
+    enabled: !!communityId && enabled,
     staleTime: 1000 * 60 * 2, // 2 minutes (activity feed should be more fresh)
   })
 }
@@ -470,14 +472,14 @@ export function useDeleteComment() {
 
 // ==================== Stats ====================
 
-export function useCommunityStats(communityId: string) {
+export function useCommunityStats(communityId: string, enabled: boolean = true) {
   return useQuery({
     queryKey: communityQueryKeys.stats(communityId),
     queryFn: async () => {
       const response = await communityAPI.getCommunityStats(communityId)
       return response.data
     },
-    enabled: !!communityId,
+    enabled: !!communityId && enabled,
     staleTime: 1000 * 60 * 5, // 5 minutes
   })
 }

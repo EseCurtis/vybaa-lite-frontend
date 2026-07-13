@@ -15,6 +15,7 @@ import { MembersTab } from '@/components/custom/community/members-tab.component'
 import { ModerationTab } from '@/components/custom/community/moderation-tab.component'
 import { StartGoalConfirmationSheet } from '@/components/custom/community/start-goal-confirmation-sheet.component'
 import { TemplatesTab } from '@/components/custom/community/templates-tab.component'
+import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -32,7 +33,7 @@ import {
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
-import { RiMore2Fill } from '@remixicon/react'
+import { RiLockLine, RiMore2Fill, RiUserAddLine } from '@remixicon/react'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   useNavigate,
@@ -84,26 +85,32 @@ export default function CommunityDetailScreen() {
 
   const { data: community, isLoading: isLoadingCommunity } =
     useCommunity(communityId)
-  const { data: stats } = useCommunityStats(communityId)
+  const isMember = community?.isMember || false
+  const userRole = community?.userRole
+  const isOwner = userRole === 'OWNER'
+  const canViewMemberContent = isMember
+  const canJoinDirectly = community?.isPublic ?? false
+  const { data: stats } = useCommunityStats(communityId, canViewMemberContent)
   const {
     data: templatesData,
     isLoading: isLoadingTemplates,
     fetchNextPage: fetchNextTemplates,
     hasNextPage: hasNextTemplates,
-  } = useTemplates(communityId, 20)
+  } = useTemplates(communityId, 20, canViewMemberContent)
   const {
     data: activityData,
     isLoading: isLoadingActivity,
     fetchNextPage: fetchNextActivity,
     hasNextPage: hasNextActivity,
-  } = useActivityFeed(communityId, 20)
+  } = useActivityFeed(communityId, 20, canViewMemberContent)
   const {
     data: membersData,
     isLoading: isLoadingMembers,
     fetchNextPage: fetchNextMembers,
     hasNextPage: hasNextMembers,
-  } = useCommunityMembers(communityId, 50)
-  const { mutateAsync: joinCommunity } = useJoinCommunity()
+  } = useCommunityMembers(communityId, 50, canViewMemberContent)
+  const { mutateAsync: joinCommunity, isPending: isJoiningCommunity } =
+    useJoinCommunity()
   const { mutateAsync: leaveCommunity } = useLeaveCommunity()
   const { mutateAsync: startGoal, isPending: isStartingGoal } =
     useStartGoalFromTemplate()
@@ -111,15 +118,14 @@ export default function CommunityDetailScreen() {
   const templates = templatesData?.pages.flatMap((page) => page.data) || []
   const activities = activityData?.pages.flatMap((page) => page.data) || []
   const members = membersData?.pages.flatMap((page) => page.data) || []
-  const isMember = community?.isMember || false
-  const userRole = community?.userRole
-  const isOwner = userRole === 'OWNER'
-  const activeTab = getCommunityTabFromHash(locationHash, isOwner)
-
-
+  const activeTab = isMember
+    ? getCommunityTabFromHash(locationHash, isOwner)
+    : defaultCommunityTab
 
   useEffect(() => {
-    const normalizedTab = getCommunityTabFromHash(locationHash, isOwner)
+    const normalizedTab = isMember
+      ? getCommunityTabFromHash(locationHash, isOwner)
+      : defaultCommunityTab
     const normalizedHash = getCommunityTabHash(normalizedTab)
     const currentHash = locationHash.startsWith('#')
       ? locationHash.slice(1)
@@ -135,15 +141,17 @@ export default function CommunityDetailScreen() {
       hash: normalizedHash,
       replace: true,
     })
-  }, [communityId, isOwner, locationHash, navigate])
+  }, [communityId, isMember, isOwner, locationHash, navigate])
 
-
-
-    useEffect(() => {
+  useEffect(() => {
     hapticFeedback.light()
   }, [activeTab])
 
   const handleJoin = async () => {
+    if (!canJoinDirectly) {
+      return
+    }
+
     try {
       await joinCommunity(communityId)
     } catch (error) {
@@ -204,6 +212,7 @@ export default function CommunityDetailScreen() {
   const handleOpenHeaderMenu = () => {
     bottomSheet.present(
       <CommunityHeaderMenuSheet
+        canJoinDirectly={canJoinDirectly}
         isMember={isMember}
         userRole={userRole}
         onJoin={handleJoin}
@@ -274,10 +283,7 @@ export default function CommunityDetailScreen() {
     }
   }
 
-  const handleComment = (activityId: string) => {
-    // TODO: Implement comment sheet
-    console.log('Comment on activity', activityId)
-  }
+  const handleComment = () => {}
 
   const handleLoadMoreTemplates = () => {
     if (hasNextTemplates) {
@@ -352,11 +358,18 @@ export default function CommunityDetailScreen() {
     )
   }
 
+  const displayStats = stats ?? {
+    activeGoalCount: community._count?.goals ?? 0,
+    memberCount: community._count?.members ?? 0,
+    recentActivityCount: 0,
+    templateCount: community._count?.templates ?? 0,
+  }
+
   return (
     <View className="flex-1 bg-cardd">
       <View className="absolute top-0 left-0 w-full z-[999] backdrop-blur-xl bg-cardd/30">
         <TabHeader
-          title={"Community"}
+          title={'Community'}
           children={
             <Pressable
               onPress={handleOpenHeaderMenu}
@@ -369,73 +382,127 @@ export default function CommunityDetailScreen() {
       </View>
 
       <CommunityBackground communityName={community.name} />
-      <PullToRefresh
-        className="flex-1 overflow-y-auto no-scrollbar"
-        onRefresh={handleRefreshCommunity}
-        refreshing={isRefreshing}
-      >
-        <NoiseComponent>
+      <NoiseComponent>
+        <PullToRefresh
+          className="flex-1 overflow-y-auto no-scrollbar"
+          onRefresh={handleRefreshCommunity}
+          refreshing={isRefreshing}
+        >
           <View className="z-10 relative ">
             <TopNotch />
             <View className="mt-24" />
 
-            <CommunityHeader community={community} stats={stats} />
+            <CommunityHeader community={community} stats={displayStats} />
 
-            <View className="">
-              <CommunityTabs
-                activeTab={activeTab}
-                onTabChange={handleTabChange}
-                showModeration={isOwner}
-              />
-            </View>
+            {!isMember ? (
+              <View className="px-mg pb-20">
+                <View className="rounded-3xl bg-cardd/80 border border-card-light/30 p-5 gap-4">
+                  <View className="flex-row items-start gap-3">
+                    <View className="w-11 h-11 rounded-full bg-warning-yellow/15 items-center justify-center">
+                      <RiLockLine size={20} className="text-warning-yellow" />
+                    </View>
+                    <View className="flex-1 min-w-0">
+                      <Text className="text-white text-base font-bold font-bbh">
+                        Join to unlock the room
+                      </Text>
+                      <Text className="text-card-lighter-2 text-sm font-bbh mt-1 leading-relaxed">
+                        Preview the community here. Members can start shared
+                        goals, see activity, react, and meet the people inside.
+                      </Text>
+                    </View>
+                  </View>
 
-            <View className="flex-1 px-mg pb-20">
-              {activeTab === 'templates' && (
-                <TemplatesTab
-                  templates={templates.slice(0, 4)}
-                  isLoading={isLoadingTemplates}
-                  isMember={isMember}
-                  userRole={userRole}
-                  onCreateTemplate={handleCreateTemplate}
-                  onStartGoal={handleStartGoal}
-                  hasNextPage={hasNextTemplates}
-                  onLoadMore={handleLoadMoreTemplates}
-                  isPreview
-                  onShowAll={handleShowAllGoals}
-                />
-              )}
+                  <View className="flex-row gap-2">
+                    <View className="flex-1 rounded-2xl bg-card-light/20 p-3">
+                      <Text className="text-white text-lg font-bold font-bbh">
+                        {displayStats.templateCount}
+                      </Text>
+                      <Text className="text-card-lighter-2 text-xs font-bbh">
+                        templates
+                      </Text>
+                    </View>
+                    <View className="flex-1 rounded-2xl bg-card-light/20 p-3">
+                      <Text className="text-white text-lg font-bold font-bbh">
+                        {displayStats.activeGoalCount}
+                      </Text>
+                      <Text className="text-card-lighter-2 text-xs font-bbh">
+                        active goals
+                      </Text>
+                    </View>
+                  </View>
 
-              {activeTab === 'activity' && (
-                <ActivityTab
-                  activities={activities.slice(0, 4)}
-                  isLoading={isLoadingActivity}
-                  onReact={handleReact}
-                  onComment={handleComment}
-                  reactingActivityId={reactingActivityId}
-                  hasNextPage={hasNextActivity}
-                  onLoadMore={handleLoadMoreActivity}
-                  isPreview
-                  onShowAll={handleShowAllActivity}
-                />
-              )}
+                  <Button
+                    label={
+                      canJoinDirectly ? 'Join community' : 'Invite required'
+                    }
+                    variant="default"
+                    fullWidth
+                    onClick={handleJoin}
+                    loading={isJoiningCommunity}
+                    disabled={isJoiningCommunity || !canJoinDirectly}
+                    leftIcon={<RiUserAddLine size={18} />}
+                  />
+                </View>
+              </View>
+            ) : (
+              <>
+                <View className="">
+                  <CommunityTabs
+                    activeTab={activeTab}
+                    onTabChange={handleTabChange}
+                    showModeration={isOwner}
+                  />
+                </View>
 
-              {activeTab === 'members' && (
-                <MembersTab
-                  members={members.slice(0, 4)}
-                  isLoading={isLoadingMembers}
-                  currentUserRole={userRole}
-                  hasNextPage={hasNextMembers}
-                  onLoadMore={handleLoadMoreMembers}
-                  isPreview
-                  onShowAll={handleShowAllMembers}
-                />
-              )}
+                <View className="flex-1 px-mg pb-20">
+                  {activeTab === 'templates' && (
+                    <TemplatesTab
+                      templates={templates.slice(0, 4)}
+                      isLoading={isLoadingTemplates}
+                      isMember={isMember}
+                      userRole={userRole}
+                      onCreateTemplate={handleCreateTemplate}
+                      onStartGoal={handleStartGoal}
+                      hasNextPage={hasNextTemplates}
+                      onLoadMore={handleLoadMoreTemplates}
+                      isPreview
+                      onShowAll={handleShowAllGoals}
+                    />
+                  )}
 
-              {activeTab === 'moderation' && isOwner && <ModerationTab />}
-            </View>
+                  {activeTab === 'activity' && (
+                    <ActivityTab
+                      activities={activities.slice(0, 4)}
+                      isLoading={isLoadingActivity}
+                      onReact={handleReact}
+                      onComment={handleComment}
+                      reactingActivityId={reactingActivityId}
+                      hasNextPage={hasNextActivity}
+                      onLoadMore={handleLoadMoreActivity}
+                      isPreview
+                      onShowAll={handleShowAllActivity}
+                    />
+                  )}
+
+                  {activeTab === 'members' && (
+                    <MembersTab
+                      members={members.slice(0, 4)}
+                      isLoading={isLoadingMembers}
+                      currentUserRole={userRole}
+                      hasNextPage={hasNextMembers}
+                      onLoadMore={handleLoadMoreMembers}
+                      isPreview
+                      onShowAll={handleShowAllMembers}
+                    />
+                  )}
+
+                  {activeTab === 'moderation' && isOwner && <ModerationTab />}
+                </View>
+              </>
+            )}
           </View>
-        </NoiseComponent>
-      </PullToRefresh>
+        </PullToRefresh>
+      </NoiseComponent>
     </View>
   )
 }

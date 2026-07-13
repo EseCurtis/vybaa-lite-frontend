@@ -87,7 +87,7 @@ export function GoalCard({
     <View className="flex-row mt-3 w-full overflow-x-scroll no-scrollbar snap-x snap-mandatory gap-3 ">
       <Pressable
         onPress={handleCardClick}
-        className={`p-2 border-b border-b-red-500 flex flex-col w-full shrink-0 rounded-3xl relative snap-center transition-all ${
+        className={`p-2  flex flex-col w-full shrink-0 rounded-3xl relative snap-center transition-all ${
           isSelected ? 'ring-2 ring-white ring-offset-2 ring-offset-cardd' : ''
         }`}
         style={{
@@ -116,10 +116,12 @@ export function GoalCard({
             </View>
           </View>
         )}
-        
+
         <View className="flex-col items-start pl-3 text-left  w-full">
           <View className="flex-row items-start gap-2 mb-2 w-full ">
-            <Text className="mb-1 max-w-[80vw] flex-1 font-semibold">{goalText} </Text>
+            <Text className="mb-1 max-w-[80vw] flex-1 font-semibold">
+              {goalText}{' '}
+            </Text>
             {community && (
               <Pressable
                 onPress={handleCommunityClick as any}
@@ -144,7 +146,7 @@ export function GoalCard({
           >
             {canCheckIn ? (
               <Button
-                leftIcon={<RiArrowRightUpLine color={"#0a0e16"}/>}
+                leftIcon={<RiArrowRightUpLine color={'#0a0e16'} />}
                 variant="default"
                 fullWidth
                 onClick={async (e) => {
@@ -166,7 +168,7 @@ export function GoalCard({
                     {
                       title: 'Goal Details',
                       elevation: 999,
-                    }
+                    },
                   )
                 }}
                 className="text-sm font-bold border-2 border-cardd !bg-black/20  p-1 px-4 h-auto"
@@ -175,7 +177,7 @@ export function GoalCard({
               />
             ) : (
               <Button
-                leftIcon={<RiArrowRightUpLine color={color}/>}
+                leftIcon={<RiArrowRightUpLine color={color} />}
                 variant="default"
                 fullWidth
                 disabled

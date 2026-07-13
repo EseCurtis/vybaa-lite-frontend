@@ -1,11 +1,15 @@
 import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
-import React, { useEffect } from 'react'
+import React from 'react'
 import { toast as sonnerToast, Toaster } from 'sonner'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
 type ToastContextType = {
-  showToast: (message: string, type?: ToastType, duration?: number) => string | number
+  showToast: (
+    message: string,
+    type?: ToastType,
+    duration?: number,
+  ) => string | number
   success: (message: string, duration?: number) => string | number
   error: (message: string, duration?: number) => string | number
   warning: (message: string, duration?: number) => string | number
@@ -51,32 +55,34 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           return sonnerToast.info(message, options)
       }
     },
-    []
+    [],
   )
 
   const success = React.useCallback(
-    (message: string, duration = 3000) => showToast(message, 'success', duration),
-    [showToast]
+    (message: string, duration = 3000) =>
+      showToast(message, 'success', duration),
+    [showToast],
   )
 
   const error = React.useCallback(
     (message: string, duration = 4000) => showToast(message, 'error', duration),
-    [showToast]
+    [showToast],
   )
 
   const warning = React.useCallback(
-    (message: string, duration = 3500) => showToast(message, 'warning', duration),
-    [showToast]
+    (message: string, duration = 3500) =>
+      showToast(message, 'warning', duration),
+    [showToast],
   )
 
   const info = React.useCallback(
     (message: string, duration = 3000) => showToast(message, 'info', duration),
-    [showToast]
+    [showToast],
   )
 
   const loading = React.useCallback(
     (message: string) => showToast(message, 'loading', 0),
-    [showToast]
+    [showToast],
   )
 
   const dismiss = React.useCallback((id: string | number) => {
@@ -85,12 +91,12 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = React.useMemo(
     () => ({ showToast, success, error, warning, info, loading, dismiss }),
-    [showToast, success, error, warning, info, loading, dismiss]
+    [showToast, success, error, warning, info, loading, dismiss],
   )
 
-  useEffect(() => {
-   showToast('Welcome to Vybaa! Your AI companion for self-reflection and personal growth.', 'success', 5000)
-  }, [top])
+  // useEffect(() => {
+  //  showToast('Welcome to Vybaa! Your AI companion for self-reflection and personal growth.', 'success', 5000)
+  // }, [top])
 
   //alert(top)
 
@@ -99,21 +105,19 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       <Toaster
         position="top-center"
-     
         richColors
         toastOptions={{
           className: 'rounded-full',
           style: {
             borderRadius: '9999px',
             top: top,
-            textAlign: "center"
-           // transform: `translateY(${Number(top)*4}px)`,
-           
+            textAlign: 'center',
+            // transform: `translateY(${Number(top)*4}px)`,
           },
         }}
         style={{
-          textAlign: "left",
-          fontWeight: "bold"
+          textAlign: 'left',
+          fontWeight: 'bold',
         }}
       />
     </ToastContext.Provider>

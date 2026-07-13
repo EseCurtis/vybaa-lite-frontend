@@ -146,7 +146,7 @@ export const BottomSheetProvider = ({
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              className="fixed inset-0 max-w-[400px] flex-1 mx-auto"
+              className="fixed inset-0 max-w-[400px] w-full flex-1 mx-auto"
               style={{ zIndex: sheetZIndex }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -161,7 +161,7 @@ export const BottomSheetProvider = ({
               />
               <motion.div
                 className={cn(
-                  'bg-cardd rounded-t-2xl p-5 w-full absolute bottom-0 left-0',
+                  'bg-cardd border-2 border-card-light/30 rounded-3xl p-5  absolute bottom-mg left-1/2 !-translate-x-1/2 w-[calc(100%-17px)] ',
                   topSize === 'semi-full' && 'min-h-[78dvh]',
                 )}
                 style={shadow}

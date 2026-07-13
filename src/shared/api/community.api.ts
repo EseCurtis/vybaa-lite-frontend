@@ -21,7 +21,10 @@ export interface Community {
   }
   createdAt: string
   updatedAt: string
+  discoveryReason?: string
+  discoveryScore?: number
   isMember?: boolean
+  joinedAt?: string | null
   userRole?: 'OWNER' | 'MOD' | 'MEMBER' | null
   _count?: {
     members: number

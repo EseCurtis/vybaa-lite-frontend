@@ -14,6 +14,8 @@ PODS:
     - CapacitorCordova
   - CapacitorApp (7.1.2):
     - Capacitor
+  - CapacitorBrowser (7.0.5):
+    - Capacitor
   - CapacitorCordova (7.6.2)
   - CapacitorFilesystem (8.1.2):
     - Capacitor
@@ -29,6 +31,8 @@ PODS:
   - CapacitorShare (8.0.1):
     - Capacitor
   - CapacitorStatusBar (7.0.6):
+    - Capacitor
+  - CapacitorVoiceRecorder (7.0.6):
     - Capacitor
   - CapgoCapacitorSocialLogin (8.3.17):
     - Alamofire (~> 5.10.2)
@@ -119,6 +123,7 @@ PODS:
 DEPENDENCIES:
   - "Capacitor (from `../../node_modules/.pnpm/@capacitor+ios@7.6.2_@capacitor+core@7.6.2/node_modules/@capacitor/ios`)"
   - "CapacitorApp (from `../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.2/node_modules/@capacitor/app`)"
+  - "CapacitorBrowser (from `../../node_modules/.pnpm/@capacitor+browser@7.0.5_@capacitor+core@7.6.2/node_modules/@capacitor/browser`)"
   - "CapacitorCordova (from `../../node_modules/.pnpm/@capacitor+ios@7.6.2_@capacitor+core@7.6.2/node_modules/@capacitor/ios`)"
   - "CapacitorFilesystem (from `../../node_modules/.pnpm/@capacitor+filesystem@8.1.2_@capacitor+core@7.6.2/node_modules/@capacitor/filesystem`)"
   - "CapacitorHaptics (from `../../node_modules/.pnpm/@capacitor+haptics@7.0.5_@capacitor+core@7.6.2/node_modules/@capacitor/haptics`)"
@@ -127,6 +132,7 @@ DEPENDENCIES:
   - "CapacitorPushNotifications (from `../../node_modules/.pnpm/@capacitor+push-notifications@7.0.6_@capacitor+core@7.6.2/node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@7.6.2/node_modules/@capacitor/share`)"
   - "CapacitorStatusBar (from `../../node_modules/.pnpm/@capacitor+status-bar@7.0.6_@capacitor+core@7.6.2/node_modules/@capacitor/status-bar`)"
+  - "CapacitorVoiceRecorder (from `../../node_modules/.pnpm/capacitor-voice-recorder@7.0.6_@capacitor+core@7.6.2_@capacitor+filesystem@8.1.2_@capacitor+core@7.6.2_/node_modules/capacitor-voice-recorder`)"
   - "CapgoCapacitorSocialLogin (from `../../node_modules/.pnpm/@capgo+capacitor-social-login@8.3.17_@capacitor+core@7.6.2/node_modules/@capgo/capacitor-social-login`)"
   - FirebaseMessaging
   - "MozartecCapacitorMicrophone (from `../../node_modules/.pnpm/@mozartec+capacitor-microphone@7.1.0_@capacitor+core@7.6.2/node_modules/@mozartec/capacitor-microphone`)"
@@ -161,6 +167,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.6.2_@capacitor+core@7.6.2/node_modules/@capacitor/ios"
   CapacitorApp:
     :path: "../../node_modules/.pnpm/@capacitor+app@7.1.2_@capacitor+core@7.6.2/node_modules/@capacitor/app"
+  CapacitorBrowser:
+    :path: "../../node_modules/.pnpm/@capacitor+browser@7.0.5_@capacitor+core@7.6.2/node_modules/@capacitor/browser"
   CapacitorCordova:
     :path: "../../node_modules/.pnpm/@capacitor+ios@7.6.2_@capacitor+core@7.6.2/node_modules/@capacitor/ios"
   CapacitorFilesystem:
@@ -177,6 +185,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/.pnpm/@capacitor+share@8.0.1_@capacitor+core@7.6.2/node_modules/@capacitor/share"
   CapacitorStatusBar:
     :path: "../../node_modules/.pnpm/@capacitor+status-bar@7.0.6_@capacitor+core@7.6.2/node_modules/@capacitor/status-bar"
+  CapacitorVoiceRecorder:
+    :path: "../../node_modules/.pnpm/capacitor-voice-recorder@7.0.6_@capacitor+core@7.6.2_@capacitor+filesystem@8.1.2_@capacitor+core@7.6.2_/node_modules/capacitor-voice-recorder"
   CapgoCapacitorSocialLogin:
     :path: "../../node_modules/.pnpm/@capgo+capacitor-social-login@8.3.17_@capacitor+core@7.6.2/node_modules/@capgo/capacitor-social-login"
   MozartecCapacitorMicrophone:
@@ -190,6 +200,7 @@ SPEC CHECKSUMS:
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   Capacitor: 5d4e6523047feb0e4755e5e922ded0372c2dde24
   CapacitorApp: f01a913211780e0718dae9750442c3e23f96e106
+  CapacitorBrowser: 6d09f59655e89aede71654ef08b98de55cf032b6
   CapacitorCordova: 8214697bed435f6e7c5e3ed86d1632a8c42f7d77
   CapacitorFilesystem: 2db285a1ac6e475cc27cae2e1bea999000f9e2be
   CapacitorHaptics: 1b145fa83c622e5383a3bac04ea81e2514f0b0f5
@@ -198,6 +209,7 @@ SPEC CHECKSUMS:
   CapacitorPushNotifications: b8e30637549ce91468b8c4dddbef2657be831f4c
   CapacitorShare: 0c58305114538568059bfc07111f22dcb9cb2a82
   CapacitorStatusBar: 416e9e53fd6397e668d4a181cd2131617d949bd6
+  CapacitorVoiceRecorder: 9158861be982f32d411769723a4d813d6ce46135
   CapgoCapacitorSocialLogin: bfa9f0cd49e7b39c0358df03d0e504d8d729cb85
   FBAEMKit: 2a6b529993713c185b02bc36f8c91129bf78dfb0
   FBSDKCoreKit: 65d7f7a7d6fcc3aa6eb6e093ec737a4184fc6049
@@ -220,6 +232,6 @@ SPEC CHECKSUMS:
   RevenueCat: e47ff90dfd271fde155a4befe48e8fc02e8281e4
   RevenuecatPurchasesCapacitor: 6727a4dc1455bdf2374259420719ce5dfbe957fa
 
-PODFILE CHECKSUM: 9f16bde8730274bb161fe4fd7b61a225c3a3322a
+PODFILE CHECKSUM: b537145bc44e2ca69b15953c0b8cbb7a63d8c58f
 
 COCOAPODS: 1.16.2

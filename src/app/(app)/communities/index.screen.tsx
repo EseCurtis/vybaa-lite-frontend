@@ -1,20 +1,24 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
-import { CommunityCard } from '@/components/custom/community/community-card.component'
 import { CommunitiesHeaderMenuSheet } from '@/components/custom/community/communities-header-menu.sheet'
+import { CommunityCard } from '@/components/custom/community/community-card.component'
 import { CreateCommunitySheet } from '@/components/custom/community/create-community-sheet.component'
 import { JoinByCodeSheet } from '@/components/custom/community/join-by-code-sheet.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useCommunities } from '@/hooks/use-communities.hook'
+import {
+  useCommunities,
+  useJoinCommunity,
+  useMyCommunities,
+} from '@/hooks/use-communities.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import type { Community } from '@/shared/api/community.api'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { cn } from '@/shared/utils/helpers.util'
@@ -24,6 +28,27 @@ import { useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
 type CommunitySubTab = 'ALL' | 'MINE' | 'JOINED'
+type CommunityFeedKey = 'ALL' | 'MY'
+
+function mergeCommunities(
+  currentCommunities: Community[],
+  nextCommunities: Community[],
+): Community[] {
+  const nextCommunityById = new Map(
+    nextCommunities.map((community) => [community.id, community]),
+  )
+  const mergedCommunities = currentCommunities.map(
+    (community) => nextCommunityById.get(community.id) ?? community,
+  )
+  const existingIds = new Set(
+    currentCommunities.map((community) => community.id),
+  )
+  const appendedCommunities = nextCommunities.filter(
+    (community) => !existingIds.has(community.id),
+  )
+
+  return [...mergedCommunities, ...appendedCommunities]
+}
 
 export default function CommunitiesScreen() {
   const router = useRouter()
@@ -32,30 +57,66 @@ export default function CommunitiesScreen() {
   const { user } = useAuth()
   const [page, setPage] = useState(1)
   const [tab, setTab] = useState<CommunitySubTab>('ALL')
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const { data, isLoading, refetch, isFetching } = useCommunities(page, 10)
+  const [communitiesByFeed, setCommunitiesByFeed] = useState<
+    Record<CommunityFeedKey, Community[]>
+  >({
+    ALL: [],
+    MY: [],
+  })
+  const [joiningCommunityId, setJoiningCommunityId] = useState<string | null>(
+    null,
+  )
+  const discoverQuery = useCommunities(page, 20, true)
+  const myCommunitiesQuery = useMyCommunities(page, 20)
+  const { mutateAsync: joinCommunity } = useJoinCommunity()
 
-  const communities = data?.data || []
-  const hasMore = data?.pagination?.hasNextPage || false
+  const activeQuery = tab === 'ALL' ? discoverQuery : myCommunitiesQuery
+  const activeFeedKey: CommunityFeedKey = tab === 'ALL' ? 'ALL' : 'MY'
+  const communities = communitiesByFeed[activeFeedKey]
+  const hasMore = activeQuery.data?.pagination?.hasNextPage || false
+  const isLoading = activeQuery.isLoading && communities.length === 0
+  const isFetching = activeQuery.isFetching
 
-  const filtered = communities.filter((c: any) => {
-    const role = c.userRole
-    const isOwner = role === 'OWNER' || (!!user && c.ownerId === user.id)
-    if (tab === 'MINE') return isOwner
-    if (tab === 'JOINED') return !isOwner
+  const filtered = communities.filter((community) => {
+    const role = community.userRole
+    const isOwner =
+      role === 'OWNER' || (!!user && community.ownerId === user.id)
+    if (tab === 'MINE') {
+      return isOwner
+    }
+    if (tab === 'JOINED') {
+      return !isOwner
+    }
     return true
   })
 
   useEffect(() => {
     hapticFeedback.light()
+    setPage(1)
   }, [tab])
+
+  useEffect(() => {
+    const nextCommunities = activeQuery.data?.data
+
+    if (!nextCommunities) {
+      return
+    }
+
+    setCommunitiesByFeed((currentFeeds) => ({
+      ...currentFeeds,
+      [activeFeedKey]:
+        page === 1
+          ? nextCommunities
+          : mergeCommunities(currentFeeds[activeFeedKey], nextCommunities),
+    }))
+  }, [activeFeedKey, activeQuery.data, page])
 
   const handleCreateCommunity = () => {
     bottomSheet.present(
       <CreateCommunitySheet
         onSuccess={() => {
           bottomSheet.dismiss()
-          refetch()
+          void activeQuery.refetch()
         }}
       />,
       {
@@ -69,7 +130,7 @@ export default function CommunitiesScreen() {
     bottomSheet.present(
       <JoinByCodeSheet
         onSuccess={() => {
-          refetch()
+          void activeQuery.refetch()
         }}
         onClose={() => bottomSheet.dismiss()}
       />,
@@ -80,21 +141,36 @@ export default function CommunitiesScreen() {
     )
   }
 
-  const handleCommunityPress = (community: any) => {
+  const handleCommunityPress = (community: Community) => {
     router.navigate({ to: `/app/community/${community.id}` })
   }
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true)
-    setPage(1)
+  const handleQuickJoin = async (community: Community) => {
+    if (community.isMember || joiningCommunityId) {
+      return
+    }
+
+    setJoiningCommunityId(community.id)
     try {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() }),
-        queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() }),
-      ])
-      await refetch()
+      await joinCommunity(community.id)
     } finally {
-      setIsRefreshing(false)
+      setJoiningCommunityId(null)
+    }
+  }
+
+  const handleRefresh = async () => {
+    const shouldRefetchCurrentPage = page === 1
+    setPage(1)
+    setCommunitiesByFeed((currentFeeds) => ({
+      ...currentFeeds,
+      [activeFeedKey]: [],
+    }))
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() }),
+      queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() }),
+    ])
+    if (shouldRefetchCurrentPage) {
+      await activeQuery.refetch()
     }
   }
 
@@ -138,7 +214,9 @@ export default function CommunitiesScreen() {
                 <Text
                   className={cn(
                     'text-sm font-bbh',
-                    tab === t ? 'text-black font-semibold' : 'text-card-lighter-3',
+                    tab === t
+                      ? 'text-black font-semibold'
+                      : 'text-card-lighter-3',
                   )}
                 >
                   {t === 'ALL' ? 'All' : t === 'MINE' ? 'Mine' : 'Joined'}
@@ -148,48 +226,52 @@ export default function CommunitiesScreen() {
           </View>
         </View>
 
-        <PullToRefresh
-          className="flex-1 overflow-y-auto no-scrollbar"
-          onRefresh={handleRefresh}
-          refreshing={isRefreshing}
-        >
-          <View className="flex-1 px-mg mt-7 pb-20">
+          <View className="flex-1 px-mg mt-1 h-full">
             {isLoading ? (
               <View className="flex-1 items-center justify-center">
                 <Spinner />
               </View>
             ) : filtered.length === 0 ? (
               <EmptyList
-                icon={<RiGroup2Line size={128} className="text-warning-yellow" />}
+                icon={
+                  <RiGroup2Line size={128} className="text-warning-yellow" />
+                }
                 title={
                   tab === 'MINE'
                     ? 'No owned communities yet'
                     : tab === 'JOINED'
                       ? 'No joined communities yet'
-                      : 'No communities yet'
+                      : 'Nothing to discover yet'
                 }
                 description={
                   tab === 'MINE'
                     ? 'Create a community to get started.'
-                    : 'Create a community or join one using an invite code.'
+                    : tab === 'JOINED'
+                      ? 'Join a community from All or use an invite code.'
+                      : 'Create a community or join one using an invite code.'
                 }
                 action={{
                   label: tab === 'MINE' ? 'Create community' : 'Join by code',
-                  onPress: tab === 'MINE' ? handleCreateCommunity : handleJoinByCode,
+                  onPress:
+                    tab === 'MINE' ? handleCreateCommunity : handleJoinByCode,
                 }}
               />
             ) : (
               <VirtualList
                 items={filtered}
                 estimateSize={120}
-                height={520}
                 renderItem={(community, index) => (
                   <>
-                    {!(index === 0) && <hr className="border-card-lighter/20" />}
+                    {!(index === 0) && (
+                      <hr className="border-card-lighter/20" />
+                    )}
                     <CommunityCard
                       key={community.id}
                       community={community}
+                      isJoining={joiningCommunityId === community.id}
+                      onJoin={tab === 'ALL' ? handleQuickJoin : undefined}
                       onPress={handleCommunityPress}
+                      showDiscoverySignal={tab === 'ALL'}
                     />
                   </>
                 )}
@@ -210,7 +292,6 @@ export default function CommunitiesScreen() {
               />
             )}
           </View>
-        </PullToRefresh>
 
         {/* Bottom hint for joining */}
         {communities.length > 0 && (
@@ -220,7 +301,9 @@ export default function CommunitiesScreen() {
               className="flex-row items-center justify-center gap-2 py-3 rounded-full bg-card-light/10 mb-2"
             >
               <RiKeyLine size={16} className="text-white/50" />
-              <Text className="text-white/50 text-xs font-bbh">Have an invite code? Tap to join</Text>
+              <Text className="text-white/50 text-xs font-bbh">
+                Have an invite code? Tap to join
+              </Text>
             </Pressable>
           </View>
         )}
