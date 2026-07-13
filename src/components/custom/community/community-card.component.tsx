@@ -5,10 +5,7 @@ import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
 import type { Community } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
-import {
-  RiArrowRightUpLine, RiGroupLine,
-  RiTargetLine
-} from '@remixicon/react'
+import { RiArrowRightUpLine, RiGroupLine, RiTargetLine } from '@remixicon/react'
 import type { MouseEvent } from 'react'
 
 import { FlameIcon } from 'lucide-react'
@@ -52,16 +49,18 @@ export function CommunityCard({
       className="p-3 flex-row gap-4 rounded-3xl mb-3 w-full shrink-0 relative transition-all"
     >
       <View className="relative size-[50px] shrink-0 inline-block">
-        <View
-          className="rounded-3xl absolute right-0 bottom-0 border border-white"
-          style={{ backgroundColor: bgColor }}
-        >
-          <Avatar url={community?.owner?.avatarUrl ?? undefined} />
-        </View>
+        {community?.owner && (
+          <View
+            className="rounded-3xl  z-10 absolute right-0 translate-x-[5px] -bottom-[5px] border-2 border-black"
+            style={{ backgroundColor: bgColor }}
+          >
+            <Avatar user={community?.owner as any} url={community?.owner?.avatarUrl ?? undefined} />
+          </View>
+        )}
 
-        <View className="size-full rounded-full overflow-hidden">
+        <View className="size-full rounded-xl overflow-hidden">
           <CommunityIllustration
-            className="size-full rounded-full"
+            className="size-full "
             label={community.name}
             seed={`${community.id}-${community.name}`}
             showInitials
@@ -72,15 +71,20 @@ export function CommunityCard({
       <View className="flex flex-col gap-2 flex-1 min-w-0">
         <View className="flex text-left flex-row items-start justify-between gap-2">
           <View className="flex-1 min-w-0">
-            <Text lines={1} className="text-white text-sm text-base font-bold font-bbh mb-1 break-words">
+            <Text
+              lines={1}
+              className="text-white text-sm text-base font-bold font-bbh mb-1 break-words"
+            >
               {community.name}
             </Text>
             {community.description && (
-              <Text lines={2} className="text-white/70 text-xs font-bbh line-clamp-2">
+              <Text
+                lines={2}
+                className="text-white/70 text-xs font-bbh line-clamp-2"
+              >
                 {community.description}
               </Text>
             )}
-          
           </View>
         </View>
 
@@ -89,25 +93,23 @@ export function CommunityCard({
             <View className="flex whitespace-nowrap flex-row items-center gap-1.5">
               <RiGroupLine size={16} className="text-blue-400" />
               <Text className="text-white/70 text-[11px] font-bbh">
-                {community._count?.members || 0} 
+                {community._count?.members || 0}
               </Text>
             </View>
-           <View className="flex whitespace-nowrap flex-row items-center gap-1.5">
+            <View className="flex whitespace-nowrap flex-row items-center gap-1.5">
               <RiTargetLine size={16} className="text-accent-400" />
               <Text className="text-white/70 text-[11px] font-bbh">
-                {community._count?.templates || 0} 
+                {community._count?.templates || 0}
               </Text>
             </View>
 
-             <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
+            <View className="flex flex whitespace-nowrap flex-row items-center gap-1.5">
               <FlameIcon size={16} className="text-warning-yellow" />
               <Text className="text-white/70 text-[11px] font-bbh">
-                {community._count?.goals || 0} 
+                {community._count?.goals || 0}
               </Text>
             </View>
           </View>
-
-        
         </View>
       </View>
       <View className="p-2 items-end justify-start">
@@ -120,7 +122,7 @@ export function CommunityCard({
             disabled={isJoining}
             className="px-4 py-2 min-w-[72px]"
             textClassName="text-xs"
-            size='sm'
+            size="sm"
           />
         ) : (
           <RiArrowRightUpLine className="text-card-lighter-3" />

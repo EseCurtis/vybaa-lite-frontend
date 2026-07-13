@@ -109,9 +109,9 @@ export default function AppScreen() {
               )}
             </View>
           )}
-          <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto bg-card-light/50 rounded-full">
+          <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto w-[60%] bg-card-light/50 rounded-full">
             <TouchableOpacity
-              className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
+              className="flex-1 rounded-full text-center bg-white px-4 py-4 flex-row justify-center items-center"
               disabled={isLoading}
               onPress={handleGetStarted}
             >
@@ -122,7 +122,7 @@ export default function AppScreen() {
             {IS_MOBILE && (
               <>
                 <TouchableOpacity
-                  className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
+                  className="shrink-0 rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
                   disabled={isLoading || isGoogleLoading}
                   onPress={handleGoogle}
                 >

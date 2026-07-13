@@ -2,12 +2,15 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useAuth } from '@/providers/auth.provider'
 import { featureFlags } from '@/shared/config/feature-flags.config'
+import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiEmotionLaughLine,
   RiFileMarkedLine,
   RiFireLine,
+  RiHeart2Line,
   RiRewindLine,
   RiTempColdLine,
   type RemixiconComponentType,
@@ -25,7 +28,7 @@ function HomeActionCard({
   name: string
   description: string
   icon: RemixiconComponentType
-  onAction?: () => void,
+  onAction?: () => void
   filled?: boolean
 }) {
   const Icon = icon
@@ -33,13 +36,38 @@ function HomeActionCard({
   const darkColor = adjustColor(color, { lightness: -5 })
 
   return (
-    <View className={cn(" text-center ", filled ? "col-span-2" : "col-span-1")}>
+    <View
+      style={
+        {
+          '--color': color,
+          '--darkColor': darkColor,
+        } as any
+      }
+      className={cn(
+        ' text-center  rounded-[40px] overflow-hidden',
+        filled ? 'col-span-2' : 'col-span-1',
+      )}
+    >
       <Pressable
         onPress={onAction}
-        className="w-full flex-col items-center justify-center h-[140%] bg-cardx rounded-[30px] p-mg"
+        className={cn(!filled && "aspect-square ", "w-full overflow-hidden flex-col  relative items-center justify-center h-[140%] bg-cardx rounded-[40px] p-mg")}
       >
-        <Icon color={darkColor} size={70} className="text-white" />
-        <View className="mt-1 flex-col items-center justify-center">
+        <View
+          className="border-2 size-full absolute z-[99] rounded-[42px] border-[var(--color)]"
+          style={{
+            maskImage: `linear-gradient(to bottom, transparent 0%, transparent 10%, black 130%)`,
+          
+          }}
+        ></View>
+        <View
+          style={{
+            background: 'radial-gradient( transparent 30%, var(--color))',
+            maskImage: `linear-gradient(to top, transparent 0%, transparent 50%, black 130%)`,
+          }}
+          className="bg-[var(--color)]  w-full h-full absolute bottom-0 rounded-[40px]  "
+        />
+        <Icon color={darkColor} size={70} className="text-white z-10" />
+        <View className="mt-1 flex-col items-center justify-center z-10">
           <Text className="font-bold  text-card-lighter-3">{name}</Text>
           <Text className="text-sm hidden leading-tight text-card-lighter-3/60">
             {description}
@@ -52,12 +80,12 @@ function HomeActionCard({
 
 export function HomeActions() {
   const bottomSheet = useBottomSheet()
+  const {user} = useAuth();
   const navigate = useNavigate()
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-      title: 'New Goal',
+      title: randomGreetings(user?.username),
       elevation: 999,
-      size: 'semi-full',
     })
   }
 
@@ -77,6 +105,17 @@ export function HomeActions() {
       onAction() {
         navigate({
           to: '/app/actions/flexx',
+        })
+      },
+    },
+    {
+      name: 'Wellbeing',
+      description: 'See your progress patterns',
+      icon: RiHeart2Line,
+       //enabled: featureFlags.insights,
+      onAction() {
+        navigate({
+          to: '/app/sub-profile/insights',
         })
       },
     },

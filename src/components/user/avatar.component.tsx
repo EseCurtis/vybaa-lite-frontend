@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import type { User } from '@/shared/types/auth.types'
-import { cn } from '@/shared/utils/helpers.util'
+import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import { Text } from '../layout/text.component'
 import { View } from '../layout/view.component'
 
@@ -21,19 +21,27 @@ export function Avatar({
   ].join('')
 
   const avatarUrl = user?.avatarUrl || url
+  const color = seededColor(JSON.stringify(user))
+  const darkerColor = adjustColor(color, { lightness: -30, saturation: -20 })
   return (
     <View
       className={cn(
         'rounded-full relative overflow-hidden flex place-content-center items-center justify-center',
         className,
       )}
-      style={{
-        width: size,
-        aspectRatio: '1/1',
-      }}
+      style={
+        {
+          width: size,
+          aspectRatio: '1/1',
+          '--darkcolor': darkerColor,
+          background: color,
+        } as any
+      }
     >
-      <Text className="absolute text-card-50 font-bbh size-full top-0 left-0 bg-card-600 flex place-content-center items-center justify-center">
-        <span className=' '>{initials}</span>
+      <Text className="absolute  font-bbh size-full top-0 left-0 bg-csard-600 flex place-content-center items-center justify-center">
+        <span className=" font-bold text-xs !text-[var(--darkcolor)]">
+          {initials}
+        </span>
       </Text>
       <img src={avatarUrl} className="size-full object-fill relative z-10" />
     </View>

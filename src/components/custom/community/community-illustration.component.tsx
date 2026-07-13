@@ -126,7 +126,7 @@ export function CommunityIllustration({
     >
       <View className="absolute inset-0 bg-black/10" />
       {showInitials ? (
-        <View className="absolute inset-0 items-center justify-center">
+        <View className="absolute inset-0  items-center justify-center">
           <Text className="font-bbh text-sm font-bold text-white">
             {getInitials(label)}
           </Text>

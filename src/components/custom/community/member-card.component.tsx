@@ -47,7 +47,7 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
   return (
     <Pressable
       onPress={handlePress}
-      className="p-4 w-full rounded-2xl bg-card-light/20 mb-3 min-h-[88px]"
+      className="p-4 w-full rounded-2xl bg-cardx mb-1 min-h-[88px]"
     >
       <View className="flex-row items-center gap-3 w-full">
         {/* Avatar */}
@@ -67,11 +67,11 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
 
         {/* Member Info */}
         <View className="flex-1 min-w-0">
-          <View className="flex-row items-start gap-2 mb-1 min-w-0">
-            <Text className="text-white text-base font-bold font-bbh flex-1 min-w-0 leading-tight break-words">
+          <View className="flex-row items-start justify-between  gap-2 w-full mb-1 min-w-0">
+            <Text className="text-white  mr-auto  text-left text-base font-bold font-bbh flex-1 min-w-0 leading-tight break-words">
               {displayName}
             </Text>
-            <View className="flex-row items-center gap-1 rounded-full bg-card-light/20 px-2 py-1 shrink-0">
+            <View className="flex-row items-center ml-auto gap-1 rounded-full bg-card-light/20 px-2 py-1 shrink-0">
               <RoleIcon size={14} className="text-white/40" />
               <Text className="text-white/50 text-[11px] font-bbh whitespace-nowrap">
                 {roleLabel}
@@ -79,14 +79,14 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
             </View>
           </View>
           <View className="flex-row items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
-            <Text className="text-white/40 text-xs font-bbh leading-snug">
+            <Text className="text-card-lighter-3/40 text-xs font-bbh leading-snug">
               Joined {moment(member.joinedAt).fromNow()}
             </Text>
             {typeof member.totalRewards === 'number' && (
-              <View className="flex-row items-center gap-1 min-w-0">
+              <View className="flex-row items-center ml-auto gap-1 min-w-0">
                 <RiCoinsLine size={12} className="text-accent-400" />
                 <Text className="text-accent-400 text-xs font-bbh leading-snug break-words">
-                  {member.totalRewards.toLocaleString()} Play Points
+                  {member.totalRewards.toLocaleString()}ppts
                 </Text>
               </View>
             )}

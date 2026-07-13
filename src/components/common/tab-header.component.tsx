@@ -13,16 +13,18 @@ export function TabHeader({
   onBack,
   children,
   canGoBack = true,
+  className,
 }: {
   title?: ReactNode
   onBack?: () => void
   children?: ReactNode
   canGoBack?: boolean
+  className?: string
 }) {
   const router = useRouter()
 
   return (
-    <View className="px-mg py-mg">
+    <View className={cn(className, 'px-mg py-mg')}>
       <TopNotch />
 
       <View className="flex-row justify-between  items-center">

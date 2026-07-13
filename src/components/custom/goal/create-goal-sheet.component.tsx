@@ -7,6 +7,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateGoal } from '@/hooks/use-goals.hook'
 import { useToast } from '@/providers/toast.provider'
+import { randomCreateGoalPlaceholder } from '@/shared/goal/goal.util.shared'
 import { useState } from 'react'
 
 interface CreateGoalSheetProps {
@@ -67,23 +68,26 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
 
   return (
     <View className="space-y-4">
-      <View>
+      <View className='mt-3'>
         <TextArea
-          placeholder="What's your commitment?"
+          placeholder={randomCreateGoalPlaceholder()}
           value={formData.goalText}
           onChange={(e) => {
             setFormData({ ...formData, goalText: e.target.value })
             setFormError(null)
           }}
-          className="min-h-[100px] rounded-xl bg-card-light/30 p-1 text-white"
+          className="min-h-[10px] border-b !rounded-none border-card-light rounded-xl bsg-card-light/30 !px-0 text-white"
           maxLength={500}
+          autoFocus
+          rows={2}
         />
       </View>
 
-      <View>
+      <View className='flex-row items-center gap-3'>
+        <Text className="text-card-lighter-3 whitespace-nowrap">For how long?</Text>
         <Input
           type="number"
-          placeholder="Days (1-365)"
+          placeholder="20 days"
           value={formData.targetDays}
           onChange={(e) => {
             setFormData({ ...formData, targetDays: e.target.value })
@@ -98,7 +102,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
       <View className="space-y-2">
         <View className="flex-row items-center justify-between">
           <Text className="text-card-lighter-3/80 text-xs font-bbh">
-            Reminder time (optional)
+            Remind me at? (optional)
           </Text>
           <Switch
             checked={reminderEnabled}
@@ -118,7 +122,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
           }}
           disabled={!reminderEnabled}
         />
-        <Text className="text-card-lighter-3/60 text-xs text-left font-bbh mt-1 ml-1">
+        <Text className="text-card-lighter-3/60 text-center hidden text-xs text-left font-bbh mt-1 ml-1">
           Set a daily reminder time (optional) - toggle on to schedule
         </Text>
       </View>
@@ -128,8 +132,10 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
           {formError}
         </Text>
       )}
+      <View className="p-10"></View>
 
-      <Button
+      <View className="absolute bottom-0 left-0 w-full p-mg">
+        <Button
         label="Create Goal"
         variant="default"
         fullWidth
@@ -138,6 +144,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
         loading={isCreating}
         textClassName='text-sm'
       />
+      </View>
     </View>
   )
 }

@@ -32,14 +32,14 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   return (
     <div
-      className={cn('w-full', containerClassName)}
+      className={cn('w-full ', containerClassName)}
       style={maxWidth ? { maxWidth, ...style } : style}
     >
       <textarea
         ref={ref}
         rows={1}
         className={cn(
-          'w-full bg-transparent text-white font-bbh text-[17px] outline-none resize-none  placeholder:text-card-lighter-3/40',
+          'w-full bg-transparent !p-3 text-white font-bbh text-[17px] outline-none resize-none  placeholder:text-card-lighter-3/40',
           className,
         )}
         {...props}

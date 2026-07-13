@@ -5,12 +5,14 @@ import { CreateGoalSheet } from '@/components/custom/goal/create-goal-sheet.comp
 import { GoalDetailsSheet } from '@/components/custom/goal/goal-details-sheet.component'
 import { GoalList } from '@/components/custom/goal/goal-list.component'
 import { View } from '@/components/layout/view.component'
+import { useAuth } from '@/providers/auth.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { useToast } from '@/providers/toast.provider'
 import type { Goal } from '@/shared/api/goal.api'
 import { goalAPI } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
+import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
@@ -18,6 +20,7 @@ export default function GoalsAppScreen() {
   const bottomSheet = useBottomSheetController()
   const queryClient = useQueryClient()
   const toast = useToast()
+  const { user} = useAuth();
 
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set())
@@ -26,7 +29,7 @@ export default function GoalsAppScreen() {
 
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-      title: 'New Goal',
+      title:randomGreetings(user?.username),
       elevation: 999,
       size: 'semi-full',
     })

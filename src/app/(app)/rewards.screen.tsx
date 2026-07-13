@@ -52,7 +52,7 @@ export default function RewardsScreen() {
       <NoiseComponent>
         <RewardsHeader onRefresh={handleRefresh} />
 
-        <View className="px-mg py-6 space-y-6">
+        <View className="px-mg py-6 space-y-3">
           <PlayWalletPanel rewards={rewards} />
         </View>
       </NoiseComponent>

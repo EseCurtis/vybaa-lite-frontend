@@ -227,14 +227,15 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
       <NoiseComponent>
-        <TopNotchPadd />
-        {isEditing && (
+        {isEditing ? (
           <TabHeader
             onBack={() => {
               setIsEditing(false)
             }}
             title="Edit Profile"
           />
+        ) : (
+          <TopNotchPadd />
         )}
 
         <View className="flex-1 px-mg pb-[170px] pt-4 space-y-3">

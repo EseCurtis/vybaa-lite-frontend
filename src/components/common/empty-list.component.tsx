@@ -21,12 +21,12 @@ export function EmptyList({ icon, title, description, action }: EmptyListProps) 
         </View>
       )}
       
-      <Text className="text-white w-full  text-xl font-bold font-bbh text-center mb-3">
+      <Text className="text-white w-full  text-md font-bold font-bbh text-center mb-3">
         {title}
       </Text>
       
       {description && (
-        <Text className="text-white/60 text-base font-bbh text-center mb-8 max-w-sm">
+        <Text className="text-card-lighter-3 text-base text-sm font-bbh text-center mb-8 max-w-sm">
           {description}
         </Text>
       )}

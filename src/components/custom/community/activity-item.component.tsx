@@ -3,14 +3,18 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityActivity } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
+import { formatCompactNumber } from '@/shared/utils/number-format.util'
 import {
   RiChat3Line,
+  RiDoorOpenLine,
   RiErrorWarningLine,
   RiFileAddLine,
   RiFireLine,
   RiHeartFill,
   RiHeartLine,
+  RiIndeterminateCircleLine,
   RiTrophyLine,
+  type RemixiconComponentType,
 } from '@remixicon/react'
 import moment from 'moment'
 
@@ -19,12 +23,15 @@ interface ActivityItemProps {
   onReact?: (activityId: string) => void
   onComment?: (activityId: string) => void
   isReacting?: boolean
+  isLastItem?: boolean
 }
 
-const activityIcons = {
+const activityIcons: Record<CommunityActivity['type'], RemixiconComponentType> = {
   GOAL_STARTED: RiFireLine,
   GOAL_CHECK_IN: RiFireLine,
   GOAL_COMPLETED: RiTrophyLine,
+  GOAL_DELETED: RiIndeterminateCircleLine,
+  MEMBER_LEFT: RiDoorOpenLine,
   ACHIEVEMENT_EARNED: RiTrophyLine,
   TEMPLATE_CREATED: RiFileAddLine,
   GOAL_STREAK_RESET: RiErrorWarningLine,
@@ -48,8 +55,9 @@ export function ActivityItem({
   onReact,
   onComment,
   isReacting,
+  isLastItem,
 }: ActivityItemProps) {
-  const Icon = activityIcons[activity.type] || RiFireLine
+  const Icon = activityIcons[activity.type]
   const baseLabel = activityLabels[activity.type] || activity.type
 
   let goalOrTemplateLabel: string | null = null
@@ -58,9 +66,16 @@ export function ActivityItem({
     try {
       const meta = JSON.parse(activity.metadata)
       goalOrTemplateLabel =
-        meta.goalText || meta.templateTitle || meta.title || meta.milestoneName || null
+        meta.goalText ||
+        meta.templateTitle ||
+        meta.title ||
+        meta.milestoneName ||
+        null
 
-      if (activity.type === 'MILESTONE_REACHED' && typeof meta.points === 'number') {
+      if (
+        activity.type === 'MILESTONE_REACHED' &&
+        typeof meta.points === 'number'
+      ) {
         milestonePointsLabel = `(+${meta.points} pts)`
       }
     } catch {
@@ -82,8 +97,7 @@ export function ActivityItem({
     onReact?.(activity.id)
   }
 
-  const handleComment = (e: any) => {
-    e.stopPropagation()
+  const handleComment = () => {
     onComment?.(activity.id)
   }
 
@@ -93,7 +107,7 @@ export function ActivityItem({
     <View className="mb-1 rounded-2xl">
       <View className="flex-row items-start gap-3 mb-3">
         <View className="">
-          <View className="w-10 h-10 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
+          <View className="w-12 h-12 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
             {activity.user.avatarUrl ? (
               <img
                 src={activity.user.avatarUrl}
@@ -101,31 +115,38 @@ export function ActivityItem({
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
-              <Text className="text-white/60 text-sm font-bold font-bbh">
+              <Text className="text-card-lighter-3/60 text-sm font-bold font-bbh">
                 {(activity.user.username ||
                   activity.user.firstName ||
                   'U')[0].toUpperCase()}
               </Text>
             )}
           </View>
-          <View className="h-7 scale-y-[1.7] border-l mx-auto mt-3 border-card-lighter-3/30 "></View>
+          {!isLastItem && (
+            <View className="h-7 scale-y-[1.7] border-l border-dashed mx-auto mt-4 -translate-x-0.5 border-card-lighter-3/30 "></View>
+          )}
         </View>
 
         <View className="flex-1">
           <View className="flex-col items-start gap-2 mb-1">
-         <View className="flex-row gap-2 items-center">
-             <Text className="text-white text-xs font-bold font-bbh">
-              @{activity.user.username || activity.user.firstName || 'User'}
+            <View className="flex-row gap-2 items-center">
+              <Text className="text-white text-xs font-bold font-bbh">
+                @{activity.user.username || activity.user.firstName || 'User'}
+              </Text>
+              <Icon
+                size={14}
+                color={seedColor}
+                className="text-card-lighter-3/40"
+              />
+              <Text className="text-card-lighter-3/40 text-xs font-bbh">
+                {moment(activity.createdAt).fromNow()}
+              </Text>
+            </View>
+            <Text className="text-card-lighter-3/90 text-xs font-bbh">
+              {label}
             </Text>
-            <Icon size={14} color={seedColor} className="text-white/40" />
-            <Text className="text-white/40 text-xs font-bbh">
-              {moment(activity.createdAt).fromNow()}
-            </Text>
-         </View>
-            <Text className="text-white/60 text-sm font-bbh">{label}</Text>
           </View>
           <View className="">
-            
             <View className="flex-row justify-ensd items-center gap-4 mt-3">
               <Pressable
                 onPress={() => {
@@ -137,12 +158,12 @@ export function ActivityItem({
                 {activity.hasUserReacted ? (
                   <RiHeartFill size={18} className="text-accent-500" />
                 ) : (
-                  <RiHeartLine size={18} className="text-white/40" />
+                  <RiHeartLine size={18} className="text-card-lighter-3/40" />
                 )}
                 <Text
-                  className={`text-sm font-bbh ${activity.hasUserReacted ? 'text-accent-500' : 'text-white/60'}`}
+                  className={`text-sm font-bbh ${activity.hasUserReacted ? 'text-accent-500' : 'text-card-lighter-3/60'}`}
                 >
-                  {activity._count?.reactions || 0}
+                  {formatCompactNumber(activity._count?.reactions)}
                 </Text>
               </Pressable>
 
@@ -150,9 +171,9 @@ export function ActivityItem({
                 onPress={handleComment}
                 className="flex-row hidden items-center gap-1.5"
               >
-                <RiChat3Line size={18} className="text-white/40" />
-                <Text className="text-white/60 text-sm font-bbh">
-                  {activity._count?.comments || 0}
+                <RiChat3Line size={18} className="text-card-lighter-3/40" />
+                <Text className="text-card-lighter-3/60 text-sm font-bbh">
+                  {formatCompactNumber(activity._count?.comments)}
                 </Text>
               </Pressable>
             </View>

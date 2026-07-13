@@ -1,5 +1,5 @@
-import { useVirtualizer } from '@tanstack/react-virtual';
-import React, { useRef, type ReactNode } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual'
+import React, { useRef, type ReactNode } from 'react'
 
 /**
  * Generic virtualized list using react-virtual for web with dynamic height support.
@@ -19,13 +19,14 @@ import React, { useRef, type ReactNode } from 'react';
  *   />
  */
 export interface VirtualListProps<T> {
-  items: T[];
-  renderItem: (item: T, index: number) => React.ReactNode;
-  estimateSize?: number;
-  height?: number;
-  itemKey?: (item: T, index: number) => string | number;
-  footer?: ReactNode;
-  overscan?: number;
+  items: T[]
+  renderItem: (item: T, index: number) => React.ReactNode
+  estimateSize?: number
+  height?: number
+  itemKey?: (item: T, index: number) => string | number
+  footer?: ReactNode
+  header?: ReactNode
+  overscan?: number
 }
 
 export function VirtualList<T extends { id?: string | number }>({
@@ -35,10 +36,11 @@ export function VirtualList<T extends { id?: string | number }>({
   height = 600,
   itemKey = (item, i) => (item.id != null ? item.id : i),
   footer,
+  header,
   overscan = 5,
 }: VirtualListProps<T>) {
-  const parentRef = useRef<HTMLDivElement>(null);
-  
+  const parentRef = useRef<HTMLDivElement>(null)
+
   const virtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => parentRef.current,
@@ -46,20 +48,25 @@ export function VirtualList<T extends { id?: string | number }>({
     overscan,
     // Enable dynamic size measurement
     measureElement:
-      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+      typeof window !== 'undefined' &&
+      navigator.userAgent.indexOf('Firefox') === -1
         ? (element) => element?.getBoundingClientRect().height
         : undefined,
-  });
+  })
 
   return (
     <div
       ref={parentRef}
       style={{ height, overflowY: 'auto', position: 'relative' }}
-      className='no-scrollbar'
+      className="no-scrollbar"
     >
-      <div  className='no-scrollbar' style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
+      {header}
+      <div
+        className="no-scrollbar"
+        style={{ height: virtualizer.getTotalSize(), position: 'relative' }}
+      >
         {virtualizer.getVirtualItems().map((virtualRow) => {
-          const item = items[virtualRow.index];
+          const item = items[virtualRow.index]
           return (
             <div
               key={itemKey(item, virtualRow.index)}
@@ -75,16 +82,10 @@ export function VirtualList<T extends { id?: string | number }>({
             >
               {renderItem(item, virtualRow.index)}
             </div>
-          );
+          )
         })}
       </div>
       {footer}
     </div>
-  );
+  )
 }
-
-
-
-
-
-

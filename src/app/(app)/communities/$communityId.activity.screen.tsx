@@ -1,5 +1,4 @@
 import { NoiseComponent } from '@/components/common/noise.component'
-import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ActivityTab } from '@/components/custom/community/activity-tab.component'
@@ -8,21 +7,23 @@ import { View } from '@/components/layout/view.component'
 import {
   useActivityFeed,
   useCommunity,
+  useReactToActivity,
 } from '@/hooks/use-communities.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export default function CommunityActivityScreen() {
   const router = useRouter()
-  const { communityId } = useParams({ from: '/app/community/activity/$communityId' })
+  const { communityId } = useParams({
+    from: '/app/community/activity/$communityId',
+  })
 
   const [isRefreshing, setIsRefreshing] = useState(false)
   const {
     data: community,
     isLoading: isLoadingCommunity,
     refetch: refetchCommunity,
-  } =
-    useCommunity(communityId)
+  } = useCommunity(communityId)
   const {
     data: activityData,
     isLoading: isLoadingActivity,
@@ -30,7 +31,12 @@ export default function CommunityActivityScreen() {
     hasNextPage,
     isFetchingNextPage,
     refetch: refetchActivity,
-  } = useActivityFeed(communityId,20)
+  } = useActivityFeed(communityId, 20)
+  const {
+    mutate: reactToActivity,
+    isPending: isReacting,
+    variables: reactingActivityId,
+  } = useReactToActivity(communityId)
 
   const activities = activityData?.pages.flatMap((page) => page.data) || []
 
@@ -89,23 +95,17 @@ export default function CommunityActivityScreen() {
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
         <TabHeader canGoBack title="Community activity" onBack={handleBack} />
-        <PullToRefresh
-          className="flex-1 overflow-y-auto no-scrollbar"
-          onRefresh={handleRefresh}
-          refreshing={isRefreshing}
-        >
-          <View className="flex-1 px-mg ">
-            <ActivityTab
-              activities={activities}
-              isLoading={isLoadingActivity || isFetchingNextPage}
-              onReact={() => {}}
-              onComment={() => {}}
-              reactingActivityId={null}
-              hasNextPage={hasNextPage}
-              onLoadMore={handleLoadMoreActivity}
-            />
-          </View>
-        </PullToRefresh>
+        <View className="flex-1 px-mg ">
+          <ActivityTab
+            activities={activities}
+            isLoading={isLoadingActivity || isFetchingNextPage}
+            onReact={reactToActivity}
+            onComment={() => {}}
+            reactingActivityId={isReacting ? reactingActivityId : null}
+            hasNextPage={hasNextPage}
+            onLoadMore={handleLoadMoreActivity}
+          />
+        </View>
       </NoiseComponent>
     </View>
   )

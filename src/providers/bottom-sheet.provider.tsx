@@ -1,12 +1,11 @@
 import { BottomNotchPadd } from '@/components/common/notch.component'
+import { useKeyboard } from '@/components/layout'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { hapticFeedback } from '@/shared/haptic.util'
-import { shouldAnimate } from '@/shared/utils/animation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { RiCloseCircleFill } from '@remixicon/react'
-import { AnimatePresence, motion } from 'framer-motion'
 import {
   createContext,
   useCallback,
@@ -99,26 +98,17 @@ export const BottomSheetProvider = ({
   }, [])
 
   const dismiss = useCallback(() => {
+    hapticFeedback.light()
     // Capture which sheet we intend to dismiss *now*.
     // This prevents "present then dismiss" in the same tick from closing the newly presented sheet.
     const currentStack = stackRef.current
     const idToRemove = currentStack[currentStack.length - 1]?.id
     if (!idToRemove) return
-    setTimeout(
-      () => {
-        setStack((prev) => prev.filter((s) => s.id !== idToRemove))
-      },
-      shouldAnimate ? 200 : 0,
-    )
+    setStack((prev) => prev.filter((s) => s.id !== idToRemove))
   }, [])
 
   const dismissAll = useCallback(() => {
-    setTimeout(
-      () => {
-        setStack([])
-      },
-      shouldAnimate ? 200 : 0,
-    )
+    setStack([])
   }, [])
 
   const isOpen = stack.length > 0
@@ -139,44 +129,37 @@ export const BottomSheetProvider = ({
         }
       : undefined
 
+      const {isKeyboardVisible} = useKeyboard()
+
   return (
     <BottomSheetContext.Provider value={value}>
       {children}
-      {shouldAnimate ? (
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              className="fixed inset-0 max-w-[400px] w-full flex-1 mx-auto"
-              style={{ zIndex: sheetZIndex }}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            >
-              <motion.div
-                className="absolute inset-0 bg-black/60"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={dismiss}
-              />
-              <motion.div
+      {isOpen && (
+        <>
+          <div
+            className="fixed top-0 bg-black/60 z-10 inset-0"
+            onClick={dismiss}
+          />
+
+          <div
+            className="fixed  inset-0 max-w-[400px] w-full flex-1 mx-auto"
+            style={{ zIndex: sheetZIndex, top: '0' }}
+          >
+               <div
+            className="fixed top-0  z-10 inset-0"
+            onClick={dismiss}
+          />
+            <div className='bottom-05-mg z-[10] max-h-[calc(100vh-(var(--safe-area-inset-top)+20px))] flex flex-col absolute left-1/2 !-translate-x-1/2 w-[calc(100%-17px)]'>
+
+              <div
                 className={cn(
-                  'bg-cardd border-2 border-card-light/30 rounded-3xl p-5  absolute bottom-mg left-1/2 !-translate-x-1/2 w-[calc(100%-17px)] ',
-                  topSize === 'semi-full' && 'min-h-[78dvh]',
+                  'bg-cardd  border-2 border-card-light/30 rounded-[30px] rounded-b-[40px] p-5  w-full',
+                  topSize === 'semi-full' && '',
                 )}
                 style={shadow}
-                initial={{ y: 40, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 32, opacity: 0 }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 320,
-                  damping: 26,
-                  mass: 0.8,
-                }}
               >
                 <>
-                  <View className="flex-row items-center justify-between mb-7">
+                  <View className={cn("flex-row items-center justify-between ", isKeyboardVisible && "mb-7")}>
                     {top?.title ? (
                       <Text className="text-white text-lg font-bold font-bbh">
                         {top.title}
@@ -202,54 +185,9 @@ export const BottomSheetProvider = ({
                   </View>
                 </>
                 <BottomNotchPadd />
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      ) : (
-        <>
-          {isOpen && (
-            <div
-              className="fixed inset-0 max-w-[400px] flex-1 mx-auto"
-              style={{ zIndex: sheetZIndex }}
-            >
-              <div className="absolute inset-0 bg-black/60" onClick={dismiss} />
-              <div
-                className={cn(
-                  'bg-[#111111] rounded-t-2xl p-5 w-full border-t border-[#2a2a2a] absolute bottom-0 left-0',
-                  topSize === 'semi-full' && 'min-h-[78dvh]',
-                )}
-                style={shadow}
-              >
-                <>
-                  <View className="flex-row items-center justify-between mb-7">
-                    {top?.title ? (
-                      <Text className="text-white text-lg font-bold font-bbh">
-                        {top.title}
-                      </Text>
-                    ) : (
-                      <View />
-                    )}
-                    {top?.title && (
-                      <TouchableOpacity onPress={dismiss}>
-                        <RiCloseCircleFill size={27} color="#ffffff" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                  <View
-                    className={cn(
-                      'overflow-y-auto pr-1',
-                      topSize === 'semi-full'
-                        ? 'max-h-[calc(88dvh-112px)]'
-                        : 'max-h-[70vh]',
-                    )}
-                  >
-                    {top?.content}
-                  </View>
-                </>
               </div>
             </div>
-          )}
+          </div>
         </>
       )}
     </BottomSheetContext.Provider>

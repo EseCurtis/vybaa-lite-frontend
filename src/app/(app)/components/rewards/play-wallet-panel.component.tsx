@@ -11,23 +11,23 @@ interface PlayWalletPanelProps {
 export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
   return (
     <>
-      <View className="rounded-2xl bg-card-light/10 p-6 space-y-2">
+      <View className="rounded-[30px] bg-cardx p-6 space-y-1">
         <View className="flex-row items-center gap-2">
           <RiCoinsLine size={24} className="text-accent-400" />
-          <Text className="text-white/60 text-sm font-bbh">
-            Play Wallet Balance
+          <Text className="text-card-lighter-3/60 text-sm font-bbh">
+            Balance
           </Text>
         </View>
         <Text className="text-white text-4xl font-bold font-bbh">
-          {rewards.balance.toLocaleString()}
+          {rewards.balance.toLocaleString()}<Text className="text-xs">pts</Text>
         </Text>
-        <Text className="text-white/40 text-xs font-bbh">
+        <Text className="text-card-lighter-3 text-xs font-bbh">
           Play Points earned from completed goals
         </Text>
       </View>
 
       {rewards.pendingPoints > 0 ? (
-        <View className="rounded-2xl bg-card-light/10 p-6 space-y-3">
+        <View className="rounded-[30px] bg-cardx p-6 space-y-3">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <RiTrophyLine size={20} className="text-accent-400" />
@@ -72,9 +72,9 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
           ) : null}
         </View>
       ) : (
-        <View className="rounded-2xl bg-card-light/10  p-6">
+        <View className="rounded-[30px] bg-cardx  p-6">
           <EmptyList
-            icon={<RiTrophyLine size={48} className="text-white/40" />}
+            icon={<RiTrophyLine size={48} className="text-card-lighter-3" />}
             title="No pending Play Points"
             description="Complete goals with milestones to earn pending Play Points"
           />

@@ -238,12 +238,36 @@ function rgbToHsl(r: number, g: number, b: number): HslColor {
 }
 
 /**
- * Returns a random number between min and max
- * @param min inclusive lower bound
- * @param max inclusive upper bound
+ * Returns a deterministic random number between min and max.
+ *
+ * @param min Lower bound
+ * @param max Upper bound
+ * @param seed Seed used to generate the random value
+ * @param integerOnly When true, returns a whole number
  */
-export function randomInRange(min: number, max: number): number {
+export function randomInRange(
+  min: number,
+  max: number,
+  seed: number,
+  integerOnly = false,
+): number {
   if (min > max) [min, max] = [max, min];
 
-  return Math.random() * (max - min) + min;
+  let value = seed >>> 0;
+
+  value += 0x6d2b79f5;
+  value = Math.imul(value ^ (value >>> 15), value | 1);
+  value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+
+  const random = ((value ^ (value >>> 14)) >>> 0) / 4_294_967_296;
+
+  if (integerOnly) {
+    return (
+      Math.floor(
+        random * (Math.floor(max) - Math.ceil(min) + 1),
+      ) + Math.ceil(min)
+    );
+  }
+
+  return random * (max - min) + min;
 }

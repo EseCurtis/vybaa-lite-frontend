@@ -22,7 +22,7 @@ export function TimeField({ value, onChange, disabled }: TimeFieldProps) {
             hasValue ? 'text-white' : 'text-card-lighter-3/50'
           }`}
         >
-          {hasValue ? value : 'Select time'}
+          {hasValue ? value : '00:00'}
         </Text>
         <Text className="text-card-lighter-3/70 text-xs font-bbh">
           
