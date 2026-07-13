@@ -114,10 +114,25 @@ export function CreateTemplateSheet({
           return
         }
 
-        if (m.triggerType === 'DAY' || m.triggerType === 'SEQUENCE') {
+        if (m.triggerType === 'DAY') {
           if (value > targetDays) {
             setFormError(
               `${label}: value cannot be greater than total days (${targetDays})`,
+            )
+            return
+          }
+        }
+
+        if (m.triggerType === 'SEQUENCE') {
+          const startDay = Number(m.sequenceStartDay)
+          const endDay = Number(m.sequenceEndDay)
+          if (!startDay || startDay < 1) {
+            setFormError(`${label}: start day must be at least 1`)
+            return
+          }
+          if (!endDay || endDay < startDay || endDay > targetDays) {
+            setFormError(
+              `${label}: end day must be between the start day and day ${targetDays}`,
             )
             return
           }
@@ -151,6 +166,14 @@ export function CreateTemplateSheet({
                   sequenceBonusPoints:
                     m.triggerType === 'SEQUENCE'
                       ? Number(m.sequenceBonusPoints || '10')
+                      : undefined,
+                  sequenceStartDay:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceStartDay)
+                      : undefined,
+                  sequenceEndDay:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceEndDay)
                       : undefined,
                   order: index,
                 }))
@@ -317,10 +340,12 @@ export function CreateTemplateSheet({
                         ? `Day ${m.triggerValue || '?'}`
                         : m.triggerType === 'PERCENTAGE'
                           ? `${m.triggerValue || '?'}% of goal`
-                          : `Every ${m.triggerValue || '?'} check-ins`}{' '}
-                      • +{m.points || '0'} pts
+                          : `${m.points || '0'} pts every ${m.triggerValue || '?'} days`}{' '}
+                      {m.triggerType !== 'SEQUENCE'
+                        ? `• +${m.points || '0'} pts`
+                        : ''}
                       {m.triggerType === 'SEQUENCE'
-                        ? `, +${m.sequenceBonusPoints || '10'} more each repeat`
+                        ? `• +${m.sequenceBonusPoints || '10'} each time • days ${m.sequenceStartDay || '?'}–${m.sequenceEndDay || '?'}`
                         : ''}
                     </Text>
                   </View>

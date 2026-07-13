@@ -136,7 +136,7 @@ export default function TemplateDetailScreen() {
                           ? `Day ${m.triggerValue}`
                           : m.triggerType === 'PERCENTAGE'
                             ? `${m.triggerValue}% of goal`
-                            : `Every ${m.triggerValue} check-ins`}
+                            : `Every ${m.triggerValue} days, from day ${m.sequenceStartDay ?? m.triggerValue} to day ${m.sequenceEndDay ?? template.targetDays}`}
                       </Text>
                     </View>
                     <Text className="text-accent-400 text-xs font-bbh">

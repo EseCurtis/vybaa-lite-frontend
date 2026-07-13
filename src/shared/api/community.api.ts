@@ -79,6 +79,8 @@ export interface TemplateMilestone {
   triggerValue: number
   points: number
   sequenceBonusPoints: number
+  sequenceStartDay: number | null
+  sequenceEndDay: number | null
   order: number
   createdAt: string
   updatedAt: string
@@ -176,6 +178,8 @@ export interface CreateTemplateRequest {
     triggerValue: number
     points: number
     sequenceBonusPoints?: number
+    sequenceStartDay?: number
+    sequenceEndDay?: number
     order?: number
   }[]
 }
@@ -192,6 +196,8 @@ export interface UpdateTemplateRequest {
     triggerValue: number
     points: number
     sequenceBonusPoints?: number
+    sequenceStartDay?: number
+    sequenceEndDay?: number
     order?: number
   }[]
 }
