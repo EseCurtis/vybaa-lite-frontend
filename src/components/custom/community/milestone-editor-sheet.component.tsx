@@ -4,6 +4,7 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { MilestoneTriggerType } from '@/shared/api/community.api'
+import { cn } from '@/shared/utils/helpers.util'
 import { useState } from 'react'
 
 export interface MilestoneDraft {
@@ -13,6 +14,7 @@ export interface MilestoneDraft {
   triggerType: MilestoneTriggerType
   triggerValue: string
   points: string
+  sequenceBonusPoints?: string
 }
 
 interface MilestoneEditorSheetProps {
@@ -22,10 +24,51 @@ interface MilestoneEditorSheetProps {
   maxDays?: number
 }
 
+function getTriggerLabel(triggerType: MilestoneTriggerType): string {
+  if (triggerType === 'DAY') {
+    return 'Day'
+  }
+
+  if (triggerType === 'PERCENTAGE') {
+    return '%'
+  }
+
+  return 'Every'
+}
+
+function getTriggerPlaceholder(triggerType: MilestoneTriggerType): string {
+  if (triggerType === 'PERCENTAGE') {
+    return '50'
+  }
+
+  if (triggerType === 'SEQUENCE') {
+    return '5'
+  }
+
+  return '7'
+}
+
+function getSequencePreview(draft: MilestoneDraft): string | null {
+  if (draft.triggerType !== 'SEQUENCE') {
+    return null
+  }
+
+  const interval = Number(draft.triggerValue)
+  const start = Number(draft.points)
+  const step = Number(draft.sequenceBonusPoints || '10')
+
+  if (!interval || interval < 1 || start < 0 || step < 0) {
+    return null
+  }
+
+  return `${interval}, ${interval * 2}, ${interval * 3} checks: +${start} -> +${start + step} -> +${start + step * 2}`
+}
+
 export function MilestoneEditorSheet({
   initial,
   onSave,
   onCancel,
+  maxDays,
 }: MilestoneEditorSheetProps) {
   const [draft, setDraft] = useState<MilestoneDraft>(
     initial ?? {
@@ -34,26 +77,28 @@ export function MilestoneEditorSheet({
       triggerType: 'DAY',
       triggerValue: '',
       points: '',
+      sequenceBonusPoints: '10',
     },
   )
 
   const [error, setError] = useState<string | null>(null)
+  const isSequence = draft.triggerType === 'SEQUENCE'
+  const sequencePreview = getSequencePreview(draft)
 
   const handleSave = () => {
     if (!draft.name.trim()) {
       setError('Milestone name is required')
       return
     }
-    const value = parseInt(draft.triggerValue, 10)
+    const value = Number(draft.triggerValue)
     if (!value || value < 1) {
       setError('Trigger value must be at least 1')
       return
     }
 
-    if (draft.triggerType === 'DAY') {
-      // Duration should already be set before opening, but guard just in case.
+    if (draft.triggerType === 'DAY' || draft.triggerType === 'SEQUENCE') {
       if (typeof maxDays === 'number' && value > maxDays) {
-        setError(`Day cannot be greater than ${maxDays}`)
+        setError(`Value cannot be greater than ${maxDays}`)
         return
       }
     }
@@ -64,9 +109,15 @@ export function MilestoneEditorSheet({
         return
       }
     }
-    const pts = parseInt(draft.points || '0', 10)
+    const pts = Number(draft.points || '0')
     if (pts < 0) {
       setError('Points cannot be negative')
+      return
+    }
+
+    const bonusPoints = Number(draft.sequenceBonusPoints || '10')
+    if (draft.triggerType === 'SEQUENCE' && bonusPoints < 0) {
+      setError('Sequence bonus cannot be negative')
       return
     }
 
@@ -77,6 +128,8 @@ export function MilestoneEditorSheet({
       description: draft.description?.trim() || '',
       triggerValue: String(value),
       points: String(pts),
+      sequenceBonusPoints:
+        draft.triggerType === 'SEQUENCE' ? String(bonusPoints) : undefined,
     })
 
     // If creating (no initial), reset form so user can add another without closing
@@ -87,22 +140,25 @@ export function MilestoneEditorSheet({
         triggerType: 'DAY',
         triggerValue: '',
         points: '',
+        sequenceBonusPoints: '10',
       })
     }
   }
 
   return (
     <View className="space-y-3">
-      <View className="flex-row-reverse gap-3 items-center justify-between">
-        <View className="flex-1">
+      <View className="space-y-2">
+        <View>
           <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            Trigger type
+            Reward timing
           </Text>
           <View className="flex-row">
             <View className="flex-row p-1 gap-2 bg-card-lighter-2/5 rounded-full">
               <button
                 type="button"
-                onClick={() => setDraft({ ...draft, triggerType: 'DAY' })}
+                onClick={() =>
+                  setDraft({ ...draft, sequenceBonusPoints: undefined, triggerType: 'DAY' })
+                }
                 className={`px-3 py-1.5 rounded-full text-md font-bbh ${
                   draft.triggerType === 'DAY'
                     ? 'bg-accent-500/80 border-accent-500 text-white'
@@ -114,7 +170,11 @@ export function MilestoneEditorSheet({
               <button
                 type="button"
                 onClick={() =>
-                  setDraft({ ...draft, triggerType: 'PERCENTAGE' })
+                  setDraft({
+                    ...draft,
+                    sequenceBonusPoints: undefined,
+                    triggerType: 'PERCENTAGE',
+                  })
                 }
                 className={`px-3 py-1.5 rounded-full text-md font-bbh ${
                   draft.triggerType === 'PERCENTAGE'
@@ -124,39 +184,89 @@ export function MilestoneEditorSheet({
               >
                 %
               </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    sequenceBonusPoints: draft.sequenceBonusPoints || '10',
+                    triggerType: 'SEQUENCE',
+                  })
+                }
+                className={`px-3 py-1.5 rounded-full text-md font-bbh ${
+                  draft.triggerType === 'SEQUENCE'
+                    ? 'bg-accent-500/80 border-accent-500 text-white '
+                    : 'bg-card-light/20 border-card-lighter-3/40 text-card-lighter-3/80'
+                }`}
+              >
+                Every
+              </button>
             </View>
           </View>
         </View>
 
-        <View className="w-24">
-          <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            {draft.triggerType}
-          </Text>
-          <Input
-            type="number"
-            value={draft.triggerValue}
-            onChange={(e) =>
-              setDraft({ ...draft, triggerValue: e.target.value })
-            }
-            className="bg-card-light/30 border-0 text-white text-xs"
-            min={1}
-            placeholder="10"
-          />
+        <View
+          className={cn(
+            'grid gap-2',
+            isSequence ? 'grid-cols-3' : 'grid-cols-2',
+          )}
+        >
+          <View>
+            <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
+              {getTriggerLabel(draft.triggerType)}
+            </Text>
+            <Input
+              type="number"
+              value={draft.triggerValue}
+              onChange={(e) =>
+                setDraft({ ...draft, triggerValue: e.target.value })
+              }
+              className="bg-card-light/30 border-0 text-white text-xs"
+              min={1}
+              placeholder={getTriggerPlaceholder(draft.triggerType)}
+            />
+          </View>
+
+          <View>
+            <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
+              {isSequence ? 'Start' : 'Points'}
+            </Text>
+            <Input
+              type="number"
+              value={draft.points}
+              onChange={(e) => setDraft({ ...draft, points: e.target.value })}
+              className="bg-card-light/30 border-0 text-white text-xs"
+              min={0}
+              placeholder="20"
+            />
+          </View>
+
+          {isSequence && (
+            <View>
+              <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
+                Step
+              </Text>
+              <Input
+                type="number"
+                value={draft.sequenceBonusPoints || ''}
+                onChange={(e) =>
+                  setDraft({ ...draft, sequenceBonusPoints: e.target.value })
+                }
+                className="bg-card-light/30 border-0 text-white text-xs"
+                min={0}
+                placeholder="10"
+              />
+            </View>
+          )}
         </View>
 
-        <View className="w-24">
-          <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            Points
-          </Text>
-          <Input
-            type="number"
-            value={draft.points}
-            onChange={(e) => setDraft({ ...draft, points: e.target.value })}
-            className="bg-card-light/30 border-0 text-white text-xs"
-            min={0}
-            placeholder="5.5"
-          />
-        </View>
+        {sequencePreview && (
+          <View className="rounded-xl bg-accent-500/10 px-3 py-2">
+            <Text className="text-accent-300 text-[11px] font-bbh">
+              {sequencePreview}
+            </Text>
+          </View>
+        )}
       </View>
       <Input
         placeholder="Milestone name (e.g. First week)"

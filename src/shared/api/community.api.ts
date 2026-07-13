@@ -68,7 +68,7 @@ export interface GoalTemplate {
   }
 }
 
-export type MilestoneTriggerType = 'DAY' | 'PERCENTAGE'
+export type MilestoneTriggerType = 'DAY' | 'PERCENTAGE' | 'SEQUENCE'
 
 export interface TemplateMilestone {
   id: string
@@ -78,6 +78,7 @@ export interface TemplateMilestone {
   triggerType: MilestoneTriggerType
   triggerValue: number
   points: number
+  sequenceBonusPoints: number
   order: number
   createdAt: string
   updatedAt: string
@@ -174,6 +175,7 @@ export interface CreateTemplateRequest {
     triggerType: MilestoneTriggerType
     triggerValue: number
     points: number
+    sequenceBonusPoints?: number
     order?: number
   }[]
 }
@@ -189,6 +191,7 @@ export interface UpdateTemplateRequest {
     triggerType: MilestoneTriggerType
     triggerValue: number
     points: number
+    sequenceBonusPoints?: number
     order?: number
   }[]
 }

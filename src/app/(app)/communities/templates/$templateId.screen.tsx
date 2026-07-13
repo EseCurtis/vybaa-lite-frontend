@@ -134,11 +134,16 @@ export default function TemplateDetailScreen() {
                       <Text className="text-card-lighter-3/80 text-[11px] font-bbh mt-0.5">
                         {m.triggerType === 'DAY'
                           ? `Day ${m.triggerValue}`
-                          : `${m.triggerValue}% of goal`}
+                          : m.triggerType === 'PERCENTAGE'
+                            ? `${m.triggerValue}% of goal`
+                            : `Every ${m.triggerValue} check-ins`}
                       </Text>
                     </View>
                     <Text className="text-accent-400 text-xs font-bbh">
                       +{m.points} pts
+                      {m.triggerType === 'SEQUENCE'
+                        ? `, +${m.sequenceBonusPoints} each repeat`
+                        : ''}
                     </Text>
                   </View>
                 ))}

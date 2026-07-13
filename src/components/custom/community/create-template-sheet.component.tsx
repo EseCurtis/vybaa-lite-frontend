@@ -106,7 +106,7 @@ export function CreateTemplateSheet({
     if (milestonesEnabled && milestones.length > 0) {
       for (let i = 0; i < milestones.length; i++) {
         const m = milestones[i]
-        const value = parseInt(m.triggerValue, 10)
+        const value = Number(m.triggerValue)
         const label = m.name?.trim() || `Milestone ${i + 1}`
 
         if (!value || value < 1) {
@@ -114,10 +114,10 @@ export function CreateTemplateSheet({
           return
         }
 
-        if (m.triggerType === 'DAY') {
+        if (m.triggerType === 'DAY' || m.triggerType === 'SEQUENCE') {
           if (value > targetDays) {
             setFormError(
-              `${label}: day cannot be greater than total days (${targetDays})`,
+              `${label}: value cannot be greater than total days (${targetDays})`,
             )
             return
           }
@@ -146,8 +146,12 @@ export function CreateTemplateSheet({
                   name: m.name.trim(),
                   description: m.description?.trim() || undefined,
                   triggerType: m.triggerType,
-                  triggerValue: parseInt(m.triggerValue, 10),
-                  points: parseInt(m.points, 10) || 0,
+                  triggerValue: Number(m.triggerValue),
+                  points: Number(m.points) || 0,
+                  sequenceBonusPoints:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceBonusPoints || '10')
+                      : undefined,
                   order: index,
                 }))
               : undefined,
@@ -201,7 +205,7 @@ export function CreateTemplateSheet({
     setMilestones((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const targetDaysNum = parseInt(formData.targetDays, 10) || undefined
+  const targetDaysNum = Number(formData.targetDays) || undefined
 
   if (isMilestoneWizardOpen) {
     const initial =
@@ -311,8 +315,13 @@ export function CreateTemplateSheet({
                     <Text className="text-card-lighter-3/80 text-[11px] font-bbh mt-0.5">
                       {m.triggerType === 'DAY'
                         ? `Day ${m.triggerValue || '?'}`
-                        : `${m.triggerValue || '?'}% of goal`}{' '}
+                        : m.triggerType === 'PERCENTAGE'
+                          ? `${m.triggerValue || '?'}% of goal`
+                          : `Every ${m.triggerValue || '?'} check-ins`}{' '}
                       • +{m.points || '0'} pts
+                      {m.triggerType === 'SEQUENCE'
+                        ? `, +${m.sequenceBonusPoints || '10'} more each repeat`
+                        : ''}
                     </Text>
                   </View>
                 </View>
