@@ -201,6 +201,10 @@ body,
   display: none;
 }
 
+.muted {
+  @apply text-card-lighter-3/70;
+}
+
 
 *::-webkit-scrollbar {
   display: none !important;
@@ -236,5 +240,4 @@ body,
   text-overflow: ellipsis;
   /* Optional: adds the '...' */
 }
-
 

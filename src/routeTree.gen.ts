@@ -33,6 +33,7 @@ import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppRewindHistorySessionsRouteImport } from './routes/app/rewind-history/sessions'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
@@ -165,6 +166,12 @@ const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   path: '/app/sub-profile/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRewindHistorySessionsRoute =
+  AppRewindHistorySessionsRouteImport.update({
+    id: '/sessions',
+    path: '/sessions',
+    getParentRoute: () => AppRewindHistoryRoute,
+  } as any)
 const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
   id: '/app/r/$sessionId',
   path: '/app/r/$sessionId',
@@ -238,7 +245,7 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
-  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history': typeof AppRewindHistoryRouteWithChildren
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-history/sessions': typeof AppRewindHistorySessionsRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -275,7 +283,7 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
-  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history': typeof AppRewindHistoryRouteWithChildren
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-history/sessions': typeof AppRewindHistorySessionsRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -313,7 +322,7 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
-  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history': typeof AppRewindHistoryRouteWithChildren
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -329,6 +338,7 @@ export interface FileRoutesById {
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-history/sessions': typeof AppRewindHistorySessionsRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -368,6 +378,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/invite/$code'
     | '/app/r/$sessionId'
+    | '/app/rewind-history/sessions'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -405,6 +416,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/invite/$code'
     | '/app/r/$sessionId'
+    | '/app/rewind-history/sessions'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -442,6 +454,7 @@ export interface FileRouteTypes {
     | '/app/community/$communityId'
     | '/app/invite/$code'
     | '/app/r/$sessionId'
+    | '/app/rewind-history/sessions'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -464,7 +477,7 @@ export interface RootRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
-  AppRewindHistoryRoute: typeof AppRewindHistoryRoute
+  AppRewindHistoryRoute: typeof AppRewindHistoryRouteWithChildren
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -659,6 +672,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewind-history/sessions': {
+      id: '/app/rewind-history/sessions'
+      path: '/sessions'
+      fullPath: '/app/rewind-history/sessions'
+      preLoaderRoute: typeof AppRewindHistorySessionsRouteImport
+      parentRoute: typeof AppRewindHistoryRoute
+    }
     '/app/r/$sessionId': {
       id: '/app/r/$sessionId'
       path: '/app/r/$sessionId'
@@ -751,6 +771,17 @@ const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
   AppCommunitiesRouteChildren,
 )
 
+interface AppRewindHistoryRouteChildren {
+  AppRewindHistorySessionsRoute: typeof AppRewindHistorySessionsRoute
+}
+
+const AppRewindHistoryRouteChildren: AppRewindHistoryRouteChildren = {
+  AppRewindHistorySessionsRoute: AppRewindHistorySessionsRoute,
+}
+
+const AppRewindHistoryRouteWithChildren =
+  AppRewindHistoryRoute._addFileChildren(AppRewindHistoryRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementSimulatorRoute: AchievementSimulatorRoute,
@@ -763,7 +794,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,
-  AppRewindHistoryRoute: AppRewindHistoryRoute,
+  AppRewindHistoryRoute: AppRewindHistoryRouteWithChildren,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,

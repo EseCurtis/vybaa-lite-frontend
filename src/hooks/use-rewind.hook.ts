@@ -1,6 +1,9 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
-import type { RewindSessionsFilters } from '@/shared/api/rewind.api'
+import type {
+  RewindInsightsRange,
+  RewindSessionsFilters,
+} from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 
@@ -68,5 +71,16 @@ export function useRewindSession(sessionId: string) {
     },
     queryKey: rewindQueryKeys.session(sessionId),
     staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useRewindInsights(range: RewindInsightsRange) {
+  return useQuery({
+    queryKey: rewindQueryKeys.insights(range),
+    queryFn: async () => {
+      const response = await rewindAPI.getInsights(range)
+      return response.data
+    },
+    staleTime: 1000 * 60,
   })
 }

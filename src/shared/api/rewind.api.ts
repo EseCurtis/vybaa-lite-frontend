@@ -15,8 +15,51 @@ export type RewindSession = {
   emotionalInsight: string | null
   emotionalTags: string[]
   nextStepNote: string | null
+  comparisonInsight: string | null
+  journalDraft: string | null
+  wellbeingSignals: RewindWellbeingSignals | null
+  journalId: string | null
+  journalSavedAt: string | null
+  transcriptAvailable?: boolean
+  turns?: RewindTurn[]
   createdAt: string
   updatedAt: string
+}
+
+export type RewindTurn = {
+  id: string
+  role: 'USER' | 'PARTNER'
+  sequence: number
+  content: string
+  createdAt: string
+}
+
+export type RewindWellbeingSignals = {
+  agency: number
+  clarity: number
+  connection: number
+  emotionalSteadiness: number
+  energy: number
+}
+
+export type RewindInsightsRange = '7d' | '30d' | '90d'
+
+export type RewindInsights = {
+  range: RewindInsightsRange
+  coverage: {
+    completedDays: number
+    completedSessions: number
+    days: number
+  }
+  hasSufficientData: boolean
+  signals: RewindWellbeingSignals | null
+  deltas: RewindWellbeingSignals | null
+  progress: {
+    clarity: number
+    consistency: number
+    momentum: number
+  } | null
+  contextualInsight: string | null
 }
 
 export type RewindLiveTokenResponse = {
@@ -73,6 +116,23 @@ export type RewindSessionResponse = {
   data: RewindSession
 }
 
+export type RewindInsightsResponse = {
+  msg: string
+  data: RewindInsights
+}
+
+export type AddRewindToJournalResponse = {
+  msg: string
+  data: {
+    journal: {
+      id: string
+      content: string
+      date: string
+    }
+    saved: boolean
+  }
+}
+
 class RewindAPI {
   async createLiveToken(
     personaId: RewindPersonaId,
@@ -107,6 +167,23 @@ class RewindAPI {
   async getSession(sessionId: string): Promise<RewindSessionResponse> {
     const { data: res } = await http.get<RewindSessionResponse>(
       `${API_V1}/rewind/sessions/${sessionId}`,
+    )
+    return res
+  }
+
+  async getInsights(range: RewindInsightsRange): Promise<RewindInsightsResponse> {
+    const { data: res } = await http.get<RewindInsightsResponse>(
+      `${API_V1}/rewind/insights`,
+      { params: { range } },
+    )
+    return res
+  }
+
+  async addSessionToJournal(
+    sessionId: string,
+  ): Promise<AddRewindToJournalResponse> {
+    const { data: res } = await http.post<AddRewindToJournalResponse>(
+      `${API_V1}/rewind/sessions/${sessionId}/add-to-journal`,
     )
     return res
   }

@@ -37,9 +37,15 @@ import { authAPI } from '@/shared/api/auth.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import {
-  applyAdaptiveGain,
+  createAdaptiveGainController,
   floatTo16BitPcmBase64,
+  resampleFloat32Audio,
 } from '@/shared/rewind/audio-processing'
+import {
+  createRewindCaptureWorkletSource,
+  REWIND_CAPTURE_WORKLET_NAME,
+} from '@/shared/rewind/rewind-audio-worklet'
+import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
 import {
   REWIND_PERSONAS,
   getRewindPersona,
@@ -66,7 +72,12 @@ type RewindSocketMessage =
   | { type: 'reconnecting' }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
-  | { type: 'session_ended'; emotionalInsight?: string; summary: string }
+  | {
+      type: 'session_ended'
+      emotionalInsight?: string | null
+      sessionId?: string
+      summary: string
+    }
   | { type: 'open_history' }
   | { type: 'error'; message: string }
   | { type: 'debug'; content: unknown }
@@ -199,6 +210,8 @@ export default function RewindScreen(): ReactElement {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const inputAudioContextRef = useRef<AudioContext | null>(null)
   const processorRef = useRef<AudioNode | null>(null)
+  const inputPipelineNodesRef = useRef<AudioNode[]>([])
+  const gainControllerRef = useRef(createAdaptiveGainController())
   const playbackContextRef = useRef<AudioContext | null>(null)
   const audioQueueRef = useRef<Array<{ data: string; mimeType: string }>>([])
   const activeAudioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set())
@@ -208,6 +221,7 @@ export default function RewindScreen(): ReactElement {
   const isConversationPausedRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
   const shouldReconnectRef = useRef(false)
+  const disconnectNoticeShownRef = useRef(false)
   const reconnectAttemptsRef = useRef(0)
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const startSessionRef = useRef<(() => Promise<void>) | null>(null)
@@ -314,12 +328,21 @@ export default function RewindScreen(): ReactElement {
   }, [])
 
   const cleanupAudioPipeline = useCallback(() => {
+    for (const node of inputPipelineNodesRef.current) {
+      try {
+        node.disconnect()
+      } catch {}
+    }
+    inputPipelineNodesRef.current = []
+
     if (processorRef.current) {
       try {
         processorRef.current.disconnect()
       } catch {}
       processorRef.current = null
     }
+
+    gainControllerRef.current.reset()
 
     if (
       inputAudioContextRef.current &&
@@ -442,20 +465,25 @@ export default function RewindScreen(): ReactElement {
 
         const AudioContextClass =
           window.AudioContext || (window as any).webkitAudioContext
-        const context = new AudioContextClass({ sampleRate: 16000 })
+        const context = new AudioContextClass()
         inputAudioContextRef.current = context
+        if (context.state === 'suspended') await context.resume()
 
         const source = context.createMediaStreamSource(stream)
         const compressor = context.createDynamicsCompressor()
-        compressor.threshold.value = -30
-        compressor.knee.value = 18
-        compressor.ratio.value = 4
-        compressor.attack.value = 0.005
-        compressor.release.value = 0.2
+        compressor.threshold.value = -34
+        compressor.knee.value = 20
+        compressor.ratio.value = 3
+        compressor.attack.value = 0.003
+        compressor.release.value = 0.25
+        const silentSink = context.createGain()
+        silentSink.gain.value = 0
         const sendAudio = (inputData: Float32Array): void => {
           if (isConversationPausedRef.current) return
           if (ws.readyState !== WebSocket.OPEN) return
-          const data = floatTo16BitPcmBase64(applyAdaptiveGain(inputData))
+          const resampled = resampleFloat32Audio(inputData, context.sampleRate)
+          const processed = gainControllerRef.current.process(resampled)
+          const data = floatTo16BitPcmBase64(processed)
           ws.send(
             JSON.stringify({
               type: 'realtime_audio',
@@ -465,55 +493,31 @@ export default function RewindScreen(): ReactElement {
           )
         }
 
-        let processor: AudioNode
+        let processor: AudioNode | null = null
         if (context.audioWorklet) {
-          const workletSource = `class RewindCaptureProcessor extends AudioWorkletProcessor {
-            constructor() {
-              super()
-              this.chunk = new Float32Array(1600)
-              this.offset = 0
-            }
-
-            process(inputs) {
-              const channel = inputs[0] && inputs[0][0]
-              if (!channel) return true
-
-              let inputOffset = 0
-              while (inputOffset < channel.length) {
-                const remaining = this.chunk.length - this.offset
-                const sampleCount = Math.min(remaining, channel.length - inputOffset)
-                this.chunk.set(
-                  channel.subarray(inputOffset, inputOffset + sampleCount),
-                  this.offset,
-                )
-                this.offset += sampleCount
-                inputOffset += sampleCount
-
-                if (this.offset === this.chunk.length) {
-                  this.port.postMessage(this.chunk)
-                  this.chunk = new Float32Array(1600)
-                  this.offset = 0
-                }
-              }
-
-              return true
-            }
-          }
-          registerProcessor('rewind-capture', RewindCaptureProcessor)`
           const workletUrl = URL.createObjectURL(
-            new Blob([workletSource], { type: 'text/javascript' }),
+            new Blob([createRewindCaptureWorkletSource()], {
+              type: 'text/javascript',
+            }),
           )
           try {
             await context.audioWorklet.addModule(workletUrl)
+            const worklet = new AudioWorkletNode(
+              context,
+              REWIND_CAPTURE_WORKLET_NAME,
+            )
+            worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
+              sendAudio(event.data)
+            }
+            processor = worklet
+          } catch {
+            // Some older WebViews expose AudioWorklet but cannot load dynamic modules.
           } finally {
             URL.revokeObjectURL(workletUrl)
           }
-          const worklet = new AudioWorkletNode(context, 'rewind-capture')
-          worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
-            sendAudio(event.data)
-          }
-          processor = worklet
-        } else {
+        }
+
+        if (!processor) {
           const fallbackProcessor = context.createScriptProcessor(4096, 1, 1)
           fallbackProcessor.onaudioprocess = (event) => {
             sendAudio(event.inputBuffer.getChannelData(0))
@@ -521,10 +525,18 @@ export default function RewindScreen(): ReactElement {
           processor = fallbackProcessor
         }
         processorRef.current = processor
+        inputPipelineNodesRef.current = [
+          source,
+          compressor,
+          processor,
+          silentSink,
+        ]
 
         source.connect(compressor)
         compressor.connect(processor)
-        processor.connect(context.destination)
+        // Keep the capture graph alive without ever routing microphone audio to speakers.
+        processor.connect(silentSink)
+        silentSink.connect(context.destination)
 
         if (!isConversationPausedRef.current) {
           setStatusText('Listening')
@@ -662,6 +674,7 @@ export default function RewindScreen(): ReactElement {
 
     isConnectingRef.current = true
     shouldReconnectRef.current = true
+    disconnectNoticeShownRef.current = false
     try {
       setIsConversationPaused(false)
       setIsFinishingSession(false)
@@ -774,17 +787,25 @@ export default function RewindScreen(): ReactElement {
                 refetchType: 'all',
               })
               .finally(() => {
+                if (payload.sessionId) {
+                  navigate({
+                    params: { sessionId: payload.sessionId },
+                    to: '/app/r/$sessionId',
+                  })
+                  return
+                }
                 navigate({ to: '/app/rewind-history' })
               })
             return
           }
 
           if (payload.type === 'open_history') {
-            navigate({ to: '/app/rewind-history' })
+            navigate({ to: '/app/rewind-history/sessions' })
             return
           }
 
           if (payload.type === 'error') {
+            disconnectNoticeShownRef.current = true
             setStatusText('Error')
             toast.error(payload.message)
           }
@@ -798,14 +819,21 @@ export default function RewindScreen(): ReactElement {
         setStatusText('Error')
       }
 
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         isConnectingRef.current = false
         cleanupAudioPipeline()
         if (liveSessionRef.current === ws) {
           liveSessionRef.current = null
         }
         if (!isSessionCompleteRef.current) {
-          if (shouldReconnectRef.current && reconnectAttemptsRef.current < 4) {
+          if (
+            shouldAutoReconnectRewindSocket({
+              closeCode: event.code,
+              isSessionComplete: isSessionCompleteRef.current,
+              reconnectAttempts: reconnectAttemptsRef.current,
+              shouldReconnect: shouldReconnectRef.current,
+            })
+          ) {
             reconnectAttemptsRef.current += 1
             setStatusText('Reconnecting')
             const delay = 500 * 2 ** (reconnectAttemptsRef.current - 1)
@@ -818,7 +846,9 @@ export default function RewindScreen(): ReactElement {
 
           shouldReconnectRef.current = false
           setStatusText('Disconnected')
-          toast.error('Rewind disconnected. Tap to reconnect and continue.')
+          if (!disconnectNoticeShownRef.current) {
+            toast.error('Rewind disconnected. Tap to reconnect and continue.')
+          }
         }
       }
     } catch {
@@ -858,7 +888,7 @@ export default function RewindScreen(): ReactElement {
 
   const currentSessionPreview = conversationStateNote
 
-  const openSessionHistory = useCallback(() => {
+  const openRewindInsights = useCallback(() => {
     navigate({
       to: '/app/rewind-history',
     })
@@ -879,7 +909,7 @@ export default function RewindScreen(): ReactElement {
                 <Text className="text-white font-bbh text-2xl font-bold text-center">
                   Choose your Rewind partner
                 </Text>
-                <Text className="mt-2 text-white/60 font-bbh text-base text-center">
+                <Text className="muted mt-2 font-bbh text-base text-center">
                   Pick a custom-tuned persona to start your live rewind
                   conversations.
                 </Text>
@@ -951,8 +981,8 @@ export default function RewindScreen(): ReactElement {
               ) : (
                 <>
                   <Pressable
-                    onPress={openSessionHistory}
-                    accessibilityLabel="Open Rewind history"
+                    onPress={openRewindInsights}
+                    accessibilityLabel="Open Rewind insights"
                     className="w-11 h-11 rounded-full items-center justify-center bg-white/8"
                   >
                     <RiHistoryLine size={18} className="text-white/90" />
@@ -981,7 +1011,7 @@ export default function RewindScreen(): ReactElement {
         <View className="flex-1 min-h-0 h-full px-mg pb-xl">
           <View className="items-center h-full pt-6">
             <View className="px-3 py-2 rounded-full">
-              <Text className="text-white/65 font-bbh text-xs uppercase tracking-[0.28em]">
+              <Text className="muted font-bbh text-xs uppercase tracking-[0.28em]">
                 {isSessionRestored ? 'Restored Session' : ''}
               </Text>
             </View>
@@ -1063,7 +1093,7 @@ export default function RewindScreen(): ReactElement {
 
             {currentSessionPreview && hasActiveSession && (
               <View className="flex text-center mt-5 flex-row items-center gap-3 mx-auto">
-                <Text className="text-white/70 text-sm max-w-[70%] mx-auto font-bold">
+                <Text className="muted text-sm max-w-[70%] mx-auto font-bold">
                   "{currentSessionPreview}"
                 </Text>
               </View>
@@ -1084,16 +1114,16 @@ export default function RewindScreen(): ReactElement {
               ) : null}
 
               <Pressable
-                onPress={openSessionHistory}
+                onPress={openRewindInsights}
                 className="w-full flex-row items-center justify-between rounded-lg bg-card-light/15 px-4 py-3 text-left"
               >
                 <View className="min-w-0 flex-1 gap-1">
-                  <Text className="text-white/45 font-bbh text-[10px] uppercase tracking-[0.18em]">
-                    {'Last Session'}
+                  <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
+                    {'Rewind insights'}
                   </Text>
-                  <Text className="text-white/80 font-bbh text-xs line-clamp-2">
+                  <Text className="muted font-bbh text-xs line-clamp-2">
                     {previousSessionPreview ||
-                      'Your saved rewinds will appear here'}
+                      'See the patterns your reflections are beginning to show'}
                   </Text>
                 </View>
                 <RiHistoryLine
