@@ -15,7 +15,11 @@ let lastSentTimezone: string | null = null
 /**
  * Get current timezone - from localStorage or browser
  */
-function getCurrentTimezone(): string {
+export function getCurrentTimezone(): string {
+  if (typeof window === 'undefined') {
+    return 'UTC'
+  }
+
   // Try localStorage first (user's saved timezone)
   const stored = localStorage.getItem('userTimezone')
   if (stored) {
@@ -77,7 +81,7 @@ http.interceptors.request.use((config) => {
 
     // Get current timezone
     const currentTimezone = getCurrentTimezone()
-    
+
     // Add timezone headers only if timezone has changed or this is the first request
     if (currentTimezone && (lastSentTimezone === null || currentTimezone !== lastSentTimezone)) {
       config.headers = config.headers ?? {}

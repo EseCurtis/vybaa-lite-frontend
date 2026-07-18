@@ -1,4 +1,4 @@
-import { http } from '@/shared/api/http'
+import { getCurrentTimezone, http } from '@/shared/api/http'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 const API_V1 = '/api/v1'
@@ -140,7 +140,7 @@ class RewindAPI {
   ): Promise<RewindLiveTokenResponse> {
     const { data: res } = await http.post<RewindLiveTokenResponse>(
       `${API_V1}/rewind/live-token`,
-      { personaId, sessionId },
+      { personaId, sessionId, timezone: getCurrentTimezone() },
     )
     return res
   }

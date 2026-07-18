@@ -73,6 +73,7 @@ type RewindSocketMessage =
   | { type: 'reconnecting' }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
+  | { type: 'session_paused'; sessionId?: string }
   | {
       type: 'session_ended'
       emotionalInsight?: string | null
@@ -89,6 +90,31 @@ type RewindSessionSnapshot = {
   completed: boolean
   summary: string
   updatedAt: number
+}
+
+function getPausedRewindSessionStorageKey(personaId: RewindPersonaId): string {
+  return `rewind:paused-session:${personaId}`
+}
+
+function getPausedRewindSessionId(personaId: RewindPersonaId): string | null {
+  if (typeof window === 'undefined') return null
+
+  return localStorage.getItem(getPausedRewindSessionStorageKey(personaId))
+}
+
+function savePausedRewindSessionId(
+  personaId: RewindPersonaId,
+  sessionId: string,
+): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.setItem(getPausedRewindSessionStorageKey(personaId), sessionId)
+}
+
+function clearPausedRewindSessionId(personaId: RewindPersonaId): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.removeItem(getPausedRewindSessionStorageKey(personaId))
 }
 
 type LegacyNavigator = Navigator & {
@@ -220,6 +246,7 @@ export default function RewindScreen(): ReactElement {
   const nextStartTimeRef = useRef(0)
   const isConnectingRef = useRef(false)
   const isConversationPausedRef = useRef(false)
+  const isSessionPausedByToolRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
   const shouldReconnectRef = useRef(false)
   const disconnectNoticeShownRef = useRef(false)
@@ -682,6 +709,7 @@ export default function RewindScreen(): ReactElement {
 
     isConnectingRef.current = true
     shouldReconnectRef.current = true
+    isSessionPausedByToolRef.current = false
     disconnectNoticeShownRef.current = false
     try {
       setIsConversationPaused(false)
@@ -689,7 +717,10 @@ export default function RewindScreen(): ReactElement {
       isSessionCompleteRef.current = false
       setStatusText('Connecting')
 
-      const liveToken = await rewindAPI.createLiveToken(persona.id)
+      const liveToken = await rewindAPI.createLiveToken(
+        persona.id,
+        getPausedRewindSessionId(persona.id),
+      )
       const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
       const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
       setRewindSessionDateKey(liveToken.data.sessionDateKey ?? null)
@@ -709,6 +740,7 @@ export default function RewindScreen(): ReactElement {
 
           if (payload.type === 'ready') {
             reconnectAttemptsRef.current = 0
+            isSessionPausedByToolRef.current = false
             setRewindSessionDateKey(payload.sessionDateKey ?? null)
             setIsSessionRestored(Boolean(payload.restored))
             setPreviousSession(payload.previousSession ?? null)
@@ -784,6 +816,7 @@ export default function RewindScreen(): ReactElement {
           if (payload.type === 'session_ended') {
             isSessionCompleteRef.current = true
             shouldReconnectRef.current = false
+            clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
             setStatusText('Completed')
             cleanupAudioPipeline()
@@ -804,6 +837,21 @@ export default function RewindScreen(): ReactElement {
                 }
                 navigate({ to: '/app/rewind-history' })
               })
+            return
+          }
+
+          if (payload.type === 'session_paused') {
+            isSessionPausedByToolRef.current = true
+            isConversationPausedRef.current = true
+            shouldReconnectRef.current = false
+            setIsConversationPaused(true)
+            setIsFinishingSession(false)
+            setStatusText('Paused')
+            if (payload.sessionId) {
+              savePausedRewindSessionId(persona.id, payload.sessionId)
+            }
+            cleanupAudioPipeline()
+            toast.success('Rewind paused. It will continue when you return.')
             return
           }
 
@@ -832,6 +880,11 @@ export default function RewindScreen(): ReactElement {
         cleanupAudioPipeline()
         if (liveSessionRef.current === ws) {
           liveSessionRef.current = null
+        }
+        if (isSessionPausedByToolRef.current) {
+          shouldReconnectRef.current = false
+          setStatusText('Paused')
+          return
         }
         if (!isSessionCompleteRef.current) {
           if (
@@ -1094,7 +1147,9 @@ export default function RewindScreen(): ReactElement {
                 <Text className="text-white font-bold">
                   {statusText === 'Failed' || statusText === 'Disconnected'
                     ? 'Reconnect and continue'
-                    : 'Ready? tap to begin'}
+                    : statusText === 'Paused'
+                      ? 'Resume your Rewind'
+                      : 'Ready? tap to begin'}
                 </Text>
               </Pressable>
             ) : null}
