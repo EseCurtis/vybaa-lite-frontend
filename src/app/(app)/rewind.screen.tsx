@@ -43,6 +43,7 @@ import {
 } from '@/shared/rewind/audio-processing'
 import {
   createRewindCaptureWorkletSource,
+  getRewindCaptureFrameSize,
   REWIND_CAPTURE_WORKLET_NAME,
 } from '@/shared/rewind/rewind-audio-worklet'
 import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
@@ -496,9 +497,16 @@ export default function RewindScreen(): ReactElement {
         let processor: AudioNode | null = null
         if (context.audioWorklet) {
           const workletUrl = URL.createObjectURL(
-            new Blob([createRewindCaptureWorkletSource()], {
-              type: 'text/javascript',
-            }),
+            new Blob(
+              [
+                createRewindCaptureWorkletSource(
+                  getRewindCaptureFrameSize(context.sampleRate),
+                ),
+              ],
+              {
+                type: 'text/javascript',
+              },
+            ),
           )
           try {
             await context.audioWorklet.addModule(workletUrl)

@@ -1,6 +1,23 @@
 export const REWIND_CAPTURE_WORKLET_NAME = 'rewind-capture'
+export const REWIND_CAPTURE_FRAME_DURATION_MS = 100
 
-export function createRewindCaptureWorkletSource(frameSize: number = 2048): string {
+export function getRewindCaptureFrameSize(
+  sampleRate: number,
+  durationMs: number = REWIND_CAPTURE_FRAME_DURATION_MS,
+): number {
+  if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
+    throw new Error('A valid capture sample rate is required')
+  }
+  if (!Number.isFinite(durationMs) || durationMs <= 0) {
+    throw new Error('A valid capture frame duration is required')
+  }
+
+  return Math.max(128, Math.round((sampleRate * durationMs) / 1000))
+}
+
+export function createRewindCaptureWorkletSource(
+  frameSize: number = 2048,
+): string {
   return `class RewindCaptureProcessor extends AudioWorkletProcessor {
     constructor() {
       super()
