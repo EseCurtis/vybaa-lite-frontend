@@ -1,4 +1,4 @@
-import { getCurrentTimezone, http } from '@/shared/api/http'
+import { http } from '@/shared/api/http'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 const API_V1 = '/api/v1'
@@ -8,6 +8,16 @@ export type RewindSession = {
   userId: string
   personaId: RewindPersonaId
   sessionDateKey: string | null
+  scheduledFor: string | null
+  windowEndsAt: string | null
+  startedAt: string | null
+  status:
+    | 'LEGACY'
+    | 'SCHEDULED'
+    | 'IN_PROGRESS'
+    | 'FINALIZING'
+    | 'COMPLETED'
+    | 'MISSED'
   completed: boolean
   completedAt: string | null
   checkInAt: string | null
@@ -69,8 +79,61 @@ export type RewindLiveTokenResponse = {
     wsUrl: string
     personaId: RewindPersonaId
     sessionId: string
-    sessionDateKey: string
+    sessionDateKey: string | null
+    scheduledFor: string | null
+    windowEndsAt: string | null
   }
+}
+
+export type RewindRoutineFrequency =
+  | 'MORNINGS_AND_EVENINGS'
+  | 'JUST_MORNINGS'
+  | 'JUST_EVENINGS'
+  | 'CUSTOM'
+
+export type RewindRoutineIntent =
+  | 'UNDERSTAND_EMOTIONS'
+  | 'SPOT_PATTERNS'
+  | 'BUILD_SMALL_CHANGES'
+  | 'CUSTOM'
+
+export type RewindRoutine = {
+  id: string
+  frequency: RewindRoutineFrequency
+  times: string[]
+  intent: RewindRoutineIntent
+  customIntent: string | null
+  enabled: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export type RewindOccurrence = {
+  id: string
+  scheduledFor: string | null
+  status: RewindSession['status']
+  windowEndsAt: string | null
+}
+
+export type RewindRoutineOverview = {
+  currentSession: RewindOccurrence | null
+  latestSession: RewindOccurrence | null
+  nextSession: RewindOccurrence | null
+  routine: RewindRoutine | null
+  timezone: string
+}
+
+export type RewindRoutineResponse = {
+  msg: string
+  data: RewindRoutineOverview
+}
+
+export type UpdateRewindRoutineInput = {
+  frequency: RewindRoutineFrequency
+  intent: RewindRoutineIntent
+  times?: string[]
+  customIntent?: string | null
+  timezone: string
 }
 
 export type RewindSessionsFilters = {
@@ -140,7 +203,7 @@ class RewindAPI {
   ): Promise<RewindLiveTokenResponse> {
     const { data: res } = await http.post<RewindLiveTokenResponse>(
       `${API_V1}/rewind/live-token`,
-      { personaId, sessionId, timezone: getCurrentTimezone() },
+      { personaId, sessionId },
     )
     return res
   }
@@ -160,6 +223,23 @@ class RewindAPI {
           personaId: filters?.personaId,
         },
       },
+    )
+    return res
+  }
+
+  async getRoutine(): Promise<RewindRoutineResponse> {
+    const { data: res } = await http.get<RewindRoutineResponse>(
+      `${API_V1}/rewind/routine`,
+    )
+    return res
+  }
+
+  async updateRoutine(
+    input: UpdateRewindRoutineInput,
+  ): Promise<RewindRoutineResponse> {
+    const { data: res } = await http.put<RewindRoutineResponse>(
+      `${API_V1}/rewind/routine`,
+      input,
     )
     return res
   }

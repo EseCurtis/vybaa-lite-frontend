@@ -1,7 +1,8 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import type {
   RewindInsightsRange,
+  UpdateRewindRoutineInput,
   RewindSessionsFilters,
 } from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
@@ -82,5 +83,33 @@ export function useRewindInsights(range: RewindInsightsRange) {
       return response.data
     },
     staleTime: 1000 * 60,
+  })
+}
+
+export function useRewindRoutine() {
+  return useQuery({
+    queryKey: rewindQueryKeys.routine(),
+    queryFn: async () => {
+      const response = await rewindAPI.getRoutine()
+      return response.data
+    },
+    staleTime: 1000 * 30,
+  })
+}
+
+export function useUpdateRewindRoutine() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: UpdateRewindRoutineInput) => {
+      const response = await rewindAPI.updateRoutine(input)
+      return response.data
+    },
+    onSuccess: async (overview) => {
+      queryClient.setQueryData(rewindQueryKeys.routine(), overview)
+      await queryClient.invalidateQueries({
+        queryKey: rewindQueryKeys.all,
+      })
+    },
   })
 }

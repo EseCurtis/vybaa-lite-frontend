@@ -13,25 +13,28 @@ export const http = axios.create({
 let lastSentTimezone: string | null = null
 
 /**
- * Get current timezone - from localStorage or browser
+ * Reads the current device timezone, retaining the saved value only for
+ * runtimes that cannot expose a timezone through Intl.
  */
-export function getCurrentTimezone(): string {
+export function getDeviceTimezone(): string {
   if (typeof window === 'undefined') {
     return 'UTC'
   }
 
-  // Try localStorage first (user's saved timezone)
-  const stored = localStorage.getItem('userTimezone')
-  if (stored) {
-    return stored
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (timezone) {
+      return timezone
+    }
+  } catch {
+    // Use the last known value when Intl is unavailable.
   }
 
-  // Fallback to browser's timezone
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone
-  } catch {
-    return 'UTC'
-  }
+  return localStorage.getItem('userTimezone') ?? 'UTC'
+}
+
+export function getCurrentTimezone(): string {
+  return getDeviceTimezone()
 }
 
 /**

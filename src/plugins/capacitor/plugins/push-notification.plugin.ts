@@ -1,97 +1,172 @@
-import { notificationQueryKeys } from '@/shared/api/notification.query-keys';
-import { userAPI } from '@/shared/api/user.api';
-import { PushNotifications } from '@capacitor/push-notifications';
-import { createPushNotificationChannel } from '../helpers/push-notifications.helper';
+import type { PushNotificationSchema } from '@capacitor/push-notifications'
+import { Capacitor } from '@capacitor/core'
+import { PushNotifications } from '@capacitor/push-notifications'
+import type { QueryClient } from '@tanstack/react-query'
 
-// Store queryClient reference for invalidation
-let queryClientRef: any = null;
+import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
+import {
+  getInAppNotification,
+  getPushNotificationRoute,
+  type InAppNotification,
+} from '@/shared/notifications/in-app-notification.util'
+import { userAPI } from '@/shared/api/user.api'
 
-export const setQueryClientForNotifications = (queryClient: any) => {
-    queryClientRef = queryClient;
-};
+import { createPushNotificationChannel } from '../helpers/push-notifications.helper'
 
-export const addPushNotificationListeners = async () => {
-    return Promise.all([await PushNotifications.addListener('registration', async (token) => {
-        // console.info('Registration token: ', token.value);
+type ForegroundPushNotificationHandler = (
+  notification: InAppNotification,
+) => void
 
-        // Store token in localStorage for hydration sync
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('fcmToken', token.value);
-        }
+let notificationListenersPromise: Promise<void> | null = null
+let pushRegistrationPromise: Promise<void> | null = null
+let pushChannelPromise: Promise<void> | null = null
+let queryClientRef: QueryClient | null = null
+let foregroundPushNotificationHandler: ForegroundPushNotificationHandler | null =
+  null
+let notificationRouteHandler: ((route: string) => void) | null = null
 
-        // Sync FCM token to backend
-        try {
-            await userAPI.syncFCMToken(token.value);
-            console.info('FCM token synced successfully');
-        } catch (error) {
-            console.error('Failed to sync FCM token:', error);
-        }
-    }),
+function invalidateNotificationQueries(): void {
+  if (!queryClientRef) return
 
-    await PushNotifications.addListener('registrationError', err => {
-        console.error('Registration error: ', err.error);
-        // alert( "Error=>>"+JSON.stringify(err))
-    }),
-
-    await PushNotifications.addListener('pushNotificationReceived', notification => {
-        console.log('Push notification received: ', notification);
-        
-        // Refresh notification list when push is received
-        if (queryClientRef) {
-            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.lists() });
-            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() });
-        }
-    }),
-
-    await PushNotifications.addListener('pushNotificationActionPerformed', notification => {
-        console.log('Push notification action performed', notification.actionId, notification.inputValue);
-        
-        // Refresh notification list when user taps notification
-        if (queryClientRef) {
-            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.lists() });
-            queryClientRef.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() });
-        }
-        
-        // TODO: Navigate to specific screen based on notification data
-        // Example: if (notification.data?.goalId) navigate to goal details
-    })])
+  void queryClientRef.invalidateQueries({
+    queryKey: notificationQueryKeys.lists(),
+  })
+  void queryClientRef.invalidateQueries({
+    queryKey: notificationQueryKeys.unreadCount(),
+  })
 }
 
-export const registerPushNotifications = async () => {
-    let permStatus = await PushNotifications.checkPermissions();
+function handleForegroundPush(notification: PushNotificationSchema): void {
+  invalidateNotificationQueries()
 
-   
-
-    if (permStatus.receive === 'prompt') {
-        permStatus = await PushNotifications.requestPermissions();
-    }
-
-    if (permStatus.receive !== 'granted') {
-        throw new Error('User denied permissions!');
-    }
-     //alert(permStatus.receive)
-
-    return await PushNotifications.register();
+  const inAppNotification = getInAppNotification(notification)
+  if (inAppNotification) {
+    foregroundPushNotificationHandler?.(inAppNotification)
+  }
 }
 
-export const getDeliveredPushNotifications = async () => {
-    const notificationList = await PushNotifications.getDeliveredNotifications();
-    console.log('delivered notifications', notificationList);
+function handlePushAction(notification: PushNotificationSchema): void {
+  invalidateNotificationQueries()
+
+  const route = getPushNotificationRoute(notification)
+  if (route) {
+    notificationRouteHandler?.(route)
+  }
 }
 
-export const createPushNotificationChannels = async () => {
-    const STREEK_REMINDER_CHANNEL_PAYLOAD = createPushNotificationChannel({
-        importance: 4,
-        visibility: 1,
-        lights: true,
-        vibration: true,
-        lightColor: "green",
-        id: "vybaa_notifications",
-        name: "vybaa_notifications",
-        description: "Reminder for your goals",
-        sound: "streek_reminder_sound.wav",
-    });
+async function registerPushNotificationListeners(): Promise<void> {
+  await Promise.all([
+    PushNotifications.addListener('registration', async (token) => {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fcmToken', token.value)
+      }
 
+      await userAPI.syncFCMToken(token.value)
+    }),
+    PushNotifications.addListener('registrationError', () => {
+      // Permission and registration state are handled by the caller.
+    }),
+    PushNotifications.addListener(
+      'pushNotificationReceived',
+      handleForegroundPush,
+    ),
+    PushNotifications.addListener(
+      'pushNotificationActionPerformed',
+      ({ notification }) => {
+        handlePushAction(notification)
+      },
+    ),
+  ])
+}
 
-    await PushNotifications.createChannel(STREEK_REMINDER_CHANNEL_PAYLOAD).then(console.log).catch(console.error);
+async function requestPushRegistration(): Promise<void> {
+  let permission = await PushNotifications.checkPermissions()
+  if (permission.receive === 'prompt') {
+    permission = await PushNotifications.requestPermissions()
+  }
+
+  if (permission.receive !== 'granted') {
+    throw new Error('Push notification permission was not granted.')
+  }
+
+  await PushNotifications.register()
+}
+
+async function createNotificationChannel(): Promise<void> {
+  if (Capacitor.getPlatform() !== 'android') {
+    return
+  }
+
+  const channel = createPushNotificationChannel({
+    description: 'Vybaa reminders and updates',
+    id: 'vybaa_notifications',
+    importance: 4,
+    lightColor: 'green',
+    lights: true,
+    name: 'Vybaa notifications',
+    sound: 'streek_reminder_sound.wav',
+    vibration: true,
+    visibility: 1,
+  })
+
+  await PushNotifications.createChannel(channel)
+}
+
+export function setQueryClientForNotifications(
+  queryClient: QueryClient | null,
+): void {
+  queryClientRef = queryClient
+}
+
+export function setForegroundPushNotificationHandler(
+  handler: ForegroundPushNotificationHandler | null,
+): void {
+  foregroundPushNotificationHandler = handler
+}
+
+export function setPushNotificationRouteHandler(
+  handler: ((route: string) => void) | null,
+): void {
+  notificationRouteHandler = handler
+}
+
+export function addPushNotificationListeners(): Promise<void> {
+  if (!notificationListenersPromise) {
+    notificationListenersPromise = registerPushNotificationListeners().catch(
+      (error: unknown) => {
+        notificationListenersPromise = null
+        throw error
+      },
+    )
+  }
+
+  return notificationListenersPromise
+}
+
+export function registerPushNotifications(): Promise<void> {
+  if (!pushRegistrationPromise) {
+    pushRegistrationPromise = requestPushRegistration().catch(
+      (error: unknown) => {
+        pushRegistrationPromise = null
+        throw error
+      },
+    )
+  }
+
+  return pushRegistrationPromise
+}
+
+export function getDeliveredPushNotifications() {
+  return PushNotifications.getDeliveredNotifications()
+}
+
+export function createPushNotificationChannels(): Promise<void> {
+  if (!pushChannelPromise) {
+    pushChannelPromise = createNotificationChannel().catch((error: unknown) => {
+      pushChannelPromise = null
+      throw error
+    })
+  }
+
+  return pushChannelPromise
 }

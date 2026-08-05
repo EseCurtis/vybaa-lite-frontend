@@ -5,7 +5,9 @@ import {
   RiFileTextLine,
   RiLogoutBoxRLine,
   RiShieldCheckLine,
+  RiTimeLine,
 } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 
@@ -23,6 +25,7 @@ import {
 
 export default function SettingsScreen() {
   const { logout, deleteAccount } = useAuth()
+  const navigate = useNavigate()
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
@@ -80,7 +83,42 @@ export default function SettingsScreen() {
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           <View className=" px-mg pb-[120px] space-y-6">
-           
+            <View className="space-y-3">
+              <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
+                Rewind
+              </Text>
+
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.18 }}
+              >
+                <Pressable
+                  onPress={() => {
+                    void navigate({
+                      search: { from: 'settings' },
+                      to: '/app/rewind-routine',
+                    })
+                  }}
+                  className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                >
+                  <View className="flex-row items-center gap-4 flex-1 min-w-0">
+                    <View className="w-10 h-10 rounded-xl bg-card-light/60 flex items-center justify-center">
+                      <RiTimeLine size={20} className="text-white" />
+                    </View>
+                    <View className="min-w-0 flex-1">
+                      <Text className="text-white text-sm font-bbh font-semibold">
+                        Rewind routine
+                      </Text>
+                      <Text className="text-white/50 text-xs font-bbh">
+                        Choose your reflection times and focus
+                      </Text>
+                    </View>
+                  </View>
+                  <RiArrowRightSLine size={20} className="text-white/40" />
+                </Pressable>
+              </motion.div>
+            </View>
 
             {/* Legal Section */}
             <View className="space-y-3">

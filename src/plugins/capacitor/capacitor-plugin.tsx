@@ -4,6 +4,9 @@ import { useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { useAuth } from '@/providers/auth.provider'
+import { useToast } from '@/providers/toast.provider'
+import { authAPI } from '@/shared/api/auth.api'
+import { getDeviceTimezone, updateTimezone } from '@/shared/api/http'
 import {
   consumePendingDeepLink,
   getUnauthenticatedDeepLinkEntryPath,
@@ -11,9 +14,18 @@ import {
   storePendingDeepLink,
 } from '@/shared/utils/deep-link.util'
 import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
+import {
+  claimInAppNotificationDisplay,
+  formatInAppNotification,
+  type InAppNotification,
+} from '@/shared/notifications/in-app-notification.util'
 
 import ConfigCapacitorApp from './config'
-import { setQueryClientForNotifications } from './plugins/push-notification.plugin'
+import {
+  setForegroundPushNotificationHandler,
+  setPushNotificationRouteHandler,
+  setQueryClientForNotifications,
+} from './plugins/push-notification.plugin'
 
 type CapacitorPluginProps = {
   router: AnyRouter
@@ -21,7 +33,32 @@ type CapacitorPluginProps = {
 
 export function CapacitorPlugin({ router }: CapacitorPluginProps) {
   const queryClient = useQueryClient()
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, refreshSession, user } = useAuth()
+  const toast = useToast()
+
+  const handleForegroundPushNotification = useCallback(
+    (notification: InAppNotification): void => {
+      if (!claimInAppNotificationDisplay(notification.id)) return
+
+      toast.info(formatInAppNotification(notification))
+    },
+    [toast],
+  )
+
+  const syncDeviceTimezone = useCallback(async (): Promise<void> => {
+    if (!isAuthenticated || !user) return
+
+    const timezone = getDeviceTimezone()
+    updateTimezone(timezone)
+    if (timezone === user.timezone) return
+
+    try {
+      await authAPI.updateProfile({ timezone })
+      await refreshSession()
+    } catch {
+      // A later resume or authenticated request will retry the sync.
+    }
+  }, [isAuthenticated, refreshSession, user])
 
   const handleDeepLink = useCallback(
     async (url: string): Promise<void> => {
@@ -47,11 +84,18 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
 
   useEffect(() => {
     setQueryClientForNotifications(queryClient)
+    setPushNotificationRouteHandler((route) => {
+      void handleDeepLink(`https://vybaa.app${route}`)
+    })
+    setForegroundPushNotificationHandler(handleForegroundPushNotification)
 
     const configure = async (): Promise<() => void> => {
-      const appUrlOpenListener = await App.addListener('appUrlOpen', (event) => {
-        void handleDeepLink(event.url)
-      })
+      const appUrlOpenListener = await App.addListener(
+        'appUrlOpen',
+        (event) => {
+          void handleDeepLink(event.url)
+        },
+      )
       const launchUrl = await App.getLaunchUrl()
 
       if (launchUrl?.url) {
@@ -76,8 +120,30 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
 
     return () => {
       cleanup?.()
+      setForegroundPushNotificationHandler(null)
+      setPushNotificationRouteHandler(null)
     }
-  }, [handleDeepLink, queryClient, router])
+  }, [handleDeepLink, handleForegroundPushNotification, queryClient, router])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+
+    void syncDeviceTimezone()
+    let appStateListener:
+      | Awaited<ReturnType<typeof App.addListener>>
+      | undefined
+    void App.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) {
+        void syncDeviceTimezone()
+      }
+    }).then((listener) => {
+      appStateListener = listener
+    })
+
+    return () => {
+      void appStateListener?.remove()
+    }
+  }, [isAuthenticated, syncDeviceTimezone, user])
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) {

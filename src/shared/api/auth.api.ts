@@ -103,6 +103,7 @@ class AuthAPI {
     username?: string
     profileImageId?: string
     rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | null
+    timezone?: string
   }): Promise<{ msg: string; data: any }> {
     const { data: res } = await http.put<{ msg: string; data: any }>(`${API_V1}/users/me`, data)
     return res

@@ -1,7 +1,14 @@
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { notificationAPI, type Notification } from '@/shared/api/notification.api'
+import {
+  notificationAPI,
+  type Notification,
+} from '@/shared/api/notification.api'
 import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
+import {
+  claimInAppNotificationDisplay,
+  formatInAppNotification,
+} from '@/shared/notifications/in-app-notification.util'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
@@ -20,20 +27,100 @@ interface NotificationContextValue {
   addNotification: (notification: Notification) => void
 }
 
+interface NotificationPreview {
+  createdAt: string
+  id: string
+  message: string
+  title: string
+  type: string
+}
+
+interface NotificationRealtimeSignal {
+  latestNotification: NotificationPreview
+  notificationCount: number
+}
+
 const NotificationContext = createContext<NotificationContextValue | null>(null)
+
+const NOTIFICATION_POLL_INTERVAL_MS = 60_000
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+function getNotificationPreview(value: unknown): NotificationPreview | null {
+  if (!isRecord(value)) return null
+
+  const { createdAt, id, message, title, type } = value
+  if (
+    typeof createdAt !== 'string' ||
+    typeof id !== 'string' ||
+    typeof message !== 'string' ||
+    typeof title !== 'string' ||
+    typeof type !== 'string'
+  ) {
+    return null
+  }
+
+  return { createdAt, id, message, title, type }
+}
+
+function getNotificationRealtimeSignal(
+  value: unknown,
+): NotificationRealtimeSignal | null {
+  if (!isRecord(value) || typeof value.notificationCount !== 'number')
+    return null
+
+  const latestNotification = getNotificationPreview(value.latestNotification)
+  if (!latestNotification) return null
+
+  return { latestNotification, notificationCount: value.notificationCount }
+}
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated } = useAuth()
   const toast = useToast()
   const queryClient = useQueryClient()
-  
+
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [isConnected, setIsConnected] = useState(false)
-  
+
   const ablyRef = useRef<any>(null)
   const channelRef = useRef<any>(null)
-  const connectionListenersRef = useRef<{ connected?: any; disconnected?: any; failed?: any }>({})
+  const connectionListenersRef = useRef<{
+    connected?: any
+    disconnected?: any
+    failed?: any
+  }>({})
+
+  const refreshNotificationData = useCallback(() => {
+    void queryClient.invalidateQueries({
+      queryKey: notificationQueryKeys.lists(),
+    })
+    void queryClient.invalidateQueries({
+      queryKey: notificationQueryKeys.unreadCount(),
+    })
+  }, [queryClient])
+
+  const handleRealtimeNotificationPulse = useCallback(
+    (data: unknown) => {
+      const signal = getNotificationRealtimeSignal(data)
+      if (
+        signal &&
+        claimInAppNotificationDisplay(signal.latestNotification.id)
+      ) {
+        toast.info(
+          signal.notificationCount === 1
+            ? formatInAppNotification(signal.latestNotification)
+            : `${signal.notificationCount} new notifications are ready.`,
+        )
+      }
+
+      refreshNotificationData()
+    },
+    [refreshNotificationData, toast],
+  )
 
   // Note: FCM push notifications are handled by Capacitor plugin
   // See: app/src/plugins/capacitor/plugins/push-notification.plugin.ts
@@ -50,13 +137,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     const connectToAbly = async () => {
       try {
         console.log('Initializing Ably connection for user:', user.id)
-        
+
         // Dynamically import Ably (only on client side)
         const Ably = (await import('ably')).default
-        
+
         // Create Ably client with token auth
         const ablyClient = new Ably.Realtime({
-          authCallback: async (tokenParams, callback) => {
+          authCallback: async (_tokenParams, callback) => {
             try {
               const response = await notificationAPI.getAblyAuth()
               callback(null, response.data)
@@ -112,27 +199,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         ablyClient.connection.on('disconnected', onDisconnected)
         ablyClient.connection.on('failed', onFailed)
 
-        // Listen for notifications
-        channel.subscribe('notification', (message: any) => {
-          if (!isMounted) return
+        // One pulse can represent many notification writes; the API remains canonical.
+        channel.subscribe(
+          'notifications_changed',
+          (message: { data?: unknown }) => {
+            if (!isMounted) return
 
-          const notification = message.data as Notification
-          console.log('📬 Received notification:', notification)
-          
-          // Add to local state (only if unread)
-          if (!notification.isRead) {
-            setNotifications((prev) => [notification, ...prev])
-            setUnreadCount((prev) => prev + 1)
-          }
-          
-          // Show toast
-          toast.info(notification.title)
-          toast.info(notification.message)
-          
-          // Invalidate queries to refresh notification list
-          queryClient.invalidateQueries({ queryKey: notificationQueryKeys.lists() })
-          queryClient.invalidateQueries({ queryKey: notificationQueryKeys.unreadCount() })
-        })
+            handleRealtimeNotificationPulse(message.data)
+          },
+        )
 
         console.log('🔔 Subscribed to notifications channel')
       } catch (error) {
@@ -144,6 +219,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     }
 
     connectToAbly()
+    const notificationPoll = window.setInterval(
+      refreshNotificationData,
+      NOTIFICATION_POLL_INTERVAL_MS,
+    )
 
     // Cleanup function
     return () => {
@@ -153,7 +232,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       // Unsubscribe from channel
       if (channelRef.current) {
         try {
-          channelRef.current.unsubscribe('notification')
+          channelRef.current.unsubscribe('notifications_changed')
           channelRef.current.detach()
         } catch (error) {
           console.error('Error unsubscribing from channel:', error)
@@ -187,9 +266,15 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       ablyRef.current = null
       channelRef.current = null
       connectionListenersRef.current = {}
+      window.clearInterval(notificationPoll)
       setIsConnected(false)
     }
-  }, [isAuthenticated, user?.id, toast, queryClient])
+  }, [
+    handleRealtimeNotificationPulse,
+    isAuthenticated,
+    refreshNotificationData,
+    user?.id,
+  ])
 
   const addNotification = useCallback((notification: Notification) => {
     setNotifications((prev) => [notification, ...prev])
@@ -205,13 +290,19 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     addNotification,
   }
 
-  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>
+  return (
+    <NotificationContext.Provider value={value}>
+      {children}
+    </NotificationContext.Provider>
+  )
 }
 
 export const useNotificationContext = () => {
   const context = useContext(NotificationContext)
   if (!context) {
-    throw new Error('useNotificationContext must be used within NotificationProvider')
+    throw new Error(
+      'useNotificationContext must be used within NotificationProvider',
+    )
   }
   return context
 }

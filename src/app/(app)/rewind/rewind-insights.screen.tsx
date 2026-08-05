@@ -205,7 +205,7 @@ export default function RewindInsightsScreen(): ReactElement {
               accessibilityLabel="Open Rewind transcript history"
               className="min-h-12 flex-row items-center justify-between rounded-lg px-4"
               style={{ backgroundColor: colors['card-light-50'] }}
-              onPress={() => navigate({ to: '/app/rewind-history/sessions' })}
+              onPress={() => navigate({ to: '/app/rewind-history-sessions' })}
             >
               <View className="flex-row items-center gap-3">
                 <RiFileList3Line size={19} style={{ color: colors.white }} />

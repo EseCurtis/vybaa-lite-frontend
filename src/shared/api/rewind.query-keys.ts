@@ -5,6 +5,7 @@ import type {
 
 export const rewindQueryKeys = {
   all: ['rewind'] as const,
+  routine: () => [...rewindQueryKeys.all, 'routine'] as const,
   sessions: () => [...rewindQueryKeys.all, 'sessions'] as const,
   session: (sessionId: string) =>
     [...rewindQueryKeys.sessions(), 'detail', sessionId] as const,

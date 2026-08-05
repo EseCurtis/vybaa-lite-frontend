@@ -1,16 +1,24 @@
 export type DeepLinkRouteName =
   | 'achievements'
+  | 'community'
   | 'communities'
+  | 'flexx'
   | 'goal'
   | 'home'
   | 'invite'
   | 'profile'
   | 'rewind'
   | 'rewindHistory'
+  | 'rewindHistorySessions'
+  | 'rewindRoutine'
+  | 'rewindSession'
   | 'rewards'
 
 export type DeepLinkTarget = {
   code?: string
+  communityId?: string
+  hash?: string
+  sessionId?: string
   path: string
   requiresAuth: boolean
   route: DeepLinkRouteName
@@ -32,6 +40,11 @@ const allowedAppPaths: Record<string, DeepLinkTarget> = {
     path: '/app/goal',
     requiresAuth: true,
     route: 'goal',
+  },
+  '/app/actions/flexx': {
+    path: '/app/actions/flexx',
+    requiresAuth: true,
+    route: 'flexx',
   },
   '/app/home': {
     path: '/app/home',
@@ -58,6 +71,16 @@ const allowedAppPaths: Record<string, DeepLinkTarget> = {
     requiresAuth: true,
     route: 'rewindHistory',
   },
+  '/app/rewind-history-sessions': {
+    path: '/app/rewind-history-sessions',
+    requiresAuth: true,
+    route: 'rewindHistorySessions',
+  },
+  '/app/rewind-routine': {
+    path: '/app/rewind-routine',
+    requiresAuth: true,
+    route: 'rewindRoutine',
+  },
 }
 
 function normalizeInviteCode(code: string | undefined): string | undefined {
@@ -77,7 +100,17 @@ function getUrlFromInput(input: string): URL | null {
   }
 }
 
-function getTargetFromPath(pathname: string): DeepLinkTarget | null {
+function getCommunityHash(hash: string): string | undefined {
+  const value = hash.startsWith('#') ? hash.slice(1) : hash
+  return value === 'activity' || value === 'members' || value === 'moderation'
+    ? value
+    : undefined
+}
+
+function getTargetFromPath(
+  pathname: string,
+  hash: string = '',
+): DeepLinkTarget | null {
   const inviteMatch = pathname.match(/^\/(?:app\/)?invite\/([^/]+)$/)
   const inviteCode = normalizeInviteCode(inviteMatch?.[1])
 
@@ -87,6 +120,29 @@ function getTargetFromPath(pathname: string): DeepLinkTarget | null {
       path: `/app/invite/${inviteCode}`,
       requiresAuth: true,
       route: 'invite',
+    }
+  }
+
+  const rewindSessionMatch = pathname.match(/^\/app\/r\/([^/]+)$/)
+  const sessionId = rewindSessionMatch?.[1]?.trim()
+  if (sessionId) {
+    return {
+      path: `/app/r/${sessionId}`,
+      requiresAuth: true,
+      route: 'rewindSession',
+      sessionId,
+    }
+  }
+
+  const communityMatch = pathname.match(/^\/app\/community\/([^/]+)$/)
+  const communityId = communityMatch?.[1]?.trim()
+  if (communityId) {
+    return {
+      communityId,
+      hash: getCommunityHash(hash),
+      path: `/app/community/${communityId}`,
+      requiresAuth: true,
+      route: 'community',
     }
   }
 
@@ -100,11 +156,11 @@ export function normalizeDeepLink(input: string): DeepLinkTarget | null {
     return null
   }
 
-  if (url.protocol === 'vybaa:') {
+  if (url.protocol === 'vybaa:' || url.protocol === 'com.vybaa.app:') {
     const schemePath = url.hostname
       ? `/${url.hostname}${url.pathname}`
       : url.pathname
-    return getTargetFromPath(schemePath)
+    return getTargetFromPath(schemePath, url.hash)
   }
 
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
@@ -115,7 +171,7 @@ export function normalizeDeepLink(input: string): DeepLinkTarget | null {
     return null
   }
 
-  return getTargetFromPath(url.pathname)
+  return getTargetFromPath(url.pathname, url.hash)
 }
 
 export function storePendingDeepLink(target: DeepLinkTarget): void {

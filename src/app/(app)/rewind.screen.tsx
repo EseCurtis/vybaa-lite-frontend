@@ -4,6 +4,7 @@ import {
   RiPauseLine,
   RiPlayLine,
   RiRefreshLine,
+  RiSettings3Line,
   RiStopCircleLine,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -29,7 +30,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
-import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useRewindRoutine } from '@/hooks/use-rewind.hook'
 import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
@@ -74,6 +75,8 @@ type RewindSocketMessage =
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
   | { type: 'session_paused'; sessionId?: string }
+  | { type: 'session_missed'; sessionId?: string }
+  | { type: 'session_unavailable'; sessionId?: string; message: string }
   | {
       type: 'session_ended'
       emotionalInsight?: string | null
@@ -217,7 +220,7 @@ function PersonaCard({
 
 export default function RewindScreen(): ReactElement {
   const { user, refreshSession } = useAuth()
-  useBottomSheet()
+  const routineQuery = useRewindRoutine()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [statusText, setStatusText] = useState('Idle')
@@ -255,6 +258,13 @@ export default function RewindScreen(): ReactElement {
   const startSessionRef = useRef<(() => Promise<void>) | null>(null)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+
+  const openRoutineSettings = useCallback(() => {
+    void navigate({
+      search: { from: 'rewind' },
+      to: '/app/rewind-routine',
+    })
+  }, [navigate])
 
   useEffect(() => {
     isConversationPausedRef.current = isConversationPaused
@@ -706,6 +716,14 @@ export default function RewindScreen(): ReactElement {
     if (!persona) return
     if (isConnectingRef.current) return
     if (liveSessionRef.current?.readyState === WebSocket.OPEN) return
+    if (!routineQuery.data?.routine) {
+      openRoutineSettings()
+      return
+    }
+    if (!routineQuery.data.currentSession) {
+      setStatusText('Not scheduled now')
+      return
+    }
 
     isConnectingRef.current = true
     shouldReconnectRef.current = true
@@ -828,6 +846,7 @@ export default function RewindScreen(): ReactElement {
                 refetchType: 'all',
               })
               .finally(() => {
+                void routineQuery.refetch()
                 if (payload.sessionId) {
                   navigate({
                     params: { sessionId: payload.sessionId },
@@ -855,8 +874,25 @@ export default function RewindScreen(): ReactElement {
             return
           }
 
+          if (
+            payload.type === 'session_missed' ||
+            payload.type === 'session_unavailable'
+          ) {
+            isSessionCompleteRef.current = true
+            shouldReconnectRef.current = false
+            clearPausedRewindSessionId(persona.id)
+            setIsFinishingSession(false)
+            setStatusText(
+              payload.type === 'session_missed' ? 'Window closed' : 'Unavailable',
+            )
+            cleanupAudioPipeline()
+            void routineQuery.refetch()
+            liveSessionRef.current?.close(1000, 'Rewind window closed')
+            return
+          }
+
           if (payload.type === 'open_history') {
-            navigate({ to: '/app/rewind-history/sessions' })
+            navigate({ to: '/app/rewind-history-sessions' })
             return
           }
 
@@ -912,8 +948,13 @@ export default function RewindScreen(): ReactElement {
           }
         }
       }
-    } catch {
+    } catch (error) {
       isConnectingRef.current = false
+      if (isAxiosError<{ msg?: string }>(error) && error.response?.status === 409) {
+        setStatusText('Not scheduled now')
+        void routineQuery.refetch()
+        return
+      }
       setStatusText('Failed')
     }
   }, [
@@ -923,6 +964,8 @@ export default function RewindScreen(): ReactElement {
     playNextAudioChunk,
     queryClient,
     navigate,
+    openRoutineSettings,
+    routineQuery,
     toast,
   ])
 
@@ -954,6 +997,39 @@ export default function RewindScreen(): ReactElement {
       to: '/app/rewind-history',
     })
   }, [navigate])
+
+  const routineStatus = useMemo(() => {
+    const formatOccurrenceTime = (value: string | null): string => {
+      if (!value) return ''
+      return new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(new Date(value))
+    }
+
+    if (!routineQuery.data?.routine) {
+      return 'Set your Rewind routine'
+    }
+    if (routineQuery.data.currentSession) {
+      return `Open until ${formatOccurrenceTime(
+        routineQuery.data.currentSession.windowEndsAt,
+      )}`
+    }
+    if (routineQuery.data.latestSession?.status === 'COMPLETED') {
+      return 'Your latest Rewind is complete'
+    }
+    if (routineQuery.data.latestSession?.status === 'MISSED') {
+      return 'Your last Rewind window closed'
+    }
+    if (routineQuery.data.nextSession) {
+      return `Next Rewind ${formatOccurrenceTime(
+        routineQuery.data.nextSession.scheduledFor,
+      )}`
+    }
+    return 'Your next Rewind is being scheduled'
+  }, [routineQuery.data])
+
+  const hasAvailableOccurrence = Boolean(routineQuery.data?.currentSession)
 
   const hasActiveSession =
     liveSessionRef.current?.readyState === WebSocket.OPEN ||
@@ -1092,11 +1168,9 @@ export default function RewindScreen(): ReactElement {
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
               <View className="px-3 py-2 rounded-full bg-white/6">
                 <Text className="text-white/80 font-bold font-bbh text-xs">
-                  {rewindSessionDateKey
-                    ? `Daily Rewind ${rewindSessionDateKey.slice(5)}`
-                    : conversationSummary.toLowerCase() === 'failed'
-                      ? 'Unavailable'
-                      : 'Connected'}{' '}
+                    {rewindSessionDateKey
+                    ? `Rewind ${rewindSessionDateKey.slice(5)}`
+                    : routineStatus}{' '}
                   -{' '}
                   <Text
                     className={cn(
@@ -1116,7 +1190,9 @@ export default function RewindScreen(): ReactElement {
             </View>
 
             <Pressable
-              onPress={startSession}
+              onPress={() => {
+                void startSession()
+              }}
               className={cn(
                 isConversationPaused && 'saturate-0 opacity-50',
                 'bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full mt-16',
@@ -1149,6 +1225,10 @@ export default function RewindScreen(): ReactElement {
                     ? 'Reconnect and continue'
                     : statusText === 'Paused'
                       ? 'Resume your Rewind'
+                      : !routineQuery.data?.routine
+                        ? 'Set your routine to begin'
+                        : !hasAvailableOccurrence
+                          ? routineStatus
                       : 'Ready? tap to begin'}
                 </Text>
               </Pressable>
@@ -1173,6 +1253,26 @@ export default function RewindScreen(): ReactElement {
                   <Text className="font-bbh font-bold text-cardd">
                     {isFinishingSession ? 'Saving summary...' : 'Conclude'}
                   </Text>
+                </Pressable>
+              ) : null}
+
+              {!hasActiveSession ? (
+                <Pressable
+                  onPress={openRoutineSettings}
+                  className="w-full flex-row items-center justify-between rounded-lg bg-card-light/15 px-4 py-3 text-left"
+                >
+                  <View className="min-w-0 flex-1 gap-1">
+                    <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
+                      Rewind routine
+                    </Text>
+                    <Text className="muted font-bbh text-xs line-clamp-2">
+                      {routineStatus}
+                    </Text>
+                  </View>
+                  <RiSettings3Line
+                    size={18}
+                    className="ml-3 shrink-0 text-white/60"
+                  />
                 </Pressable>
               ) : null}
 

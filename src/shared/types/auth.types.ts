@@ -48,6 +48,7 @@ export interface User {
   avatarUrl?: string
   currentMood?: string
   rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
+  timezone?: string
   // OAuth fields
   googleId?: string
   // Timestamps
