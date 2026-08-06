@@ -22,6 +22,8 @@ const ENV = {
   GOOGLE_CLIENT_ID: (import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '') as string,
   GOOGLE_IOS_CLIENT_ID: (import.meta.env.VITE_GOOGLE_IOS_CLIENT_ID ?? '') as string,
   GOOGLE_ANDROID_CLIENT_ID: (import.meta.env.VITE_GOOGLE_ANDROID_CLIENT_ID ?? '') as string,
+  REVENUECAT_IOS_API_KEY: (import.meta.env.VITE_REVENUECAT_IOS_API_KEY ?? '') as string,
+  REVENUECAT_ANDROID_API_KEY: (import.meta.env.VITE_REVENUECAT_ANDROID_API_KEY ?? '') as string,
 } as {
   API_BASE_URL: string
   ENVIRONMENT: 'production' | 'development' | 'staging'
@@ -34,6 +36,8 @@ const ENV = {
   GOOGLE_CLIENT_ID: string
   GOOGLE_IOS_CLIENT_ID: string
   GOOGLE_ANDROID_CLIENT_ID: string
+  REVENUECAT_IOS_API_KEY: string
+  REVENUECAT_ANDROID_API_KEY: string
 }
 
 export default ENV

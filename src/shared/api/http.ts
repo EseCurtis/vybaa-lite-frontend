@@ -1,6 +1,34 @@
 import ENV from '@/env'
 import axios, { AxiosError, type InternalAxiosRequestConfig, } from 'axios'
 
+export type ApiErrorCode =
+  | 'FREE_LIMIT_REACHED'
+  | 'PLAN_LIMIT_REACHED'
+  | 'PRO_REQUIRED'
+  | 'SUBSCRIPTION_UNAVAILABLE'
+
+export class ApiError extends Error {
+  public readonly code?: string
+  public readonly status?: number
+
+  public constructor(message: string, options?: { code?: string; status?: number }) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = options?.code
+    this.status = options?.status
+  }
+}
+
+export function isSubscriptionApiError(error: unknown): error is ApiError {
+  return (
+    error instanceof ApiError &&
+    (error.code === 'FREE_LIMIT_REACHED' ||
+      error.code === 'PLAN_LIMIT_REACHED' ||
+      error.code === 'PRO_REQUIRED' ||
+      error.code === 'SUBSCRIPTION_UNAVAILABLE')
+  )
+}
+
 export const http = axios.create({
   baseURL: `${ENV.API_BASE_URL}`,
   headers: {
@@ -137,13 +165,21 @@ http.interceptors.response.use(
 
     
 
-    const message = error?.response?.data?.msg || error?.message || 'Request failed'
+    const responseData = error?.response?.data as
+      | { code?: string; msg?: string }
+      | undefined
+    const message = responseData?.msg || error?.message || 'Request failed'
     const properMessage =  extractError(
     (error?.response?.data as any)?.msg || error?.response?.data
   ).trimEnd();
 
+    const isSubscriptionError =
+      typeof responseData?.code === 'string' &&
+      ['FREE_LIMIT_REACHED', 'PLAN_LIMIT_REACHED', 'PRO_REQUIRED', 'SUBSCRIPTION_UNAVAILABLE'].includes(
+        responseData.code,
+      )
 
-    if ((status === 401 || status === 403) && !original?._retry) {
+    if ((status === 401 || (status === 403 && !isSubscriptionError)) && !original?._retry) {
       original._retry = true
       try {
         const refreshToken = localStorage.getItem('refreshToken')
@@ -178,10 +214,10 @@ http.interceptors.response.use(
         processQueue(undefined)
         localStorage.removeItem('authToken')
         localStorage.removeItem('refreshToken')
-        return Promise.reject(new Error(properMessage ||'Session expired'))
+        return Promise.reject(new ApiError(properMessage || 'Session expired', { status }))
       }
     }
 
-    return Promise.reject(new Error(message))
+    return Promise.reject(new ApiError(message, { code: responseData?.code, status }))
   },
 )

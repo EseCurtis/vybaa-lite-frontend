@@ -6,7 +6,9 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateGoal } from '@/hooks/use-goals.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useToast } from '@/providers/toast.provider'
+import type { CreateGoalRequest } from '@/shared/api/goal.api'
 import { randomCreateGoalPlaceholder } from '@/shared/goal/goal.util.shared'
 import { useState } from 'react'
 
@@ -16,8 +18,9 @@ interface CreateGoalSheetProps {
 
 export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
   const toast = useToast()
+  const { handleSubscriptionError } = useProAccess()
   const { mutateAsync: createGoal, isPending: isCreating } = useCreateGoal()
-  
+
   const [formData, setFormData] = useState({
     goalText: '',
     targetDays: '',
@@ -44,23 +47,33 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
       return
     }
 
-    try {
-      setFormError(null)
-      await createGoal({
-        goalText: formData.goalText.trim(),
-        targetDays,
-        reminderTime:
-          reminderEnabled && formData.reminderTime
-            ? formData.reminderTime
-            : undefined,
-      })
-      
+    const payload: CreateGoalRequest = {
+      goalText: formData.goalText.trim(),
+      targetDays,
+      reminderTime:
+        reminderEnabled && formData.reminderTime
+          ? formData.reminderTime
+          : undefined,
+    }
+
+    const submitGoal = async (): Promise<void> => {
+      await createGoal(payload)
+
       // Reset form and dismiss on success
       setFormData({ goalText: '', targetDays: '', reminderTime: '' })
       setReminderEnabled(false)
       onSuccess?.()
-    } catch (err: any) {
-      const errorMsg = err.message || 'Failed to create goal'
+    }
+
+    try {
+      setFormError(null)
+      await submitGoal()
+    } catch (error: unknown) {
+      const handled = await handleSubscriptionError(error, submitGoal)
+      if (handled) return
+
+      const errorMsg =
+        error instanceof Error ? error.message : 'Failed to create goal'
       setFormError(errorMsg)
       toast.error(errorMsg)
     }
@@ -68,7 +81,7 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
 
   return (
     <View className="space-y-4">
-      <View className='mt-3'>
+      <View className="mt-3">
         <TextArea
           placeholder={randomCreateGoalPlaceholder()}
           value={formData.goalText}
@@ -83,8 +96,10 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
         />
       </View>
 
-      <View className='flex-row items-center gap-3'>
-        <Text className="text-card-lighter-3 whitespace-nowrap">For how long?</Text>
+      <View className="flex-row items-center gap-3">
+        <Text className="text-card-lighter-3 whitespace-nowrap">
+          For how long?
+        </Text>
         <Input
           type="number"
           placeholder="20 days"
@@ -128,22 +143,20 @@ export function CreateGoalSheet({ onSuccess }: CreateGoalSheetProps) {
       </View>
 
       {formError && (
-        <Text className="text-danger-500 text-sm font-bbh">
-          {formError}
-        </Text>
+        <Text className="text-danger-500 text-sm font-bbh">{formError}</Text>
       )}
       <View className="p-10"></View>
 
       <View className="absolute bottom-0 left-0 w-full p-mg">
         <Button
-        label="Create Goal"
-        variant="default"
-        fullWidth
-        onClick={handleSubmit}
-        disabled={isCreating}
-        loading={isCreating}
-        textClassName='text-sm'
-      />
+          label="Create Goal"
+          variant="default"
+          fullWidth
+          onClick={handleSubmit}
+          disabled={isCreating}
+          loading={isCreating}
+          textClassName="text-sm"
+        />
       </View>
     </View>
   )

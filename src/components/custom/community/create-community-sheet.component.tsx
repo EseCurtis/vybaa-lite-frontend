@@ -6,6 +6,7 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateCommunity } from '@/hooks/use-communities.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useToast } from '@/providers/toast.provider'
 import { uploadAPI } from '@/shared/api/upload.api'
 import {
@@ -23,8 +24,12 @@ interface CreateCommunitySheetProps {
 
 export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
   const toast = useToast()
-  const { mutateAsync: createCommunity, isPending: isCreating } = useCreateCommunity()
-  const defaultCover = getCommunityIllustrationToken(communityIllustrations[0]!.id)
+  const { handleSubscriptionError } = useProAccess()
+  const { mutateAsync: createCommunity, isPending: isCreating } =
+    useCreateCommunity()
+  const defaultCover = getCommunityIllustrationToken(
+    communityIllustrations[0]!.id,
+  )
 
   const [formData, setFormData] = useState({
     name: '',
@@ -42,9 +47,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
       return
     }
 
-    try {
-      setFormError(null)
-
+    const submitCommunity = async (): Promise<void> => {
       await createCommunity({
         name: formData.name.trim(),
         description: formData.description.trim() || undefined,
@@ -52,12 +55,22 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
         category: formData.category.trim() || undefined,
         isPublic: formData.isPublic,
       })
-      
+
       setFormData({ name: '', description: '', category: '', isPublic: true })
       setCoverImage(defaultCover)
       onSuccess?.()
-    } catch (err: any) {
-      setFormError(err.message || 'Failed to create community')
+    }
+
+    try {
+      setFormError(null)
+      await submitCommunity()
+    } catch (error: unknown) {
+      const handled = await handleSubscriptionError(error, submitCommunity)
+      if (handled) return
+
+      setFormError(
+        error instanceof Error ? error.message : 'Failed to create community',
+      )
     }
   }
 
@@ -170,9 +183,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
             />
             <View className="mt-1 flex-row items-center justify-center gap-1">
               <RiImageAddLine size={12} className="text-white/40" />
-              <Text className="text-white/40 text-[10px] font-bbh">
-                Upload
-              </Text>
+              <Text className="text-white/40 text-[10px] font-bbh">Upload</Text>
             </View>
           </View>
         </View>
@@ -198,7 +209,9 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
         <input
           type="checkbox"
           checked={formData.isPublic}
-          onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+          onChange={(e) =>
+            setFormData({ ...formData, isPublic: e.target.checked })
+          }
           className="w-4 h-4 rounded"
         />
         <Text className="text-white/60 text-sm font-bbh">
@@ -207,9 +220,7 @@ export function CreateCommunitySheet({ onSuccess }: CreateCommunitySheetProps) {
       </View>
 
       {formError && (
-        <Text className="text-danger-500 text-sm font-bbh">
-          {formError}
-        </Text>
+        <Text className="text-danger-500 text-sm font-bbh">{formError}</Text>
       )}
 
       <Button

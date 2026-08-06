@@ -1,4 +1,5 @@
 import { useToast } from '@/providers/toast.provider'
+import { isSubscriptionApiError } from '@/shared/api/http'
 import {
   communityAPI,
   type ActivityFeedResponse,
@@ -23,7 +24,6 @@ function invalidateCommunityCollections(queryClient: QueryClient, communityId: s
   void queryClient.invalidateQueries({ queryKey: communityQueryKeys.activityRoot(communityId) })
   void queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(communityId) })
 }
-
 function updateActivityReactionCache(
   oldData: InfiniteData<ActivityFeedResponse> | undefined,
   activityId: string,
@@ -106,9 +106,9 @@ export function useCreateCommunity() {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
       toast.success('Community created successfully!')
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to create community'
-      toast.error(message)
+    onError: (error: Error) => {
+      if (isSubscriptionApiError(error)) return
+      toast.error(error.message || 'Failed to create community')
     },
   })
 }
@@ -343,9 +343,9 @@ export function useStartGoalFromTemplate() {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('Goal started successfully!')
     },
-    onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to start goal'
-      toast.error(message)
+    onError: (error: Error) => {
+      if (isSubscriptionApiError(error)) return
+      toast.error(error.message || 'Failed to start goal')
     },
   })
 }

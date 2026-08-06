@@ -10,20 +10,22 @@ import {
   useStartGoalFromTemplate,
   useTemplates,
 } from '@/hooks/use-communities.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export default function CommunityGoalsScreen() {
   const router = useRouter()
-  const { communityId } = useParams({ from: '/app/community/goals/$communityId' })
+  const { communityId } = useParams({
+    from: '/app/community/goals/$communityId',
+  })
 
   const [isRefreshing, setIsRefreshing] = useState(false)
   const {
     data: community,
     isLoading: isLoadingCommunity,
     refetch: refetchCommunity,
-  } =
-    useCommunity(communityId)
+  } = useCommunity(communityId)
   const {
     data: templatesData,
     isLoading: isLoadingTemplates,
@@ -33,6 +35,7 @@ export default function CommunityGoalsScreen() {
     refetch: refetchTemplates,
   } = useTemplates(communityId, 20)
   const { mutateAsync: startGoal } = useStartGoalFromTemplate()
+  const { handleSubscriptionError } = useProAccess()
 
   const templates = templatesData?.pages.flatMap((page) => page.data) || []
 
@@ -51,10 +54,16 @@ export default function CommunityGoalsScreen() {
   }
 
   const handleStartGoal = async (template: any) => {
-    try {
+    const startTemplateGoal = async (): Promise<void> => {
       await startGoal({ templateId: template.id })
       router.navigate({ replace: true, to: '/app/goal' })
-    } catch {
+    }
+
+    try {
+      await startTemplateGoal()
+    } catch (error: unknown) {
+      const handled = await handleSubscriptionError(error, startTemplateGoal)
+      if (handled) return
       // errors handled in hook
     }
   }

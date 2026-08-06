@@ -1,4 +1,9 @@
-import { RiCheckLine, RiLoader4Line, RiTimeLine } from '@remixicon/react'
+import {
+  RiCheckLine,
+  RiLoader4Line,
+  RiTimeLine,
+  RiVipCrownLine,
+} from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import {
@@ -19,6 +24,8 @@ import {
   useRewindRoutine,
   useUpdateRewindRoutine,
 } from '@/hooks/use-rewind.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import {
   type RewindRoutineFrequency,
@@ -106,6 +113,8 @@ export function RewindRoutineScreen({
   const toast = useToast()
   const routineQuery = useRewindRoutine()
   const updateRoutine = useUpdateRewindRoutine()
+  const { handleSubscriptionError, requestProAccess } = useProAccess()
+  const { isPro } = useSubscription()
   const [frequency, setFrequency] = useState<RewindRoutineFrequency>(
     'MORNINGS_AND_EVENINGS',
   )
@@ -140,6 +149,8 @@ export function RewindRoutineScreen({
       ? 'Add a short intention for your Rewinds.'
       : null
   const canSave = !timeError && !intentError && !updateRoutine.isPending
+  const isProFrequency = (value: RewindRoutineFrequency): boolean =>
+    value === 'MORNINGS_AND_EVENINGS' || value === 'CUSTOM'
 
   const returnToOrigin = useCallback((): void => {
     if (origin === 'settings') {
@@ -153,6 +164,11 @@ export function RewindRoutineScreen({
   const handleSave = async (): Promise<void> => {
     if (!canSave) return
 
+    if (isProFrequency(frequency) && !isPro) {
+      const granted = await requestProAccess()
+      if (!granted) return
+    }
+
     try {
       await updateRoutine.mutateAsync({
         customIntent: intent === 'CUSTOM' ? customIntent.trim() : null,
@@ -164,6 +180,8 @@ export function RewindRoutineScreen({
       toast.success('Rewind routine saved')
       returnToOrigin()
     } catch (error) {
+      const handled = await handleSubscriptionError(error)
+      if (handled) return
       toast.error(getErrorMessage(error))
     }
   }
@@ -187,6 +205,7 @@ export function RewindRoutineScreen({
             <View className="gap-2">
               {frequencyOptions.map((option) => {
                 const selected = frequency === option.value
+                const requiresPro = isProFrequency(option.value)
                 return (
                   <Pressable
                     key={option.value}
@@ -197,7 +216,16 @@ export function RewindRoutineScreen({
                         ? 'border-accent-400 bg-accent-500/15'
                         : 'border-card-light/35 bg-card-light/10',
                     )}
-                    onPress={() => setFrequency(option.value)}
+                    onPress={() => {
+                      if (!requiresPro || isPro) {
+                        setFrequency(option.value)
+                        return
+                      }
+
+                      void requestProAccess().then((granted) => {
+                        if (granted) setFrequency(option.value)
+                      })
+                    }}
                   >
                     <View className="min-w-0 flex-1 gap-0.5">
                       <Text className="font-bbh text-sm font-semibold text-white">
@@ -207,7 +235,14 @@ export function RewindRoutineScreen({
                         {option.description}
                       </Text>
                     </View>
-                    {selected ? (
+                    {requiresPro && !isPro ? (
+                      <View className="flex-row items-center gap-1 rounded-full bg-accent-500/15 px-2 py-1">
+                        <RiVipCrownLine size={12} className="text-accent-300" />
+                        <Text className="font-bbh text-[10px] font-bold text-accent-300">
+                          PRO
+                        </Text>
+                      </View>
+                    ) : selected ? (
                       <View className="size-6 items-center justify-center rounded-full bg-accent-400">
                         <RiCheckLine size={15} className="text-white" />
                       </View>

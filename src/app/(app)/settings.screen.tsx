@@ -6,6 +6,7 @@ import {
   RiLogoutBoxRLine,
   RiShieldCheckLine,
   RiTimeLine,
+  RiVipCrownLine,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
@@ -17,17 +18,56 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import {
   publicUrls,
   type LegalDocumentType,
 } from '@/shared/config/public-urls.config'
+import { getSubscriptionDisplayLabel } from '@/shared/subscription/subscription.util'
 
 export default function SettingsScreen() {
   const { logout, deleteAccount } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [isManagingSubscription, setIsManagingSubscription] = useState(false)
+  const {
+    isLoading: isSubscriptionLoading,
+    isPro,
+    openCustomerCenter,
+    presentPaywall,
+    status: subscriptionStatus,
+  } = useSubscription()
+
+  const handleSubscriptionPress = async (): Promise<void> => {
+    if (isManagingSubscription || isSubscriptionLoading) return
+
+    try {
+      setIsManagingSubscription(true)
+      if (isPro) {
+        await openCustomerCenter()
+        return
+      }
+
+      const outcome = await presentPaywall()
+      if (outcome === 'purchased' || outcome === 'restored') {
+        toast.success('Vybaa Pro is ready')
+      } else if (outcome === 'pending') {
+        toast.info('Your purchase is pending approval.')
+      } else if (outcome === 'error') {
+        toast.error('The subscription screen could not complete your purchase.')
+      }
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Subscriptions are unavailable right now.',
+      )
+    } finally {
+      setIsManagingSubscription(false)
+    }
+  }
 
   const openLegalDocument = async (documentType: LegalDocumentType) => {
     const url =
@@ -83,6 +123,37 @@ export default function SettingsScreen() {
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           <View className=" px-mg pb-[120px] space-y-6">
+            <View className="space-y-3">
+              <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
+                Membership
+              </Text>
+
+              <Pressable
+                className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between disabled:opacity-60"
+                disabled={isManagingSubscription || isSubscriptionLoading}
+                onPress={() => {
+                  void handleSubscriptionPress()
+                }}
+              >
+                <View className="flex-row items-center gap-4 flex-1 min-w-0">
+                  <View className="w-10 h-10 rounded-xl bg-accent-500/20 flex items-center justify-center">
+                    <RiVipCrownLine size={20} className="text-accent-300" />
+                  </View>
+                  <View className="min-w-0 flex-1">
+                    <Text className="text-white text-sm font-bbh font-semibold">
+                      Vybaa Pro
+                    </Text>
+                    <Text className="text-white/50 text-xs font-bbh">
+                      {isSubscriptionLoading
+                        ? 'Checking subscription...'
+                        : getSubscriptionDisplayLabel(subscriptionStatus)}
+                    </Text>
+                  </View>
+                </View>
+                <RiArrowRightSLine size={20} className="text-white/40" />
+              </Pressable>
+            </View>
+
             <View className="space-y-3">
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
                 Rewind

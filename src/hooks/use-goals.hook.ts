@@ -3,6 +3,7 @@ import { useToast } from '@/providers/toast.provider'
 import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
+import { isSubscriptionApiError } from '@/shared/api/http'
 import type { QueryClient } from '@tanstack/react-query'
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
@@ -12,7 +13,6 @@ function invalidateGoalCollections(queryClient: QueryClient) {
   void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
   void queryClient.invalidateQueries({ queryKey: ['rewards'] })
 }
-
 /**
  * Hook to fetch all goals with pagination and optional canCheckIn filter
  */
@@ -85,7 +85,8 @@ export function useCreateGoal() {
       }
       toast.success('Goal created successfully!')
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
+      if (isSubscriptionApiError(error)) return
       toast.error(error.message || 'Failed to create goal')
     },
   })

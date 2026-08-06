@@ -3,6 +3,7 @@ import {
   RiFileList3Line,
   RiInformationLine,
   RiRefreshLine,
+  RiVipCrownLine,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
@@ -15,6 +16,8 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useRewindInsights } from '@/hooks/use-rewind.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
+import { useSubscription } from '@/providers/subscription.provider'
 import type { RewindInsightsRange } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
@@ -37,7 +40,9 @@ function ProgressReading({
   return (
     <View className="gap-2">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="font-bbh text-sm font-semibold text-white">{label}</Text>
+        <Text className="font-bbh text-sm font-semibold text-white">
+          {label}
+        </Text>
         <Text className="muted font-bbh text-xs tabular-nums">{value}%</Text>
       </View>
       <View
@@ -54,8 +59,10 @@ function ProgressReading({
 }
 
 export default function RewindInsightsScreen(): ReactElement {
-  const [range, setRange] = useState<RewindInsightsRange>('30d')
+  const [range, setRange] = useState<RewindInsightsRange>('7d')
   const navigate = useNavigate()
+  const { requestProAccess } = useProAccess()
+  const { isPro } = useSubscription()
   const { data, error, isError, isLoading, refetch } = useRewindInsights(range)
 
   return (
@@ -70,7 +77,8 @@ export default function RewindInsightsScreen(): ReactElement {
                 Your reflection pattern
               </Text>
               <Text className="muted max-w-xl font-bbh text-sm leading-6">
-                A read of the themes you have chosen to share in completed Rewinds.
+                A read of the themes you have chosen to share in completed
+                Rewinds.
               </Text>
             </View>
 
@@ -80,6 +88,7 @@ export default function RewindInsightsScreen(): ReactElement {
             >
               {INSIGHT_RANGES.map((option) => {
                 const isSelected = option.value === range
+                const requiresPro = option.value !== '7d'
                 return (
                   <Pressable
                     key={option.value}
@@ -88,16 +97,35 @@ export default function RewindInsightsScreen(): ReactElement {
                       'min-h-11 flex-1 items-center justify-center rounded-md px-2',
                       isSelected ? 'bg-white' : '',
                     )}
-                    onPress={() => setRange(option.value)}
+                    onPress={() => {
+                      if (!requiresPro || isPro) {
+                        setRange(option.value)
+                        return
+                      }
+
+                      void requestProAccess().then((granted) => {
+                        if (granted) setRange(option.value)
+                      })
+                    }}
                   >
-                    <Text
-                      className={cn(
-                        'font-bbh text-xs font-bold',
-                        isSelected ? 'text-cardd' : 'muted',
-                      )}
-                    >
-                      {option.label}
-                    </Text>
+                    <View className="flex-row items-center gap-1">
+                      <Text
+                        className={cn(
+                          'font-bbh text-xs font-bold',
+                          isSelected ? 'text-cardd' : 'muted',
+                        )}
+                      >
+                        {option.label}
+                      </Text>
+                      {requiresPro && !isPro ? (
+                        <RiVipCrownLine
+                          size={11}
+                          className={
+                            isSelected ? 'text-cardd' : 'text-accent-300'
+                          }
+                        />
+                      ) : null}
+                    </View>
                   </Pressable>
                 )
               })}
@@ -106,7 +134,9 @@ export default function RewindInsightsScreen(): ReactElement {
             {isLoading ? (
               <View className="items-center gap-3 py-16">
                 <Spinner />
-                <Text className="muted font-bbh text-sm">Reading your reflections…</Text>
+                <Text className="muted font-bbh text-sm">
+                  Reading your reflections…
+                </Text>
               </View>
             ) : isError ? (
               <View className="gap-4 py-12">
@@ -124,7 +154,9 @@ export default function RewindInsightsScreen(): ReactElement {
                   }}
                 >
                   <RiRefreshLine size={17} className="text-cardd" />
-                  <Text className="font-bbh text-sm font-bold text-cardd">Retry</Text>
+                  <Text className="font-bbh text-sm font-bold text-cardd">
+                    Retry
+                  </Text>
                 </Pressable>
               </View>
             ) : data ? (
@@ -138,11 +170,13 @@ export default function RewindInsightsScreen(): ReactElement {
                             Reflection map
                           </Text>
                           <Text className="muted font-bbh text-xs">
-                            {data.coverage.completedSessions} completed Rewinds in this range
+                            {data.coverage.completedSessions} completed Rewinds
+                            in this range
                           </Text>
                         </View>
                         <Text className="muted font-bbh text-xs">
-                          {data.coverage.completedDays}/{data.coverage.days} days
+                          {data.coverage.completedDays}/{data.coverage.days}{' '}
+                          days
                         </Text>
                       </View>
                       <RewindRadarChart signals={data.signals} />
@@ -152,13 +186,22 @@ export default function RewindInsightsScreen(): ReactElement {
                       <Text className="font-bbh text-base font-bold text-white">
                         Progress readings
                       </Text>
-                      <ProgressReading label="Reflection consistency" value={data.progress.consistency} />
-                      <ProgressReading label="Clarity" value={data.progress.clarity} />
-                      <ProgressReading label="Momentum" value={data.progress.momentum} />
+                      <ProgressReading
+                        label="Reflection consistency"
+                        value={data.progress.consistency}
+                      />
+                      <ProgressReading
+                        label="Clarity"
+                        value={data.progress.clarity}
+                      />
+                      <ProgressReading
+                        label="Momentum"
+                        value={data.progress.momentum}
+                      />
                     </View>
 
                     {data.contextualInsight ? (
-            <View
+                      <View
                         className="gap-2 rounded-lg px-4 py-4"
                         style={{ backgroundColor: colors['card-light-50'] }}
                       >
@@ -177,10 +220,15 @@ export default function RewindInsightsScreen(): ReactElement {
                       Your picture is still forming
                     </Text>
                     <Text className="muted max-w-md font-bbh text-sm leading-6">
-                      Complete {Math.max(0, 3 - data.coverage.completedSessions)} more Rewind{data.coverage.completedSessions === 2 ? '' : 's'} in this range to see a pattern that is grounded in your own reflections.
+                      Complete{' '}
+                      {Math.max(0, 3 - data.coverage.completedSessions)} more
+                      Rewind{data.coverage.completedSessions === 2 ? '' : 's'}{' '}
+                      in this range to see a pattern that is grounded in your
+                      own reflections.
                     </Text>
                     <Text className="muted font-bbh text-xs">
-                      {data.coverage.completedSessions} completed in the last {data.coverage.days} days
+                      {data.coverage.completedSessions} completed in the last{' '}
+                      {data.coverage.days} days
                     </Text>
                   </View>
                 )}
@@ -195,7 +243,8 @@ export default function RewindInsightsScreen(): ReactElement {
                     style={{ color: colors['card-lighter-3'] }}
                   />
                   <Text className="muted flex-1 font-bbh text-xs leading-5">
-                    These readings reflect what you shared in Rewind. They are not medical measures or diagnoses.
+                    These readings reflect what you shared in Rewind. They are
+                    not medical measures or diagnoses.
                   </Text>
                 </View>
               </>
@@ -218,7 +267,10 @@ export default function RewindInsightsScreen(): ReactElement {
                   </Text>
                 </View>
               </View>
-              <RiArrowRightLine size={18} style={{ color: colors['card-lighter-2'] }} />
+              <RiArrowRightLine
+                size={18}
+                style={{ color: colors['card-lighter-2'] }}
+              />
             </Pressable>
           </View>
         </View>

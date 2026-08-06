@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
+import { SubscriptionProvider } from './providers/subscription.provider.tsx'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -54,12 +55,14 @@ if (rootElement && !rootElement.innerHTML) {
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ToastProvider>
-              <NotificationProvider>
-                <CapacitorPlugin router={router} />
-                <RouterProvider router={router} />
-              </NotificationProvider>
-            </ToastProvider>
+            <SubscriptionProvider>
+              <ToastProvider>
+                <NotificationProvider>
+                  <CapacitorPlugin router={router} />
+                  <RouterProvider router={router} />
+                </NotificationProvider>
+              </ToastProvider>
+            </SubscriptionProvider>
           </AuthProvider>
         </QueryClientProvider>
       </StrictMode>,

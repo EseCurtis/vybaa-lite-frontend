@@ -1,15 +1,10 @@
 
-import { configPurchases } from "@/plugins/revenuecat/configure-purchases";
-import { Purchases } from "@revenuecat/purchases-capacitor";
 import { SafeArea } from "capacitor-plugin-safe-area";
 import { addPushNotificationListeners, createPushNotificationChannels, registerPushNotifications } from "../plugins/push-notification.plugin";
 
 const mobileConfig = async () => {
     //return 
     await Promise.all([
-        await Purchases.addCustomerInfoUpdateListener(async (customerInfo) => {
-            await configPurchases({ customerInfo });
-        }),
         await registerPushNotifications().then(async () => {
         }).catch(() => { }),
         await Promise.all([

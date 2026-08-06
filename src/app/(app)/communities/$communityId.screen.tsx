@@ -30,6 +30,7 @@ import {
   useStartGoalFromTemplate,
   useTemplates,
 } from '@/hooks/use-communities.hook'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { hapticFeedback } from '@/shared/haptic.util'
@@ -114,6 +115,7 @@ export default function CommunityDetailScreen() {
   const { mutateAsync: leaveCommunity } = useLeaveCommunity()
   const { mutateAsync: startGoal, isPending: isStartingGoal } =
     useStartGoalFromTemplate()
+  const { handleSubscriptionError } = useProAccess()
   const { mutateAsync: reactToActivity } = useReactToActivity(communityId)
   const templates = templatesData?.pages.flatMap((page) => page.data) || []
   const activities = activityData?.pages.flatMap((page) => page.data) || []
@@ -254,11 +256,20 @@ export default function CommunityDetailScreen() {
       <StartGoalConfirmationSheet
         template={template}
         onConfirm={async () => {
-          try {
+          const startTemplateGoal = async (): Promise<void> => {
             await startGoal({ templateId: template.id })
             bottomSheet.dismiss()
             router.navigate({ to: '/app/goal' })
+          }
+
+          try {
+            await startTemplateGoal()
           } catch (error) {
+            const handled = await handleSubscriptionError(
+              error,
+              startTemplateGoal,
+            )
+            if (handled) return
             // Error handled in hook
             bottomSheet.dismiss()
           }
