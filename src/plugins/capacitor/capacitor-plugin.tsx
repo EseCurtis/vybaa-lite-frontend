@@ -1,24 +1,25 @@
 import { App } from '@capacitor/app'
-import type { AnyRouter } from '@tanstack/react-router'
-import { useEffect, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import type { AnyRouter } from '@tanstack/react-router'
+import { useCallback, useEffect, type ReactElement } from 'react'
 
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { getDeviceTimezone, updateTimezone } from '@/shared/api/http'
 import {
+  claimInAppNotificationDisplay,
+  formatInAppNotification,
+  type InAppNotification,
+} from '@/shared/notifications/in-app-notification.util'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
+import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
+import {
   consumePendingDeepLink,
   getUnauthenticatedDeepLinkEntryPath,
   normalizeDeepLink,
   storePendingDeepLink,
 } from '@/shared/utils/deep-link.util'
-import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
-import {
-  claimInAppNotificationDisplay,
-  formatInAppNotification,
-  type InAppNotification,
-} from '@/shared/notifications/in-app-notification.util'
 
 import ConfigCapacitorApp from './config'
 import {
@@ -31,18 +32,47 @@ type CapacitorPluginProps = {
   router: AnyRouter
 }
 
-export function CapacitorPlugin({ router }: CapacitorPluginProps) {
+export function CapacitorPlugin({
+  router,
+}: CapacitorPluginProps): ReactElement | null {
   const queryClient = useQueryClient()
   const { isAuthenticated, isLoading, refreshSession, user } = useAuth()
   const toast = useToast()
+
+  const handleDeepLink = useCallback(
+    async (url: string): Promise<void> => {
+      const target = normalizeDeepLink(url)
+      if (!target) return
+
+      if (target.requiresAuth && !isAuthenticated) {
+        storePendingDeepLink(target)
+        await router.navigate({
+          replace: true,
+          to: getUnauthenticatedDeepLinkEntryPath(target),
+        })
+        return
+      }
+
+      await navigateToDeepLinkTarget(router, target)
+    },
+    [isAuthenticated, router],
+  )
 
   const handleForegroundPushNotification = useCallback(
     (notification: InAppNotification): void => {
       if (!claimInAppNotificationDisplay(notification.id)) return
 
-      toast.info(formatInAppNotification(notification))
+      const openNotification = notification.route
+        ? (): void => {
+            void handleDeepLink(`https://vybaa.app${notification.route}`)
+          }
+        : undefined
+      toast.notification(
+        formatInAppNotification(notification),
+        openNotification,
+      )
     },
-    [toast],
+    [handleDeepLink, toast],
   )
 
   const syncDeviceTimezone = useCallback(async (): Promise<void> => {
@@ -60,40 +90,35 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
     }
   }, [isAuthenticated, refreshSession, user])
 
-  const handleDeepLink = useCallback(
-    async (url: string): Promise<void> => {
-      const target = normalizeDeepLink(url)
-
-      if (!target) {
-        return
-      }
-
-      if (target.requiresAuth && !isAuthenticated) {
-        storePendingDeepLink(target)
-        await router.navigate({
-          replace: true,
-          to: getUnauthenticatedDeepLinkEntryPath(target),
-        })
-        return
-      }
-
-      await navigateToDeepLinkTarget(router, target)
-    },
-    [isAuthenticated, router],
-  )
-
   useEffect(() => {
     setQueryClientForNotifications(queryClient)
     setPushNotificationRouteHandler((route) => {
       void handleDeepLink(`https://vybaa.app${route}`)
     })
     setForegroundPushNotificationHandler(handleForegroundPushNotification)
+    ConfigCapacitorApp()
 
-    const configure = async (): Promise<() => void> => {
+    const configureListeners = async (): Promise<() => void> => {
       const appUrlOpenListener = await App.addListener(
         'appUrlOpen',
         (event) => {
           void handleDeepLink(event.url)
+        },
+      )
+      const backButtonListener = await App.addListener(
+        'backButton',
+        ({ canGoBack }) => {
+          void navigateBackWithinApp(
+            router,
+            router.state.location.pathname,
+          ).then((handled) => {
+            if (handled) return
+            if (canGoBack) {
+              router.history.back()
+              return
+            }
+            void App.exitApp()
+          })
         },
       )
       const launchUrl = await App.getLaunchUrl()
@@ -102,19 +127,14 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
         void handleDeepLink(launchUrl.url)
       }
 
-      ConfigCapacitorApp({
-        onBack: () => {
-          router.history.back()
-        },
-      })
-
-      return () => {
+      return (): void => {
         void appUrlOpenListener.remove()
+        void backButtonListener.remove()
       }
     }
 
     let cleanup: (() => void) | undefined
-    void configure().then((nextCleanup) => {
+    void configureListeners().then((nextCleanup) => {
       cleanup = nextCleanup
     })
 
@@ -146,9 +166,7 @@ export function CapacitorPlugin({ router }: CapacitorPluginProps) {
   }, [isAuthenticated, syncDeviceTimezone, user])
 
   useEffect(() => {
-    if (isLoading || !isAuthenticated) {
-      return
-    }
+    if (isLoading || !isAuthenticated) return
 
     const target = consumePendingDeepLink()
     if (target) {

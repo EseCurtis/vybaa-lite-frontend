@@ -1,3 +1,5 @@
+import { normalizeDeepLink } from '@/shared/utils/deep-link.util'
+
 export type InAppNotification = {
   id: string
   message: string
@@ -39,12 +41,39 @@ function isInternalAppRoute(route: string): boolean {
   return route.startsWith('/') && !route.startsWith('//')
 }
 
+function normalizeNotificationRoute(value: unknown): string | null {
+  const route = getString(value)
+  if (!route) return null
+  if (isInternalAppRoute(route)) return route
+
+  const target = normalizeDeepLink(route)
+  if (!target) return null
+  return target.hash ? `${target.path}#${target.hash}` : target.path
+}
+
+function getRouteFromRecord(payload: Record<string, unknown>): string | null {
+  const keys = [
+    'route',
+    'deepLink',
+    'deeplink',
+    'link',
+    'url',
+    'click_action',
+  ] as const
+
+  for (const key of keys) {
+    const route = normalizeNotificationRoute(payload[key])
+    if (route) return route
+  }
+
+  return null
+}
+
 function getRoute(
   payload: Record<string, unknown>,
   nestedPayload: Record<string, unknown>,
 ): string | null {
-  const route = getString(payload.route) ?? getString(nestedPayload.route)
-  return route && isInternalAppRoute(route) ? route : null
+  return getRouteFromRecord(payload) ?? getRouteFromRecord(nestedPayload)
 }
 
 function getNotificationId(

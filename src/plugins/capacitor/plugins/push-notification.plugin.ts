@@ -24,6 +24,7 @@ let queryClientRef: QueryClient | null = null
 let foregroundPushNotificationHandler: ForegroundPushNotificationHandler | null =
   null
 let notificationRouteHandler: ((route: string) => void) | null = null
+let pendingNotificationRoute: string | null = null
 
 function invalidateNotificationQueries(): void {
   if (!queryClientRef) return
@@ -49,9 +50,14 @@ function handlePushAction(notification: PushNotificationSchema): void {
   invalidateNotificationQueries()
 
   const route = getPushNotificationRoute(notification)
-  if (route) {
-    notificationRouteHandler?.(route)
+  if (!route) return
+
+  if (notificationRouteHandler) {
+    notificationRouteHandler(route)
+    return
   }
+
+  pendingNotificationRoute = route
 }
 
 async function registerPushNotificationListeners(): Promise<void> {
@@ -128,6 +134,12 @@ export function setPushNotificationRouteHandler(
   handler: ((route: string) => void) | null,
 ): void {
   notificationRouteHandler = handler
+
+  if (!handler || !pendingNotificationRoute) return
+
+  const route = pendingNotificationRoute
+  pendingNotificationRoute = null
+  handler(route)
 }
 
 export function addPushNotificationListeners(): Promise<void> {

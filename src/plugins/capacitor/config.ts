@@ -1,37 +1,28 @@
-import ENV from '@/env';
-import { App } from '@capacitor/app';
-import androidConfig from './configurations/android';
-import iosConfig from './configurations/ios';
-import webConfig from './configurations/web';
+import ENV from '@/env'
 
-type CapacitorAppConfigOptions = {
-    onBack?: () => void;
-};
+import androidConfig from './configurations/android'
+import iosConfig from './configurations/ios'
+import webConfig from './configurations/web'
 
-const ConfigCapacitorApp = (options: CapacitorAppConfigOptions = {}) => {
-    App.addListener('backButton', ({ canGoBack }: any) => {
-        if (!canGoBack) {
-            App.exitApp();
-        } else {
-            options.onBack?.();
-        }
-    });
-    
+let isConfigured = false
 
-    switch (ENV.PLATFORM) {
-        case ENV.PLATFORMS.ANDROID:
-            androidConfig()
-            break;
+function ConfigCapacitorApp(): void {
+  if (isConfigured) return
+  isConfigured = true
 
-        case ENV.PLATFORMS.IOS:
-            iosConfig()
-            break;
-
-        case ENV.PLATFORMS.WEB:
-            webConfig()
-            break;
-
-    }
+  switch (ENV.PLATFORM) {
+    case ENV.PLATFORMS.ANDROID:
+      androidConfig()
+      return
+    case ENV.PLATFORMS.IOS:
+      iosConfig()
+      return
+    case ENV.PLATFORMS.WEB:
+      webConfig()
+      return
+    default:
+      return
+  }
 }
 
-export default ConfigCapacitorApp;
+export default ConfigCapacitorApp

@@ -1,8 +1,9 @@
 import { hapticFeedback } from '@/shared/haptic.util'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { RiArrowLeftSLine } from '@remixicon/react'
-import { useRouter } from '@tanstack/react-router'
-import type { ReactNode } from 'react'
+import { useLocation, useRouter } from '@tanstack/react-router'
+import type { ReactElement, ReactNode } from 'react'
 import { Pressable } from '../layout/pressables.component'
 import { Text } from '../layout/text.component'
 import { View } from '../layout/view.component'
@@ -20,8 +21,9 @@ export function TabHeader({
   children?: ReactNode
   canGoBack?: boolean
   className?: string
-}) {
+}): ReactElement {
   const router = useRouter()
+  const location = useLocation()
 
   return (
     <View className={cn(className, 'px-mg py-mg')}>
@@ -32,10 +34,18 @@ export function TabHeader({
           <View className="">
             <Pressable
               onPress={() => {
-                onBack ? onBack() : router.history.back()
-                hapticFeedback.light()
+                if (onBack) {
+                  onBack()
+                } else {
+                  void navigateBackWithinApp(router, location.pathname).then(
+                    (handled) => {
+                      if (!handled) router.history.back()
+                    },
+                  )
+                }
+                void hapticFeedback.light()
               }}
-              className="w-12 h-12 rounded-full bg-card-light/40 flex items-center justify-center"
+              className="w-12 h-12 rounded-full bg-cardx flex items-center justify-center"
             >
               <RiArrowLeftSLine size={24} className="text-white" />
             </Pressable>{' '}

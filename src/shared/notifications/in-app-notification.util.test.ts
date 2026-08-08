@@ -64,6 +64,24 @@ describe('in-app notification payloads', () => {
     ).toBe('/app/rewind')
   })
 
+  it('normalizes trusted full links and alternate FCM route fields', () => {
+    expect(
+      getPushNotificationRoute({
+        data: {
+          data: JSON.stringify({
+            click_action: 'https://vybaa.app/app/r/rewind_456',
+          }),
+        },
+      }),
+    ).toBe('/app/r/rewind_456')
+
+    expect(
+      getPushNotificationRoute({
+        data: { link: 'vybaa://invite/ab12cd' },
+      }),
+    ).toBe('/app/invite/AB12CD')
+  })
+
   it('rejects protocol-relative routes from notification data', () => {
     expect(
       getPushNotificationRoute({

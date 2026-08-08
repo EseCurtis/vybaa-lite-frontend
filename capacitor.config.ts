@@ -55,7 +55,7 @@ const config: CapacitorConfig = {
     : {}),
   plugins: {
     PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
+      presentationOptions: [],
     },
     Keyboard: {
       resizeOnFullScreen: true,

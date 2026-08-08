@@ -1,6 +1,7 @@
 import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
 import React from 'react'
 import { toast as sonnerToast, Toaster } from 'sonner'
+import type { ExternalToast } from 'sonner'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
 
@@ -14,6 +15,11 @@ type ToastContextType = {
   error: (message: string, duration?: number) => string | number
   warning: (message: string, duration?: number) => string | number
   info: (message: string, duration?: number) => string | number
+  notification: (
+    message: string,
+    onOpen?: () => void,
+    duration?: number,
+  ) => string | number
   loading: (message: string) => string | number
   dismiss: (id: string | number) => void
 }
@@ -32,7 +38,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
 
   const showToast = React.useCallback(
     (message: string, type: ToastType = 'info', duration = 3000) => {
-      const options: any = {
+      const options: ExternalToast = {
         duration: type === 'loading' ? Infinity : duration,
         style: {
           borderRadius: '9999px', // rounded-full
@@ -80,6 +86,29 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [showToast],
   )
 
+  const notification = React.useCallback(
+    (message: string, onOpen?: () => void, duration = 5000) => {
+      const options: ExternalToast = {
+        action: onOpen
+          ? {
+              label: 'Open',
+              onClick: onOpen,
+            }
+          : undefined,
+        duration,
+        style: {
+          borderRadius: '16px',
+          maxWidth: 'calc(100vw - 24px)',
+          minWidth: '260px',
+          padding: '14px 16px',
+        },
+      }
+
+      return sonnerToast.info(message, options)
+    },
+    [],
+  )
+
   const loading = React.useCallback(
     (message: string) => showToast(message, 'loading', 0),
     [showToast],
@@ -90,8 +119,17 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   const value = React.useMemo(
-    () => ({ showToast, success, error, warning, info, loading, dismiss }),
-    [showToast, success, error, warning, info, loading, dismiss],
+    () => ({
+      dismiss,
+      error,
+      info,
+      loading,
+      notification,
+      showToast,
+      success,
+      warning,
+    }),
+    [dismiss, error, info, loading, notification, showToast, success, warning],
   )
 
   // useEffect(() => {
