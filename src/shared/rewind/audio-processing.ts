@@ -6,10 +6,15 @@ export type AudioLevel = {
 }
 
 export type AdaptiveGainOptions = {
+  attack: number
   limiterCeiling: number
   maxGain: number
   noiseFloor: number
+  noiseLearningRate: number
+  noiseThresholdMultiplier: number
+  release: number
   targetRms: number
+  voiceHangoverFrames: number
 }
 
 export type AdaptiveGainController = {
@@ -18,10 +23,15 @@ export type AdaptiveGainController = {
 }
 
 const DEFAULT_ADAPTIVE_GAIN_OPTIONS: AdaptiveGainOptions = {
+  attack: 0.32,
   limiterCeiling: 0.92,
-  maxGain: 8,
-  noiseFloor: 0.0035,
-  targetRms: 0.11,
+  maxGain: 12,
+  noiseFloor: 0.0012,
+  noiseLearningRate: 0.08,
+  noiseThresholdMultiplier: 1.8,
+  release: 0.1,
+  targetRms: 0.14,
+  voiceHangoverFrames: 4,
 }
 
 export function measureAudioLevel(input: Float32Array): AudioLevel {
@@ -44,7 +54,8 @@ export function applyAdaptiveGain(
   options: AdaptiveGainOptions = DEFAULT_ADAPTIVE_GAIN_OPTIONS,
 ): Float32Array {
   const { peak, rms } = measureAudioLevel(input)
-  if (peak === 0 || rms < options.noiseFloor) {
+  const voiceThreshold = options.noiseFloor * options.noiseThresholdMultiplier
+  if (peak === 0 || rms < voiceThreshold) {
     // Keep silence and room tone intact but do not amplify either. The Live VAD
     // receives a truthful signal instead of a hard-gated stream with clipped words.
     return new Float32Array(input)
@@ -63,17 +74,34 @@ export function createAdaptiveGainController(
   options: AdaptiveGainOptions = DEFAULT_ADAPTIVE_GAIN_OPTIONS,
 ): AdaptiveGainController {
   let gain = 1
+  let noiseEstimate = options.noiseFloor
+  let voiceHangover = 0
 
   return {
     process(input: Float32Array): Float32Array {
       const { peak, rms } = measureAudioLevel(input)
-      if (peak === 0 || rms < options.noiseFloor) {
-        gain += (1 - gain) * 0.08
+      const voiceThreshold = Math.max(
+        options.noiseFloor * options.noiseThresholdMultiplier,
+        noiseEstimate * options.noiseThresholdMultiplier,
+      )
+      const hasVoice = peak > 0 && rms >= voiceThreshold
+
+      if (hasVoice) {
+        voiceHangover = options.voiceHangoverFrames
+      } else if (voiceHangover > 0) {
+        voiceHangover -= 1
+      } else {
+        if (rms > 0) {
+          noiseEstimate +=
+            (rms - noiseEstimate) * options.noiseLearningRate
+        }
+        gain += (1 - gain) * options.release
         return new Float32Array(input)
       }
 
       const desiredGain = Math.min(options.maxGain, options.targetRms / rms)
-      const smoothing = desiredGain > gain ? 0.22 : 0.08
+      const smoothing =
+        desiredGain > gain ? options.attack : options.release
       gain += (desiredGain - gain) * smoothing
       const limiterGain = Math.min(gain, options.limiterCeiling / peak)
       const output = new Float32Array(input.length)
@@ -87,6 +115,8 @@ export function createAdaptiveGainController(
     },
     reset(): void {
       gain = 1
+      noiseEstimate = options.noiseFloor
+      voiceHangover = 0
     },
   }
 }

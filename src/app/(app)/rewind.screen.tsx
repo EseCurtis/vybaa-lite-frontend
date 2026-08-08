@@ -47,6 +47,7 @@ import {
   getRewindCaptureFrameSize,
   REWIND_CAPTURE_WORKLET_NAME,
 } from '@/shared/rewind/rewind-audio-worklet'
+import { decodePcmAudioChunk } from '@/shared/rewind/pcm-audio'
 import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
 import {
   REWIND_PERSONAS,
@@ -56,6 +57,13 @@ import {
 } from '@/shared/rewind/rewind-personas'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
+
+type RewindConversationStage =
+  | 'ARRIVING'
+  | 'UNPACKING'
+  | 'MAKING_MEANING'
+  | 'CONNECTING_PATTERNS'
+  | 'CLOSING'
 
 type RewindSocketMessage =
   | {
@@ -69,7 +77,18 @@ type RewindSocketMessage =
   | { type: 'audio'; data: string; mimeType: string }
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
-  | { type: 'conversation_state'; content: string }
+  | {
+      type: 'conversation_state'
+      content: string
+      stage: RewindConversationStage
+    }
+  | {
+      type: 'finalization_progress'
+      stage:
+        | 'saving_conversation'
+        | 'noticing_patterns'
+        | 'saving_reflection'
+    }
   | { type: 'reconnected' }
   | { type: 'reconnecting' }
   | { type: 'turn_complete' }
@@ -131,6 +150,41 @@ type LegacyNavigator = Navigator & {
     success: (stream: MediaStream) => void,
     failure?: (error: unknown) => void,
   ) => void
+}
+
+type AudioContextWindow = Window & {
+  webkitAudioContext?: typeof AudioContext
+}
+
+type RewindFinalizationStage =
+  | 'saving_conversation'
+  | 'noticing_patterns'
+  | 'saving_reflection'
+
+const REWIND_FINALIZATION_LABELS: Record<RewindFinalizationStage, string> = {
+  noticing_patterns: 'Noticing patterns',
+  saving_conversation: 'Saving conversation',
+  saving_reflection: 'Building your reflection',
+}
+
+const REWIND_CONVERSATION_STAGE_LABELS: Record<
+  RewindConversationStage,
+  string
+> = {
+  ARRIVING: 'Settling in',
+  CLOSING: 'Closing reflection',
+  CONNECTING_PATTERNS: 'Connecting patterns',
+  MAKING_MEANING: 'Making meaning',
+  UNPACKING: 'Unpacking',
+}
+
+function getAudioContextConstructor(): typeof AudioContext | null {
+  if (typeof window === 'undefined') return null
+  return (
+    window.AudioContext ??
+    (window as AudioContextWindow).webkitAudioContext ??
+    null
+  )
 }
 
 function getMutationErrorMessage(error: unknown): string {
@@ -230,9 +284,13 @@ export default function RewindScreen(): ReactElement {
   >(null)
   const [isSessionRestored, setIsSessionRestored] = useState(false)
   const [isFinishingSession, setIsFinishingSession] = useState(false)
+  const [finalizationStage, setFinalizationStage] =
+    useState<RewindFinalizationStage | null>(null)
   const [conversationStateNote, setConversationStateNote] = useState<
     string | null
   >(null)
+  const [conversationStage, setConversationStage] =
+    useState<RewindConversationStage | null>(null)
   const [previousSession, setPreviousSession] =
     useState<RewindSessionSnapshot | null>(null)
 
@@ -247,10 +305,12 @@ export default function RewindScreen(): ReactElement {
   const activeAudioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set())
   const isPlayingAudioQueueRef = useRef(false)
   const nextStartTimeRef = useRef(0)
+  const playbackGenerationRef = useRef(0)
   const isConnectingRef = useRef(false)
   const isConversationPausedRef = useRef(false)
   const isSessionPausedByToolRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
+  const isFinishingSessionRef = useRef(false)
   const shouldReconnectRef = useRef(false)
   const disconnectNoticeShownRef = useRef(false)
   const reconnectAttemptsRef = useRef(0)
@@ -294,9 +354,12 @@ export default function RewindScreen(): ReactElement {
     if (!personaId) return
     setRewindSessionDateKey(null)
     setConversationStateNote(null)
+    setConversationStage(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setIsFinishingSession(false)
+    setFinalizationStage(null)
+    isFinishingSessionRef.current = false
     isSessionCompleteRef.current = false
     setStatusText('Ready')
   }, [personaId])
@@ -329,7 +392,13 @@ export default function RewindScreen(): ReactElement {
     liveSessionRef.current?.close()
     liveSessionRef.current = null
     cleanupAudioPipeline()
+    playbackGenerationRef.current += 1
     audioQueueRef.current = []
+    for (const source of activeAudioSourcesRef.current) {
+      try {
+        source.stop()
+      } catch {}
+    }
     activeAudioSourcesRef.current.clear()
     isPlayingAudioQueueRef.current = false
     nextStartTimeRef.current = 0
@@ -337,9 +406,12 @@ export default function RewindScreen(): ReactElement {
     setPersonaId(null)
     setRewindSessionDateKey(null)
     setConversationStateNote(null)
+    setConversationStage(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
     setIsFinishingSession(false)
+    setFinalizationStage(null)
+    isFinishingSessionRef.current = false
     isSessionCompleteRef.current = false
     setStatusText('Idle')
     await persistPersonaMutation.mutateAsync(null)
@@ -348,12 +420,13 @@ export default function RewindScreen(): ReactElement {
   const primePlaybackContext = useCallback(async () => {
     if (typeof window === 'undefined') return
 
-    const AudioContextClass =
-      window.AudioContext || (window as any).webkitAudioContext
+    const AudioContextClass = getAudioContextConstructor()
     if (!AudioContextClass) return
 
     if (!playbackContextRef.current) {
-      playbackContextRef.current = new AudioContextClass({ sampleRate: 24000 })
+      playbackContextRef.current = new AudioContextClass({
+        latencyHint: 'interactive',
+      })
     }
 
     if (playbackContextRef.current.state === 'suspended') {
@@ -396,89 +469,96 @@ export default function RewindScreen(): ReactElement {
     }
   }, [])
 
-  const playNextAudioChunk = useCallback(async () => {
-    if (audioQueueRef.current.length === 0) {
-      isPlayingAudioQueueRef.current = false
-      return
-    }
+  const clearPlayback = useCallback((): void => {
+    playbackGenerationRef.current += 1
+    audioQueueRef.current = []
+    isPlayingAudioQueueRef.current = false
+    nextStartTimeRef.current = 0
 
-    isPlayingAudioQueueRef.current = true
-    const chunk = audioQueueRef.current.shift()
-    if (!chunk) {
-      isPlayingAudioQueueRef.current = false
-      return
+    for (const source of activeAudioSourcesRef.current) {
+      try {
+        source.stop()
+        source.disconnect()
+      } catch {}
     }
+    activeAudioSourcesRef.current.clear()
+  }, [])
+
+  const playNextAudioChunk = useCallback(async () => {
+    if (isPlayingAudioQueueRef.current) return
+    if (isConversationPausedRef.current) return
+    if (audioQueueRef.current.length === 0) return
+
+    const generation = playbackGenerationRef.current
+    isPlayingAudioQueueRef.current = true
 
     try {
-      if (!chunk.mimeType.includes('audio/pcm')) {
-        isPlayingAudioQueueRef.current = false
-        return
-      }
-
       if (!playbackContextRef.current) {
-        const AudioContextClass =
-          window.AudioContext || (window as any).webkitAudioContext
+        const AudioContextClass = getAudioContextConstructor()
+        if (!AudioContextClass) {
+          throw new Error('Audio playback is unavailable')
+        }
         playbackContextRef.current = new AudioContextClass({
-          sampleRate: 24000,
+          latencyHint: 'interactive',
         })
       }
 
       const ctx = playbackContextRef.current
       if (ctx.state === 'suspended') await ctx.resume()
 
-      const binary = atob(chunk.data)
-      const bytes = new Int16Array(binary.length / 2)
-      for (let i = 0; i < binary.length; i += 2) {
-        bytes[i / 2] =
-          (binary.charCodeAt(i) & 0xff) |
-          ((binary.charCodeAt(i + 1) & 0xff) << 8)
-      }
+      while (
+        generation === playbackGenerationRef.current &&
+        !isConversationPausedRef.current &&
+        audioQueueRef.current.length > 0
+      ) {
+        const chunk = audioQueueRef.current.shift()
+        if (!chunk) break
 
-      const floatData = new Float32Array(bytes.length)
-      for (let i = 0; i < bytes.length; i++) {
-        floatData[i] = bytes[i] / 32768
-      }
+        const decoded = decodePcmAudioChunk(chunk.data, chunk.mimeType)
+        if (decoded.samples.length === 0) continue
 
-      const buffer = ctx.createBuffer(1, floatData.length, 24000)
-      buffer.getChannelData(0).set(floatData)
+        const buffer = ctx.createBuffer(
+          1,
+          decoded.samples.length,
+          decoded.sampleRate,
+        )
+        buffer.getChannelData(0).set(decoded.samples)
 
-      const source = ctx.createBufferSource()
-      source.buffer = buffer
-      source.connect(ctx.destination)
-      activeAudioSourcesRef.current.add(source)
+        const source = ctx.createBufferSource()
+        source.buffer = buffer
+        source.connect(ctx.destination)
+        activeAudioSourcesRef.current.add(source)
 
-      const now = ctx.currentTime
-      if (nextStartTimeRef.current < now) {
-        nextStartTimeRef.current = now + 0.05
-      }
-
-      source.start(nextStartTimeRef.current)
-      nextStartTimeRef.current += buffer.duration
-      setStatusText('Speaking')
-
-      setTimeout(
-        () => {
-          void playNextAudioChunk()
-        },
-        Math.max(0, (nextStartTimeRef.current - now - 0.1) * 1000),
-      )
-
-      source.onended = () => {
-        activeAudioSourcesRef.current.delete(source)
-        if (
-          !isConversationPausedRef.current &&
-          audioQueueRef.current.length === 0 &&
-          ctx.currentTime >= nextStartTimeRef.current - 0.05
-        ) {
-          setStatusText('Listening')
-          isPlayingAudioQueueRef.current = false
+        const startAt = Math.max(
+          nextStartTimeRef.current,
+          ctx.currentTime + 0.035,
+        )
+        nextStartTimeRef.current = startAt + buffer.duration
+        source.onended = () => {
+          activeAudioSourcesRef.current.delete(source)
+          source.disconnect()
+          if (
+            generation === playbackGenerationRef.current &&
+            !isConversationPausedRef.current &&
+            activeAudioSourcesRef.current.size === 0 &&
+            audioQueueRef.current.length === 0
+          ) {
+            setStatusText('Listening')
+          }
         }
+        source.start(startAt)
+        setStatusText('Speaking')
       }
     } catch {
       setStatusText('Playback interrupted')
+    } finally {
       isPlayingAudioQueueRef.current = false
-      if (audioQueueRef.current.length > 0) {
-        void playNextAudioChunk()
+      if (
+        generation === playbackGenerationRef.current &&
+        !isConversationPausedRef.current &&
+        audioQueueRef.current.length > 0
+      ) {
+        queueMicrotask(() => void playNextAudioChunk())
       }
     }
   }, [])
@@ -494,24 +574,28 @@ export default function RewindScreen(): ReactElement {
           audio: {
             sampleRate: 16000,
             channelCount: 1,
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
+            echoCancellation: { ideal: true },
+            noiseSuppression: { ideal: true },
+            autoGainControl: { ideal: true },
           },
         })
         mediaStreamRef.current = stream
 
-        const AudioContextClass =
-          window.AudioContext || (window as any).webkitAudioContext
-        const context = new AudioContextClass()
+        const AudioContextClass = getAudioContextConstructor()
+        if (!AudioContextClass) {
+          throw new Error('Live audio is unavailable on this device.')
+        }
+        const context = new AudioContextClass({ latencyHint: 'interactive' })
         inputAudioContextRef.current = context
         if (context.state === 'suspended') await context.resume()
 
         const source = context.createMediaStreamSource(stream)
+        const inputGain = context.createGain()
+        inputGain.gain.value = 1.35
         const compressor = context.createDynamicsCompressor()
-        compressor.threshold.value = -34
-        compressor.knee.value = 20
-        compressor.ratio.value = 3
+        compressor.threshold.value = -38
+        compressor.knee.value = 18
+        compressor.ratio.value = 2.5
         compressor.attack.value = 0.003
         compressor.release.value = 0.25
         const silentSink = context.createGain()
@@ -572,12 +656,14 @@ export default function RewindScreen(): ReactElement {
         processorRef.current = processor
         inputPipelineNodesRef.current = [
           source,
+          inputGain,
           compressor,
           processor,
           silentSink,
         ]
 
-        source.connect(compressor)
+        source.connect(inputGain)
+        inputGain.connect(compressor)
         compressor.connect(processor)
         // Keep the capture graph alive without ever routing microphone audio to speakers.
         processor.connect(silentSink)
@@ -587,13 +673,14 @@ export default function RewindScreen(): ReactElement {
           setStatusText('Listening')
         }
       } catch (error) {
+        cleanupAudioPipeline()
         toast.error(
           error instanceof Error ? error.message : 'Microphone access denied',
         )
         setStatusText('Mic blocked')
       }
     },
-    [primePlaybackContext, toast],
+    [cleanupAudioPipeline, primePlaybackContext, toast],
   )
 
   const pauseConversation = useCallback(async () => {
@@ -601,15 +688,7 @@ export default function RewindScreen(): ReactElement {
     if (liveSessionRef.current?.readyState === WebSocket.OPEN) {
       liveSessionRef.current.send(JSON.stringify({ type: 'audio_stream_end' }))
     }
-    audioQueueRef.current = []
-    isPlayingAudioQueueRef.current = false
-
-    for (const source of activeAudioSourcesRef.current) {
-      try {
-        source.stop()
-      } catch {}
-    }
-    activeAudioSourcesRef.current.clear()
+    clearPlayback()
 
     if (
       playbackContextRef.current &&
@@ -623,7 +702,7 @@ export default function RewindScreen(): ReactElement {
     }
 
     setStatusText('Paused')
-  }, [])
+  }, [clearPlayback])
 
   const resumeConversation = useCallback(async () => {
     setIsConversationPaused(false)
@@ -673,24 +752,26 @@ export default function RewindScreen(): ReactElement {
     }
 
     isConversationPausedRef.current = true
+    isFinishingSessionRef.current = true
     setIsConversationPaused(true)
     setIsFinishingSession(true)
-    setStatusText('Wrapping up')
+    setFinalizationStage('saving_conversation')
+    setStatusText('Saving conversation')
+    clearPlayback()
     cleanupAudioPipeline()
     liveSession.send(JSON.stringify({ type: 'finish_session' }))
-  }, [cleanupAudioPipeline, isFinishingSession])
+  }, [cleanupAudioPipeline, clearPlayback, isFinishingSession])
 
   useEffect(() => {
     if (!persona) {
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
-      audioQueueRef.current = []
-      activeAudioSourcesRef.current.clear()
-      isPlayingAudioQueueRef.current = false
-      nextStartTimeRef.current = 0
+      clearPlayback()
       setIsConversationPaused(false)
       setIsFinishingSession(false)
+      setFinalizationStage(null)
+      isFinishingSessionRef.current = false
       isSessionCompleteRef.current = false
       setStatusText('Idle')
       return
@@ -705,12 +786,9 @@ export default function RewindScreen(): ReactElement {
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
-      audioQueueRef.current = []
-      activeAudioSourcesRef.current.clear()
-      isPlayingAudioQueueRef.current = false
-      nextStartTimeRef.current = 0
+      clearPlayback()
     }
-  }, [cleanupAudioPipeline, persona])
+  }, [cleanupAudioPipeline, clearPlayback, persona])
 
   const startSession = useCallback(async () => {
     if (!persona) return
@@ -732,6 +810,8 @@ export default function RewindScreen(): ReactElement {
     try {
       setIsConversationPaused(false)
       setIsFinishingSession(false)
+      setFinalizationStage(null)
+      isFinishingSessionRef.current = false
       isSessionCompleteRef.current = false
       setStatusText('Connecting')
 
@@ -799,7 +879,16 @@ export default function RewindScreen(): ReactElement {
             const nextConversationState = payload.content.trim()
             if (nextConversationState) {
               setConversationStateNote(nextConversationState)
+              setConversationStage(payload.stage)
             }
+            return
+          }
+
+          if (payload.type === 'finalization_progress') {
+            isFinishingSessionRef.current = true
+            setIsFinishingSession(true)
+            setFinalizationStage(payload.stage)
+            setStatusText(REWIND_FINALIZATION_LABELS[payload.stage])
             return
           }
 
@@ -822,11 +911,7 @@ export default function RewindScreen(): ReactElement {
           }
 
           if (payload.type === 'interrupted') {
-            audioQueueRef.current = []
-            nextStartTimeRef.current = 0
-            for (const source of activeAudioSourcesRef.current) source.stop()
-            activeAudioSourcesRef.current.clear()
-            isPlayingAudioQueueRef.current = false
+            clearPlayback()
             setStatusText('Listening')
             return
           }
@@ -836,7 +921,10 @@ export default function RewindScreen(): ReactElement {
             shouldReconnectRef.current = false
             clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
             setStatusText('Completed')
+            clearPlayback()
             cleanupAudioPipeline()
             toast.success('Your Rewind summary is ready')
             liveSessionRef.current?.close(1000, 'Session completed')
@@ -866,6 +954,8 @@ export default function RewindScreen(): ReactElement {
             shouldReconnectRef.current = false
             setIsConversationPaused(true)
             setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
             setStatusText('Paused')
             if (payload.sessionId) {
               savePausedRewindSessionId(persona.id, payload.sessionId)
@@ -883,6 +973,8 @@ export default function RewindScreen(): ReactElement {
             shouldReconnectRef.current = false
             clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
             setStatusText(
               payload.type === 'session_missed'
                 ? 'Window closed'
@@ -901,7 +993,20 @@ export default function RewindScreen(): ReactElement {
 
           if (payload.type === 'error') {
             disconnectNoticeShownRef.current = true
-            setStatusText('Error')
+            if (
+              isFinishingSessionRef.current &&
+              ws.readyState === WebSocket.OPEN
+            ) {
+              isFinishingSessionRef.current = false
+              isConversationPausedRef.current = false
+              setIsFinishingSession(false)
+              setFinalizationStage(null)
+              setIsConversationPaused(false)
+              setStatusText('Listening')
+              void connectMicrophone(ws)
+            } else {
+              setStatusText('Error')
+            }
             toast.error(payload.message)
           }
         } catch {
@@ -916,6 +1021,7 @@ export default function RewindScreen(): ReactElement {
 
       ws.onclose = (event) => {
         isConnectingRef.current = false
+        clearPlayback()
         cleanupAudioPipeline()
         if (liveSessionRef.current === ws) {
           liveSessionRef.current = null
@@ -965,6 +1071,7 @@ export default function RewindScreen(): ReactElement {
     }
   }, [
     cleanupAudioPipeline,
+    clearPlayback,
     connectMicrophone,
     persona,
     playNextAudioChunk,
@@ -1112,7 +1219,7 @@ export default function RewindScreen(): ReactElement {
                     'w-11 h-11 rounded-full items-center justify-center',
                     isConversationPaused
                       ? 'bg-white'
-                      : 'bg-white/8 backdrop-blur-md',
+                      : 'bg-cardx',
                   )}
                 >
                   {isConversationPaused ? (
@@ -1126,7 +1233,7 @@ export default function RewindScreen(): ReactElement {
                   <Pressable
                     onPress={openRewindInsights}
                     accessibilityLabel="Open Rewind insights"
-                    className="w-11 h-11 rounded-full items-center justify-center bg-white/8"
+                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
                   >
                     <RiHistoryLine size={18} className="text-white/90" />
                   </Pressable>
@@ -1134,7 +1241,7 @@ export default function RewindScreen(): ReactElement {
                     onPress={clearPersona}
                     disabled={persistPersonaMutation.isPending}
                     accessibilityLabel="Change Rewind partner"
-                    className="w-11 h-11 rounded-full items-center justify-center bg-white/8"
+                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
                   >
                     <RiRefreshLine
                       size={18}
@@ -1172,7 +1279,7 @@ export default function RewindScreen(): ReactElement {
             </View>
 
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
-              <View className="px-3 py-2 rounded-full bg-white/6">
+              <View className="px-3 py-2 rounded-full bg-cardx">
                 <Text className="text-white/80 font-bold font-bbh text-xs">
                   {rewindSessionDateKey
                     ? `Rewind ${rewindSessionDateKey.slice(5)}`
@@ -1183,10 +1290,10 @@ export default function RewindScreen(): ReactElement {
                       ['connected', 'listening'].includes(
                         conversationSummary.toLowerCase(),
                       )
-                        ? 'bg-success-green/70 text-white p-0.5 rounded-full px-2'
+                        ? 'bg-success-green text-cardd p-0.5 rounded-full px-2'
                         : ['ended'].includes(conversationSummary.toLowerCase())
-                          ? 'bg-red-500/70 text-white p-0.5 rounded-full px-2'
-                          : 'bg-orange-500/70 text-white p-0.5 rounded-full px-2',
+                          ? 'bg-red-500 text-white p-0.5 rounded-full px-2'
+                          : 'bg-yellow-400 text-cardd p-0.5 rounded-full px-2',
                     )}
                   >
                     {conversationSummary}
@@ -1241,9 +1348,14 @@ export default function RewindScreen(): ReactElement {
             ) : null}
 
             {currentSessionPreview && hasActiveSession && (
-              <View className="flex text-center mt-5 flex-row items-center gap-3 mx-auto">
-                <Text className="muted text-sm max-w-[70%] mx-auto font-bold">
-                  "{currentSessionPreview}"
+              <View className="mt-5 max-w-[78%] items-center gap-1 text-center">
+                {conversationStage ? (
+                  <Text className="text-card-lighter-3/60 font-bbh text-[10px] font-bold uppercase tracking-[0.16em]">
+                    {REWIND_CONVERSATION_STAGE_LABELS[conversationStage]}
+                  </Text>
+                ) : null}
+                <Text className="muted mx-auto text-sm font-bold leading-5">
+                  {currentSessionPreview}
                 </Text>
               </View>
             )}
@@ -1257,7 +1369,9 @@ export default function RewindScreen(): ReactElement {
                 >
                   <RiStopCircleLine size={19} className="text-cardd" />
                   <Text className="font-bbh font-bold text-cardd">
-                    {isFinishingSession ? 'Saving summary...' : 'Conclude'}
+                    {isFinishingSession && finalizationStage
+                      ? REWIND_FINALIZATION_LABELS[finalizationStage]
+                      : 'Conclude'}
                   </Text>
                 </Pressable>
               ) : null}
@@ -1265,7 +1379,7 @@ export default function RewindScreen(): ReactElement {
               {!hasActiveSession ? (
                 <Pressable
                   onPress={openRoutineSettings}
-                  className="w-full flex-row items-center justify-between rounded-lg bg-card-light/15 px-4 py-3 text-left"
+                  className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
                 >
                   <View className="min-w-0 flex-1 gap-1">
                     <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
@@ -1284,7 +1398,7 @@ export default function RewindScreen(): ReactElement {
 
               <Pressable
                 onPress={openRewindInsights}
-                className="w-full flex-row items-center justify-between rounded-lg bg-card-light/15 px-4 py-3 text-left"
+                className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
               >
                 <View className="min-w-0 flex-1 gap-1">
                   <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
