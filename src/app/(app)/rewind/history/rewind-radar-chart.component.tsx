@@ -6,16 +6,21 @@ import type { RewindWellbeingSignals } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 
 type RadarSignal = {
+  color: string
   key: keyof RewindWellbeingSignals
   label: string
 }
 
 const RADAR_SIGNALS: RadarSignal[] = [
-  { key: 'emotionalSteadiness', label: 'Steadiness' },
-  { key: 'energy', label: 'Energy' },
-  { key: 'clarity', label: 'Clarity' },
-  { key: 'connection', label: 'Connection' },
-  { key: 'agency', label: 'Agency' },
+  {
+    color: colors['success-green'],
+    key: 'emotionalSteadiness',
+    label: 'Steadiness',
+  },
+  { color: colors['warning-yellow'], key: 'energy', label: 'Energy' },
+  { color: colors.accent[700], key: 'clarity', label: 'Clarity' },
+  { color: colors.accent[300], key: 'connection', label: 'Connection' },
+  { color: colors['card-lighter-3'], key: 'agency', label: 'Agency' },
 ]
 
 const CENTER = 130
@@ -40,11 +45,15 @@ function getPolygonPoints(values: number[]): string {
 }
 
 export function RewindRadarChart({
+  empty = false,
   signals,
 }: {
+  empty?: boolean
   signals: RewindWellbeingSignals
 }): ReactElement {
-  const values = RADAR_SIGNALS.map((signal) => signals[signal.key] / 100)
+  const values = RADAR_SIGNALS.map((signal) =>
+    Math.max(0, Math.min(1, signals[signal.key] / 100)),
+  )
 
   return (
     <View className="items-center gap-3">
@@ -91,24 +100,52 @@ export function RewindRadarChart({
             </g>
           )
         })}
-        <polygon
-          fill="rgba(255, 255, 255, 0.14)"
-          points={getPolygonPoints(values)}
-          stroke={colors.white}
-          strokeOpacity="0.86"
-          strokeWidth="1.5"
-        />
-        {values.map((value, index) => {
-          const point = getPoint(index, value)
-          return <circle key={RADAR_SIGNALS[index].key} cx={point.x} cy={point.y} fill={colors.white} r="3" />
-        })}
+        {empty ? (
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            fill={colors.cardx}
+            r="5"
+            stroke={colors['card-lighter-3']}
+            strokeOpacity="0.7"
+          />
+        ) : (
+          <>
+            <polygon
+              fill="rgba(22, 186, 129, 0.12)"
+              points={getPolygonPoints(values)}
+              stroke={colors['success-green']}
+              strokeOpacity="0.9"
+              strokeWidth="1.75"
+            />
+            {values.map((value, index) => {
+              const point = getPoint(index, value)
+              const signal = RADAR_SIGNALS[index]
+              return (
+                <circle
+                  key={signal.key}
+                  cx={point.x}
+                  cy={point.y}
+                  fill={signal.color}
+                  r="3.5"
+                />
+              )
+            })}
+          </>
+        )}
       </svg>
 
-      <View className="flex-row flex-wrap justify-center gap-x-3 gap-y-1 px-3">
+      <View className="flex-row flex-wrap justify-center gap-x-4 gap-y-2 px-3">
         {RADAR_SIGNALS.map((signal) => (
-          <Text key={signal.key} className="muted font-bbh text-[11px]">
-            {signal.label} {signals[signal.key]}
-          </Text>
+          <View key={signal.key} className="flex-row items-center gap-1.5">
+            <View
+              className="size-1.5 rounded-full"
+              style={{ backgroundColor: signal.color }}
+            />
+            <Text className="muted font-bbh text-[11px]">
+              {signal.label} {empty ? '--' : signals[signal.key]}
+            </Text>
+          </View>
         ))}
       </View>
     </View>

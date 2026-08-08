@@ -18,7 +18,10 @@ import { View } from '@/components/layout/view.component'
 import { useRewindInsights } from '@/hooks/use-rewind.hook'
 import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useSubscription } from '@/providers/subscription.provider'
-import type { RewindInsightsRange } from '@/shared/api/rewind.api'
+import type {
+  RewindInsightsRange,
+  RewindWellbeingSignals,
+} from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
 
@@ -30,28 +33,45 @@ const INSIGHT_RANGES: Array<{ label: string; value: RewindInsightsRange }> = [
   { label: '90 days', value: '90d' },
 ]
 
+const EMPTY_REWIND_SIGNALS: RewindWellbeingSignals = {
+  agency: 0,
+  clarity: 0,
+  connection: 0,
+  emotionalSteadiness: 0,
+  energy: 0,
+}
+
 function ProgressReading({
+  color,
   label,
   value,
 }: {
+  color: string
   label: string
-  value: number
+  value: number | null
 }): ReactElement {
+  const width = value === null ? 0 : Math.max(2, value)
+
   return (
-    <View className="gap-2">
+    <View className="gap-2.5 py-1">
       <View className="flex-row items-center justify-between gap-3">
-        <Text className="font-bbh text-sm font-semibold text-white">
-          {label}
+        <View className="flex-row items-center gap-2">
+          <View
+            className="size-2 rounded-full"
+            style={{ backgroundColor: color }}
+          />
+          <Text className="font-bbh text-sm font-semibold text-white">
+            {label}
+          </Text>
+        </View>
+        <Text className="muted font-bbh text-xs tabular-nums">
+          {value === null ? '--' : `${value}%`}
         </Text>
-        <Text className="muted font-bbh text-xs tabular-nums">{value}%</Text>
       </View>
-      <View
-        className="h-1.5 overflow-hidden rounded-full"
-        style={{ backgroundColor: colors['card-light-50'] }}
-      >
+      <View className="h-1.5 overflow-hidden rounded-full bg-cardd">
         <View
-          className="h-full rounded-full bg-white"
-          style={{ width: `${Math.max(2, value)}%` }}
+          className="h-full rounded-full"
+          style={{ backgroundColor: color, width: `${width}%` }}
         />
       </View>
     </View>
@@ -64,6 +84,8 @@ export default function RewindInsightsScreen(): ReactElement {
   const { requestProAccess } = useProAccess()
   const { isPro } = useSubscription()
   const { data, error, isError, isLoading, refetch } = useRewindInsights(range)
+  const signals = data?.signals ?? EMPTY_REWIND_SIGNALS
+  const hasReflectionData = Boolean(data?.signals && data?.progress)
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
@@ -77,14 +99,13 @@ export default function RewindInsightsScreen(): ReactElement {
                 Your reflection pattern
               </Text>
               <Text className="muted max-w-xl font-bbh text-sm leading-6">
-                A read of the themes you have chosen to share in completed
-                Rewinds.
+                A simple read of what you have shared in Rewind.
               </Text>
             </View>
 
             <View
               className="flex-row rounded-lg p-1"
-              style={{ backgroundColor: colors['card-light-50'] }}
+              style={{ backgroundColor: colors.cardx }}
             >
               {INSIGHT_RANGES.map((option) => {
                 const isSelected = option.value === range
@@ -161,86 +182,95 @@ export default function RewindInsightsScreen(): ReactElement {
               </View>
             ) : data ? (
               <>
-                {data.hasSufficientData && data.signals && data.progress ? (
-                  <View className="gap-7">
-                    <View className="gap-2">
-                      <View className="flex-row items-end justify-between gap-3 px-1">
-                        <View className="gap-1">
-                          <Text className="font-bbh text-base font-bold text-white">
-                            Reflection map
-                          </Text>
-                          <Text className="muted font-bbh text-xs">
-                            {data.coverage.completedSessions} completed Rewinds
-                            in this range
-                          </Text>
-                        </View>
-                        <Text className="muted font-bbh text-xs">
-                          {data.coverage.completedDays}/{data.coverage.days}{' '}
-                          days
+                <View className="gap-5">
+                  <View
+                    className="gap-3 rounded-2xl px-4 py-5"
+                    style={{ backgroundColor: colors.cardx }}
+                  >
+                    <View className="flex-row items-start justify-between gap-4">
+                      <View className="min-w-0 flex-1 gap-1">
+                        <Text className="font-bbh text-base font-bold text-white">
+                          Reflection map
+                        </Text>
+                        <Text className="muted font-bbh text-xs leading-5">
+                          {data.coverage.completedSessions
+                            ? `${data.coverage.completedSessions} completed ${
+                                data.coverage.completedSessions === 1
+                                  ? 'Rewind'
+                                  : 'Rewinds'
+                              }`
+                            : 'Your first Rewind will shape this map'}
                         </Text>
                       </View>
-                      <RewindRadarChart signals={data.signals} />
-                    </View>
-
-                    <View className="gap-5">
-                      <Text className="font-bbh text-base font-bold text-white">
-                        Progress readings
+                      <Text className="muted shrink-0 font-bbh text-xs tabular-nums">
+                        {data.coverage.completedDays}/{data.coverage.days} days
                       </Text>
-                      <ProgressReading
-                        label="Reflection consistency"
-                        value={data.progress.consistency}
-                      />
-                      <ProgressReading
-                        label="Clarity"
-                        value={data.progress.clarity}
-                      />
-                      <ProgressReading
-                        label="Momentum"
-                        value={data.progress.momentum}
-                      />
                     </View>
 
-                    {data.contextualInsight ? (
-                      <View
-                        className="gap-2 rounded-lg px-4 py-4"
-                        style={{ backgroundColor: colors['card-light-50'] }}
-                      >
-                        <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-                          A pattern worth noticing
-                        </Text>
-                        <Text className="muted font-bbh text-sm leading-6">
-                          {data.contextualInsight}
-                        </Text>
-                      </View>
+                    <RewindRadarChart
+                      empty={!hasReflectionData}
+                      signals={signals}
+                    />
+
+                    {data.coverage.completedSessions > 0 &&
+                    data.coverage.completedSessions < 3 ? (
+                      <Text className="muted text-center font-bbh text-[11px] leading-5">
+                        Early read. It will become more representative as you
+                        Rewind.
+                      </Text>
                     ) : null}
                   </View>
-                ) : (
-                  <View className="gap-3 py-10">
-                    <Text className="font-bbh text-xl font-bold text-white">
-                      Your picture is still forming
+
+                  <View
+                    className="gap-4 rounded-2xl px-4 py-5"
+                    style={{ backgroundColor: colors.cardx }}
+                  >
+                    <Text className="font-bbh text-base font-bold text-white">
+                      Progress readings
                     </Text>
-                    <Text className="muted max-w-md font-bbh text-sm leading-6">
-                      Complete{' '}
-                      {Math.max(0, 3 - data.coverage.completedSessions)} more
-                      Rewind{data.coverage.completedSessions === 2 ? '' : 's'}{' '}
-                      in this range to see a pattern that is grounded in your
-                      own reflections.
-                    </Text>
-                    <Text className="muted font-bbh text-xs">
-                      {data.coverage.completedSessions} completed in the last{' '}
-                      {data.coverage.days} days
-                    </Text>
+                    <ProgressReading
+                      color={colors['warning-yellow']}
+                      label="Consistency"
+                      value={data.progress?.consistency ?? null}
+                    />
+                    <ProgressReading
+                      color={colors['success-green']}
+                      label="Clarity"
+                      value={data.progress?.clarity ?? null}
+                    />
+                    <ProgressReading
+                      color={colors.accent[700]}
+                      label="Momentum"
+                      value={data.progress?.momentum ?? null}
+                    />
                   </View>
-                )}
+
+                  {data.contextualInsight ? (
+                    <View
+                      className="gap-2 rounded-2xl px-4 py-5"
+                      style={{ backgroundColor: colors.cardx }}
+                    >
+                      <View className="flex-row items-center gap-2">
+                        <View className="h-1.5 w-5 rounded-full bg-accent-700" />
+                        <Text className="font-bbh text-xs font-bold text-white">
+                          Worth noticing
+                        </Text>
+                      </View>
+                      <Text className="muted font-bbh text-sm leading-6">
+                        {data.contextualInsight}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
 
                 <View
-                  className="flex-row items-start gap-3 rounded-lg px-4 py-4"
-                  style={{ backgroundColor: colors['card-light-50'] }}
+                  className="flex-row items-start gap-3 rounded-2xl px-4 py-5"
+                  style={{ backgroundColor: colors.cardx }}
                 >
                   <RiInformationLine
                     size={18}
                     className="mt-0.5 shrink-0"
-                    style={{ color: colors['card-lighter-3'] }}
+                    style={{ color: colors['warning-yellow'] }}
                   />
                   <Text className="muted flex-1 font-bbh text-xs leading-5">
                     These readings reflect what you shared in Rewind. They are
@@ -252,17 +282,17 @@ export default function RewindInsightsScreen(): ReactElement {
 
             <Pressable
               accessibilityLabel="Open Rewind transcript history"
-              className="min-h-12 flex-row items-center justify-between rounded-lg px-4"
-              style={{ backgroundColor: colors['card-light-50'] }}
+              className="min-h-16 flex-row items-center justify-between rounded-2xl px-4 py-4"
+              style={{ backgroundColor: colors.cardx }}
               onPress={() => navigate({ to: '/app/rewind-history-sessions' })}
             >
-              <View className="flex-row items-center gap-3">
+              <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-3">
                 <RiFileList3Line size={19} style={{ color: colors.white }} />
-                <View className="gap-0.5">
+                <View className="min-w-0 flex-1 gap-0.5">
                   <Text className="font-bbh text-sm font-bold text-white">
                     Transcript history
                   </Text>
-                  <Text className="muted font-bbh text-xs">
+                  <Text className="muted font-bbh text-xs" lines={2}>
                     Open past Rewinds and their saved reflections
                   </Text>
                 </View>

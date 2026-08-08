@@ -1,5 +1,3 @@
-
-
 // Color values with full type safety
 export const colors = {
   white: '#ffffff',
@@ -7,7 +5,7 @@ export const colors = {
   cardd: '#0A0E16',
   cardx: '#0f1119',
   'card-light': '#292D3D',
-  'card-light-50': 'rgb(41 45 61 / 0.5)',
+  'card-light-50': '#0f1119',
   'card-lighter': '#494f66',
   'card-lighter-2': '#6d7490',
   'card-lighter-3': '#848ba6',
@@ -102,7 +100,7 @@ export const colors = {
     800: '#991B1B',
     900: '#7F1D1D',
   },
-  "burnt-coffee": {
+  'burnt-coffee': {
     900: '#0f0a0c',
     800: '#1a1417',
     700: '#2e1f23',
@@ -113,6 +111,5 @@ export const colors = {
     200: '#b98a8c',
     100: '#d6a9a8',
     50: '#f4c8c4',
-  }
+  },
 }
-
