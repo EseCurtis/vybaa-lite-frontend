@@ -72,6 +72,13 @@ class GoalAPI {
     return res
   }
 
+  async getGoalById(goalId: string): Promise<GoalResponse> {
+    const { data: res } = await http.get<GoalResponse>(
+      `${API_V1}/goals/${encodeURIComponent(goalId)}`,
+    )
+    return res
+  }
+
   async checkIn(
     goalId?: string,
     notes?: string,

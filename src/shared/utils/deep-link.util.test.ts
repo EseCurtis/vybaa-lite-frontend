@@ -41,6 +41,19 @@ describe('normalizeDeepLink', () => {
     })
   })
 
+  it('preserves a goal id from a reminder route', () => {
+    expect(
+      normalizeDeepLink(
+        'https://vybaa.app/app/goal?goalId=goal_2026-reminder',
+      ),
+    ).toEqual({
+      goalId: 'goal_2026-reminder',
+      path: '/app/goal',
+      requiresAuth: true,
+      route: 'goal',
+    })
+  })
+
   it('preserves a supported community tab from a notification route', () => {
     expect(
       normalizeDeepLink(

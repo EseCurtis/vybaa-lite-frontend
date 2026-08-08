@@ -35,6 +35,15 @@ export async function navigateToDeepLinkTarget(
     return
   }
 
+  if (target.route === 'goal') {
+    await router.navigate({
+      replace: true,
+      search: target.goalId ? { goalId: target.goalId } : {},
+      to: '/app/goal',
+    })
+    return
+  }
+
   await router.navigate({
     replace: true,
     to: target.path,

@@ -13,14 +13,31 @@ import { goalAPI } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
 import { randomGreetings } from '@/shared/goal/goal.util.shared'
-import { useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
 
-export default function GoalsAppScreen() {
+type GoalsAppScreenProps = {
+  initialGoalId?: string
+}
+
+export default function GoalsAppScreen({
+  initialGoalId,
+}: GoalsAppScreenProps) {
   const bottomSheet = useBottomSheetController()
   const queryClient = useQueryClient()
   const toast = useToast()
   const { user} = useAuth();
+  const handledInitialGoalIdRef = useRef<string | null>(null)
+
+  const initialGoalQuery = useQuery({
+    enabled: Boolean(initialGoalId),
+    queryFn: async () => {
+      if (!initialGoalId) return null
+      const response = await goalAPI.getGoalById(initialGoalId)
+      return response.data
+    },
+    queryKey: goalQueryKeys.detail(initialGoalId ?? 'notification'),
+  })
 
   const [bulkMode, setBulkMode] = useState(false)
   const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set())
@@ -57,6 +74,38 @@ export default function GoalsAppScreen() {
       )
     }
   }
+
+  useEffect(() => {
+    if (
+      !initialGoalId ||
+      handledInitialGoalIdRef.current === initialGoalId
+    ) {
+      return
+    }
+
+    if (initialGoalQuery.data) {
+      handledInitialGoalIdRef.current = initialGoalId
+      bottomSheet.present(
+        <GoalDetailsSheet
+          goal={initialGoalQuery.data}
+          onDismiss={bottomSheet.dismiss}
+        />,
+        { title: 'Goal Details', elevation: 9999 },
+      )
+      return
+    }
+
+    if (initialGoalQuery.isError) {
+      handledInitialGoalIdRef.current = initialGoalId
+      toast.error('That goal is no longer available.')
+    }
+  }, [
+    bottomSheet,
+    initialGoalId,
+    initialGoalQuery.data,
+    initialGoalQuery.isError,
+    toast,
+  ])
 
   const handleRefresh = async () => {
     setIsRefreshing(true)

@@ -17,6 +17,7 @@ export type DeepLinkRouteName =
 export type DeepLinkTarget = {
   code?: string
   communityId?: string
+  goalId?: string
   hash?: string
   sessionId?: string
   path: string
@@ -107,9 +108,18 @@ function getCommunityHash(hash: string): string | undefined {
     : undefined
 }
 
+function normalizeGoalId(value: string | null): string | undefined {
+  const goalId = value?.trim()
+  if (!goalId || goalId.length > 128 || !/^[a-z0-9_-]+$/i.test(goalId)) {
+    return undefined
+  }
+  return goalId
+}
+
 function getTargetFromPath(
   pathname: string,
   hash: string = '',
+  searchParams?: URLSearchParams,
 ): DeepLinkTarget | null {
   const inviteMatch = pathname.match(/^\/(?:app\/)?invite\/([^/]+)$/)
   const inviteCode = normalizeInviteCode(inviteMatch?.[1])
@@ -146,6 +156,14 @@ function getTargetFromPath(
     }
   }
 
+  if (pathname === '/app/goal') {
+    const goalId = normalizeGoalId(searchParams?.get('goalId') ?? null)
+    return {
+      ...allowedAppPaths['/app/goal'],
+      ...(goalId ? { goalId } : {}),
+    }
+  }
+
   return allowedAppPaths[pathname] ?? null
 }
 
@@ -160,7 +178,7 @@ export function normalizeDeepLink(input: string): DeepLinkTarget | null {
     const schemePath = url.hostname
       ? `/${url.hostname}${url.pathname}`
       : url.pathname
-    return getTargetFromPath(schemePath, url.hash)
+    return getTargetFromPath(schemePath, url.hash, url.searchParams)
   }
 
   if (url.protocol !== 'https:' && url.protocol !== 'http:') {
@@ -171,7 +189,7 @@ export function normalizeDeepLink(input: string): DeepLinkTarget | null {
     return null
   }
 
-  return getTargetFromPath(url.pathname, url.hash)
+  return getTargetFromPath(url.pathname, url.hash, url.searchParams)
 }
 
 export function storePendingDeepLink(target: DeepLinkTarget): void {
