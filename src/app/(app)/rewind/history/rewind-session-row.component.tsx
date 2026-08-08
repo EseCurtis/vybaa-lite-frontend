@@ -13,7 +13,6 @@ import type { RewindSession } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
-import { cn } from '@/shared/utils/helpers.util'
 import {
   createAccentStyle,
   formatSessionDate,
@@ -43,8 +42,9 @@ export function RewindSessionRow({
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: Math.min(index * 0.035, 0.16), duration: 0.22 }}
-        className="border-b border-card-light/30 pb-7 py-4 w-full"
+        className="w-full rounded-2xl px-4 py-4"
         style={{
+          backgroundColor: colors.cardx,
           ...createAccentStyle(accent, accentSoft),
         }}
       >
@@ -67,26 +67,26 @@ export function RewindSessionRow({
                     {persona.name}
                   </Text>
                   <View
-                    className={cn(
-                      'rounded-full px-2.5 py-1',
-                      session.completed
-                        ? 'var(--accent-soft)'
-                        : 'bg-warning-yellow/10',
-                    )}
-                    style={{
-                      //@ts-ignore
-                      '--accent-soft': accentSoft,
-                    }}
+                    className="flex-row items-center gap-1.5 rounded-full px-2.5 py-1"
+                    style={{ backgroundColor: colors.cardd }}
                   >
+                    <View
+                      className="size-1.5 rounded-full"
+                      style={{
+                        backgroundColor: session.completed
+                          ? colors['success-green']
+                          : colors['warning-yellow'],
+                      }}
+                    />
                     <Text
-                      className="font-bbh text-[10px] font-bold  tracking-[0.14em]"
+                      className="font-bbh text-[10px] font-bold"
                       style={{
                         color: session.completed
-                          ? accent
+                          ? colors['success-green']
                           : colors['warning-yellow'],
                       }}
                     >
-                      {session.completed ? 'Complete' : 'Pending'}
+                      {session.completed ? 'Saved' : 'Pending'}
                     </Text>
                   </View>
                 </View>

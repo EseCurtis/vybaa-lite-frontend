@@ -14,19 +14,36 @@ import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
 import { RewindSessionDetail } from './history/rewind-session-detail-sheet.component'
 
-export default function RewindSessionDetailScreen(): ReactElement {
+export type RewindSessionDetailOrigin = 'history' | 'insights' | 'rewind'
+
+export default function RewindSessionDetailScreen({
+  origin,
+}: {
+  origin: RewindSessionDetailOrigin
+}): ReactElement {
   const navigate = useNavigate()
   const { sessionId } = useParams({ from: '/app/r/$sessionId' })
-  const { data: session, error, isError, isLoading, refetch } =
-    useRewindSession(sessionId)
+  const {
+    data: session,
+    error,
+    isError,
+    isLoading,
+    refetch,
+  } = useRewindSession(sessionId)
   const persona = session ? getRewindPersona(session.personaId) : null
+  const returnPath =
+    origin === 'history'
+      ? '/app/rewind-history-sessions'
+      : origin === 'rewind'
+        ? '/app/rewind'
+        : '/app/rewind-history'
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
       <NoiseComponent>
         <TabHeader
           canGoBack
-          onBack={() => navigate({ replace: true, to: '/app/rewind-history' })}
+          onBack={() => navigate({ replace: true, to: returnPath })}
           title={persona?.name ?? 'Rewind'}
         />
 
@@ -34,7 +51,7 @@ export default function RewindSessionDetailScreen(): ReactElement {
           <View className="mx-auto w-full max-w-3xl">
             {isLoading ? (
               <View className="items-center justify-center gap-3 py-16">
-                <Spinner  />
+                <Spinner />
                 <Text
                   className="font-bbh text-sm"
                   style={{ color: colors['card-lighter-2'] }}

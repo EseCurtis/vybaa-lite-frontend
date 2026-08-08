@@ -2,11 +2,12 @@ import {
   RiBookOpenLine,
   RiCalendar2Line,
   RiCheckLine,
+  RiLoader4Line,
   RiTimeLine,
   RiUserVoiceLine,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ReactElement } from 'react'
+import { useState, type ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -16,6 +17,7 @@ import { rewindAPI, type RewindSession } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import { cn } from '@/shared/utils/helpers.util'
 
 import {
   createAccentStyle,
@@ -23,6 +25,14 @@ import {
   formatSessionTime,
   getSessionAccent,
 } from './rewind-history.utils'
+
+type DetailSection = 'conversation' | 'journal' | 'reflection'
+
+const DETAIL_SECTIONS: Array<{ label: string; value: DetailSection }> = [
+  { label: 'Conversation', value: 'conversation' },
+  { label: 'Reflection', value: 'reflection' },
+  { label: 'Journal', value: 'journal' },
+]
 
 function getTextBlocks(value: string): string[] {
   return value
@@ -37,7 +47,7 @@ function DetailText({ value }: { value: string }): ReactElement {
       {getTextBlocks(value).map((block, index) => (
         <Text
           key={`${index}-${block.slice(0, 16)}`}
-          className="muted font-bbh text-sm leading-7"
+          className="muted font-bbh text-sm leading-6"
         >
           {block}
         </Text>
@@ -50,7 +60,7 @@ function getJournalActionLabel(
   isJournalSaved: boolean,
   isPending: boolean,
 ): string {
-  if (isPending) return 'Adding to Journal…'
+  if (isPending) return 'Adding to Journal...'
   if (isJournalSaved) return 'Added to Journal'
   return 'Add to Journal'
 }
@@ -70,13 +80,127 @@ function TranscriptTurn({
         {isPartner ? partnerName : 'You'}
       </Text>
       <View
-        className="max-w-[88%] rounded-lg px-3 py-3"
+        className="max-w-[88%] rounded-2xl px-4 py-3"
         style={{
-          backgroundColor: isPartner ? colors['card-light-50'] : colors.card[500],
+          backgroundColor: isPartner ? colors.cardx : colors['card-light'],
         }}
       >
         <Text className="font-bbh text-sm leading-6 text-white">{content}</Text>
       </View>
+    </View>
+  )
+}
+
+function DetailSectionTabs({
+  activeSection,
+  hasJournal,
+  onChange,
+}: {
+  activeSection: DetailSection
+  hasJournal: boolean
+  onChange: (section: DetailSection) => void
+}): ReactElement {
+  return (
+    <View
+      className="flex-row rounded-xl p-1"
+      style={{ backgroundColor: colors.cardx }}
+    >
+      {DETAIL_SECTIONS.map((section) => {
+        const selected = section.value === activeSection
+        return (
+          <Pressable
+            key={section.value}
+            accessibilityLabel={`${section.label}${selected ? ', selected' : ''}`}
+            className={cn(
+              'min-h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-lg px-2',
+              selected ? 'bg-white' : '',
+            )}
+            onPress={() => onChange(section.value)}
+          >
+            <Text
+              className={cn(
+                'font-bbh text-[11px] font-bold',
+                selected ? 'text-cardd' : 'muted',
+              )}
+            >
+              {section.label}
+            </Text>
+            {section.value === 'journal' && hasJournal ? (
+              <View
+                className={cn(
+                  'size-1.5 rounded-full',
+                  selected ? 'bg-success-green' : 'bg-warning-yellow',
+                )}
+              />
+            ) : null}
+          </Pressable>
+        )
+      })}
+    </View>
+  )
+}
+
+function ReflectionSection({
+  session,
+}: {
+  session: RewindSession
+}): ReactElement {
+  if (session.status === 'FINALIZING') {
+    return (
+      <View
+        className="items-center gap-3 rounded-2xl px-5 py-10"
+        style={{ backgroundColor: colors.cardx }}
+      >
+        <RiLoader4Line size={22} className="animate-spin text-success-green" />
+        <Text className="font-bbh text-sm font-bold text-white">
+          Building your reflection
+        </Text>
+        <Text className="muted max-w-[280px] text-center font-bbh text-xs leading-5">
+          Saving the conversation and noticing the patterns that matter.
+        </Text>
+      </View>
+    )
+  }
+
+  return (
+    <View className="gap-4">
+      <View
+        className="gap-3 rounded-2xl px-4 py-5"
+        style={{ backgroundColor: colors.cardx }}
+      >
+        <Text className="font-bbh text-sm font-bold text-white">Summary</Text>
+        <DetailText value={session.summary} />
+      </View>
+
+      {session.emotionalInsight ? (
+        <View
+          className="gap-2 rounded-2xl px-4 py-5"
+          style={{ backgroundColor: colors.cardx }}
+        >
+          <View className="flex-row items-center gap-2">
+            <View className="h-1.5 w-5 rounded-full bg-accent-700" />
+            <Text className="font-bbh text-xs font-bold text-white">
+              Emotional insight
+            </Text>
+          </View>
+          <DetailText value={session.emotionalInsight} />
+        </View>
+      ) : null}
+
+      {session.comparisonInsight ? (
+        <View
+          className="gap-2 rounded-2xl px-4 py-5"
+          style={{ backgroundColor: colors.cardx }}
+        >
+          <View className="flex-row items-center gap-2">
+            <View className="h-1.5 w-5 rounded-full bg-success-green" />
+            <Text className="font-bbh text-xs font-bold text-white">
+              In context
+            </Text>
+          </View>
+          <DetailText value={session.comparisonInsight} />
+        </View>
+      ) : null}
     </View>
   )
 }
@@ -86,6 +210,8 @@ export function RewindSessionDetail({
 }: {
   session: RewindSession
 }): ReactElement {
+  const [activeSection, setActiveSection] =
+    useState<DetailSection>('conversation')
   const persona = getRewindPersona(session.personaId)
   const queryClient = useQueryClient()
   const toast = useToast()
@@ -109,8 +235,8 @@ export function RewindSessionDetail({
   )
 
   return (
-    <View className="gap-7 pb-4" style={createAccentStyle(accent, accentSoft)}>
-      <View className="flex-row items-start gap-3 px-1">
+    <View className="gap-5 pb-4" style={createAccentStyle(accent, accentSoft)}>
+      <View className="flex-row items-start gap-3 px-1 pt-1">
         <View
           className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: accentSoft }}
@@ -123,13 +249,19 @@ export function RewindSessionDetail({
           </Text>
           <View className="flex-row flex-wrap items-center gap-3">
             <View className="flex-row items-center gap-1.5">
-              <RiCalendar2Line size={12} style={{ color: colors['card-lighter-3'] }} />
+              <RiCalendar2Line
+                size={12}
+                style={{ color: colors['card-lighter-3'] }}
+              />
               <Text className="muted font-bbh text-[11px]">
                 {formatSessionDate(session.createdAt)}
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
-              <RiTimeLine size={12} style={{ color: colors['card-lighter-3'] }} />
+              <RiTimeLine
+                size={12}
+                style={{ color: colors['card-lighter-3'] }}
+              />
               <Text className="muted font-bbh text-[11px]">
                 {formatSessionTime(session.createdAt)}
               </Text>
@@ -138,86 +270,90 @@ export function RewindSessionDetail({
         </View>
       </View>
 
-      <View className="gap-3">
-        <Text className="font-bbh text-base font-bold text-white">Conversation</Text>
-        {turns.length ? (
-          <View className="gap-4">
-            {turns.map((turn) => (
+      <View className="sticky top-0 z-20 bg-cardd py-2">
+        <DetailSectionTabs
+          activeSection={activeSection}
+          hasJournal={Boolean(session.journalDraft)}
+          onChange={setActiveSection}
+        />
+      </View>
+
+      {activeSection === 'conversation' ? (
+        <View className="gap-4">
+          {turns.length ? (
+            turns.map((turn) => (
               <TranscriptTurn
                 key={turn.id}
                 content={turn.content}
                 isPartner={turn.role === 'PARTNER'}
                 partnerName={persona.name}
               />
-            ))}
-          </View>
-        ) : (
-          <View
-            className="rounded-lg px-4 py-4"
-            style={{ backgroundColor: colors['card-light-50'] }}
-          >
-            <Text className="muted font-bbh text-sm leading-6">
-              A transcript was not captured for this earlier Rewind. Its saved reflection remains below.
-            </Text>
-          </View>
-        )}
-      </View>
-
-      <View className="gap-3 border-t border-white/10 pt-6">
-        <Text className="font-bbh text-base font-bold text-white">Summary</Text>
-        <DetailText value={session.summary} />
-      </View>
-
-      {session.emotionalInsight ? (
-        <View className="gap-2">
-          <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-            Emotional insight
-          </Text>
-          <DetailText value={session.emotionalInsight} />
-        </View>
-      ) : null}
-
-      {session.comparisonInsight ? (
-        <View className="gap-2">
-          <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-            In context
-          </Text>
-          <DetailText value={session.comparisonInsight} />
-        </View>
-      ) : null}
-
-      {session.journalDraft ? (
-        <View
-          className="gap-2 rounded-lg px-4 py-4"
-          style={{ backgroundColor: colors['card-light-50'] }}
-        >
-          <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-            Journal note
-          </Text>
-          <DetailText value={session.journalDraft} />
-        </View>
-      ) : null}
-
-      {canAddToJournal ? (
-        <Pressable
-          accessibilityLabel={
-            isJournalSaved ? 'Rewind already added to Journal' : 'Add Rewind to Journal'
-          }
-          disabled={isJournalSaved || addToJournalMutation.isPending}
-          className="min-h-12 flex-row items-center justify-center gap-2 rounded-lg bg-white px-4"
-          onPress={() => {
-            addToJournalMutation.mutate()
-          }}
-        >
-          {isJournalSaved ? (
-            <RiCheckLine size={18} className="text-cardd" />
+            ))
           ) : (
-            <RiBookOpenLine size={18} className="text-cardd" />
+            <View
+              className="rounded-2xl px-4 py-5"
+              style={{ backgroundColor: colors.cardx }}
+            >
+              <Text className="muted font-bbh text-sm leading-6">
+                A transcript was not captured for this earlier Rewind. Its
+                reflection is still available in the next tab.
+              </Text>
+            </View>
           )}
-          <Text className="font-bbh text-sm font-bold text-cardd">
-            {journalActionLabel}
-          </Text>
-        </Pressable>
+        </View>
+      ) : null}
+
+      {activeSection === 'reflection' ? (
+        <ReflectionSection session={session} />
+      ) : null}
+
+      {activeSection === 'journal' ? (
+        <View className="gap-4">
+          <View
+            className="gap-3 rounded-2xl px-4 py-5"
+            style={{ backgroundColor: colors.cardx }}
+          >
+            <View className="flex-row items-center gap-2">
+              <RiBookOpenLine size={17} className="text-warning-yellow" />
+              <Text className="font-bbh text-sm font-bold text-white">
+                Journal note
+              </Text>
+            </View>
+            {session.journalDraft ? (
+              <DetailText value={session.journalDraft} />
+            ) : (
+              <Text className="muted font-bbh text-sm leading-6">
+                This Rewind does not have a Journal note yet.
+              </Text>
+            )}
+          </View>
+
+          {canAddToJournal ? (
+            <Pressable
+              accessibilityLabel={
+                isJournalSaved
+                  ? 'Rewind already added to Journal'
+                  : 'Add Rewind to Journal'
+              }
+              disabled={isJournalSaved || addToJournalMutation.isPending}
+              className="min-h-12 flex-row items-center justify-center gap-2 rounded-full bg-white px-4 disabled:opacity-50"
+              onPress={() => {
+                addToJournalMutation.mutate()
+              }}
+            >
+              {addToJournalMutation.isPending ? (
+                <RiLoader4Line size={18} className="animate-spin text-cardd" />
+              ) : isJournalSaved ? (
+                <RiCheckLine size={18} className="text-cardd" />
+              ) : (
+                <RiBookOpenLine size={18} className="text-cardd" />
+              )}
+              <Text className="font-bbh text-sm font-bold text-cardd">
+                {journalActionLabel}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
       ) : null}
     </View>
   )

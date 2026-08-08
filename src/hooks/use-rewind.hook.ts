@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 import type {
   RewindInsightsRange,
@@ -71,6 +76,8 @@ export function useRewindSession(sessionId: string) {
       return response.data
     },
     queryKey: rewindQueryKeys.session(sessionId),
+    refetchInterval: (query) =>
+      query.state.data?.status === 'FINALIZING' ? 1_500 : false,
     staleTime: 1000 * 60 * 5,
   })
 }

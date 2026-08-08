@@ -27,9 +27,9 @@ import {
 import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
-import {
-  type RewindRoutineFrequency,
-  type RewindRoutineIntent,
+import type {
+  RewindRoutineFrequency,
+  RewindRoutineIntent,
 } from '@/shared/api/rewind.api'
 import { getDeviceTimezone } from '@/shared/api/http'
 import { colors } from '@/shared/colors.shared'
@@ -38,59 +38,68 @@ import { cn } from '@/shared/utils/helpers.util'
 
 export type RewindRoutineOrigin = 'rewind' | 'settings'
 
+type FrequencyOption = {
+  detail: string
+  label: string
+  schedule: string
+  value: RewindRoutineFrequency
+}
+
+type IntentOption = {
+  detail: string
+  label: string
+  value: RewindRoutineIntent
+}
+
 const DEFAULT_MORNING_TIME = '08:00'
 const DEFAULT_EVENING_TIME = '20:00'
 
-const frequencyOptions: Array<{
-  description: string
-  label: string
-  value: RewindRoutineFrequency
-}> = [
+const frequencyOptions: FrequencyOption[] = [
   {
-    description: '08:00 and 20:00',
-    label: 'Mornings and evenings',
+    detail: 'Two one-hour windows, spaced across the day.',
+    label: 'Morning and evening',
+    schedule: '08:00 + 20:00',
     value: 'MORNINGS_AND_EVENINGS',
   },
   {
-    description: '20:00',
+    detail: 'Close the day with one evening reflection.',
     label: 'Just evenings',
+    schedule: '20:00',
     value: 'JUST_EVENINGS',
   },
   {
-    description: '08:00',
+    detail: 'Begin the day with one morning reflection.',
     label: 'Just mornings',
+    schedule: '08:00',
     value: 'JUST_MORNINGS',
   },
   {
-    description: 'Choose two times',
-    label: 'Custom',
+    detail: 'Choose two windows at least eight hours apart.',
+    label: 'Custom times',
+    schedule: 'Choose 2 times',
     value: 'CUSTOM',
   },
 ]
 
-const intentOptions: Array<{
-  description: string
-  label: string
-  value: RewindRoutineIntent
-}> = [
+const intentOptions: IntentOption[] = [
   {
-    description: 'Notice what you are feeling beneath the day.',
+    detail: 'Notice what you are feeling beneath the day.',
     label: 'Understand my emotions',
     value: 'UNDERSTAND_EMOTIONS',
   },
   {
-    description: 'Connect recurring moments across your days.',
+    detail: 'Connect recurring moments and changes across your days.',
     label: 'Spot patterns in my days',
     value: 'SPOT_PATTERNS',
   },
   {
-    description: 'Turn what you notice into one useful next step.',
-    label: 'Turn reflection into small changes',
+    detail: 'Turn one useful realization into a manageable next step.',
+    label: 'Make small changes',
     value: 'BUILD_SMALL_CHANGES',
   },
   {
-    description: 'Set a focus that is personal to you.',
-    label: 'Custom intention',
+    detail: 'Give your Rewind partner a focus that is personal to you.',
+    label: 'Set my own focus',
     value: 'CUSTOM',
   },
 ]
@@ -102,6 +111,60 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error
     ? error.message
     : 'Could not save your Rewind routine.'
+}
+
+function isProFrequency(value: RewindRoutineFrequency): boolean {
+  return value === 'MORNINGS_AND_EVENINGS' || value === 'CUSTOM'
+}
+
+function ChoiceIndicator({
+  requiresPro,
+  selected,
+}: {
+  requiresPro: boolean
+  selected: boolean
+}): ReactElement | null {
+  if (requiresPro) {
+    return (
+      <View className="flex-row items-center gap-1 rounded-full bg-accent-900 px-2 py-1">
+        <RiVipCrownLine size={11} className="text-accent-100" />
+        <Text className="font-bbh text-[9px] font-bold text-accent-100">
+          PRO
+        </Text>
+      </View>
+    )
+  }
+
+  if (!selected) return null
+
+  return (
+    <View className="size-6 items-center justify-center rounded-full bg-accent-500">
+      <RiCheckLine size={15} className="text-white" />
+    </View>
+  )
+}
+
+function SelectionExplanation({
+  detail,
+  label,
+}: {
+  detail: string
+  label: string
+}): ReactElement {
+  return (
+    <View
+      className="flex-row items-start gap-3 rounded-2xl px-4 py-4"
+      style={{ backgroundColor: colors.cardx }}
+    >
+      <View className="mt-1 size-2 shrink-0 rounded-full bg-success-green" />
+      <View className="min-w-0 flex-1 gap-1">
+        <Text className="font-bbh text-sm font-semibold text-white">
+          {label}
+        </Text>
+        <Text className="muted font-bbh text-xs leading-5">{detail}</Text>
+      </View>
+    </View>
+  )
 }
 
 export function RewindRoutineScreen({
@@ -146,11 +209,14 @@ export function RewindRoutineScreen({
   )
   const intentError =
     intent === 'CUSTOM' && !customIntent.trim()
-      ? 'Add a short intention for your Rewinds.'
+      ? 'Add a short focus for your Rewinds.'
       : null
   const canSave = !timeError && !intentError && !updateRoutine.isPending
-  const isProFrequency = (value: RewindRoutineFrequency): boolean =>
-    value === 'MORNINGS_AND_EVENINGS' || value === 'CUSTOM'
+  const selectedFrequency =
+    frequencyOptions.find((option) => option.value === frequency) ??
+    frequencyOptions[0]
+  const selectedIntent =
+    intentOptions.find((option) => option.value === intent) ?? intentOptions[0]
 
   const returnToOrigin = useCallback((): void => {
     if (origin === 'settings') {
@@ -187,86 +253,100 @@ export function RewindRoutineScreen({
   }
 
   return (
-    <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
+    <View className="relative flex-1" style={{ backgroundColor: colors.cardd }}>
       <NoiseComponent>
         <TabHeader canGoBack onBack={returnToOrigin} title="Rewind routine" />
 
-        <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
-          <View className="mx-auto w-full max-w-3xl gap-6">
-            <View className="gap-1 px-1">
-              <Text className="font-bbh text-base font-bold text-white">
-                When should Rewind meet you?
-              </Text>
-              <Text className="muted font-bbh text-xs">
-                Each session stays open for one hour.
+        <View className="flex-1 overflow-y-auto px-mg pb-[132px] pt-2">
+          <View className="mx-auto w-full max-w-3xl gap-7">
+            <View className="flex-row items-center gap-1.5 px-1">
+              <RiTimeLine size={13} className="shrink-0 text-warning-yellow" />
+              <Text className="muted min-w-0 font-bbh text-xs">
+                Local time: {timezone}
               </Text>
             </View>
 
-            <View className="gap-2">
-              {frequencyOptions.map((option) => {
-                const selected = frequency === option.value
-                const requiresPro = isProFrequency(option.value)
-                return (
-                  <Pressable
-                    key={option.value}
-                    className={cn(
-                      'w-full rounded-2xl border px-4 py-3',
-                      'flex-row items-center justify-between',
-                      selected
-                        ? 'border-accent-400 bg-accent-500/15'
-                        : 'border-card-light/35 bg-card-light/10',
-                    )}
-                    onPress={() => {
-                      if (!requiresPro || isPro) {
-                        setFrequency(option.value)
-                        return
-                      }
+            <View className="gap-3">
+              <View className="gap-1 px-1">
+                <Text className="font-bbh text-base font-bold text-white">
+                  Choose a schedule
+                </Text>
+                <Text className="muted font-bbh text-xs">
+                  Each Rewind stays open for one hour.
+                </Text>
+              </View>
 
-                      void requestProAccess().then((granted) => {
-                        if (granted) setFrequency(option.value)
-                      })
-                    }}
-                  >
-                    <View className="min-w-0 flex-1 gap-0.5">
-                      <Text className="font-bbh text-sm font-semibold text-white">
-                        {option.label}
-                      </Text>
-                      <Text className="muted font-bbh text-xs">
-                        {option.description}
-                      </Text>
-                    </View>
-                    {requiresPro && !isPro ? (
-                      <View className="flex-row items-center gap-1 rounded-full bg-accent-500/15 px-2 py-1">
-                        <RiVipCrownLine size={12} className="text-accent-300" />
-                        <Text className="font-bbh text-[10px] font-bold text-accent-300">
-                          PRO
+              <View className="grid grid-cols-2 gap-3">
+                {frequencyOptions.map((option) => {
+                  const selected = frequency === option.value
+                  const requiresPro = isProFrequency(option.value) && !isPro
+                  return (
+                    <Pressable
+                      key={option.value}
+                      accessibilityLabel={`${option.label}, ${option.schedule}`}
+                      className={cn(
+                        'min-h-[104px] w-full justify-between rounded-2xl border px-4 py-4 text-left',
+                        selected ? 'border-accent-500' : 'border-transparent',
+                      )}
+                      style={{ backgroundColor: colors.cardx }}
+                      onPress={() => {
+                        if (!requiresPro) {
+                          setFrequency(option.value)
+                          return
+                        }
+
+                        void requestProAccess().then((granted) => {
+                          if (granted) setFrequency(option.value)
+                        })
+                      }}
+                    >
+                      <View className="flex-row items-start justify-between gap-2">
+                        <Text
+                          className="min-w-0 flex-1 font-bbh text-sm font-semibold leading-5 text-white"
+                          lines={2}
+                        >
+                          {option.label}
                         </Text>
+                        <ChoiceIndicator
+                          requiresPro={requiresPro}
+                          selected={selected}
+                        />
                       </View>
-                    ) : selected ? (
-                      <View className="size-6 items-center justify-center rounded-full bg-accent-400">
-                        <RiCheckLine size={15} className="text-white" />
-                      </View>
-                    ) : null}
-                  </Pressable>
-                )
-              })}
+                      <Text className="muted font-bbh text-[11px] tabular-nums">
+                        {option.schedule}
+                      </Text>
+                    </Pressable>
+                  )
+                })}
+              </View>
+
+              <SelectionExplanation
+                detail={selectedFrequency.detail}
+                label={selectedFrequency.label}
+              />
             </View>
 
             {frequency === 'CUSTOM' ? (
-              <View className="gap-2">
-                <Text className="font-bbh text-sm font-semibold text-white">
+              <View className="gap-3">
+                <Text className="px-1 font-bbh text-sm font-semibold text-white">
                   Your two times
                 </Text>
-                <View className="flex-row gap-3">
+                <View
+                  className="overflow-hidden rounded-2xl"
+                  style={{ backgroundColor: colors.cardx }}
+                >
                   {times.map((time, index) => (
                     <View
                       key={index}
-                      className="flex-1 rounded-2xl bg-card-light/10 px-3 py-3"
+                      className={cn(
+                        'min-h-16 flex-row items-center justify-between gap-4 px-4 py-3',
+                        index === 0 ? 'border-b border-card-light' : '',
+                      )}
                     >
-                      <Text className="muted font-bbh text-[10px] uppercase tracking-[0.14em]">
+                      <Text className="font-bbh text-sm font-semibold text-white">
                         {index === 0 ? 'First Rewind' : 'Second Rewind'}
                       </Text>
-                      <View className="mt-2 flex-row items-center gap-2">
+                      <View className="min-w-[124px] flex-row items-center gap-2 rounded-xl bg-cardd px-3 py-2">
                         <RiTimeLine size={16} className="text-card-lighter-3" />
                         <input
                           aria-label={
@@ -276,12 +356,11 @@ export function RewindRoutineScreen({
                           }
                           className="min-w-0 w-full bg-transparent font-bbh text-base text-white outline-none"
                           onChange={(event) => {
-                            const nextTimes: [string, string] = [...times] as [
-                              string,
-                              string,
-                            ]
-                            nextTimes[index] = event.target.value
-                            setTimes(nextTimes)
+                            setTimes(
+                              index === 0
+                                ? [event.target.value, times[1]]
+                                : [times[0], event.target.value],
+                            )
                           }}
                           type="time"
                           value={time}
@@ -292,51 +371,68 @@ export function RewindRoutineScreen({
                 </View>
                 <Text
                   className={cn(
-                    'font-bbh text-xs',
+                    'px-1 font-bbh text-xs',
                     timeError ? 'text-danger-400' : 'muted',
                   )}
                 >
-                  {timeError ??
-                    'Keep at least eight hours between both windows.'}
+                  {timeError ?? 'Keep at least eight hours between both times.'}
                 </Text>
               </View>
             ) : null}
 
-            <View className="gap-2">
-              <View className="gap-1">
-                <Text className="font-bbh text-sm font-semibold text-white">
-                  What do you want to get from Rewind?
+            <View className="gap-3">
+              <View className="gap-1 px-1">
+                <Text className="font-bbh text-base font-bold text-white">
+                  Choose your focus
                 </Text>
                 <Text className="muted font-bbh text-xs">
-                  This guides your partner&apos;s focus.
+                  Your partner uses this to guide the conversation.
                 </Text>
               </View>
-              {intentOptions.map((option) => {
-                const selected = intent === option.value
-                return (
-                  <Pressable
-                    key={option.value}
-                    className={cn(
-                      'w-full rounded-2xl border px-4 py-3',
-                      selected
-                        ? 'border-accent-400 bg-accent-500/15'
-                        : 'border-card-light/35 bg-card-light/10',
-                    )}
-                    onPress={() => setIntent(option.value)}
-                  >
-                    <Text className="font-bbh text-sm font-semibold text-white">
-                      {option.label}
-                    </Text>
-                    <Text className="muted mt-0.5 font-bbh text-xs">
-                      {option.description}
-                    </Text>
-                  </Pressable>
-                )
-              })}
+
+              <View className="grid grid-cols-2 gap-3">
+                {intentOptions.map((option) => {
+                  const selected = intent === option.value
+                  return (
+                    <Pressable
+                      key={option.value}
+                      accessibilityLabel={option.label}
+                      className={cn(
+                        'min-h-[88px] w-full justify-between rounded-2xl border px-4 py-4 text-left',
+                        selected
+                          ? 'border-success-green'
+                          : 'border-transparent',
+                      )}
+                      style={{ backgroundColor: colors.cardx }}
+                      onPress={() => setIntent(option.value)}
+                    >
+                      <Text
+                        className="font-bbh text-sm font-semibold leading-5 text-white"
+                        lines={2}
+                      >
+                        {option.label}
+                      </Text>
+                      {selected ? (
+                        <View className="size-6 items-center justify-center rounded-full bg-success-green">
+                          <RiCheckLine size={15} className="text-white" />
+                        </View>
+                      ) : null}
+                    </Pressable>
+                  )
+                })}
+              </View>
+
+              <SelectionExplanation
+                detail={selectedIntent.detail}
+                label={selectedIntent.label}
+              />
             </View>
 
             {intent === 'CUSTOM' ? (
-              <View className="rounded-2xl bg-card-light/10 px-2 py-2">
+              <View
+                className="rounded-2xl px-2 py-2"
+                style={{ backgroundColor: colors.cardx }}
+              >
                 <TextArea
                   maxLength={240}
                   onChange={(event) => setCustomIntent(event.target.value)}
@@ -350,28 +446,29 @@ export function RewindRoutineScreen({
                 ) : null}
               </View>
             ) : null}
-
-            <View className="rounded-2xl bg-card-light/10 px-4 py-3">
-              <Text className="muted font-bbh text-xs">
-                Times use {timezone}.
-              </Text>
-            </View>
-
-            <Pressable
-              className="min-h-12 w-full flex-row items-center justify-center gap-2 rounded-full bg-white disabled:opacity-45"
-              disabled={!canSave}
-              onPress={() => {
-                void handleSave()
-              }}
-            >
-              {updateRoutine.isPending ? (
-                <RiLoader4Line size={18} className="animate-spin text-cardd" />
-              ) : null}
-              <Text className="font-bbh font-bold text-cardd">
-                {updateRoutine.isPending ? 'Saving routine...' : 'Save routine'}
-              </Text>
-            </Pressable>
           </View>
+        </View>
+
+        <View
+          className="absolute inset-x-0 bottom-0 bg-cardd px-mg pt-3"
+          style={{
+            paddingBottom: 'calc(var(--safe-area-inset-bottom, 0px) + 16px)',
+          }}
+        >
+          <Pressable
+            className="mx-auto min-h-12 w-full max-w-3xl flex-row items-center justify-center gap-2 rounded-full bg-white disabled:opacity-45"
+            disabled={!canSave}
+            onPress={() => {
+              void handleSave()
+            }}
+          >
+            {updateRoutine.isPending ? (
+              <RiLoader4Line size={18} className="animate-spin text-cardd" />
+            ) : null}
+            <Text className="font-bbh font-bold text-cardd">
+              {updateRoutine.isPending ? 'Saving...' : 'Save routine'}
+            </Text>
+          </Pressable>
         </View>
       </NoiseComponent>
     </View>

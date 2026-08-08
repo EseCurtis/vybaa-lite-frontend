@@ -38,7 +38,10 @@ export default function RewindSessionArchiveScreen(): ReactElement {
     () => normalizePages<RewindSession>(data?.pages),
     [data?.pages],
   )
-  const groupedSessions = useMemo(() => groupSessionsByDay(sessions), [sessions])
+  const groupedSessions = useMemo(
+    () => groupSessionsByDay(sessions),
+    [sessions],
+  )
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
@@ -87,6 +90,7 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                         onPress={() => {
                           void navigate({
                             params: { sessionId: session.id },
+                            search: { from: 'history' },
                             to: '/app/r/$sessionId',
                           })
                         }}
@@ -104,7 +108,9 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                       onClick={() => {
                         void fetchNextPage()
                       }}
-                      rightIcon={<RiArrowDownSLine size={20} className="text-white" />}
+                      rightIcon={
+                        <RiArrowDownSLine size={20} className="text-white" />
+                      }
                       variant="secondary"
                       fullWidth
                     />
@@ -116,7 +122,9 @@ export default function RewindSessionArchiveScreen(): ReactElement {
             )}
 
             {error instanceof Error ? (
-              <Text className="muted px-1 font-bbh text-xs">{error.message}</Text>
+              <Text className="muted px-1 font-bbh text-xs">
+                {error.message}
+              </Text>
             ) : null}
           </View>
         </View>

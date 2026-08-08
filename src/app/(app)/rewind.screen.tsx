@@ -850,6 +850,7 @@ export default function RewindScreen(): ReactElement {
                 if (payload.sessionId) {
                   navigate({
                     params: { sessionId: payload.sessionId },
+                    search: { from: 'rewind' },
                     to: '/app/r/$sessionId',
                   })
                   return
@@ -883,7 +884,9 @@ export default function RewindScreen(): ReactElement {
             clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
             setStatusText(
-              payload.type === 'session_missed' ? 'Window closed' : 'Unavailable',
+              payload.type === 'session_missed'
+                ? 'Window closed'
+                : 'Unavailable',
             )
             cleanupAudioPipeline()
             void routineQuery.refetch()
@@ -950,7 +953,10 @@ export default function RewindScreen(): ReactElement {
       }
     } catch (error) {
       isConnectingRef.current = false
-      if (isAxiosError<{ msg?: string }>(error) && error.response?.status === 409) {
+      if (
+        isAxiosError<{ msg?: string }>(error) &&
+        error.response?.status === 409
+      ) {
         setStatusText('Not scheduled now')
         void routineQuery.refetch()
         return
@@ -1168,7 +1174,7 @@ export default function RewindScreen(): ReactElement {
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
               <View className="px-3 py-2 rounded-full bg-white/6">
                 <Text className="text-white/80 font-bold font-bbh text-xs">
-                    {rewindSessionDateKey
+                  {rewindSessionDateKey
                     ? `Rewind ${rewindSessionDateKey.slice(5)}`
                     : routineStatus}{' '}
                   -{' '}
@@ -1229,7 +1235,7 @@ export default function RewindScreen(): ReactElement {
                         ? 'Set your routine to begin'
                         : !hasAvailableOccurrence
                           ? routineStatus
-                      : 'Ready? tap to begin'}
+                          : 'Ready? tap to begin'}
                 </Text>
               </Pressable>
             ) : null}
