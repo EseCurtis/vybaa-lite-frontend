@@ -8,6 +8,7 @@ import { featureFlags } from '@/shared/config/feature-flags.config'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
+import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
@@ -96,7 +97,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
       }
 
       if (matchAllRoot) {
-        return location.pathname.includes(route)
+        return getAppTabRoot(location.pathname) === route
       }
 
       return location.pathname === route
