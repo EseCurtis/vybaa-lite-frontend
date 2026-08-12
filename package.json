@@ -22,8 +22,8 @@
     "run:ios": "CAPACITOR_USE_LOCAL_SERVER=true sudo vite build --mode base && CAPACITOR_USE_LOCAL_SERVER=true npx capacitor-assets generate && CAPACITOR_USE_LOCAL_SERVER=true npx cap sync ios && CAPACITOR_USE_LOCAL_SERVER=true npx cap open ios",
     "run:andy": "CAPACITOR_USE_LOCAL_SERVER=true sudo vite build --mode base && CAPACITOR_USE_LOCAL_SERVER=true npx capacitor-assets generate && CAPACITOR_USE_LOCAL_SERVER=true npx cap sync android && CAPACITOR_USE_LOCAL_SERVER=true npx cap open android",
     "run:android": "sudo vite build && npx capacitor-assets generate && npx cap sync android && npx cap open android",
-    "android": "export JAVA_HOME=`/usr/bin/java_home -v 23.0.2` && npx cap sync android && npx cap run android",
-    "android:dev": "export JAVA_HOME=`/usr/bin/java_home -v 23.0.2` && npx cap sync android && npx cap run android",
+    "android": "export JAVA_HOME=`/usr/libexec/java_home -v 21` && npx cap sync android && npx cap run android",
+    "android:dev": "export JAVA_HOME=`/usr/libexec/java_home -v 21` && npx cap sync android && npx cap run android",
     "check": "prettier --write . && eslint --fix"
   },
   "dependencies": {
@@ -39,7 +39,7 @@
     "@capacitor/push-notifications": "^7.0.3",
     "@capacitor/share": "^8.0.0",
     "@capacitor/status-bar": "^7.0.3",
-    "@capgo/capacitor-social-login": "^8.3.9",
+    "@capgo/capacitor-social-login": "7.19.1",
     "@google/genai": "^1.46.0",
     "@iconify-icons/twemoji": "^1.2.8",
     "@iconify/react": "^6.0.2",
