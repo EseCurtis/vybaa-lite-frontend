@@ -15,6 +15,7 @@ import { useAuth } from '@/providers/auth.provider'
 import {
   addRevenueCatCustomerInfoListener,
   configureRevenueCat,
+  getRevenueCatConfigurationErrorForCurrentBuild,
   isRevenueCatSupported,
   isVybaaProCustomer,
   presentVybaaCustomerCenter,
@@ -159,7 +160,10 @@ export function SubscriptionProvider({
   const presentPaywall = useCallback(async (): Promise<PaywallOutcome> => {
     if (paywallPromiseRef.current) return paywallPromiseRef.current
     if (!isSupported || !user) {
-      throw new Error('Subscriptions are available in the iOS app')
+      throw new Error(
+        getRevenueCatConfigurationErrorForCurrentBuild() ??
+          'Subscriptions are unavailable for this account',
+      )
     }
 
     const paywallPromise = (async (): Promise<PaywallOutcome> => {
@@ -185,7 +189,10 @@ export function SubscriptionProvider({
 
   const openCustomerCenter = useCallback(async (): Promise<void> => {
     if (!isSupported || !user) {
-      throw new Error('Subscription management is available in the iOS app')
+      throw new Error(
+        getRevenueCatConfigurationErrorForCurrentBuild() ??
+          'Subscription management is unavailable for this account',
+      )
     }
     await configureRevenueCat(user)
     await presentVybaaCustomerCenter()

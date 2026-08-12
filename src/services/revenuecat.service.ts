@@ -24,6 +24,15 @@ export type PaywallOutcome =
   | 'purchased'
   | 'restored'
 
+export type RevenueCatEnvironment = 'development' | 'production' | 'staging'
+export type RevenueCatPlatform = 'android' | 'ios' | 'web'
+
+export interface RevenueCatApiKeys {
+  android: string
+  ios: string
+  test?: string
+}
+
 export function getPaywallExceptionOutcome(
   error: unknown,
 ): Extract<PaywallOutcome, 'cancelled' | 'pending'> | null {
@@ -53,18 +62,74 @@ export function mapPaywallResult(result: PAYWALL_RESULT): PaywallOutcome {
   }
 }
 
-function getRevenueCatApiKey(): string {
-  if (ENV.PLATFORM === ENV.PLATFORMS.IOS) {
-    return ENV.REVENUECAT_IOS_API_KEY.trim()
-  }
-  if (ENV.PLATFORM === ENV.PLATFORMS.ANDROID) {
-    return ENV.REVENUECAT_ANDROID_API_KEY.trim()
-  }
+export function getRevenueCatApiKeyForPlatform(
+  platform: RevenueCatPlatform,
+  apiKeys: RevenueCatApiKeys,
+  environment: RevenueCatEnvironment = 'production',
+): string {
+  const testApiKey = apiKeys.test?.trim() ?? ''
+  if (environment !== 'production' && testApiKey) return testApiKey
+  if (platform === 'ios') return apiKeys.ios.trim()
+  if (platform === 'android') return apiKeys.android.trim()
   return ''
 }
 
+export function getRevenueCatConfigurationError(
+  platform: RevenueCatPlatform,
+  apiKey: string,
+  environment: RevenueCatEnvironment,
+): string | null {
+  if (platform === 'web') {
+    return 'Subscriptions are available in the Android and iOS apps'
+  }
+
+  const platformName = platform === 'android' ? 'Android' : 'iOS'
+  const normalizedApiKey = apiKey.trim()
+  if (!normalizedApiKey) {
+    return `RevenueCat is not configured for this ${platformName} build`
+  }
+
+  if (normalizedApiKey.startsWith('test_')) {
+    return environment === 'production'
+      ? 'A RevenueCat Test Store key cannot be used in a production build'
+      : null
+  }
+
+  const expectedPrefix = platform === 'android' ? 'goog_' : 'appl_'
+  if (!normalizedApiKey.startsWith(expectedPrefix)) {
+    return `The RevenueCat key does not belong to the ${platformName} app`
+  }
+
+  return null
+}
+
+function getRevenueCatApiKey(): string {
+  return getRevenueCatApiKeyForPlatform(
+    ENV.PLATFORM,
+    {
+      android: ENV.REVENUECAT_ANDROID_API_KEY,
+      ios: ENV.REVENUECAT_IOS_API_KEY,
+      test: ENV.REVENUECAT_TEST_API_KEY,
+    },
+    ENV.ENVIRONMENT,
+  )
+}
+
+export function getRevenueCatConfigurationErrorForCurrentBuild():
+  | string
+  | null {
+  return getRevenueCatConfigurationError(
+    ENV.PLATFORM,
+    getRevenueCatApiKey(),
+    ENV.ENVIRONMENT,
+  )
+}
+
 export function isRevenueCatSupported(): boolean {
-  return Capacitor.isNativePlatform() && Boolean(getRevenueCatApiKey())
+  return (
+    Capacitor.isNativePlatform() &&
+    getRevenueCatConfigurationErrorForCurrentBuild() === null
+  )
 }
 
 export function isVybaaProCustomer(customerInfo: CustomerInfo | null): boolean {
@@ -74,14 +139,10 @@ export function isVybaaProCustomer(customerInfo: CustomerInfo | null): boolean {
 }
 
 export async function configureRevenueCat(user: User): Promise<CustomerInfo> {
-  if (!Capacitor.isNativePlatform()) {
-    throw new Error('Subscriptions are available in the iOS app')
-  }
+  const configurationError = getRevenueCatConfigurationErrorForCurrentBuild()
+  if (configurationError) throw new Error(configurationError)
 
   const apiKey = getRevenueCatApiKey()
-  if (!apiKey) {
-    throw new Error('RevenueCat is not configured for this build')
-  }
 
   if (ENV.ENVIRONMENT !== 'production') {
     await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG })

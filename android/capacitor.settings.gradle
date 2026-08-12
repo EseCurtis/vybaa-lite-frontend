@@ -33,10 +33,10 @@ include ':mozartec-capacitor-microphone'
 project(':mozartec-capacitor-microphone').projectDir = new File('../node_modules/.pnpm/@mozartec+capacitor-microphone@7.1.0_@capacitor+core@7.6.2/node_modules/@mozartec/capacitor-microphone/android')
 
 include ':revenuecat-purchases-capacitor'
-project(':revenuecat-purchases-capacitor').projectDir = new File('../node_modules/.pnpm/@revenuecat+purchases-capacitor@11.2.4_@capacitor+core@7.6.2/node_modules/@revenuecat/purchases-capacitor/android')
+project(':revenuecat-purchases-capacitor').projectDir = new File('../node_modules/.pnpm/@revenuecat+purchases-capacitor@11.2.6_@capacitor+core@7.6.2/node_modules/@revenuecat/purchases-capacitor/android')
 
 include ':revenuecat-purchases-capacitor-ui'
-project(':revenuecat-purchases-capacitor-ui').projectDir = new File('../node_modules/.pnpm/@revenuecat+purchases-capacitor-ui@11.2.4_@capacitor+core@7.6.2/node_modules/@revenuecat/purchases-capacitor-ui/android')
+project(':revenuecat-purchases-capacitor-ui').projectDir = new File('../node_modules/.pnpm/@revenuecat+purchases-capacitor-ui@11.2.6_@capacitor+core@7.6.2/node_modules/@revenuecat/purchases-capacitor-ui/android')
 
 include ':capacitor-plugin-safe-area'
 project(':capacitor-plugin-safe-area').projectDir = new File('../node_modules/.pnpm/capacitor-plugin-safe-area@5.0.0_@capacitor+core@7.6.2/node_modules/capacitor-plugin-safe-area/android')

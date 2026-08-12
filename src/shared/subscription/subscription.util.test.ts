@@ -9,6 +9,8 @@ import { ApiError, isSubscriptionApiError } from '@/shared/api/http'
 import type { SubscriptionStatus } from '@/shared/api/subscription.api'
 import {
   getPaywallExceptionOutcome,
+  getRevenueCatApiKeyForPlatform,
+  getRevenueCatConfigurationError,
   isVybaaProCustomer,
   mapPaywallResult,
 } from '@/services/revenuecat.service'
@@ -45,6 +47,61 @@ function createStatus(
 }
 
 describe('Vybaa Pro customer state', () => {
+  it('selects a distinct public SDK key for each native platform', () => {
+    const apiKeys = { android: ' goog_android ', ios: ' appl_ios ' }
+
+    expect(getRevenueCatApiKeyForPlatform('android', apiKeys)).toBe(
+      'goog_android',
+    )
+    expect(getRevenueCatApiKeyForPlatform('ios', apiKeys)).toBe('appl_ios')
+    expect(getRevenueCatApiKeyForPlatform('web', apiKeys)).toBe('')
+  })
+
+  it('uses the shared Test Store key only for non-production builds', () => {
+    const apiKeys = {
+      android: 'goog_android',
+      ios: 'appl_ios',
+      test: 'test_shared',
+    }
+
+    expect(
+      getRevenueCatApiKeyForPlatform('android', apiKeys, 'development'),
+    ).toBe('test_shared')
+    expect(
+      getRevenueCatApiKeyForPlatform('android', apiKeys, 'production'),
+    ).toBe('goog_android')
+  })
+
+  it('accepts Test Store keys only outside production', () => {
+    expect(
+      getRevenueCatConfigurationError(
+        'android',
+        'test_shared_project_key',
+        'development',
+      ),
+    ).toBeNull()
+    expect(
+      getRevenueCatConfigurationError(
+        'android',
+        'test_shared_project_key',
+        'production',
+      ),
+    ).toContain('Test Store')
+  })
+
+  it('rejects an Apple public key in an Android build', () => {
+    expect(
+      getRevenueCatConfigurationError(
+        'android',
+        'appl_wrong_platform',
+        'production',
+      ),
+    ).toContain('Android')
+    expect(
+      getRevenueCatConfigurationError('android', 'goog_android', 'production'),
+    ).toBeNull()
+  })
+
   it('requires an active vybaa_pro entitlement', () => {
     const customerInfo = {
       entitlements: {
@@ -91,9 +148,7 @@ describe('Vybaa Pro customer state', () => {
     expect(mapPaywallResult(PAYWALL_RESULT.PURCHASED)).toBe('purchased')
     expect(mapPaywallResult(PAYWALL_RESULT.RESTORED)).toBe('restored')
     expect(mapPaywallResult(PAYWALL_RESULT.CANCELLED)).toBe('cancelled')
-    expect(mapPaywallResult(PAYWALL_RESULT.NOT_PRESENTED)).toBe(
-      'not_presented',
-    )
+    expect(mapPaywallResult(PAYWALL_RESULT.NOT_PRESENTED)).toBe('not_presented')
     expect(mapPaywallResult(PAYWALL_RESULT.ERROR)).toBe('error')
   })
 
