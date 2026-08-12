@@ -189,7 +189,7 @@ export default function CommunitiesScreen() {
   }
 
   const ListHeader = () => (
-    <View className="absolute w-full z-[999]">
+    <View className="absolute w-full z-[999] ">
       <View className="relative bg-gradient-to-b from-[#06080c] from-[70%]">
       
         <TabHeader canGoBack={false} title="Communities">
@@ -233,10 +233,10 @@ export default function CommunitiesScreen() {
   )
 
   return (
-    <View className="flex-1 relative bg-cardd">
+    <View className="flex-1 relative bg-cardd ">
       <ListHeader />
       <NoiseComponent>
-        <View className="flex-1 px-05.mg  mt-1 h-full">
+        <View className="flex-1 px-05.mg  pt-[200px] mt-1 h-full">
           {isLoading ? (
             <View>
               <View className="flex-1 items-center justify-center">
@@ -273,7 +273,7 @@ export default function CommunitiesScreen() {
           ) : (
             <VirtualList
               items={filtered}
-              header={<View className="pt-[200px]"></View>}
+             
               height={
                 Dimensions.screenHeight -
                 Dimensions.tabBarHeight -
@@ -294,7 +294,8 @@ export default function CommunitiesScreen() {
                 </>
               )}
               footer={
-                hasMore ? (
+               <View className="pb-[50px]">
+                { hasMore ? (
                   <View className="">
                     <View className="py-4 pb-10 flex-row items-center justify-center">
                       <Button
@@ -309,7 +310,8 @@ export default function CommunitiesScreen() {
                     </View>
                     <BottomNotch />
                   </View>
-                ) : null
+                ) : null}
+               </View>
               }
             />
           )}

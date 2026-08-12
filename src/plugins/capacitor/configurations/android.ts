@@ -6,6 +6,8 @@ const androidConfig = () => {
     document.documentElement.style.setProperty('--statusbar-clearfix', '20px');
     // initSubscriptionPlugin();
     mobileConfig();
+
+   
 }
 
 export default androidConfig;

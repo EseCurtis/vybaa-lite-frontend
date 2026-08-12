@@ -1,11 +1,14 @@
-import { PLATFORM } from '@/shared/constants.shared'
 
 export function BottomNotch() {
-  return PLATFORM == 'ios' && <div className="h-[var(--safe-area-inset-bottom)]"></div>
+  return <div className="h-[var(--safe-area-inset-bottom)]"></div>
+}
+
+export function BottomNotchWithTab() {
+  return <div className="pb-[calc(var(--safe-area-inset-bottom)+100px)]"></div>
 }
 
 export function BottomNotchPadd() {
-  return PLATFORM == 'ios' && <div className="pb-[var(--safe-area-inset-bottom)]"></div>
+  return <div className="pb-[var(--safe-area-inset-bottom)]"></div>
 }
 
 export function TopNotch() {

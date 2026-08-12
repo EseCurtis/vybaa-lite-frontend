@@ -4,13 +4,15 @@ import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import type { Goal } from '@/shared/api/goal.api'
+import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import {
   normalizePages,
   seededColor,
   smartTruncate,
 } from '@/shared/utils/helpers.util'
-import { RiArrowRightUpLine } from '@remixicon/react'
+import { RiAddCircleFill, RiArrowRightCircleFill, RiArrowRightUpLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import { CreateGoalSheet } from '../goal/create-goal-sheet.component'
 import { GoalDurationPill } from '../goal/duration-pill.component'
 import { GoalDetailsSheet } from '../goal/goal-details-sheet.component'
 
@@ -45,7 +47,7 @@ function HomeGoalItem({
   )
 }
 
-export function HomeGoals() {
+export function HomeGoals({ user}: { user: { username?: string } | null }) {
   const bottomSheet = useBottomSheet()
   const navigate = useNavigate()
   const { data } = useInfiniteGoals({ canCheckIn: true })
@@ -59,8 +61,16 @@ export function HomeGoals() {
     )
   }
 
+    const handleCreateGoal = () => {
+      bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
+        title: randomGreetings(user?.username),
+        elevation: 999,
+      })
+    }
+
   return (
-    <View className="overflow-x-scroll snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar ">
+ <View className="pt-mg">
+     <View className="overflow-x-scroll bg-cardd py-3 rounded-full snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar  ">
       {goals.map((goal, index) => {
         return (
           <HomeGoalItem
@@ -89,18 +99,31 @@ export function HomeGoals() {
       {noGoals && (
         <View className="flex-row w-full items-center">
           <Text className="text-card-lighter-2/50 font-medium">
-            You cleared it all! 🎊
+            Clean slate, mate!
           </Text>
+
+           <Pressable
+            onPress={() => {
+             handleCreateGoal()
+            }}
+            className="snap-center bg-purple-500 ml-2 ml-auto !p-3 text-black rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
+          >
+            
+            <RiAddCircleFill/>
+          </Pressable>
           <Pressable
             onPress={() => {
               navigate({ to: '/app/goal' })
             }}
-            className="snap-center bg-white ml-2 text-black ml-auto  rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
+            className="snap-center bg-warning-yellow ml-2 !pr-2 text-black   rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
           >
-            <Text className="whitespace-nowrap text-sm">See all goals</Text>
+            <Text className="whitespace-nowrap text-sm">Goals</Text>
+            <RiArrowRightCircleFill/>
           </Pressable>
+
         </View>
       )}
     </View>
+ </View>
   )
 }

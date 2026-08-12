@@ -17,7 +17,7 @@ interface CategoryPickerSheetProps {
 }
 
 const items: Array<{ key: string; label: string; emoji: string; icon: any; bg: string }> = [
-  { key: 'morning', label: 'Morning', emoji: '🌅', icon: sunrise, bg: 'from-amber-500/20 to-orange-500/20' },
+  { key: 'morning', label: 'Morning', emoji: '☀️', icon: sunrise, bg: 'from-amber-500/20 to-orange-500/20' },
   { key: 'wellness', label: 'Wellness', emoji: '🧘', icon: lotus, bg: 'from-emerald-500/20 to-teal-500/20' },
   { key: 'focus', label: 'Focus', emoji: '🎯', icon: target, bg: 'from-indigo-500/20 to-fuchsia-500/20' },
   { key: 'journal', label: 'Journal', emoji: '📝', icon: memo, bg: 'from-sky-500/20 to-cyan-500/20' },

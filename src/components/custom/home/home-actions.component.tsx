@@ -31,8 +31,9 @@ function HomeActionCard({
   onAction?: () => void
   filled?: boolean
 }) {
+  const {user} = useAuth()
   const Icon = icon
-  const color = seededColor(name, description, icon.displayName!)
+  const color = seededColor(JSON.stringify(name), user?.username || user?.email || 'default')
   const darkColor = adjustColor(color, { lightness: -5 })
 
   return (
@@ -99,6 +100,16 @@ export function HomeActions() {
       },
     },
     {
+      name: 'Rewind',
+      description: 'Chat with your Rewind partner',
+      icon: RiRewindLine,
+      onAction() {
+        navigate({
+          to: '/app/rewind',
+        })
+      },
+    },
+    {
       name: 'Flexx',
       description: 'Share stats to flexx on socials',
       icon: RiEmotionLaughLine,
@@ -116,16 +127,6 @@ export function HomeActions() {
       onAction() {
         navigate({
           to: '/app/sub-profile/insights',
-        })
-      },
-    },
-    {
-      name: 'Rewind',
-      description: 'Chat with your Rewind partner',
-      icon: RiRewindLine,
-      onAction() {
-        navigate({
-          to: '/app/rewind',
         })
       },
     },

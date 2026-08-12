@@ -4,7 +4,6 @@ import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
-import { featureFlags } from '@/shared/config/feature-flags.config'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
@@ -73,7 +72,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
-          enabled: featureFlags.insights, // Hide wellness tab when insights is disabled
+          enabled: false, // Hide wellness tab when insights is disabled
         },
         {
           id: 'profile',

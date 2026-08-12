@@ -1,4 +1,5 @@
 import { BottomNotch } from '@/components/common/notch.component'
+import { Spinner } from '@/components/common/spinner.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -10,12 +11,22 @@ import type { Goal } from '@/shared/api/goal.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { Icon } from '@iconify/react'
-import { RiArrowRightSLine, RiCheckLine, RiDeleteBinLine, RiEditLine, RiFireFill, RiGroupLine } from '@remixicon/react'
+import {
+  RiArrowRightSLine,
+  RiCheckLine,
+  RiDeleteBinLine,
+  RiEditLine,
+  RiFireFill,
+  RiGroupLine,
+} from '@remixicon/react'
 import { useRouter } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import moment from 'moment'
 import { useState } from 'react'
-import { AttachmentPicker, type Attachment } from './attachment-picker.component'
+import {
+  AttachmentPicker,
+  type Attachment,
+} from './attachment-picker.component'
 import { GoalDurationPill } from './duration-pill.component'
 
 // Helper function to format reminder time (HH:MM to 12-hour format)
@@ -42,7 +53,7 @@ export function GoalDetailsSheet({
   const color = seededColor(goal.goalText)
   const { checkIn, isCheckingIn } = useCheckInWithAchievements()
   const { mutate: deleteGoal, isPending: isDeleting } = useDeleteGoal()
-  
+
   const [showCheckInForm, setShowCheckInForm] = useState(false)
   const [notes, setNotes] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
@@ -61,7 +72,7 @@ export function GoalDetailsSheet({
 
   const handleCheckIn = async () => {
     if (!goal.canCheckIn) return
-    
+
     if (!showCheckInForm) {
       // Show check-in form
       setShowCheckInForm(true)
@@ -73,7 +84,7 @@ export function GoalDetailsSheet({
       const notesToSend = notes.trim() || undefined
       const attachmentsToSend = attachments.length > 0 ? attachments : undefined
       await checkIn(goal.id, notesToSend, attachmentsToSend)
-      
+
       // Reset form and close
       setNotes('')
       setAttachments([])
@@ -83,7 +94,6 @@ export function GoalDetailsSheet({
       // Error toast handled in hook
     }
   }
-
 
   const handleDelete = () => {
     if (
@@ -108,7 +118,7 @@ export function GoalDetailsSheet({
 
   return (
     <View className="space-y-5 pb-4">
-          {/* Community Link */}
+      {/* Community Link */}
       {goal.community && goal.communityId && (
         <Pressable
           onPress={handleCommunityClick}
@@ -118,7 +128,7 @@ export function GoalDetailsSheet({
             <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center">
               <RiGroupLine size={18} className="text-white/60" />
             </View>
-            <View className='text-left'>
+            <View className="text-left">
               <Text className="text-white text-sm font-bold font-bbh">
                 From Community
               </Text>
@@ -159,7 +169,7 @@ export function GoalDetailsSheet({
             />
           </View>
         </View>
-        
+
         {/* Delete Action */}
         <View className="flex-row shrink-0 items-center justify-center snap-center">
           <View className="w-[70px] h-full flex-row items-center justify-center">
@@ -173,8 +183,6 @@ export function GoalDetailsSheet({
           </View>
         </View>
       </View>
-
-  
 
       {/* Check-in Section */}
       <AnimatePresence mode="wait">
@@ -218,17 +226,21 @@ export function GoalDetailsSheet({
             {/* Notes Section */}
             <View className="space-y-3">
               <View className="flex-row items-center gap-2">
-                <Icon icon="mdi:text-box-outline" className="text-white/70" style={{ fontSize: '18px' }} />
+                <Icon
+                  icon="mdi:text-box-outline"
+                  className="text-white/70"
+                  style={{ fontSize: '18px' }}
+                />
                 <Text className="text-white/80 text-sm font-bbh font-semibold">
                   Notes (Optional)
                 </Text>
               </View>
-              <View className="bg-cardd-light/40 rounded-xl p-3">
+              <View className="bg-cardd-light/40 rounded-xl ">
                 <TextArea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="How did it go? What did you learn?"
-                  className="min-h-[100px] w-full text-white placeholder:text-white/40"
+                  className="min-h-[100px] w-full text-white placeholder:text-white/40 !px-0"
                   maxLength={500}
                 />
               </View>
@@ -253,22 +265,28 @@ export function GoalDetailsSheet({
               >
                 {isCheckingIn ? (
                   <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <RiFireFill className="text-cardd" size={20} />
-                    </motion.div>
                     <Text className="text-cardd text-sm font-bbh font-bold">
                       Checking in...
                     </Text>
+
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: 'linear',
+                      }}
+                    >
+                      <Spinner size={20}  />
+                    </motion.div>
                   </>
                 ) : (
                   <>
-                    <RiFireFill className="text-cardd" size={20} />
+                   <RiFireFill className="text-cardd" size={15} />
                     <Text className="text-cardd text-sm font-bbh font-bold">
                       Check In
                     </Text>
+                   
                   </>
                 )}
               </Pressable>
@@ -283,7 +301,11 @@ export function GoalDetailsSheet({
         {goal.lastCheckInDate && (
           <View className="rounded-2xl p-3 bg-cardd-700/40 flex-1 min-w-[140px]">
             <View className="flex-row items-center gap-2 mb-1">
-              <Icon icon="mdi:calendar-check" className="text-white/50" style={{ fontSize: '14px' }} />
+              <Icon
+                icon="mdi:calendar-check"
+                className="text-white/50"
+                style={{ fontSize: '14px' }}
+              />
               <Text className="text-white/50 text-xs font-bbh">
                 Last check-in
               </Text>
@@ -298,14 +320,12 @@ export function GoalDetailsSheet({
         {goal.reminderTime && (
           <View className="rounded-2xl p-3 bg-cardd-700/40 flex-1 min-w-[140px]">
             <View className="flex-row items-center gap-2 mb-1">
-              <Icon 
-                icon={getEmojiIcon('⏰')} 
-                className="text-white/50" 
+              <Icon
+                icon={getEmojiIcon('⏰')}
+                className="text-white/50"
                 style={{ fontSize: '14px' }}
               />
-              <Text className="text-white/50 text-xs font-bbh">
-                Reminder
-              </Text>
+              <Text className="text-white/50 text-xs font-bbh">Reminder</Text>
             </View>
             <Text className="text-white text-sm font-bbh font-semibold">
               {formatReminderTime(goal.reminderTime)}
@@ -321,9 +341,7 @@ export function GoalDetailsSheet({
           >
             <View className="flex-row items-center gap-2 mb-1">
               <RiEditLine className="text-white/50" size={14} />
-              <Text className="text-white/50 text-xs font-bbh">
-                Actions
-              </Text>
+              <Text className="text-white/50 text-xs font-bbh">Actions</Text>
             </View>
             <Text className="text-white text-sm font-bbh font-semibold">
               Edit Goal

@@ -40,7 +40,7 @@ export interface FeatureFlags {
  */
 const journalChillEnabled = false
 export const featureFlags: FeatureFlags = {
-  journal: journalChillEnabled,
+  journal: false,
   chill: journalChillEnabled,
   insights: journalChillEnabled,
 }

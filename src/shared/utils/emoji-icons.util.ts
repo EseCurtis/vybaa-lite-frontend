@@ -1,6 +1,7 @@
 // Twemoji icon imports for achievements and notifications
 import alarmClock from '@iconify-icons/twemoji/alarm-clock'
 import bell from '@iconify-icons/twemoji/bell'
+import cherryBlossom from '@iconify-icons/twemoji/cherry-blossom'
 import crescentMoon from '@iconify-icons/twemoji/crescent-moon'
 import crossedSwords from '@iconify-icons/twemoji/crossed-swords'
 import crown from '@iconify-icons/twemoji/crown'
@@ -19,9 +20,8 @@ import star from '@iconify-icons/twemoji/star'
 import sunrise from '@iconify-icons/twemoji/sunrise'
 import superhero from '@iconify-icons/twemoji/superhero'
 import trophy from '@iconify-icons/twemoji/trophy'
-import cherryBlossom from '@iconify-icons/twemoji/cherry-blossom'
-import waterWave from '@iconify-icons/twemoji/water-wave'
 import warning from '@iconify-icons/twemoji/warning'
+import waterWave from '@iconify-icons/twemoji/water-wave'
 
 // Map emoji text to iconify icons
 export const EMOJI_ICONS = {
@@ -43,7 +43,7 @@ export const EMOJI_ICONS = {
   '💪': flexedBiceps,
   '✨': sparkles,
   '🦅': eagle,
-  '🌅': sunrise,
+  '☀️': sunrise,
   '🌙': crescentMoon,
   '🌸': cherryBlossom,
   '🌊': waterWave,

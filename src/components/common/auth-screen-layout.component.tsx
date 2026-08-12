@@ -62,7 +62,7 @@ export function AuthScreenLayout({
         rootClassName,
       )}
     >
-      <OnboardingBackground backgroundSize="contain" />
+      <OnboardingBackground backgroundSize="cover" />
       <AuthBackHeader title={headerTitle} onBack={onBack} />
       <View
         className={cn(
