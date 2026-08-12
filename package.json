@@ -20,7 +20,7 @@
     "run:andy:prod": "sudo vite build --mode production && npx capacitor-assets generate && npx cap sync android && npx cap open android",
     "run:andy:dev": "sudo vite build --mode development && npx capacitor-assets generate && npx cap sync android && npx cap open android",
     "run:ios": "CAPACITOR_USE_LOCAL_SERVER=true sudo vite build --mode base && CAPACITOR_USE_LOCAL_SERVER=true npx capacitor-assets generate && CAPACITOR_USE_LOCAL_SERVER=true npx cap sync ios && CAPACITOR_USE_LOCAL_SERVER=true npx cap open ios",
-    "run:andy": "CAPACITOR_USE_LOCAL_SERVER=true sudo vite build --mode base && CAPACITOR_USE_LOCAL_SERVER=true npx capacitor-assets generate && CAPACITOR_USE_LOCAL_SERVER=true npx cap sync android && CAPACITOR_USE_LOCAL_SERVER=true npx cap open android",
+    "run:andy": "node scripts/run-android-local.mjs",
     "run:android": "sudo vite build && npx capacitor-assets generate && npx cap sync android && npx cap open android",
     "android": "export JAVA_HOME=`/usr/libexec/java_home -v 21` && npx cap sync android && npx cap run android",
     "android:dev": "export JAVA_HOME=`/usr/libexec/java_home -v 21` && npx cap sync android && npx cap run android",
