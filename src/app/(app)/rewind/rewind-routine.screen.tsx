@@ -20,18 +20,18 @@ import { TextArea } from '@/components/common/textarea.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useProAccess } from '@/hooks/use-pro-access.hook'
 import {
   useRewindRoutine,
   useUpdateRewindRoutine,
 } from '@/hooks/use-rewind.hook'
-import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
+import { getDeviceTimezone } from '@/shared/api/http'
 import type {
   RewindRoutineFrequency,
   RewindRoutineIntent,
 } from '@/shared/api/rewind.api'
-import { getDeviceTimezone } from '@/shared/api/http'
 import { colors } from '@/shared/colors.shared'
 import { getCustomRewindTimeError } from '@/shared/rewind/rewind-routine.util'
 import { cn } from '@/shared/utils/helpers.util'
@@ -285,7 +285,7 @@ export function RewindRoutineScreen({
                       key={option.value}
                       accessibilityLabel={`${option.label}, ${option.schedule}`}
                       className={cn(
-                        'min-h-[104px] w-full justify-between rounded-2xl border px-4 py-4 text-left',
+                        'min-h-[104px] !flex !flex-row w-full justify-between rounded-2xl border px-4 py-4 text-left',
                         selected ? 'border-accent-500' : 'border-transparent',
                       )}
                       style={{ backgroundColor: colors.cardx }}
@@ -300,21 +300,22 @@ export function RewindRoutineScreen({
                         })
                       }}
                     >
-                      <View className="flex-row items-start justify-between gap-2">
+                      <View className="flex-col items-start justify-between gap-2">
                         <Text
-                          className="min-w-0 flex-1 font-bbh text-sm font-semibold leading-5 text-white"
+                          className="min-w-0 flex-1 font-bbh text-xs font-semibold leading-5 text-white"
                           lines={2}
                         >
                           {option.label}
                         </Text>
-                        <ChoiceIndicator
-                          requiresPro={requiresPro}
-                          selected={selected}
-                        />
-                      </View>
-                      <Text className="muted font-bbh text-[11px] tabular-nums">
+                         <Text className="muted font-bbh text-[11px] tabular-nums">
                         {option.schedule}
                       </Text>
+                        
+                      </View>
+                    <View className=""> <ChoiceIndicator
+                          requiresPro={requiresPro}
+                          selected={selected}
+                        /></View>
                     </Pressable>
                   )
                 })}
@@ -413,9 +414,11 @@ export function RewindRoutineScreen({
                         {option.label}
                       </Text>
                       {selected ? (
-                        <View className="size-6 items-center justify-center rounded-full bg-success-green">
+                       <View className="">
+                         <View className="size-6 items-center justify-center rounded-full bg-success-green">
                           <RiCheckLine size={15} className="text-white" />
                         </View>
+                       </View>
                       ) : null}
                     </Pressable>
                   )
