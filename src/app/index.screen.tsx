@@ -3,14 +3,15 @@ import { OnboardingBackground } from '@/components/common/onboarding-background.
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
-import { RiAppleFill, RiGoogleFill, RiLoader4Line } from '@remixicon/react'
+import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
-import { IS_MOBILE } from '@/shared/constants.shared'
 import { LineWobble } from 'ldrs/react'
 import 'ldrs/react/LineWobble.css'
 
@@ -35,6 +36,7 @@ export default function AppScreen() {
     loginWithGoogle,
   } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
+  const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
   const isGoogleLoading = googleAuthStatus !== 'idle'
   const loadingText =
     getGoogleAuthStatusText(googleAuthStatus) ??
@@ -119,28 +121,18 @@ export default function AppScreen() {
                 Get Started
               </Text>
             </TouchableOpacity>
-            {IS_MOBILE && (
-              <>
-                <TouchableOpacity
-                  className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
-                  disabled={isLoading || isGoogleLoading}
-                  onPress={handleGoogle}
-                >
-                  {isGoogleLoading ? (
-                    <RiLoader4Line className="text-white animate-spin" />
-                  ) : (
-                    <RiGoogleFill className="text-white" />
-                  )}
-                </TouchableOpacity>
-                {false && (
-                  <TouchableOpacity
-                    className="rounded-full bg-card-light-50 p-4  flex items-center justify-center aspect-square"
-                    disabled={isLoading}
-                  >
-                    <RiAppleFill className="text-white" />
-                  </TouchableOpacity>
+            {canUseGoogleLogin && (
+              <TouchableOpacity
+                className="rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
+                disabled={isLoading || isGoogleLoading}
+                onPress={handleGoogle}
+              >
+                {isGoogleLoading ? (
+                  <RiLoader4Line className="text-white animate-spin" />
+                ) : (
+                  <RiGoogleFill className="text-white" />
                 )}
-              </>
+              </TouchableOpacity>
             )}
           </View>
 

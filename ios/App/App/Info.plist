@@ -47,8 +47,12 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Vybaa uses your camera when you choose to capture a profile photo or an image to share in the app.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vybaa uses your microphone for rewind conversations and journal voice notes.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Vybaa accesses only the photos you choose for your profile or to share in the app.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

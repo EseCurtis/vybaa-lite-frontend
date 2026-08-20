@@ -63,7 +63,6 @@ const config: CapacitorConfig = {
     SocialLogin: {
       providers: {
         google: true,
-        apple: true,
       },
       logLevel: 1,
     },

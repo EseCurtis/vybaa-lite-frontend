@@ -4,10 +4,11 @@ import { Button } from '@/components/layout/button.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { IS_MOBILE } from '@/shared/constants.shared'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
 import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
@@ -25,6 +26,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<LoginAction>(null)
+  const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
 
   const isEmailLoading = activeAction === 'email'
   const isGoogleLoading = activeAction === 'google'
@@ -121,22 +123,22 @@ export default function LoginScreen() {
         />
       </form>
 
-      <View className="flex-row items-center gap-3 mt-4">
-        <View className="flex-1 flex items-center justify-center">
-          <View className="w-full h-[1px] bg-card-lighter/50" />
-        </View>
-        <Text className="text-card-lighter text-[10px] font-bbh uppercase tracking-[0.2em]">
-          or continue with
-        </Text>
-        <View className="flex-1 flex items-center justify-center">
-          <View className="w-full h-[1px] bg-card-lighter/50" />
-        </View>
-      </View>
+      {canUseGoogleLogin && (
+        <>
+          <View className="flex-row items-center gap-3 mt-4">
+            <View className="flex-1 flex items-center justify-center">
+              <View className="w-full h-[1px] bg-card-lighter/50" />
+            </View>
+            <Text className="text-card-lighter text-[10px] font-bbh uppercase tracking-[0.2em]">
+              or continue with
+            </Text>
+            <View className="flex-1 flex items-center justify-center">
+              <View className="w-full h-[1px] bg-card-lighter/50" />
+            </View>
+          </View>
 
-      <View className="flex-row gap-3 mt-2">
-        {IS_MOBILE && (
           <TouchableOpacity
-            className="flex-1 py-4 rounded-full bg-cardd flex items-center justify-between px-4"
+            className="w-full py-4 mt-2 rounded-full bg-cardd flex items-center justify-between px-4"
             disabled={isSubmitting}
             onPress={handleGoogle}
           >
@@ -151,8 +153,8 @@ export default function LoginScreen() {
               </Text>
             </View>
           </TouchableOpacity>
-        )}
-      </View>
+        </>
+      )}
 
       <View className="mt-auto">
         <Button
