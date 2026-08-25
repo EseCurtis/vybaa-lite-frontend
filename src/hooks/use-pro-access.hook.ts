@@ -13,7 +13,7 @@ interface ProAccessResult {
 }
 
 export function useProAccess(): ProAccessResult {
-  const { isPro, presentPaywall } = useSubscription()
+  const { isPro, isSupported, presentPaywall } = useSubscription()
   const toast = useToast()
 
   const requestProAccess = useCallback(
@@ -21,6 +21,11 @@ export function useProAccess(): ProAccessResult {
       if (isPro) {
         if (retry) await retry()
         return true
+      }
+
+      if (!isSupported) {
+        toast.info('This action is not available in this build.')
+        return false
       }
 
       try {
@@ -31,7 +36,9 @@ export function useProAccess(): ProAccessResult {
           return false
         }
         if (outcome === 'error') {
-          toast.error('The subscription screen could not complete your purchase.')
+          toast.error(
+            'The subscription screen could not complete your purchase.',
+          )
           return false
         }
 
@@ -49,15 +56,17 @@ export function useProAccess(): ProAccessResult {
         return false
       }
     },
-    [isPro, presentPaywall, toast],
+    [isPro, isSupported, presentPaywall, toast],
   )
 
   const handleSubscriptionError = useCallback(
-    async (
-      error: unknown,
-      retry?: () => Promise<void>,
-    ): Promise<boolean> => {
+    async (error: unknown, retry?: () => Promise<void>): Promise<boolean> => {
       if (!isSubscriptionApiError(error)) return false
+
+      if (!isSupported) {
+        toast.info('This action is not available in this build.')
+        return true
+      }
 
       if (error.code === 'SUBSCRIPTION_UNAVAILABLE') {
         toast.error(error.message)
@@ -72,7 +81,7 @@ export function useProAccess(): ProAccessResult {
       await requestProAccess(retry)
       return true
     },
-    [requestProAccess, toast],
+    [isSupported, requestProAccess, toast],
   )
 
   return { handleSubscriptionError, requestProAccess }

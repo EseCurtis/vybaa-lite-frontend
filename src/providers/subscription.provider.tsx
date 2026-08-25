@@ -62,7 +62,7 @@ export function SubscriptionProvider({
   const isSupported = isRevenueCatSupported()
 
   const statusQuery = useQuery({
-    enabled: isAuthenticated && Boolean(user),
+    enabled: isSupported && isAuthenticated && Boolean(user),
     queryFn: () => subscriptionAPI.getStatus(),
     queryKey: subscriptionQueryKeys.status(),
     retry: 1,
@@ -150,10 +150,10 @@ export function SubscriptionProvider({
   }, [isAuthenticated, isSupported, queryClient, syncBackend, user])
 
   const refresh = useCallback(async (): Promise<void> => {
-    if (isSupported && user) {
-      const info = await configureRevenueCat(user)
-      setCustomerInfo(info)
-    }
+    if (!isSupported || !user) return
+
+    const info = await configureRevenueCat(user)
+    setCustomerInfo(info)
     await statusQuery.refetch()
   }, [isSupported, statusQuery, user])
 

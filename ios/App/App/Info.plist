@@ -53,10 +53,11 @@
 	<string>Vybaa uses your microphone for rewind conversations and journal voice notes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Vybaa accesses only the photos you choose for your profile or to share in the app.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Vybaa saves images to your photo library only when you explicitly choose to save them.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
-		<string>audio</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

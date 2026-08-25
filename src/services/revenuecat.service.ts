@@ -125,8 +125,15 @@ export function getRevenueCatConfigurationErrorForCurrentBuild():
   )
 }
 
+export function isRevenueCatPlatformEnabled(
+  platform: RevenueCatPlatform,
+): boolean {
+  return platform === 'android'
+}
+
 export function isRevenueCatSupported(): boolean {
   return (
+    isRevenueCatPlatformEnabled(ENV.PLATFORM) &&
     Capacitor.isNativePlatform() &&
     getRevenueCatConfigurationErrorForCurrentBuild() === null
   )

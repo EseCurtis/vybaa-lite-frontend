@@ -35,6 +35,7 @@ export default function SettingsScreen() {
   const {
     isLoading: isSubscriptionLoading,
     isPro,
+    isSupported: isSubscriptionSupported,
     openCustomerCenter,
     presentPaywall,
     status: subscriptionStatus,
@@ -123,36 +124,38 @@ export default function SettingsScreen() {
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           <View className=" px-mg pb-[120px] space-y-6">
-            <View className="space-y-3">
-              <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-                Membership
-              </Text>
+            {isSubscriptionSupported ? (
+              <View className="space-y-3">
+                <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
+                  Membership
+                </Text>
 
-              <Pressable
-                className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between disabled:opacity-60"
-                disabled={isManagingSubscription || isSubscriptionLoading}
-                onPress={() => {
-                  void handleSubscriptionPress()
-                }}
-              >
-                <View className="flex-row items-center gap-4 flex-1 min-w-0">
-                  <View className="w-10 h-10 rounded-xl bg-accent-500/20 flex items-center justify-center">
-                    <RiVipCrownLine size={20} className="text-accent-300" />
+                <Pressable
+                  className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between disabled:opacity-60"
+                  disabled={isManagingSubscription || isSubscriptionLoading}
+                  onPress={() => {
+                    void handleSubscriptionPress()
+                  }}
+                >
+                  <View className="flex-row items-center gap-4 flex-1 min-w-0">
+                    <View className="w-10 h-10 rounded-xl bg-accent-500/20 flex items-center justify-center">
+                      <RiVipCrownLine size={20} className="text-accent-300" />
+                    </View>
+                    <View className="min-w-0 flex-1">
+                      <Text className="text-white text-sm font-bbh font-semibold">
+                        Vybaa Pro
+                      </Text>
+                      <Text className="text-white/50 text-xs font-bbh">
+                        {isSubscriptionLoading
+                          ? 'Checking subscription...'
+                          : getSubscriptionDisplayLabel(subscriptionStatus)}
+                      </Text>
+                    </View>
                   </View>
-                  <View className="min-w-0 flex-1">
-                    <Text className="text-white text-sm font-bbh font-semibold">
-                      Vybaa Pro
-                    </Text>
-                    <Text className="text-white/50 text-xs font-bbh">
-                      {isSubscriptionLoading
-                        ? 'Checking subscription...'
-                        : getSubscriptionDisplayLabel(subscriptionStatus)}
-                    </Text>
-                  </View>
-                </View>
-                <RiArrowRightSLine size={20} className="text-white/40" />
-              </Pressable>
-            </View>
+                  <RiArrowRightSLine size={20} className="text-white/40" />
+                </Pressable>
+              </View>
+            ) : null}
 
             <View className="space-y-3">
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">

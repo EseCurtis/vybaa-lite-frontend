@@ -82,10 +82,13 @@ export default function RewindInsightsScreen(): ReactElement {
   const [range, setRange] = useState<RewindInsightsRange>('7d')
   const navigate = useNavigate()
   const { requestProAccess } = useProAccess()
-  const { isPro } = useSubscription()
+  const { isPro, isSupported: isSubscriptionSupported } = useSubscription()
   const { data, error, isError, isLoading, refetch } = useRewindInsights(range)
   const signals = data?.signals ?? EMPTY_REWIND_SIGNALS
   const hasReflectionData = Boolean(data?.signals && data?.progress)
+  const visibleInsightRanges = isSubscriptionSupported
+    ? INSIGHT_RANGES
+    : INSIGHT_RANGES.slice(0, 1)
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
@@ -107,7 +110,7 @@ export default function RewindInsightsScreen(): ReactElement {
               className="flex-row rounded-lg p-1"
               style={{ backgroundColor: colors.cardx }}
             >
-              {INSIGHT_RANGES.map((option) => {
+              {visibleInsightRanges.map((option) => {
                 const isSelected = option.value === range
                 const requiresPro = option.value !== '7d'
                 return (

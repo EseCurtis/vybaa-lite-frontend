@@ -126,7 +126,7 @@ export function ImagePicker({
         const photo = await Camera.getPhoto({
           allowEditing: false,
           correctOrientation: true,
-          presentationStyle: 'popover',
+          presentationStyle: 'fullscreen',
           promptLabelCancel: 'Cancel',
           promptLabelHeader: 'Choose a photo',
           promptLabelPhoto: 'Choose from Photos',

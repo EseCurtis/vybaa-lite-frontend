@@ -11,6 +11,7 @@ import {
   getPaywallExceptionOutcome,
   getRevenueCatApiKeyForPlatform,
   getRevenueCatConfigurationError,
+  isRevenueCatPlatformEnabled,
   isVybaaProCustomer,
   mapPaywallResult,
 } from '@/services/revenuecat.service'
@@ -47,6 +48,12 @@ function createStatus(
 }
 
 describe('Vybaa Pro customer state', () => {
+  it('enables RevenueCat only for Android builds', () => {
+    expect(isRevenueCatPlatformEnabled('android')).toBe(true)
+    expect(isRevenueCatPlatformEnabled('ios')).toBe(false)
+    expect(isRevenueCatPlatformEnabled('web')).toBe(false)
+  })
+
   it('selects a distinct public SDK key for each native platform', () => {
     const apiKeys = { android: ' goog_android ', ios: ' appl_ios ' }
 

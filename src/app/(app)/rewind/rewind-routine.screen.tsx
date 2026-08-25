@@ -177,9 +177,9 @@ export function RewindRoutineScreen({
   const routineQuery = useRewindRoutine()
   const updateRoutine = useUpdateRewindRoutine()
   const { handleSubscriptionError, requestProAccess } = useProAccess()
-  const { isPro } = useSubscription()
+  const { isPro, isSupported: isSubscriptionSupported } = useSubscription()
   const [frequency, setFrequency] = useState<RewindRoutineFrequency>(
-    'MORNINGS_AND_EVENINGS',
+    isSubscriptionSupported ? 'MORNINGS_AND_EVENINGS' : 'JUST_EVENINGS',
   )
   const [intent, setIntent] = useState<RewindRoutineIntent>(
     'UNDERSTAND_EMOTIONS',
@@ -194,13 +194,17 @@ export function RewindRoutineScreen({
     const routine = routineQuery.data?.routine
     if (!routine) return
 
-    setFrequency(routine.frequency)
+    setFrequency(
+      !isSubscriptionSupported && isProFrequency(routine.frequency)
+        ? 'JUST_EVENINGS'
+        : routine.frequency,
+    )
     setIntent(routine.intent)
     setCustomIntent(routine.customIntent ?? '')
     if (routine.times.length === 2) {
       setTimes([routine.times[0], routine.times[1]])
     }
-  }, [routineQuery.data?.routine])
+  }, [isSubscriptionSupported, routineQuery.data?.routine])
 
   const timezone = getDeviceTimezone()
   const timeError = useMemo(
@@ -217,6 +221,9 @@ export function RewindRoutineScreen({
     frequencyOptions[0]
   const selectedIntent =
     intentOptions.find((option) => option.value === intent) ?? intentOptions[0]
+  const visibleFrequencyOptions = isSubscriptionSupported
+    ? frequencyOptions
+    : frequencyOptions.filter((option) => !isProFrequency(option.value))
 
   const returnToOrigin = useCallback((): void => {
     if (origin === 'settings') {
@@ -277,7 +284,7 @@ export function RewindRoutineScreen({
               </View>
 
               <View className="grid grid-cols-2 gap-3">
-                {frequencyOptions.map((option) => {
+                {visibleFrequencyOptions.map((option) => {
                   const selected = frequency === option.value
                   const requiresPro = isProFrequency(option.value) && !isPro
                   return (
@@ -307,15 +314,16 @@ export function RewindRoutineScreen({
                         >
                           {option.label}
                         </Text>
-                         <Text className="muted font-bbh text-[11px] tabular-nums">
-                        {option.schedule}
-                      </Text>
-                        
+                        <Text className="muted font-bbh text-[11px] tabular-nums">
+                          {option.schedule}
+                        </Text>
                       </View>
-                    <View className=""> <ChoiceIndicator
+                      <View>
+                        <ChoiceIndicator
                           requiresPro={requiresPro}
                           selected={selected}
-                        /></View>
+                        />
+                      </View>
                     </Pressable>
                   )
                 })}
@@ -414,11 +422,11 @@ export function RewindRoutineScreen({
                         {option.label}
                       </Text>
                       {selected ? (
-                       <View className="">
-                         <View className="size-6 items-center justify-center rounded-full bg-success-green">
-                          <RiCheckLine size={15} className="text-white" />
+                        <View>
+                          <View className="size-6 items-center justify-center rounded-full bg-success-green">
+                            <RiCheckLine size={15} className="text-white" />
+                          </View>
                         </View>
-                       </View>
                       ) : null}
                     </Pressable>
                   )
