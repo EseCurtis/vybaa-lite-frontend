@@ -1,26 +1,43 @@
 {
   "project_info": {
-    "project_number": "860465337178",
-    "project_id": "vybaa-60b46",
-    "storage_bucket": "vybaa-60b46.firebasestorage.app"
+    "project_number": "103411505324",
+    "project_id": "vybaa-462511",
+    "storage_bucket": "vybaa-462511.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:860465337178:android:c16b236a24556c6dd61963",
+        "mobilesdk_app_id": "1:103411505324:android:93e4edf7446eac7f8ee709",
         "android_client_info": {
           "package_name": "com.vybaa.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "103411505324-t7r7leths7rvdqs0cmlccdmd5q5059e2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyBaWlt6FLIehz6mfPMxia5eccwQhV467EQ"
+          "current_key": "AIzaSyATCX6nCiTqytodtfCf7DMxhTfz4NTqVUM"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "103411505324-t7r7leths7rvdqs0cmlccdmd5q5059e2.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "103411505324-tjiejrhppj1ua7mdm541fkdn9nqfd2go.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vybaa.app"
+              }
+            }
+          ]
         }
       }
     }
