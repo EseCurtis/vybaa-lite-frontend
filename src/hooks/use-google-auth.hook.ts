@@ -98,6 +98,7 @@ export function useGoogleAuth(
           autoSelectEnabled: false,
           filterByAuthorizedAccounts: false,
           forceRefreshToken: true,
+          style: 'bottom',
           scopes: ['profile', 'email'],
         },
       })
