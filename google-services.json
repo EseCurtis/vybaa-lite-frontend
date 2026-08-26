@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "103411505324-i30nuioq08e34icvhes25a0fjedb4lr3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vybaa.app",
+            "certificate_hash": "45efdd312c3335827a57d0b0fb805aff01796857"
+          }
+        },
+        {
           "client_id": "103411505324-t7r7leths7rvdqs0cmlccdmd5q5059e2.apps.googleusercontent.com",
           "client_type": 3
         }
