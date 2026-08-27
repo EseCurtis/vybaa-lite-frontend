@@ -19,6 +19,7 @@ import {
 import {
   getSubscriptionDisplayLabel,
   getSubscriptionDisplayState,
+  isSubscriptionActive,
 } from './subscription.util'
 
 function createStatus(
@@ -140,6 +141,17 @@ describe('Vybaa Pro customer state', () => {
         }),
       ),
     ).toBe('expired')
+  })
+
+  it('reflects a live SDK entitlement while backend verification catches up', () => {
+    const staleFreeStatus = createStatus()
+
+    expect(isSubscriptionActive(staleFreeStatus, true)).toBe(true)
+    expect(getSubscriptionDisplayLabel(staleFreeStatus, true)).toBe('Active')
+    expect(isSubscriptionActive(createStatus({ isPro: true }), false)).toBe(
+      true,
+    )
+    expect(isSubscriptionActive(staleFreeStatus, false)).toBe(false)
   })
 
   it('recognizes only machine-readable subscription API failures', () => {

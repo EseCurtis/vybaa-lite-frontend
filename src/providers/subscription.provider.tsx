@@ -30,6 +30,7 @@ import {
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { subscriptionQueryKeys } from '@/shared/api/subscription.query-keys'
+import { isSubscriptionActive } from '@/shared/subscription/subscription.util'
 
 interface SubscriptionContextValue {
   customerInfo: CustomerInfo | null
@@ -154,8 +155,8 @@ export function SubscriptionProvider({
 
     const info = await configureRevenueCat(user)
     setCustomerInfo(info)
-    await statusQuery.refetch()
-  }, [isSupported, statusQuery, user])
+    await syncBackend()
+  }, [isSupported, syncBackend, user])
 
   const presentPaywall = useCallback(async (): Promise<PaywallOutcome> => {
     if (paywallPromiseRef.current) return paywallPromiseRef.current
@@ -202,13 +203,14 @@ export function SubscriptionProvider({
   }, [isSupported, syncBackend, user])
 
   const status = statusQuery.data ?? null
+  const hasActiveSdkEntitlement = isVybaaProCustomer(customerInfo)
   const value = useMemo<SubscriptionContextValue>(
     () => ({
       customerInfo,
       error: sdkError ?? statusQuery.error?.message ?? null,
       expiresAt: status?.expiresAt ?? null,
       isLoading: isSdkLoading || statusQuery.isLoading,
-      isPro: status?.isPro ?? isVybaaProCustomer(customerInfo),
+      isPro: isSubscriptionActive(status, hasActiveSdkEntitlement),
       isSupported,
       isTrial: status?.isTrial ?? false,
       openCustomerCenter,
@@ -219,6 +221,7 @@ export function SubscriptionProvider({
     }),
     [
       customerInfo,
+      hasActiveSdkEntitlement,
       isSdkLoading,
       isSupported,
       openCustomerCenter,

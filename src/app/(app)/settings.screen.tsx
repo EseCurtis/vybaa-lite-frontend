@@ -148,7 +148,10 @@ export default function SettingsScreen() {
                       <Text className="text-white/50 text-xs font-bbh">
                         {isSubscriptionLoading
                           ? 'Checking subscription...'
-                          : getSubscriptionDisplayLabel(subscriptionStatus)}
+                          : getSubscriptionDisplayLabel(
+                              subscriptionStatus,
+                              isPro,
+                            )}
                       </Text>
                     </View>
                   </View>
