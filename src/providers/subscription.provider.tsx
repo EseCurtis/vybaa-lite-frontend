@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from 'react'
 
+import { Spinner } from '@/components/common/spinner.component'
+import { Text } from '@/components/layout/text.component'
 import { useAuth } from '@/providers/auth.provider'
 import {
   addRevenueCatCustomerInfoListener,
@@ -37,6 +39,7 @@ interface SubscriptionContextValue {
   error: string | null
   expiresAt: string | null
   isLoading: boolean
+  isPresentingPaywall: boolean
   isPro: boolean
   isSupported: boolean
   isTrial: boolean
@@ -59,6 +62,7 @@ export function SubscriptionProvider({
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null)
   const [sdkError, setSdkError] = useState<string | null>(null)
   const [isSdkLoading, setIsSdkLoading] = useState(false)
+  const [isPresentingPaywall, setIsPresentingPaywall] = useState(false)
   const paywallPromiseRef = useRef<Promise<PaywallOutcome> | null>(null)
   const isSupported = isRevenueCatSupported()
 
@@ -168,6 +172,7 @@ export function SubscriptionProvider({
     }
 
     const paywallPromise = (async (): Promise<PaywallOutcome> => {
+      setIsPresentingPaywall(true)
       await configureRevenueCat(user)
       const outcome = await presentVybaaProPaywall()
       if (
@@ -181,6 +186,7 @@ export function SubscriptionProvider({
       }
       return outcome
     })().finally(() => {
+      setIsPresentingPaywall(false)
       paywallPromiseRef.current = null
     })
 
@@ -210,6 +216,7 @@ export function SubscriptionProvider({
       error: sdkError ?? statusQuery.error?.message ?? null,
       expiresAt: status?.expiresAt ?? null,
       isLoading: isSdkLoading || statusQuery.isLoading,
+      isPresentingPaywall,
       isPro: isSubscriptionActive(status, hasActiveSdkEntitlement),
       isSupported,
       isTrial: status?.isTrial ?? false,
@@ -223,6 +230,7 @@ export function SubscriptionProvider({
       customerInfo,
       hasActiveSdkEntitlement,
       isSdkLoading,
+      isPresentingPaywall,
       isSupported,
       openCustomerCenter,
       presentPaywall,
@@ -237,6 +245,22 @@ export function SubscriptionProvider({
   return (
     <SubscriptionContext.Provider value={value}>
       {children}
+      {isPresentingPaywall ? (
+        <div
+          aria-live="polite"
+          aria-label="Opening Vybaa Pro"
+          aria-busy="true"
+          role="status"
+          className="fixed inset-0 z-[2000000] flex items-center justify-center bg-black/60 px-6"
+        >
+          <div className="flex min-h-16 w-full max-w-[280px] items-center justify-center gap-3 rounded-2xl bg-cardx px-5 py-4">
+            <Spinner size={22} />
+            <Text className="font-bbh text-sm font-semibold text-white">
+              Opening Vybaa Pro...
+            </Text>
+          </div>
+        </div>
+      ) : null}
     </SubscriptionContext.Provider>
   )
 }

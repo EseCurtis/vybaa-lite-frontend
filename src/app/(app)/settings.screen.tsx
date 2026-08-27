@@ -34,6 +34,7 @@ export default function SettingsScreen() {
   const [isManagingSubscription, setIsManagingSubscription] = useState(false)
   const {
     isLoading: isSubscriptionLoading,
+    isPresentingPaywall,
     isPro,
     isSupported: isSubscriptionSupported,
     openCustomerCenter,
@@ -42,7 +43,8 @@ export default function SettingsScreen() {
   } = useSubscription()
 
   const handleSubscriptionPress = async (): Promise<void> => {
-    if (isManagingSubscription || isSubscriptionLoading) return
+    if (isManagingSubscription || isSubscriptionLoading || isPresentingPaywall)
+      return
 
     try {
       setIsManagingSubscription(true)
@@ -132,7 +134,11 @@ export default function SettingsScreen() {
 
                 <Pressable
                   className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between disabled:opacity-60"
-                  disabled={isManagingSubscription || isSubscriptionLoading}
+                  disabled={
+                    isManagingSubscription ||
+                    isSubscriptionLoading ||
+                    isPresentingPaywall
+                  }
                   onPress={() => {
                     void handleSubscriptionPress()
                   }}
@@ -283,7 +289,7 @@ export default function SettingsScreen() {
                       logout()
                     }
                   }}
-                  className="bg-pink-900/30 rounded-2xl px-5 py-4 flex-row w-full items-center justify-between"
+                  className="bg-[#180e13] rounded-2xl px-5 py-4 flex-row w-full items-center justify-between"
                 >
                   <View className="flex-row items-center text-left gap-4  w-full">
                     <View className="w-10 h-10 rounded-xl  flex items-center justify-center">
@@ -316,11 +322,11 @@ export default function SettingsScreen() {
                 <Pressable
                   onPress={handleDeleteAccount}
                   disabled={isDeletingAccount}
-                  className="bg-danger-500/15  rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
+                  className=" rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
                 >
                   <View className="flex-row items-center text-left gap-4 w-full">
-                    <View className="w-10 h-10 rounded-xl bg-danger-500/15 flex items-center justify-center">
-                      <RiDeleteBinLine size={20} className="text-danger-400" />
+                    <View className="w-10 h-10 rounded-xl  flex items-center justify-center">
+                      <RiDeleteBinLine size={26} className="text-danger-400" />
                     </View>
                     <View className="flex-1">
                       <Text className="text-danger-400 text-sm font-bbh font-semibold">
