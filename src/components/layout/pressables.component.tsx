@@ -20,15 +20,17 @@ interface BasePressableProps {
 // TouchableOpacity specific props
 interface TouchableOpacityProps extends BasePressableProps {
   activeOpacity?: number
-  delayPressIn?: number
-  delayPressOut?: number
   delayLongPress?: number
 }
 
 // Pressable specific props
 interface PressableProps extends BasePressableProps {
-  hitSlop?: number | { top?: number; bottom?: number; left?: number; right?: number }
-  pressRetentionOffset?: number | { top?: number; bottom?: number; left?: number; right?: number }
+  hitSlop?:
+    | number
+    | { top?: number; bottom?: number; left?: number; right?: number }
+  pressRetentionOffset?:
+    | number
+    | { top?: number; bottom?: number; left?: number; right?: number }
   android_disableSound?: boolean
   android_ripple?: {
     color?: string
@@ -38,15 +40,16 @@ interface PressableProps extends BasePressableProps {
 }
 
 // TouchableOpacity Component
-export const TouchableOpacity = React.forwardRef<HTMLButtonElement, TouchableOpacityProps>(
+export const TouchableOpacity = React.forwardRef<
+  HTMLButtonElement,
+  TouchableOpacityProps
+>(
   (
     {
       children,
       className = '',
       disabled = false,
       activeOpacity = 0.7,
-      delayPressIn = 0,
-      delayPressOut = 0,
       delayLongPress = 500,
       onPress,
       onPressIn,
@@ -59,114 +62,63 @@ export const TouchableOpacity = React.forwardRef<HTMLButtonElement, TouchableOpa
       accessibilityHint,
       ...props
     },
-    ref
+    ref,
   ) => {
-    const [isPressed, setIsPressed] = React.useState(false)
-    const [isHovered, setIsHovered] = React.useState(false)
-    //@ts-ignore
-    const pressTimeoutRef = React.useRef<NodeJS.Timeout>()
-    //@ts-ignore
-    const longPressTimeoutRef = React.useRef<NodeJS.Timeout>()
+    const longPressTimeoutRef = React.useRef<ReturnType<
+      typeof setTimeout
+    > | null>(null)
+    const isActiveRef = React.useRef(false)
 
-    const handleMouseDown = React.useCallback(() => {
-      if (disabled) return
-      
-      if (delayPressIn > 0) {
-        pressTimeoutRef.current = setTimeout(() => {
-          setIsPressed(true)
-          onPressIn?.()
-        }, delayPressIn)
-      } else {
-        setIsPressed(true)
-        onPressIn?.()
-      }
-    }, [disabled, delayPressIn, onPressIn])
+    const clearLongPress = React.useCallback(() => {
+      if (!longPressTimeoutRef.current) return
+      clearTimeout(longPressTimeoutRef.current)
+      longPressTimeoutRef.current = null
+    }, [])
 
-    const handleMouseUp = React.useCallback(() => {
+    const handlePointerDown = React.useCallback(() => {
       if (disabled) return
-      
-      if (pressTimeoutRef.current) {
-        clearTimeout(pressTimeoutRef.current)
+      isActiveRef.current = true
+      onPressIn?.()
+      if (onLongPress) {
+        longPressTimeoutRef.current = setTimeout(onLongPress, delayLongPress)
       }
-      if (longPressTimeoutRef.current) {
-        clearTimeout(longPressTimeoutRef.current)
-      }
-      
-      if (delayPressOut > 0) {
-        setTimeout(() => {
-          setIsPressed(false)
-          onPressOut?.()
-        }, delayPressOut)
-      } else {
-        setIsPressed(false)
-        onPressOut?.()
-      }
-    }, [disabled, delayPressOut, onPressOut])
+    }, [delayLongPress, disabled, onLongPress, onPressIn])
+
+    const handlePointerUp = React.useCallback(() => {
+      if (disabled || !isActiveRef.current) return
+      isActiveRef.current = false
+      clearLongPress()
+      onPressOut?.()
+    }, [clearLongPress, disabled, onPressOut])
 
     const handleClick = React.useCallback(() => {
-      if (disabled) return
-      onPress?.()
+      if (!disabled) onPress?.()
     }, [disabled, onPress])
 
-    const handleMouseEnter = React.useCallback(() => {
-      setIsHovered(true)
-    }, [])
-
-    const handleMouseLeave = React.useCallback(() => {
-      setIsHovered(false)
-      if (pressTimeoutRef.current) {
-        clearTimeout(pressTimeoutRef.current)
-      }
-      if (longPressTimeoutRef.current) {
-        clearTimeout(longPressTimeoutRef.current)
-      }
-      setIsPressed(false)
-    }, [])
-
-    const handleMouseDownWithLongPress = React.useCallback(() => {
-      if (disabled || !onLongPress) return
-      
-      longPressTimeoutRef.current = setTimeout(() => {
-        onLongPress()
-      }, delayLongPress)
-    }, [disabled, onLongPress, delayLongPress])
-
     React.useEffect(() => {
-      return () => {
-        if (pressTimeoutRef.current) {
-          clearTimeout(pressTimeoutRef.current)
-        }
-        if (longPressTimeoutRef.current) {
-          clearTimeout(longPressTimeoutRef.current)
-        }
-      }
-    }, [])
-
-    const opacity = React.useMemo(() => {
-      if (disabled) return 0.5
-      if (isPressed) return activeOpacity
-      if (isHovered) return 0.8
-      return 1
-    }, [disabled, isPressed, isHovered, activeOpacity])
+      return clearLongPress
+    }, [clearLongPress])
 
     return (
       <button
         ref={ref}
         className={cn(
-          'flex cursor-pointer transition-opacity duration-150',
+          'touchable-opacity flex cursor-pointer',
           disabled && 'cursor-not-allowed',
-          className
+          className,
         )}
-        style={{
-          ...style,
-          opacity,
-        }}
+        style={
+          {
+            ...style,
+            opacity: disabled ? 0.5 : style?.opacity,
+            '--touchable-active-opacity': activeOpacity,
+          } as React.CSSProperties
+        }
         onClick={handleClick}
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        onMouseDownCapture={handleMouseDownWithLongPress}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerUp}
         disabled={disabled}
         data-testid={testID}
         aria-label={accessibilityLabel}
@@ -177,7 +129,7 @@ export const TouchableOpacity = React.forwardRef<HTMLButtonElement, TouchableOpa
         {children}
       </button>
     )
-  }
+  },
 )
 
 TouchableOpacity.displayName = 'TouchableOpacity'
@@ -204,7 +156,7 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
       accessibilityHint,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [isPressed, setIsPressed] = React.useState(false)
     const [isHovered, setIsHovered] = React.useState(false)
@@ -215,10 +167,10 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
 
     const handleMouseDown = React.useCallback(() => {
       if (disabled) return
-      
+
       setIsPressed(true)
       onPressIn?.()
-      
+
       if (onLongPress) {
         longPressTimeoutRef.current = setTimeout(() => {
           onLongPress()
@@ -228,11 +180,11 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
 
     const handleMouseUp = React.useCallback(() => {
       if (disabled) return
-      
+
       if (longPressTimeoutRef.current) {
         clearTimeout(longPressTimeoutRef.current)
       }
-      
+
       setIsPressed(false)
       onPressOut?.()
     }, [disabled, onPressOut])
@@ -268,14 +220,14 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
     // Calculate hit area based on hitSlop
     const hitAreaStyle = React.useMemo(() => {
       if (!hitSlop) return {}
-      
+
       if (typeof hitSlop === 'number') {
         return {
           padding: `${hitSlop}px`,
           margin: `-${hitSlop}px`,
         }
       }
-      
+
       return {
         paddingTop: hitSlop.top ? `${hitSlop.top}px` : undefined,
         paddingBottom: hitSlop.bottom ? `${hitSlop.bottom}px` : undefined,
@@ -292,11 +244,11 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
       <button
         ref={ref}
         className={cn(
-          'flex active:scale-[.97] cursor-pointer transition-all duration-150',
+          'flex  cursor-pointer transition-all duration-150',
           disabled && 'cursor-not-allowed',
           isPressed && 'active:scale-105',
           //isHovered && 'scale-105',
-          className
+          className,
         )}
         style={{
           ...style,
@@ -317,10 +269,7 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
         {children}
       </button>
     )
-  }
+  },
 )
 
 Pressable.displayName = 'Pressable'
-
-
-

@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+.touchable-opacity {
+  transition: opacity 150ms ease;
+}
+
+.touchable-opacity:active {
+  opacity: var(--touchable-active-opacity, 0.7);
+}
+
 /* Sonner Toast Custom Styles - Solid Pill Design */
 [data-sonner-toast] {
   border-radius: 9999px !important;
@@ -230,7 +238,7 @@ body,
 }
 
 .text-contrast-outline {
-  -webkit-text-stroke: 3px #0A0E16;
+  -webkit-text-stroke: 3px #0a0e16;
   paint-order: stroke fill;
   text-shadow: 0 1px 1px 0A0E16;
 }
