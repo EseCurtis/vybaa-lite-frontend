@@ -2,9 +2,12 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import type { User } from '@/shared/types/auth.types'
-import { RiNotificationLine, RiVerifiedBadgeFill, RiVerifiedBadgeLine } from '@remixicon/react'
+import {
+  RiNotificationLine
+} from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 
 export function HomeHeader({ user }: { user: User }) {
@@ -15,21 +18,19 @@ export function HomeHeader({ user }: { user: User }) {
     <View className="flex-row items-center justify-between w-full pt-mg px-mg">
       <View className="flex-row gap-3 items-center">
         <Pressable
-        onPress={() => {
-          navigate({ to: '/app/profile' })
-        }}
-      >
-        <Avatar user={user!} size={40} />
-       
-      </Pressable>
+          onPress={() => {
+            navigate({ to: '/app/profile' })
+          }}
+        >
+          <Avatar user={user!} size={40} />
+        </Pressable>
 
-       <View className="flex-row gap-1 items-center">
-        <Text className="font-bold text-card-lighter-3">@{user.username}</Text>
-        <View className="relative">
-        <RiVerifiedBadgeLine size={15} className='text-white absolute '/>
-          <RiVerifiedBadgeFill size={15} className='text-accent-600 relative z-10'/>
+        <View className="flex-row gap-1 items-center">
+          <Text className="font-bold text-card-lighter-3">
+            @{user.username}
+          </Text>
+          <UserCheckmark/>
         </View>
-       </View>
       </View>
 
       <Pressable

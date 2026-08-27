@@ -13,6 +13,7 @@ import { View } from '@/components/layout/view.component'
 import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useTabBar } from '@/hooks/use-tab-bar.hook'
 import { useAuth } from '@/providers/auth.provider'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
@@ -114,6 +115,8 @@ export default function ProfileScreen() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const { hide, show } = useTabBar()
+
+  const { isPro } = useSubscription()
 
   useEffect(() => {
     if (user) {

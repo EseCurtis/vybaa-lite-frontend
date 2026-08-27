@@ -33,11 +33,13 @@ async function ensureGoogleInitialized(): Promise<void> {
     return
   }
 
+
   await SocialLogin.initialize({
     google: {
       iOSClientId: ENV.GOOGLE_IOS_CLIENT_ID,
       iOSServerClientId: ENV.GOOGLE_IOS_CLIENT_ID,
       webClientId: ENV.GOOGLE_CLIENT_ID,
+      
     },
   })
 
@@ -89,17 +91,13 @@ export function useGoogleAuth(
     try {
       setStatus('preparing')
       await ensureGoogleInitialized()
-      await logoutGoogleNativeSession()
 
       setStatus('opening-google')
       const response = await SocialLogin.login({
         provider: 'google',
         options: {
-          autoSelectEnabled: false,
-          filterByAuthorizedAccounts: false,
-          forceRefreshToken: true,
-          style: 'bottom',
           scopes: ['profile', 'email'],
+         // forcePrompt: true,
         },
       })
       setStatus('verifying-google')

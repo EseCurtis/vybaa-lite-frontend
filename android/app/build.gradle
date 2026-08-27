@@ -4,18 +4,6 @@ android {
     namespace "com.vybaa.app"
     compileSdk rootProject.ext.compileSdkVersion
 
-    signingConfigs {
-        release {
-            def signingPassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
-            if (signingPassword) {
-                storeFile file(System.getenv('ANDROID_KEYSTORE_PATH') ?: 'vybaa.keystore')
-                storePassword signingPassword
-                keyAlias System.getenv('ANDROID_KEY_ALIAS') ?: 'vybaa_keystore'
-                keyPassword System.getenv('ANDROID_KEY_PASSWORD') ?: signingPassword
-            }
-        }
-    }
-
     defaultConfig {
         applicationId "com.vybaa.app"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -32,7 +20,6 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }

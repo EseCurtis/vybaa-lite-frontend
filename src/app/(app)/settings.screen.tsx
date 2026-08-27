@@ -289,7 +289,7 @@ export default function SettingsScreen() {
                       logout()
                     }
                   }}
-                  className="bg-[#180e13] rounded-2xl px-5 py-4 flex-row w-full items-center justify-between"
+                  className="bg-[#250f1a] rounded-2xl px-5 py-4 flex-row w-full items-center justify-between"
                 >
                   <View className="flex-row items-center text-left gap-4  w-full">
                     <View className="w-10 h-10 rounded-xl  flex items-center justify-center">
@@ -309,7 +309,7 @@ export default function SettingsScreen() {
               </motion.div>
             </View>
 
-            <View className="space-y-3">
+            <View className="space-y-3 ">
               <Text className="text-danger-400 text-sm font-bbh font-semibold px-1">
                 Danger Zone
               </Text>
@@ -322,7 +322,7 @@ export default function SettingsScreen() {
                 <Pressable
                   onPress={handleDeleteAccount}
                   disabled={isDeletingAccount}
-                  className=" rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
+                  className="bg-[#250f1a] rounded-2xl px-5 py-4 flex-row w-full items-center justify-between disabled:opacity-60"
                 >
                   <View className="flex-row items-center text-left gap-4 w-full">
                     <View className="w-10 h-10 rounded-xl  flex items-center justify-center">

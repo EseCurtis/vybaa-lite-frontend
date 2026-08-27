@@ -2,6 +2,7 @@ import { ImagePicker } from '@/components/common/image-picker.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
 import { cn } from '@/shared/utils/helpers.util'
 import { motion } from 'framer-motion'
 import type { ProfileUser } from './profile.types'
@@ -26,9 +27,7 @@ export function ProfileHeader({
   onEdit,
 }: ProfileHeaderProps) {
   return (
-    <motion.div
-
-    >
+    <motion.div>
       <View className="items-center gap-4 flex-row space-y-4">
         <View className={cn(isEditing && 'mx-auto pb-4', 'relative')}>
           {isEditing ? (
@@ -36,7 +35,7 @@ export function ProfileHeader({
               currentImageUrl={imagePreview ?? undefined}
               onImageSelect={onImageSelect}
               initials={initials}
-              size='xl'
+              size="xl"
             />
           ) : (
             <View className="rounded-full w-24 h-24 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
@@ -60,9 +59,12 @@ export function ProfileHeader({
             <Text className="text-white text-xl font-bbh font-bold">
               {displayName}
             </Text>
-            <Text className="text-white/50 text-sm font-bbh">
-              @{user?.username}
-            </Text>
+            <View className="flex-row items-center gap-1">
+              <Text className="text-white/50 text-sm font-bbh">
+                @{user?.username}
+              </Text>
+              <UserCheckmark />
+            </View>
           </View>
         )}
 

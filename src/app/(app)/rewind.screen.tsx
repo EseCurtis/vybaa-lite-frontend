@@ -42,16 +42,16 @@ import {
   floatTo16BitPcmBase64,
   resampleFloat32Audio,
 } from '@/shared/rewind/audio-processing'
+import { decodePcmAudioChunk } from '@/shared/rewind/pcm-audio'
 import {
   createRewindCaptureWorkletSource,
   getRewindCaptureFrameSize,
   REWIND_CAPTURE_WORKLET_NAME,
 } from '@/shared/rewind/rewind-audio-worklet'
-import { decodePcmAudioChunk } from '@/shared/rewind/pcm-audio'
 import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
 import {
-  REWIND_PERSONAS,
   getRewindPersona,
+  REWIND_PERSONAS,
   type RewindPersona,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
@@ -84,10 +84,7 @@ type RewindSocketMessage =
     }
   | {
       type: 'finalization_progress'
-      stage:
-        | 'saving_conversation'
-        | 'noticing_patterns'
-        | 'saving_reflection'
+      stage: 'saving_conversation' | 'noticing_patterns' | 'saving_reflection'
     }
   | { type: 'reconnected' }
   | { type: 'reconnecting' }
@@ -1217,9 +1214,7 @@ export default function RewindScreen(): ReactElement {
                   }
                   className={cn(
                     'w-11 h-11 rounded-full items-center justify-center',
-                    isConversationPaused
-                      ? 'bg-white'
-                      : 'bg-cardx',
+                    isConversationPaused ? 'bg-white' : 'bg-cardx',
                   )}
                 >
                   {isConversationPaused ? (
@@ -1285,19 +1280,24 @@ export default function RewindScreen(): ReactElement {
                     ? `Rewind ${rewindSessionDateKey.slice(5)}`
                     : routineStatus}{' '}
                   -{' '}
-                  <Text
-                    className={cn(
-                      ['connected', 'listening'].includes(
-                        conversationSummary.toLowerCase(),
-                      )
-                        ? 'bg-success-green text-cardd p-0.5 rounded-full px-2'
-                        : ['ended'].includes(conversationSummary.toLowerCase())
-                          ? 'bg-red-500 text-white p-0.5 rounded-full px-2'
-                          : 'bg-yellow-400 text-cardd p-0.5 rounded-full px-2',
-                    )}
-                  >
-                    {conversationSummary}
-                  </Text>
+                  <View className="">
+                    <Text
+                      className={cn(
+                        ['connected', 'listening'].includes(
+                          conversationSummary.toLowerCase(),
+                        )
+                          ? 'bg-success-green text-cardd p-0.5 rounded-full px-2'
+                          : ['ended'].includes(
+                                conversationSummary.toLowerCase(),
+                              )
+                            ? 'bg-red-500 text-white p-0.5 rounded-full px-2'
+                            : 'bg-yellow-400 text-cardd p-0.5 rounded-full px-2',
+                        ' whitespace-nowrap  !text-center',
+                      )}
+                    >
+                      {conversationSummary}
+                    </Text>
+                  </View>
                 </Text>
               </View>
             </View>
