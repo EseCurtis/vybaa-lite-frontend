@@ -1,14 +1,22 @@
 import { TabBar } from '@/components/layout/app/tab-bar.component'
+import { useAuth } from '@/providers/auth.provider'
 import { IS_WEB } from '@/shared/constants.shared'
 import { Outlet, useLocation } from '@tanstack/react-router'
 import { View } from '../view.component'
 
 export function AppLayout() {
   const location = useLocation()
-  const tabBarHideMatches = location.pathname.match(/\/app\/(home|goal|communities|rewards|profile)(\/.*)?$/)
+  const { isAuthenticated, isLoading } = useAuth()
+  const tabBarHideMatches = location.pathname.match(
+    /\/app\/(home|goal|communities|rewards|profile)(\/.*)?$/,
+  )
 
   // Only show tab bar on app routes
-  const shouldShowTabBar = location.pathname.startsWith('/app/') && tabBarHideMatches
+  const shouldShowTabBar =
+    !isLoading &&
+    isAuthenticated &&
+    location.pathname.startsWith('/app/') &&
+    tabBarHideMatches
   const onATab = location.pathname.split('/').length < 4
 
   return (
