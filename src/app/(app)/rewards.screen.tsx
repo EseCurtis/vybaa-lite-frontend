@@ -1,5 +1,4 @@
 import { PlayWalletPanel } from '@/app/(app)/components/rewards/play-wallet-panel.component'
-import { RewardActivityTrail } from '@/app/(app)/components/rewards/reward-activity-trail.component'
 import { RewardsHeader } from '@/app/(app)/components/rewards/rewards-header.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
@@ -59,7 +58,6 @@ export default function RewardsScreen() {
 
         <View className="px-mg py-6 space-y-3">
           <PlayWalletPanel rewards={rewards} />
-          <RewardActivityTrail />
         </View>
       </NoiseComponent>
     </View>

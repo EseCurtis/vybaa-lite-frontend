@@ -1,6 +1,6 @@
-import { EmptyList } from '@/components/common/empty-list.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { RewardActivityTrail } from '@/app/(app)/components/rewards/reward-activity-trail.component'
 import type { RewardsData } from '@/shared/api/rewards.api'
 import { RiCoinsLine, RiTrophyLine } from '@remixicon/react'
 
@@ -10,8 +10,8 @@ interface PlayWalletPanelProps {
 
 export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
   return (
-    <>
-      <View className="rounded-[30px] bg-cardx p-6 space-y-1">
+    <View className="rounded-[28px] bg-cardx p-5">
+      <View className="space-y-1">
         <View className="flex-row items-center gap-2">
           <RiCoinsLine size={24} className="text-accent-400" />
           <Text className="text-card-lighter-3/60 text-sm font-bbh">
@@ -19,7 +19,8 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
           </Text>
         </View>
         <Text className="text-white text-4xl font-bold font-bbh">
-          {rewards.balance.toLocaleString()}<Text className="text-xs">pts</Text>
+          {rewards.balance.toLocaleString()}
+          <Text className="text-xs">pts</Text>
         </Text>
         <Text className="text-card-lighter-3 text-xs font-bbh">
           Play Points earned from completed goals
@@ -27,7 +28,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
       </View>
 
       {rewards.pendingPoints > 0 ? (
-        <View className="rounded-[30px] bg-cardx p-6 space-y-3">
+        <View className="mt-5 gap-3 border-t border-white/10 pt-5">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <RiTrophyLine size={20} className="text-accent-400" />
@@ -71,15 +72,11 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
             </View>
           ) : null}
         </View>
-      ) : (
-        <View className="rounded-[30px] bg-cardx  p-6">
-          <EmptyList
-            icon={<RiTrophyLine size={48} className="text-card-lighter-3" />}
-            title="No pending Play Points"
-            description="Complete goals with milestones to earn pending Play Points"
-          />
-        </View>
-      )}
-    </>
+      ) : null}
+
+      <View className="mt-5 border-t border-white/10 pt-5">
+        <RewardActivityTrail />
+      </View>
+    </View>
   )
 }

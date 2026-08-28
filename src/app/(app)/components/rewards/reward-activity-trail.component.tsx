@@ -1,5 +1,5 @@
-import { EmptyList } from '@/components/common/empty-list.component'
 import { Skeleton } from '@/components/common/skeleton.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useRewardTransactions } from '@/hooks/use-rewards.hook'
@@ -101,16 +101,20 @@ export function RewardActivityTrail() {
     []
 
   return (
-    <View className="rounded-[30px] bg-cardx p-6">
-      <View className="mb-2 flex-row items-center gap-2">
-        <RiHistoryLine size={21} className="text-accent-400" />
-        <Text className="font-bbh text-base font-bold text-white">
-          Award trail
-        </Text>
+    <View>
+      <View className="mb-1 flex-row items-center justify-between">
+        <View className="flex-row items-center gap-2">
+          <RiHistoryLine size={20} className="text-accent-400" />
+          <Text className="font-bbh text-sm font-bold text-white">
+            Award trail
+          </Text>
+        </View>
+        {transactions.length > 0 ? (
+          <Text className="muted font-bbh text-[11px]">
+            {transactionsQuery.data?.pages[0].data.pagination.total ?? 0} total
+          </Text>
+        ) : null}
       </View>
-      <Text className="muted mb-2 font-bbh text-xs leading-5">
-        Every Play Points award and release that contributes to your balance.
-      </Text>
 
       {transactionsQuery.isLoading ? (
         <View className="gap-3 py-3">
@@ -126,26 +130,26 @@ export function RewardActivityTrail() {
           ))}
         </View>
       ) : transactions.length === 0 ? (
-        <EmptyList
-          icon={<RiHistoryLine size={42} className="text-card-lighter-3" />}
-          title="No Play Points activity"
-          description="Your goal awards will appear here as they are earned."
-        />
+        <Text className="muted py-3 font-bbh text-xs">
+          Goal awards will appear here as you earn them.
+        </Text>
       ) : (
         <View>
           {transactions.map((transaction) => (
             <RewardActivityRow key={transaction.id} transaction={transaction} />
           ))}
           {transactionsQuery.hasNextPage ? (
-            <button
-              className="mt-4 w-full rounded-xl bg-card-light/10 px-4 py-3 text-center font-bbh text-xs font-semibold text-white"
+            <Pressable
+              className="mt-3 w-full items-center rounded-xl bg-card-light/10 px-4 py-3"
               disabled={transactionsQuery.isFetchingNextPage}
               onClick={() => void transactionsQuery.fetchNextPage()}
             >
-              {transactionsQuery.isFetchingNextPage
-                ? 'Loading more...'
-                : 'Load more activity'}
-            </button>
+              <Text className="font-bbh text-xs font-semibold text-white">
+                {transactionsQuery.isFetchingNextPage
+                  ? 'Loading more...'
+                  : 'Load more activity'}
+              </Text>
+            </Pressable>
           ) : null}
         </View>
       )}
