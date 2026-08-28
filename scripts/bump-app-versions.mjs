@@ -8,6 +8,33 @@ const repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
 
 const androidPath = resolve(repoRoot, 'android/app/build.gradle')
 const iosPath = resolve(repoRoot, 'ios/App/App.xcodeproj/project.pbxproj')
+const versionFiles = new Set([
+  'android/app/build.gradle',
+  'ios/App/App.xcodeproj/project.pbxproj',
+])
+
+const stagedFiles = execFileSync(
+  'git',
+  ['diff', '--cached', '--name-only', '--diff-filter=ACMRT'],
+  { cwd: repoRoot, encoding: 'utf8' },
+)
+  .split('\n')
+  .filter(Boolean)
+
+const hasManuallyStagedVersion = stagedFiles.some((file) =>
+  versionFiles.has(file),
+)
+const hasAppChanges = stagedFiles.some(
+  (file) =>
+    !versionFiles.has(file) &&
+    /^(android\/|ios\/|src\/|public\/|resources\/|package\.json$|(?:yarn|npm|pnpm)-lock\.ya?ml$|(?:capacitor|vite)\.config\.)/.test(
+      file,
+    ),
+)
+
+if (hasManuallyStagedVersion || !hasAppChanges) {
+  process.exit(0)
+}
 
 function replaceOnce(contents, pattern, replacement, description) {
   const occurrencePattern = new RegExp(
