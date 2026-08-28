@@ -1,10 +1,24 @@
 import { useToast } from '@/providers/toast.provider'
 import { rewardsAPI } from '@/shared/api/rewards.api'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 export const rewardsQueryKeys = {
   all: ['rewards'] as const,
   detail: () => [...rewardsQueryKeys.all, 'detail'] as const,
+  transactions: () => [...rewardsQueryKeys.all, 'transactions'] as const,
+}
+
+export function useRewardTransactions() {
+  return useInfiniteQuery({
+    queryKey: rewardsQueryKeys.transactions(),
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => rewardsAPI.getTransactions(pageParam),
+    getNextPageParam: (lastPage) =>
+      lastPage.data.pagination.hasMore
+        ? lastPage.data.pagination.page + 1
+        : undefined,
+    staleTime: 1000 * 60 * 2,
+  })
 }
 
 export function useRewards() {
@@ -17,7 +31,10 @@ export function useRewards() {
     },
     staleTime: 1000 * 60 * 2, // 2 minutes
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to fetch rewards'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to fetch rewards'
       toast.error(message)
     },
   })
