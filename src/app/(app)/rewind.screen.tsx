@@ -279,6 +279,9 @@ export default function RewindScreen(): ReactElement {
   const routineQuery = useRewindRoutine()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
+  const [resolvedPersonaUserId, setResolvedPersonaUserId] = useState<
+    string | null
+  >(null)
   const [statusText, setStatusText] = useState('Idle')
   const [isConversationPaused, setIsConversationPaused] = useState(false)
   const [rewindSessionDateKey, setRewindSessionDateKey] = useState<
@@ -347,10 +350,11 @@ export default function RewindScreen(): ReactElement {
   })
 
   useEffect(() => {
-    const backendPersona = user?.rewindPersona as RewindPersonaId | undefined
-    if (!backendPersona) return
-    setPersonaId(backendPersona)
-  }, [user?.rewindPersona])
+    if (!user) return
+
+    setPersonaId((user.rewindPersona as RewindPersonaId | undefined) ?? null)
+    setResolvedPersonaUserId(user.id)
+  }, [user?.id, user?.rewindPersona])
 
   useEffect(() => {
     if (!personaId) return
@@ -1167,6 +1171,21 @@ export default function RewindScreen(): ReactElement {
 
   if (!isAuthenticated || !user) {
     return null
+  }
+
+  if (resolvedPersonaUserId !== user.id) {
+    return (
+      <View className="flex-1 bg-cardd">
+        <NoiseComponent>
+          <View className="flex-1 items-center justify-center px-mg">
+            <Mirage size="96" speed="4.2" color="#ffffff" />
+            <Text className="mt-4 muted font-bbh text-sm">
+              Loading your Rewind partner...
+            </Text>
+          </View>
+        </NoiseComponent>
+      </View>
+    )
   }
 
   if (!persona) {
