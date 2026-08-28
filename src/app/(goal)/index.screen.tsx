@@ -15,6 +15,7 @@ import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
 import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
+import { getProfileDisplayName } from '../(app)/profile.screen'
 
 type GoalsAppScreenProps = {
   initialGoalId?: string
@@ -46,7 +47,7 @@ export default function GoalsAppScreen({
 
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-      title:randomGreetings(user?.username),
+      title:randomGreetings(getProfileDisplayName(user)),
       elevation: 999,
       size: 'semi-full',
     })

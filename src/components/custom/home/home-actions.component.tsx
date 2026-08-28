@@ -1,3 +1,4 @@
+import { getProfileDisplayName } from '@/app/(app)/profile.screen'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -83,7 +84,7 @@ export function HomeActions() {
   const navigate = useNavigate()
   const handleCreateGoal = () => {
     bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-      title: randomGreetings(user?.username),
+      title: randomGreetings(getProfileDisplayName(user)),
       elevation: 999,
     })
   }

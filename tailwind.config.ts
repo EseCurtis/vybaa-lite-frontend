@@ -26,6 +26,7 @@ const config: Config = {
         ],
         // Shared app copy uses the compact system stack common to social apps.
         bbh: [
+          'Mona Sans x', 
           '-apple-system',
           'BlinkMacSystemFont',
           'Helvetica Neue',

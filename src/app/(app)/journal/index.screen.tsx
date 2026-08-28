@@ -6,6 +6,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useJournalStats, usePaginatedJournals } from '@/hooks/use-journal.hook'
 import type { Journal } from '@/shared/types/auth.types'
+import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
 import anxiousFaceWithSweat from '@iconify-icons/twemoji/anxious-face-with-sweat'
 import beamingFaceWithSmilingEyes from '@iconify-icons/twemoji/beaming-face-with-smiling-eyes'
 import cryingFace from '@iconify-icons/twemoji/crying-face'
@@ -17,12 +18,12 @@ import relievedFace from '@iconify-icons/twemoji/relieved-face'
 import sleepingFace from '@iconify-icons/twemoji/sleeping-face'
 import { Icon } from '@iconify/react'
 import {
+  RiAddCircleLine,
   RiAddLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
 import moment from 'moment'
 import { useState } from 'react'
 
@@ -54,8 +55,10 @@ export default function JournalListScreen() {
   }
 
   const handleOpenEntry = (journal: Journal) => {
-    const dateStr = moment(journal.date).format('YYYY-MM-DD')
-    navigate({ to: `/app/journal/${dateStr}` })
+    navigate({
+      to: '/app/journal-preview/$id',
+      params: { id: journal.id },
+    })
   }
 
   const getMoodIcon = (mood?: string) => {
@@ -78,57 +81,43 @@ export default function JournalListScreen() {
         <TabHeader title="Journal">
           <button
             onClick={handleCreateToday}
-            className="p-2 flex flex-row text-white bg-cardd pl-4 items-center gap-1 rounded-full  hover:bg-primary-500/30 transition-colors"
+            className="p-3 flex flex-row text-white bg-card-light/60 pr-4 items-center gap-2 rounded-full"
           >
-            <Text className="">New</Text>
-            <RiAddLine size={26} className="text-white" />
+            <RiAddCircleLine size={18} className="text-white" />
+            <Text className="text-sm">New</Text>
           </button>
         </TabHeader>
 
         <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
           {/* Stats */}
           {stats && (
-            <View className="grid grid-cols-3 gap-3 mb-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 rounded-2xl p-4 flex flex-col"
-              >
-                <Text className="text-pink-300/80 text-xs font-bbh mb-1 uppercase tracking-wide">
+            <View className="grid grid-cols-3 gap-1 mb-6">
+              <View className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg p-4 flex flex-col">
+                <Text className="text-pink-900/90 font-bold text-xs font-bbh mb-1  tracking-wide">
                   Entries
                 </Text>
                 <Text className="text-white text-3xl font-bbh font-bold">
                   {stats.totalEntries}
                 </Text>
-              </motion.div>
+              </View>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="bg-gradient-to-br from-purple-500/20 to-violet-500/20 rounded-2xl p-4 flex flex-col"
-              >
-                <Text className="text-purple-300/80 text-xs font-bbh mb-1 uppercase tracking-wide">
+              <View className="bg-gradient-to-br from-purple-500 to-violet-500 rounded-lg p-4 flex flex-col">
+                <Text className="text-purple-900/90 font-bold text-xs font-bbh mb-1  tracking-wide">
                   Streak
                 </Text>
                 <Text className="text-white text-3xl font-bbh font-bold">
                   {stats.currentStreak}
                 </Text>
-              </motion.div>
+              </View>
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="bg-gradient-to-br from-amber-500/20 to-yellow-500/20 rounded-2xl p-4 flex flex-col"
-              >
-                <Text className="text-amber-300/80 text-xs font-bbh mb-1 uppercase tracking-wide">
+              <View className="bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg p-4 flex flex-col">
+                <Text className="text-amber-700/90 font-bold text-xs font-bbh mb-1  tracking-wide">
                   Moods
                 </Text>
                 <Text className="text-white text-3xl font-bbh font-bold">
                   {stats.entriesWithMood}
                 </Text>
-              </motion.div>
+              </View>
             </View>
           )}
 
@@ -181,12 +170,7 @@ export default function JournalListScreen() {
               </View>
             ) : (
               <>
-                <motion.div
-                  key={currentPage}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-3"
-                >
+                <View key={currentPage} className="space-y-3">
                   {journals.map((journal: any, index: number) => (
                     <JournalCard
                       key={journal.id}
@@ -196,7 +180,7 @@ export default function JournalListScreen() {
                       getMoodIcon={getMoodIcon}
                     />
                   ))}
-                </motion.div>
+                </View>
 
                 {/* Pagination */}
                 {pagination && pagination.totalPages > 1 && (
@@ -252,14 +236,14 @@ function JournalCard({
   // Get mood color gradient
   const getMoodGradient = (mood?: string) => {
     const gradients: Record<string, string> = {
-      happy: 'from-yellow-500/20 to-amber-500/10',
-      sad: 'from-blue-500/20 to-indigo-500/10',
-      anxious: 'from-orange-500/20 to-red-500/10',
-      calm: 'from-teal-500/20 to-cyan-500/10',
-      excited: 'from-pink-500/20 to-rose-500/10',
-      tired: 'from-purple-500/20 to-violet-500/10',
-      frustrated: 'from-red-500/20 to-orange-500/10',
-      neutral: 'from-gray-500/20 to-slate-500/10',
+      happy: 'bg-yellow-500 to-amber-500',
+      sad: 'from-blue-500 to-indigo-500',
+      anxious: 'from-orange-500 to-red-500',
+      calm: 'from-teal-500 to-cyan-500',
+      excited: 'from-pink-500 to-rose-500',
+      tired: 'from-purple-500 to-violet-500',
+      frustrated: 'from-red-500 to-orange-500',
+      neutral: 'from-gray-500 to-slate-500',
     }
     return mood
       ? gradients[mood] || 'from-card-700/40 to-card-light/20'
@@ -267,16 +251,21 @@ function JournalCard({
   }
 
   const wordCount = journal?.entry?.trim()?.split(/\s+/)?.length || 0
+  const color = seededColor((journal.mood + 'ld').replaceAll('e', '')!)
+  const moodBg = adjustColor(color, {
+    lightness: -40,
+    saturation: -20,
+    alpha: -0.85,
+  })
+
+  const textColor = adjustColor(color, {
+    saturation: -20,
+  })
 
   return (
-    <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
+    <button
       onClick={onPress}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
-      className={`w-full text-left bg-gradient-to-br ${getMoodGradient(journal.mood || undefined)} rounded-3xl p-5  transition-all relative overflow-hidden ${
+      className={`w-full text-left  bg-cardx rounded-xl pt-5 px-0 relative overflow-hidden ${
         isToday ? '' : 'border-white/10'
       }`}
     >
@@ -286,26 +275,26 @@ function JournalCard({
       {/* Content */}
       <View className="relative z-10">
         {/* Header */}
-        <View className="flex flex-row items-start justify-between gap-4 mb-3">
+        <View className="flex px-5 flex-row items-start justify-between gap-4 mb-3">
           <View className="flex-1">
             <View className="flex flex-row items-center gap-2 mb-1">
-              <Text
-                className={`font-bbh font-bold text-base ${isToday ? 'text-pink-300' : 'text-white'}`}
-              >
-                {moment(date).format('MMM D')}
-              </Text>
-              <Text className="text-white/40 text-sm font-bbh">
-                {moment(date).format('YYYY')}
-              </Text>
-              {isToday && (
-                <View className="bg-pink-500/30 rounded-full px-2 py-0.5">
-                  <Text className="text-pink-200 text-xs font-bbh font-bold">
+              {isToday ? (
+                <View className="bg-red-500/30 rounded-full px-2 py-1">
+                  <Text className="text-red-400 text-xs font-bbh font-bold">
                     Today
                   </Text>
                 </View>
+              ) : (
+                <Text className={`font-bbh font-bold text-base text-white`}>
+                  {moment(date).format('MMM D')}
+                </Text>
               )}
+              <Text className="text-card-lighter-3/40">•</Text>
+              <Text className="text-card-lighter-3/40 text-sm font-bbh">
+                {moment(date).format('YYYY')}
+              </Text>
             </View>
-            <Text className="text-white/50 text-xs font-bbh">
+            <Text className="text-card-lighter-3/70 text-xs font-bbh">
               {moment(date).format('dddd')} • {wordCount} words
             </Text>
           </View>
@@ -324,7 +313,7 @@ function JournalCard({
 
         {/* Preview Text */}
         {preview && (
-          <View className="mt-2">
+          <View className="mt-2 px-5">
             <Text className="text-white/80 text-sm font-bbh leading-relaxed line-clamp-3">
               {preview}
             </Text>
@@ -333,17 +322,23 @@ function JournalCard({
 
         {/* Footer Tags */}
         {journal.mood && (
-          <View className="mt-3 pt-3 border-t border-white/10">
-            <View className="flex flex-row items-center gap-2">
-              <View className="bg-white/10 rounded-full px-3 py-1">
-                <Text className="text-white/70 text-xs font-bbh capitalize">
-                  {journal.mood}
+          <View className="mt-3 pt-3 px-3 pb-3 rounded-tl-[100px] bg-card-light/20 w-full">
+            <View className="flex flex-row justify-end items-center gap-2">
+              <View
+                style={{
+                  background: moodBg,
+                  color: textColor,
+                }}
+                className="bg-card-lighter/30 rounded-full px-3 py-2"
+              >
+                <Text className=" font-bold text-xs  font-bbh ">
+                  Feeling {journal.mood}
                 </Text>
               </View>
             </View>
           </View>
         )}
       </View>
-    </motion.button>
+    </button>
   )
 }

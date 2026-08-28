@@ -56,11 +56,11 @@ export function ProfileHeader({
 
         {!isEditing && (
           <View className="items-start space-y-1">
-            <Text className="text-white text-xl font-display font-bold">
+            <Text className="text-white leading-[10px] text-xl font-display font-bold">
               {displayName}
             </Text>
             <View className="flex-row items-center gap-1">
-              <Text className="text-white/50 text-sm font-bbh">
+              <Text className="text-card-lighter-3/70 font-bold text-sm font-mona-sans-x">
                 @{user?.username}
               </Text>
               <UserCheckmark />

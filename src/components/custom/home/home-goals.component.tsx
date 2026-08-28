@@ -1,3 +1,4 @@
+import { getProfileDisplayName } from '@/app/(app)/profile.screen'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -47,7 +48,7 @@ function HomeGoalItem({
   )
 }
 
-export function HomeGoals({ user}: { user: { username?: string } | null }) {
+export function HomeGoals({ user }: { user: any}) {
   const bottomSheet = useBottomSheet()
   const navigate = useNavigate()
   const { data } = useInfiniteGoals({ canCheckIn: true })
@@ -63,7 +64,7 @@ export function HomeGoals({ user}: { user: { username?: string } | null }) {
 
     const handleCreateGoal = () => {
       bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-        title: randomGreetings(user?.username),
+        title: randomGreetings(getProfileDisplayName(user)),
         elevation: 999,
       })
     }
@@ -98,7 +99,7 @@ export function HomeGoals({ user}: { user: { username?: string } | null }) {
 
       {noGoals && (
         <View className="flex-row w-full items-center">
-          <Text className="text-card-lighter-2/50 font-medium">
+          <Text className="text-card-lighter-2/50 font-mona-sans-x font-medium">
             Clean slate, mate!
           </Text>
 

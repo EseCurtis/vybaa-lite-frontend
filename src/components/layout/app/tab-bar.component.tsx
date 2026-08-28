@@ -6,18 +6,20 @@ import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
-import { shouldAnimate } from '@/shared/utils/animation.util'
+//import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { StarIcon } from 'lucide-react'
+import { BookOpenCheck, CoinsIcon } from 'lucide-react'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
 import { LinearGradient } from '../linear-gradient.component'
 import { TouchableOpacity } from '../pressables.component'
 import { Text } from '../text.component'
 import { View } from '../view.component'
+
+const shouldAnimate = false
 
 export const TabBar = memo(({ className }: { className?: string }) => {
   const navigate = useNavigate()
@@ -60,11 +62,21 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         {
           id: 'rewards',
           route: '/app/rewards',
-          icon: StarIcon,
+          icon: CoinsIcon,
           label: 'Play Points',
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
+        },
+        {
+          id: 'journal',
+          route: '/app/journal',
+          icon: BookOpenCheck,
+          label: 'Journal',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+          enabled: true,
         },
         {
           id: 'wellness',
@@ -86,7 +98,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           matchAllRoot: true,
         },
       ].filter((tab) => tab.enabled !== false), // Filter out disabled tabs
-    [unreadCount],
+    [unreadCount, user],
   )
 
   const isActiveTab = useCallback(
@@ -124,7 +136,10 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   return (
     <AnimatePresence>
       <Moti.div
-        className={cn(className, 'bottom-0 left-0 fixed w-full z-50 p-0')}
+        className={cn(
+          className,
+          'bottom-0 left-0 fixed  !py-0 w-full z-50 p-0',
+        )}
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -144,8 +159,8 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           }}
         />
 
-        <View className="p-mg py-0 z-10 relative translate-y-3">
-          <Moti.div className=" py-4 px-4  rounded-full bg-cardd   mx-auto flex flex-row items-center w-full justify-between shadow-2xl borsder border-card-300/20">
+        <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
+          <Moti.div className="  px-7 flex flex-row items-center w-full justify-center ">
             {tabs.map((tab) => {
               const isActive = isActiveTab(
                 tab.route,
@@ -156,7 +171,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
               return (
                 <Moti.div
                   key={tab.id}
-                  className="relative rounded-full py-1"
+                  className="relative  border-t-3 py-4 px-1"
                   whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
                   transition={
                     shouldAnimate
@@ -164,6 +179,33 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                       : { duration: 0 }
                   }
                 >
+                  {/* Active indicator background */}
+                  {isActive && (
+                    <Moti.div
+                      className="absolute top-[-3px]  inset-0   flex items-start justify-center mt-full "
+                      layoutId={shouldAnimate ? 'activeTab' : undefined}
+                      initial={false}
+                      animate={
+                        shouldAnimate
+                          ? {
+                              //backgroundColor: colors.white,
+                            }
+                          : false
+                      }
+                      transition={
+                        shouldAnimate
+                          ? {
+                              type: 'spring',
+                              stiffness: 300,
+                              damping: 30,
+                            }
+                          : { duration: 0 }
+                      }
+                    >
+                      <View className=" text-white bg-accent-500  h-0.5 w-full "></View>
+                    </Moti.div>
+                  )}
+
                   <TouchableOpacity
                     className={cn(
                       isActive ? '  ' : '',
@@ -176,33 +218,6 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                     testID={`tab-${tab.id}`}
                   >
                     <>
-                      {/* Active indicator background */}
-                      {isActive && (
-                        <Moti.div
-                          className="absolute  inset-0   flex items-end justify-center mt-full rounded-full "
-                          layoutId={shouldAnimate ? 'activeTab' : undefined}
-                          initial={false}
-                          animate={
-                            shouldAnimate
-                              ? {
-                                  //  backgroundColor: colors.white,
-                                }
-                              : false
-                          }
-                          transition={
-                            shouldAnimate
-                              ? {
-                                  type: 'spring',
-                                  stiffness: 300,
-                                  damping: 30,
-                                }
-                              : { duration: 0 }
-                          }
-                        >
-                          <View className="w-1 text-white bg-accent-500 rounded-full h-1 shadow-lg shadow-accent-500"></View>
-                        </Moti.div>
-                      )}
-
                       {/* Icon with animation */}
                       <Moti.div
                         animate={
@@ -256,7 +271,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           style={{
                             color: isActive ? 'transparent' : colors.card[100],
                           }}
-                          className="text-white hidden text-[0.6rem] font-bold"
+                          className="text-white hidden whitespace-nowrap text-[5px] font-bold"
                         >
                           {tab.label.toUpperCase()}
                         </Text>
@@ -267,7 +282,6 @@ export const TabBar = memo(({ className }: { className?: string }) => {
               )
             })}
           </Moti.div>
-
           <BottomNotch />
         </View>
       </Moti.div>

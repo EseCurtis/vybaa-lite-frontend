@@ -32,7 +32,7 @@ function createProfileFormData(
   }
 }
 
-function getProfileDisplayName(
+export function getProfileDisplayName(
   user: ReturnType<typeof useAuth>['user'],
 ): string {
   if (!user) {
