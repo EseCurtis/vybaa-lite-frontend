@@ -11,12 +11,10 @@ export const rewardsQueryKeys = {
 export function useRewardTransactions() {
   return useInfiniteQuery({
     queryKey: rewardsQueryKeys.transactions(),
-    initialPageParam: 1,
+    initialPageParam: null as string | null,
     queryFn: ({ pageParam }) => rewardsAPI.getTransactions(pageParam),
     getNextPageParam: (lastPage) =>
-      lastPage.data.pagination.hasMore
-        ? lastPage.data.pagination.page + 1
-        : undefined,
+      lastPage.data.pagination.nextCursor ?? undefined,
     staleTime: 1000 * 60 * 2,
   })
 }

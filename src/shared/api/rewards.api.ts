@@ -38,11 +38,9 @@ export interface RewardTransaction {
 export interface RewardTransactionsData {
   transactions: RewardTransaction[]
   pagination: {
-    page: number
     limit: number
-    total: number
-    totalPages: number
     hasMore: boolean
+    nextCursor: string | null
   }
 }
 
@@ -52,11 +50,11 @@ export const rewardsAPI = {
     return response.data
   },
   getTransactions: async (
-    page = 1,
+    cursor: string | null = null,
     limit = 20,
   ): Promise<{ data: RewardTransactionsData }> => {
     const response = await http.get(`${API_V1}/users/rewards/transactions`, {
-      params: { page, limit },
+      params: { cursor: cursor ?? undefined, limit },
     })
     return response.data
   },

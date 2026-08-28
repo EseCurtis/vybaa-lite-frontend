@@ -111,7 +111,7 @@ export function RewardActivityTrail() {
         </View>
         {transactions.length > 0 ? (
           <Text className="muted font-bbh text-[11px]">
-            {transactionsQuery.data?.pages[0].data.pagination.total ?? 0} total
+            {transactions.length} loaded
           </Text>
         ) : null}
       </View>
