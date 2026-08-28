@@ -1,10 +1,11 @@
 export type RewindPersonaId = 'ella' | 'lyra' | 'jake' | 'ariel'
+export type RewindPersonaIcon = 'emotion' | 'flashlight' | 'moon' | 'water'
 
 export type RewindPersona = {
   color: string
   id: RewindPersonaId
+  icon: RewindPersonaIcon
   name: string
-  emoji: string
   perspective: string
   welcome: string
 }
@@ -13,32 +14,32 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
   {
     color: '#C43D78',
     id: 'ella',
+    icon: 'emotion',
     name: 'Ella',
-    emoji: '🌸',
     perspective: 'Notices feelings beneath the surface',
     welcome: 'A gentle space to hear what your day felt like.',
   },
   {
     color: '#5B4A9E',
     id: 'lyra',
+    icon: 'moon',
     name: 'Lyra',
-    emoji: '🌙',
     perspective: 'Sees patterns, meaning, and quiet shifts',
     welcome: 'Step back and notice what your day may be showing you.',
   },
   {
     color: '#C9782A',
     id: 'jake',
+    icon: 'flashlight',
     name: 'Jake',
-    emoji: '⚡',
     perspective: 'Spots decisions, momentum, and next moves',
     welcome: 'Talk it through clearly and leave with what matters.',
   },
   {
     color: '#2B9A8A',
     id: 'ariel',
+    icon: 'water',
     name: 'Ariel',
-    emoji: '🌊',
     perspective: 'Finds resilience, balance, and possibility',
     welcome: 'Unwind the day and reconnect with your steadier side.',
   },

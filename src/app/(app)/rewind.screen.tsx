@@ -1,11 +1,14 @@
-import { Icon } from '@iconify/react'
 import {
+  RiEmotionHappyLine,
+  RiFlashlightLine,
   RiHistoryLine,
+  RiMoonClearLine,
   RiPauseLine,
   RiPlayLine,
   RiRefreshLine,
   RiSettings3Line,
   RiStopCircleLine,
+  RiWaterFlashLine,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -54,10 +57,20 @@ import {
   getRewindPersona,
   REWIND_PERSONAS,
   type RewindPersona,
+  type RewindPersonaIcon,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { adjustColor, cn } from '@/shared/utils/helpers.util'
+
+const REWIND_PERSONA_ICONS: Record<
+  RewindPersonaIcon,
+  typeof RiEmotionHappyLine
+> = {
+  emotion: RiEmotionHappyLine,
+  flashlight: RiFlashlightLine,
+  moon: RiMoonClearLine,
+  water: RiWaterFlashLine,
+}
 
 type RewindConversationStage =
   | 'ARRIVING'
@@ -239,7 +252,8 @@ function PersonaThumbnail({
   disabled?: boolean
 }): ReactElement {
   const $color = persona.color
-  const color = adjustColor($color, { lightness: -10, saturation: -20 })
+  const color = adjustColor($color, { lightness: -10, saturation: 0 })
+  const PersonaIcon = REWIND_PERSONA_ICONS[persona.icon]
 
   return (
     <Pressable
@@ -259,14 +273,7 @@ function PersonaThumbnail({
     >
       <View className="absolute inset-0 opacity-70 bg-[var(--tw-themecolor)]" />
       <View className="z-10 items-center justify-center mb-3 opacity-40">
-        <Icon
-          icon={getEmojiIcon(persona.emoji)}
-          className="text-white"
-          style={{
-            fontSize: '34px',
-            filter: 'brightness(0)',
-          }}
-        />
+        <PersonaIcon size={34} color="white" />
       </View>
       <Text className="absolute bottom-1.5 z-10 font-bbh text-[10px] font-bold text-white">
         {persona.name}
@@ -289,6 +296,7 @@ function PersonaArtwork({
     saturation: -20,
   })
   const darkColor = adjustColor(color, { lightness: -25, saturation: -20 })
+  const PersonaIcon = REWIND_PERSONA_ICONS[persona.icon]
 
   return (
     <View
@@ -318,11 +326,7 @@ function PersonaArtwork({
       />
       <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
         <View className="mb-5 items-center opacity-40 absolute scale-[1.7] top-0 right-1/2 translate-x-1/2 justify-center">
-          <Icon
-            icon={getEmojiIcon(persona.emoji)}
-            className="text-white"
-            style={{ fontSize: '112px', filter: 'brightness(0)' }}
-          />
+          <PersonaIcon size={112} color="white" />
         </View>
         <Text className="font-bbh relative z-10 text-2xl font-extrabold text-white">
           {persona.name}
