@@ -18,7 +18,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
             Balance
           </Text>
         </View>
-        <Text className="text-white text-4xl font-bold font-bbh">
+        <Text className="text-white text-4xl font-bold font-display">
           {rewards.balance.toLocaleString()}
           <Text className="text-xs">pts</Text>
         </Text>
@@ -36,7 +36,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
                 Pending Play Points
               </Text>
             </View>
-            <Text className="text-accent-400 text-2xl font-bold font-bbh">
+            <Text className="text-accent-400 text-2xl font-bold font-display">
               {rewards.pendingPoints.toLocaleString()}
             </Text>
           </View>
@@ -76,10 +76,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
 
       <View className="mt-5 border-t border-white/10 pt-5">
         <RewardActivityTrail />
-        
       </View>
-
-    
     </View>
   )
 }

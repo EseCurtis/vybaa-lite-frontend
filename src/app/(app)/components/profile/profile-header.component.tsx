@@ -46,7 +46,7 @@ export function ProfileHeader({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Text className="text-white text-4xl font-bbh font-bold">
+                <Text className="text-white text-4xl font-display font-bold">
                   {initials}
                 </Text>
               )}
@@ -56,7 +56,7 @@ export function ProfileHeader({
 
         {!isEditing && (
           <View className="items-start space-y-1">
-            <Text className="text-white text-xl font-bbh font-bold">
+            <Text className="text-white text-xl font-display font-bold">
               {displayName}
             </Text>
             <View className="flex-row items-center gap-1">

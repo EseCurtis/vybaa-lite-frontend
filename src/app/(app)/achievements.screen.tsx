@@ -153,7 +153,7 @@ function BadgeDetailsSheet({
         />
       </View>
 
-      <Text className="mt-5 text-center text-2xl font-bold text-card-lighter">
+      <Text className="mt-5 text-center text-2xl font-display font-bold text-card-lighter">
         {badge.title}
       </Text>
       <Text className="muted mt-2 px-2 text-center text-sm leading-6">
