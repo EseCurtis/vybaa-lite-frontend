@@ -328,7 +328,7 @@ function PersonaArtwork({
         <View className="mb-5 items-center  justify-center">
           <PersonaIcon size={112} color="var(--persona-color)" />
         </View>
-        <Text className="font-bbh relative z-10 text-2xl font-extrabold text-white">
+        <Text className="font-display relative z-10 text-2xl font-extrabold text-white">
           {persona.name}
         </Text>
         <Text className="mt-2  relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
@@ -1405,7 +1405,7 @@ export default function RewindScreen(): ReactElement {
               </Text>
             </View>
             <View className="items-center justify-center ">
-              <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
+              <Text className="mt-2 text-white font-display text-xl font-extrabold">
                 <View className="flex-row items-center">
                   <Text className=" text-accent-400">@</Text>
                   {user?.username}
@@ -1413,7 +1413,7 @@ export default function RewindScreen(): ReactElement {
                 </View>
               </Text>
 
-              <Text className="mt-0 text-white font-bbh text-xl font-extrabold">
+              <Text className="mt-0 text-white font-display text-xl font-extrabold">
                 <Text className="text-card-lighter-3">you're Rewinding W/</Text>{' '}
                 <Text className="">
                   <Text className="text-[var(--theme)]">@</Text>
@@ -1454,9 +1454,17 @@ export default function RewindScreen(): ReactElement {
               onPress={() => {
                 void startSession()
               }}
+              accessibilityLabel={
+                hasActiveSession
+                  ? isConversationPaused
+                    ? 'Resume your Rewind'
+                    : 'Rewind is active'
+                  : 'Start your Rewind'
+              }
+              accessibilityRole="button"
               className={cn(
                 isConversationPaused && 'saturate-0 opacity-50',
-                'bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full mt-16',
+                'relative bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full mt-16',
               )}
             >
               <motion.div
@@ -1477,6 +1485,13 @@ export default function RewindScreen(): ReactElement {
                   />
                 </View>
               </motion.div>
+              {!hasActiveSession || isConversationPaused ? (
+                <View className="pointer-events-none absolute inset-0 items-center justify-center">
+                  <View className="h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                    <RiPlayLine size={30} className="ml-1 text-cardd" />
+                  </View>
+                </View>
+              ) : null}
             </Pressable>
 
             {!hasActiveSession ? (
@@ -1516,7 +1531,7 @@ export default function RewindScreen(): ReactElement {
                   className="min-h-12 w-full flex-row items-center justify-center gap-2 rounded-full bg-white px-4"
                 >
                   <RiStopCircleLine size={19} className="text-cardd" />
-                  <Text className="font-bbh font-bold text-cardd">
+                  <Text className="font-display font-bold text-cardd">
                     {isFinishingSession && finalizationStage
                       ? REWIND_FINALIZATION_LABELS[finalizationStage]
                       : 'Conclude'}
