@@ -57,9 +57,12 @@ function FlexxCardFooter({
         {userAvatarUrl && <Avatar url={userAvatarUrl} size={avatarSize} />}
         <View>
           {username && (
-            <Text className="text-white text-base font-bbh font-semibold">
-              @{username} <UserCheckmark/>
-            </Text>
+            <View className="flex-row items-center">
+              <Text className="text-white text-base font-bbh font-semibold">
+                @{username}
+              </Text>
+              <UserCheckmark />
+            </View>
           )}
           <Text className="text-white/40 text-xs font-bbh">{label}</Text>
         </View>

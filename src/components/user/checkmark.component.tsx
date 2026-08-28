@@ -5,7 +5,7 @@ import { View } from '../layout/view.component'
 export function UserCheckmark() {
   const { isPro } = useSubscription()
   return (
-    isPro && (
+    !isPro && (
       <View className="relative">
         <RiVerifiedBadgeLine size={15} className="text-white absolute " />
         <RiVerifiedBadgeFill

@@ -306,7 +306,7 @@ function PersonaArtwork({
           '--persona-dark-color': darkColor,
         } as CSSProperties
       }
-      className="relative w-full overflow-hidden rounded-[40px] bg-cardx"
+      className="relative w-full overflow-hidden rounded-3xl bg-cardx"
     >
       <View
         className="absolute opacity-30 top-10 inset-0"
@@ -318,15 +318,15 @@ function PersonaArtwork({
         }}
       />
       <View
-        className="absolute inset-2   rounded-[36px] border-2 border-[var(--persona-color)] opacity-70"
+        className="absolute inset-2 rounded-3xl border-2 border-[var(--persona-color)] opacity-70"
         style={{
           maskImage:
             'linear-gradient(to bottom, transparent 0%, black 45%, transparent 100%)',
         }}
       />
       <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
-        <View className="mb-5 items-center opacity-40 absolute scale-[1.7] top-0 right-1/2 translate-x-1/2 justify-center">
-          <PersonaIcon size={112} color="white" />
+        <View className="mb-5 items-center  justify-center">
+          <PersonaIcon size={112} color="var(--persona-color)" />
         </View>
         <Text className="font-bbh relative z-10 text-2xl font-extrabold text-white">
           {persona.name}

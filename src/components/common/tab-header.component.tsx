@@ -45,9 +45,9 @@ export function TabHeader({
                 }
                 void hapticFeedback.light()
               }}
-              className="w-12 h-12 rounded-full bg-cardx flex items-center justify-center"
+              className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
             >
-              <RiArrowLeftSLine size={24} className="text-white" />
+              <RiArrowLeftSLine size={24} className="text-cardx" />
             </Pressable>{' '}
           </View>
         )}
