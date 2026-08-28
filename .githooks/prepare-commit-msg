@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+MESSAGE_FILE=${1:?commit message file is required}
+SOURCE=${2-}
+
+# Preserve messages supplied by the user and Git-generated merge/squash messages.
+case "$SOURCE" in
+  message|merge|squash)
+    exit 0
+    ;;
+esac
+
+node "$REPO_ROOT/scripts/generate-commit-message.mjs" "$MESSAGE_FILE"
