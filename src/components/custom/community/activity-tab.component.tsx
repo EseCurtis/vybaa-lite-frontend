@@ -1,6 +1,6 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { BottomNotchPadd } from '@/components/common/notch.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { ActivityItem } from '@/components/custom/community/activity-item.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -35,8 +35,19 @@ export function ActivityTab({
 }: ActivityTabProps) {
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Spinner />
+      <View className="gap-3 p-4">
+        {[1, 2, 3].map((item) => (
+          <View key={item} className="gap-3 rounded-2xl bg-cardx p-4">
+            <View className="flex-row items-center gap-3">
+              <Skeleton className="size-10" rounded="full" />
+              <View className="flex-1 gap-2">
+                <Skeleton className="h-3 w-2/3" rounded="sm" />
+                <Skeleton className="h-3 w-1/3" rounded="sm" />
+              </View>
+            </View>
+            <Skeleton className="h-4 w-full" rounded="sm" />
+          </View>
+        ))}
       </View>
     )
   }
@@ -86,7 +97,7 @@ export function ActivityTab({
       <VirtualList
         items={activities}
         estimateSize={120}
-        header={<View className='pt-7'/>}
+        header={<View className="pt-7" />}
         renderItem={(activity, index) => (
           <ActivityItem
             key={activity.id}
@@ -94,11 +105,11 @@ export function ActivityTab({
             onReact={onReact}
             onComment={onComment}
             isReacting={reactingActivityId === activity.id}
-            isLastItem={!!(index ==  activities.length - 1)}
+            isLastItem={!!(index == activities.length - 1)}
           />
         )}
         footer={
-          <View className='pb-[120px]'>
+          <View className="pb-[120px]">
             {hasNextPage ? (
               <View className="mt-4 mb-2">
                 <Pressable

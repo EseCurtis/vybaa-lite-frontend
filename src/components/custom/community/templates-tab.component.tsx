@@ -1,5 +1,5 @@
 import { EmptyList } from '@/components/common/empty-list.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { TemplateCard } from '@/components/custom/community/template-card.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -38,8 +38,14 @@ export function TemplatesTab({
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Spinner />
+      <View className="gap-3 p-4">
+        {[1, 2, 3].map((item) => (
+          <View key={item} className="gap-3 rounded-2xl bg-cardx p-4">
+            <Skeleton className="h-5 w-2/3" rounded="sm" />
+            <Skeleton className="h-3 w-full" rounded="sm" />
+            <Skeleton className="h-3 w-1/2" rounded="sm" />
+          </View>
+        ))}
       </View>
     )
   }

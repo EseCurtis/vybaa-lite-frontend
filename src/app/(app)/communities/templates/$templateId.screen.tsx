@@ -1,6 +1,7 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { BottomNotch } from '@/components/common/notch.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
@@ -8,7 +9,10 @@ import { TemplateParticipantCard } from '@/components/custom/community/template-
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useTemplate, useTemplateParticipants } from '@/hooks/use-communities.hook'
+import {
+  useTemplate,
+  useTemplateParticipants,
+} from '@/hooks/use-communities.hook'
 import { normalizePages } from '@/shared/utils/helpers.util'
 import { RiFileList3Line, RiRefreshLine } from '@remixicon/react'
 import { useParams, useRouter } from '@tanstack/react-router'
@@ -16,10 +20,13 @@ import { useState } from 'react'
 
 export default function TemplateDetailScreen() {
   const router = useRouter()
-  const { templateId } = useParams({ from: '/app/community/templates/$templateId' })
+  const { templateId } = useParams({
+    from: '/app/community/templates/$templateId',
+  })
   const [page, setPage] = useState(1)
 
-  const { data: template, isLoading: isLoadingTemplate } = useTemplate(templateId)
+  const { data: template, isLoading: isLoadingTemplate } =
+    useTemplate(templateId)
   const {
     data: participantsData,
     isLoading: isLoadingParticipants,
@@ -52,8 +59,10 @@ export default function TemplateDetailScreen() {
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
           <TabHeader canGoBack title="Template Details" onBack={handleBack} />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <View className="gap-4 px-mg py-5">
+            <Skeleton className="h-40 w-full" rounded="xl" />
+            <Skeleton className="h-6 w-2/3" rounded="sm" />
+            <Skeleton className="h-20 w-full" rounded="xl" />
           </View>
         </NoiseComponent>
       </View>
@@ -82,7 +91,7 @@ export default function TemplateDetailScreen() {
       <NoiseComponent>
         <TabHeader
           canGoBack
-          title={"Participants"}
+          title={'Participants'}
           onBack={handleBack}
           children={
             <Pressable
@@ -153,8 +162,16 @@ export default function TemplateDetailScreen() {
 
         <View className="flex-1 px-mg pb-20">
           {isLoadingParticipants ? (
-            <View className="flex-1 items-center justify-center">
-              <Spinner />
+            <View className="gap-3 py-4">
+              {[1, 2].map((item) => (
+                <View
+                  key={item}
+                  className="flex-row items-center gap-3 rounded-2xl bg-cardx p-4"
+                >
+                  <Skeleton className="size-10" rounded="full" />
+                  <Skeleton className="h-4 w-1/2" rounded="sm" />
+                </View>
+              ))}
             </View>
           ) : participants.length === 0 ? (
             <EmptyList

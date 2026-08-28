@@ -10,7 +10,7 @@ import type { ReactElement } from 'react'
 import { useState } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -156,11 +156,26 @@ export default function RewindInsightsScreen(): ReactElement {
             </View>
 
             {isLoading ? (
-              <View className="items-center gap-3 py-16">
-                <Spinner />
-                <Text className="muted font-bbh text-sm">
-                  Reading your reflections…
-                </Text>
+              <View className="gap-5 py-3">
+                <View
+                  className="gap-4 rounded-2xl px-4 py-5"
+                  style={{ backgroundColor: colors.cardx }}
+                >
+                  <View className="gap-2">
+                    <Skeleton className="h-4 w-40" rounded="sm" />
+                    <Skeleton className="h-3 w-56" rounded="sm" />
+                  </View>
+                  <Skeleton className="aspect-square w-full" rounded="xl" />
+                </View>
+                <View
+                  className="gap-4 rounded-2xl px-4 py-5"
+                  style={{ backgroundColor: colors.cardx }}
+                >
+                  <Skeleton className="h-4 w-36" rounded="sm" />
+                  <Skeleton className="h-8 w-full" rounded="md" />
+                  <Skeleton className="h-8 w-full" rounded="md" />
+                  <Skeleton className="h-8 w-full" rounded="md" />
+                </View>
               </View>
             ) : isError ? (
               <View className="gap-4 py-12">

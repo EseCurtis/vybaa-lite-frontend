@@ -1,5 +1,6 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { BottomNotch } from '@/components/common/notch.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Spinner } from '@/components/common/spinner.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -38,9 +39,9 @@ interface GoalListProps {
     handleBulkDelete?: () => void
     handleCreateGoal?: () => void
     toggleBulkMode?: () => void
-  },
+  }
   states?: {
-    isDeleting?: boolean;
+    isDeleting?: boolean
   }
 }
 
@@ -51,7 +52,7 @@ export function GoalList({
   selectedGoals = new Set(),
   onToggleSelection,
   actions,
-  states
+  states,
 }: GoalListProps) {
   const [tab, setTab] = useState(tabs?.[0])
   const filter = useMemo(() => {
@@ -182,8 +183,14 @@ export function GoalList({
 
       <View className="px-mg flex-1">
         {isLoading ? (
-          <View className="flex-1 items-center justify-center">
-            <Spinner size={32} />
+          <View className="gap-3 px-mg py-4">
+            {[1, 2, 3].map((item) => (
+              <View key={item} className="gap-3 rounded-2xl bg-cardx p-4">
+                <Skeleton className="h-5 w-2/3" rounded="sm" />
+                <Skeleton className="h-3 w-full" rounded="sm" />
+                <Skeleton className="h-3 w-1/2" rounded="sm" />
+              </View>
+            ))}
           </View>
         ) : goals.length === 0 ? (
           tab === 'All' ? (

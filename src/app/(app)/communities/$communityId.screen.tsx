@@ -1,7 +1,7 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ActivityTab } from '@/components/custom/community/activity-tab.component'
 import { CommunityBackground } from '@/components/custom/community/community-background.component'
@@ -346,8 +346,10 @@ export default function CommunityDetailScreen() {
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
           <TabHeader title="Community" />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <View className="gap-4 px-mg py-5">
+            <Skeleton className="h-48 w-full" rounded="xl" />
+            <Skeleton className="h-8 w-2/3" rounded="sm" />
+            <Skeleton className="h-28 w-full" rounded="xl" />
           </View>
         </NoiseComponent>
       </View>

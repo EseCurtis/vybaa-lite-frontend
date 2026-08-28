@@ -1,7 +1,7 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { BottomNotch } from '@/components/common/notch.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { CommunitiesHeaderMenuSheet } from '@/components/custom/community/communities-header-menu.sheet'
@@ -191,7 +191,6 @@ export default function CommunitiesScreen() {
   const ListHeader = () => (
     <View className="absolute w-full z-[999] ">
       <View className="relative bg-gradient-to-b from-[#06080c] from-[70%]">
-      
         <TabHeader canGoBack={false} title="Communities">
           <View className="flex-row gap-2 w-full justify-end">
             <Pressable
@@ -206,7 +205,7 @@ export default function CommunitiesScreen() {
 
       <View className="px-msg  items-center">
         <View className="flex-row p-1 bg-card-light/30 backdrop-blur-xl rounded-full w-fit">
-          {(['ALL',  'JOINED', 'MINE'] as const).map((t) => (
+          {(['ALL', 'JOINED', 'MINE'] as const).map((t) => (
             <Pressable
               key={t}
               onPress={() => setTab(t)}
@@ -223,7 +222,11 @@ export default function CommunitiesScreen() {
                     : 'text-card-lighter-3',
                 )}
               >
-                {t === 'ALL' ? 'Discover' : t === 'MINE' ? 'Personal' : 'Partcipating'}
+                {t === 'ALL'
+                  ? 'Discover'
+                  : t === 'MINE'
+                    ? 'Personal'
+                    : 'Partcipating'}
               </Text>
             </Pressable>
           ))}
@@ -239,8 +242,14 @@ export default function CommunitiesScreen() {
         <View className="flex-1 px-05.mg  pt-[200px] mt-1 h-full">
           {isLoading ? (
             <View>
-              <View className="flex-1 items-center justify-center">
-                <Spinner />
+              <View className="gap-3 px-mg py-4">
+                {[1, 2, 3].map((item) => (
+                  <View key={item} className="gap-3 rounded-2xl bg-cardx p-4">
+                    <Skeleton className="h-5 w-3/4" rounded="sm" />
+                    <Skeleton className="h-3 w-full" rounded="sm" />
+                    <Skeleton className="h-3 w-1/2" rounded="sm" />
+                  </View>
+                ))}
               </View>
             </View>
           ) : filtered.length === 0 ? (
@@ -273,7 +282,6 @@ export default function CommunitiesScreen() {
           ) : (
             <VirtualList
               items={filtered}
-             
               height={
                 Dimensions.screenHeight -
                 Dimensions.tabBarHeight -
@@ -294,24 +302,24 @@ export default function CommunitiesScreen() {
                 </>
               )}
               footer={
-               <View className="pb-[50px]">
-                { hasMore ? (
-                  <View className="">
-                    <View className="py-4 pb-10 flex-row items-center justify-center">
-                      <Button
-                        label={isFetching ? 'Loading...' : 'Load More'}
-                        variant="default"
-                        fullWidth
-                        onClick={() => setPage((p) => p + 1)}
-                        disabled={isFetching}
-                        textClassName="text-sm"
-                        size="sm"
-                      />
+                <View className="pb-[50px]">
+                  {hasMore ? (
+                    <View className="">
+                      <View className="py-4 pb-10 flex-row items-center justify-center">
+                        <Button
+                          label={isFetching ? 'Loading...' : 'Load More'}
+                          variant="default"
+                          fullWidth
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={isFetching}
+                          textClassName="text-sm"
+                          size="sm"
+                        />
+                      </View>
+                      <BottomNotch />
                     </View>
-                    <BottomNotch />
-                  </View>
-                ) : null}
-               </View>
+                  ) : null}
+                </View>
               }
             />
           )}

@@ -1,7 +1,7 @@
 import { LineChart } from '@/components/charts/line-chart.component'
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -31,8 +31,13 @@ export default function InsightsScreen() {
 
         <View className="overflow-y-auto no-scrollbar flex-1">
           {isLoading ? (
-            <View className="flex-1 items-center justify-center">
-              <Spinner size={32} />
+            <View className="gap-4 px-mg pb-[120px] pt-4">
+              <Skeleton className="h-44 w-full" rounded="xl" />
+              <Skeleton className="h-36 w-full" rounded="xl" />
+              <View className="grid grid-cols-2 gap-3">
+                <Skeleton className="h-28 w-full" rounded="xl" />
+                <Skeleton className="h-28 w-full" rounded="xl" />
+              </View>
             </View>
           ) : !hasData ? (
             <View className="flex-1 px-mg">

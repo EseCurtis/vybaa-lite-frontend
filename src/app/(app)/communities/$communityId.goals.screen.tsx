@@ -1,6 +1,6 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { TemplatesTab } from '@/components/custom/community/templates-tab.component'
 import { Text } from '@/components/layout/text.component'
@@ -82,8 +82,14 @@ export default function CommunityGoalsScreen() {
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
           <TabHeader canGoBack title="Community goals" onBack={handleBack} />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <View className="gap-3 px-mg py-4">
+            {[1, 2, 3].map((item) => (
+              <View key={item} className="gap-3 rounded-2xl bg-cardx p-4">
+                <Skeleton className="h-5 w-2/3" rounded="sm" />
+                <Skeleton className="h-3 w-full" rounded="sm" />
+                <Skeleton className="h-3 w-1/2" rounded="sm" />
+              </View>
+            ))}
           </View>
         </NoiseComponent>
       </View>

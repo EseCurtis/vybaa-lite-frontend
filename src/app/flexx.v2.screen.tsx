@@ -1,5 +1,5 @@
 import { BottomNotch } from '@/components/common/notch.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import {
   AchievementSelector,
@@ -115,8 +115,12 @@ export function FlexxV2AppScreen() {
 
   if (isLoading || achievementsLoading || rewindInsightsLoading) {
     return (
-      <View className="flex-1 bg-cardd items-center justify-center">
-        <Spinner size={32} />
+      <View className="flex-1 items-center justify-center gap-5 bg-cardd px-mg">
+        <Skeleton className="h-[52vh] w-full max-w-[360px]" rounded="xl" />
+        <View className="w-full max-w-[280px] gap-2">
+          <Skeleton className="h-3 w-2/3" rounded="sm" />
+          <Skeleton className="h-3 w-full" rounded="sm" />
+        </View>
       </View>
     )
   }

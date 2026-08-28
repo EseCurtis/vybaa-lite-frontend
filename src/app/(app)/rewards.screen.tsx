@@ -1,7 +1,7 @@
 import { PlayWalletPanel } from '@/app/(app)/components/rewards/play-wallet-panel.component'
 import { RewardsHeader } from '@/app/(app)/components/rewards/rewards-header.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { rewardsQueryKeys, useRewards } from '@/hooks/use-rewards.hook'
@@ -24,8 +24,12 @@ export default function RewardsScreen() {
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
           <RewardsHeader onRefresh={handleRefresh} />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <View className="gap-4 px-mg py-4">
+            <Skeleton className="h-40 w-full" rounded="xl" />
+            <View className="grid grid-cols-2 gap-3">
+              <Skeleton className="h-28 w-full" rounded="xl" />
+              <Skeleton className="h-28 w-full" rounded="xl" />
+            </View>
           </View>
         </NoiseComponent>
       </View>

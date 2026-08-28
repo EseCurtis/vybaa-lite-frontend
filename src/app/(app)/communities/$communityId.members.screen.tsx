@@ -1,6 +1,6 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { PullToRefresh } from '@/components/common/pull-to-refresh.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { MembersTab } from '@/components/custom/community/members-tab.component'
 import { Text } from '@/components/layout/text.component'
@@ -20,8 +20,7 @@ export default function CommunityMembersScreen() {
     data: community,
     isLoading: isLoadingCommunity,
     refetch: refetchCommunity,
-  } =
-    useCommunity(communityId)
+  } = useCommunity(communityId)
   const {
     data: membersData,
     isLoading: isLoadingMembers,
@@ -61,8 +60,19 @@ export default function CommunityMembersScreen() {
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
           <TabHeader canGoBack title="Community members" onBack={handleBack} />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <View className="gap-3 px-mg py-4">
+            {[1, 2, 3, 4].map((item) => (
+              <View
+                key={item}
+                className="flex-row items-center gap-3 rounded-2xl bg-cardx p-4"
+              >
+                <Skeleton className="size-11" rounded="full" />
+                <View className="flex-1 gap-2">
+                  <Skeleton className="h-4 w-1/2" rounded="sm" />
+                  <Skeleton className="h-3 w-1/3" rounded="sm" />
+                </View>
+              </View>
+            ))}
           </View>
         </NoiseComponent>
       </View>

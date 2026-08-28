@@ -1,5 +1,5 @@
 import { EmptyList } from '@/components/common/empty-list.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
 import { MemberCard } from '@/components/custom/community/member-card.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -29,8 +29,19 @@ export function MembersTab({
 }: MembersTabProps) {
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center">
-        <Spinner />
+      <View className="gap-3 p-4">
+        {[1, 2, 3, 4].map((item) => (
+          <View
+            key={item}
+            className="flex-row items-center gap-3 rounded-2xl bg-cardx p-4"
+          >
+            <Skeleton className="size-11" rounded="full" />
+            <View className="flex-1 gap-2">
+              <Skeleton className="h-4 w-1/2" rounded="sm" />
+              <Skeleton className="h-3 w-1/3" rounded="sm" />
+            </View>
+          </View>
+        ))}
       </View>
     )
   }
