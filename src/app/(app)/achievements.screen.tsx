@@ -412,7 +412,7 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <View className="flex-1 bg-cardd z-20">
+    <View className="flex-1 min-h-0 bg-cardd z-20">
       <TabHeader
         title={
           <View>
@@ -434,7 +434,10 @@ export default function AchievementsScreen() {
         </Pressable>
       </TabHeader>
 
-      <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
+      <View
+        className="min-h-0 flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto"
+        style={{ height: 'auto', WebkitOverflowScrolling: 'touch' }}
+      >
         {/* Stats Cards */}
         {stats && stats.totalBadges > 0 && (
           <View className="mb-8">
