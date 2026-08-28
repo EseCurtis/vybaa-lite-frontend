@@ -1,5 +1,7 @@
 export type HomeGreeting = readonly [string, string, string]
 
+const HOME_GREETING_INTERVAL_MS = 5 * 60 * 1_000
+
 export function randomGreetings(username?: string): HomeGreeting {
   const name = username?.trim() || 'Buddy'
 
@@ -46,9 +48,9 @@ export function randomGreetings(username?: string): HomeGreeting {
     [`Where do we begin?`, `Choose what matters.`, '🎯'],
   ]
 
-  const minute = Math.floor(Date.now() / 1_000)
+  const timeBucket = Math.floor(Date.now() / HOME_GREETING_INTERVAL_MS)
 
-  let hash = minute
+  let hash = timeBucket
   hash ^= hash >>> 16
   hash = Math.imul(hash, 0x45d9f3b)
   hash ^= hash >>> 16
