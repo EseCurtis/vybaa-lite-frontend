@@ -9,6 +9,7 @@
     "build": "vite build",
     "build:prod": "yarn build production",
     "serve": "vite preview",
+    "prepare": "git config core.hooksPath .githooks",
     "testx": "vitest run",
     "lint": "eslint",
     "format": "prettier",
