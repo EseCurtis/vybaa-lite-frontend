@@ -412,13 +412,13 @@ export default function AchievementsScreen() {
   }
 
   return (
-    <View className="flex-1 min-h-0 bg-cardd z-20">
+    <View className="flex-1 min-h-0 absolute top-0 left-0 size-full bg-cardd ">
       <TabHeader
         title={
           <View>
             Achievements
             {stats && (
-              <Text className="!text-card-lighter/70 text-sm font-bbh mb-2">
+              <Text className="!text-card-lighter/70 text-sm  font-bbh mb-2">
                 {stats.totalBadges}{' '}
                 {stats.totalBadges === 1 ? 'badge' : 'badges'} earned
               </Text>
@@ -435,7 +435,7 @@ export default function AchievementsScreen() {
       </TabHeader>
 
       <View
-        className="min-h-0 flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto"
+        className="min-h-0 flex-1 px-4 pb-[120px] pt-6  max-w-4xl mx-auto overflow-y-auto"
         style={{ height: 'auto', WebkitOverflowScrolling: 'touch' }}
       >
         {/* Stats Cards */}

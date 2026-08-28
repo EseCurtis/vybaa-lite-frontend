@@ -101,8 +101,8 @@ export function RewardActivityTrail() {
     []
 
   return (
-    <View>
-      <View className="mb-1 flex-row items-center justify-between">
+    <View className="pb-[100px]">
+      <View className="mb-1 flex-row items-center justify-between ">
         <View className="flex-row items-center gap-2">
           <RiHistoryLine size={20} className="text-accent-400" />
           <Text className="font-bbh text-sm font-bold text-white">

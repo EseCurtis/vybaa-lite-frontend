@@ -1,6 +1,6 @@
+import { RewardActivityTrail } from '@/app/(app)/components/rewards/reward-activity-trail.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { RewardActivityTrail } from '@/app/(app)/components/rewards/reward-activity-trail.component'
 import type { RewardsData } from '@/shared/api/rewards.api'
 import { RiCoinsLine, RiTrophyLine } from '@remixicon/react'
 
@@ -10,7 +10,7 @@ interface PlayWalletPanelProps {
 
 export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
   return (
-    <View className="rounded-[28px] bg-cardx p-5">
+    <View className="rounded-[28px] px-05-mg ">
       <View className="space-y-1">
         <View className="flex-row items-center gap-2">
           <RiCoinsLine size={24} className="text-accent-400" />
@@ -76,7 +76,10 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
 
       <View className="mt-5 border-t border-white/10 pt-5">
         <RewardActivityTrail />
+        
       </View>
+
+    
     </View>
   )
 }

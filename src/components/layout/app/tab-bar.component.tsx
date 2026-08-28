@@ -5,13 +5,13 @@ import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
-import { featureFlags } from '@/shared/config/feature-flags.config'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
+import { StarIcon } from 'lucide-react'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
 import { LinearGradient } from '../linear-gradient.component'
@@ -46,21 +46,21 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
-          enabled: featureFlags.communities,
+          enabled: true,
         },
-        {
-          id: 'communities',
-          route: '/app/communities',
-          icon: Icons.Users,
-          label: 'Communities',
-          isSpecial: false,
-          badge: null,
-          matchAllRoot: true,
-        },
+        // {
+        //   id: 'communities',
+        //   route: '/app/communities',
+        //   icon: Icons.Users,
+        //   label: 'Communities',
+        //   isSpecial: false,
+        //   badge: null,
+        //   matchAllRoot: true,
+        // },
         {
           id: 'rewards',
           route: '/app/rewards',
-          icon: Icons.Coins,
+          icon: StarIcon,
           label: 'Play Points',
           isSpecial: false,
           badge: null,

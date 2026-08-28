@@ -7,13 +7,11 @@ import { featureFlags } from '@/shared/config/feature-flags.config'
 import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import {
-  RiEmotionLaughLine,
-  RiFileMarkedLine,
-  RiFireLine,
+  RiEmotionLaughLine, RiFireLine,
   RiHeart2Line,
   RiRewindLine,
   RiTempColdLine,
-  type RemixiconComponentType,
+  type RemixiconComponentType
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { CreateGoalSheet } from '../goal/create-goal-sheet.component'
@@ -130,19 +128,19 @@ export function HomeActions() {
         })
       },
     },
-    {
-      name: 'Journal',
-      description: 'Reflect on your day and track your thoughts',
-      icon: RiFileMarkedLine,
-      enabled: featureFlags.journal,
-      onAction() {
-        // Navigate directly to today's journal entry
-        const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
-        navigate({
-          to: `/journal/${today}`,
-        })
-      },
-    },
+    // {
+    //   name: 'Journal',
+    //   description: 'Reflect on your day and track your thoughts',
+    //   icon: RiFileMarkedLine,
+    //   enabled: featureFlags.journal,
+    //   onAction() {
+    //     // Navigate directly to today's journal entry
+    //     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+    //     navigate({
+    //       to: `/journal/${today}`,
+    //     })
+    //   },
+    // },
     {
       name: 'Chill',
       description: 'Calm down and regulate your emotions',
