@@ -14,7 +14,15 @@
       },
       "oauth_client": [
         {
-          "client_id": "103411505324-i30nuioq08e34icvhes25a0fjedb4lr3.apps.googleusercontent.com",
+          "client_id": "103411505324-2kpn18sgrlr0tnqu6gf94dmbsc5otmda.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vybaa.app",
+            "certificate_hash": "b33ebb081d1de5631107621805ba6da4d34fe4fd"
+          }
+        },
+        {
+          "client_id": "103411505324-o2aiqf5f21htkperjf6vhgjpl0l7om75.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.vybaa.app",
@@ -22,7 +30,7 @@
           }
         },
         {
-          "client_id": "103411505324-t7r7leths7rvdqs0cmlccdmd5q5059e2.apps.googleusercontent.com",
+          "client_id": "103411505324-1t5riqsb67amec70prldudugvudhfsqm.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
@@ -35,7 +43,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "103411505324-t7r7leths7rvdqs0cmlccdmd5q5059e2.apps.googleusercontent.com",
+              "client_id": "103411505324-1t5riqsb67amec70prldudugvudhfsqm.apps.googleusercontent.com",
               "client_type": 3
             },
             {

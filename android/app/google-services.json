@@ -18,6 +18,14 @@
           "client_type": 1,
           "android_info": {
             "package_name": "com.vybaa.app",
+            "certificate_hash": "b33ebb081d1de5631107621805ba6da4d34fe4fd"
+          }
+        },
+        {
+          "client_id": "103411505324-o2aiqf5f21htkperjf6vhgjpl0l7om75.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vybaa.app",
             "certificate_hash": "45efdd312c3335827a57d0b0fb805aff01796857"
           }
         },
