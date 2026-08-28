@@ -10,19 +10,22 @@ import { useAchievements } from '@/hooks/use-achievements.hook'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useFlexxExport } from '@/hooks/use-flexx-export.hook'
 import { useInsights } from '@/hooks/use-insights.hook'
+import { useRewindInsights } from '@/hooks/use-rewind.hook'
 import { useAuth } from '@/providers/auth.provider'
 import type { Achievement } from '@/shared/api/achievement.api'
+import type { RewindInsights } from '@/shared/api/rewind.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import '@/styles/swiper-custom.css'
 import { Icon } from '@iconify/react'
 import {
-    RiFireFill,
-    RiFlashlightFill,
-    RiInstagramLine,
-    RiTrophyFill,
-    RiTwitterXLine,
-    RiUpload2Fill,
-    RiWhatsappLine,
+  RiFireFill,
+  RiFlashlightFill,
+  RiHeart2Line,
+  RiInstagramLine,
+  RiTrophyFill,
+  RiTwitterXLine,
+  RiUpload2Fill,
+  RiWhatsappLine,
 } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { useRef, useState } from 'react'
@@ -30,7 +33,7 @@ import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
-type CardType = 'daily' | 'weekly' | 'streak' | 'achievement'
+type CardType = 'daily' | 'weekly' | 'streak' | 'achievement' | 'rewind'
 
 interface FlexxCardProps {
   type: CardType
@@ -45,6 +48,7 @@ interface FlexxCardProps {
   username?: string
   userAvatarUrl?: string
   achievement?: Achievement | null
+  rewind?: RewindInsights | null
 }
 
 interface ShareBottomSheetContentProps {
@@ -60,23 +64,33 @@ interface AchievementSelectorProps {
   selectedId?: string
 }
 
-function AchievementSelector({ achievements, onSelect, selectedId }: AchievementSelectorProps) {
+function AchievementSelector({
+  achievements,
+  onSelect,
+  selectedId,
+}: AchievementSelectorProps) {
   return (
     <View className="space-y-3">
-      <Text className="text-white/70 text-sm font-bbh mb-2">Select Achievement to Flex</Text>
+      <Text className="text-white/70 text-sm font-bbh mb-2">
+        Select Achievement to Flex
+      </Text>
       <View className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
         {achievements.map((achievement) => {
           const isSelected = selectedId === achievement.id
           const emojiIcon = getEmojiIcon(achievement.badgeIcon)
-          
+
           return (
             <motion.div
               key={achievement.id}
               whileTap={{ scale: 0.95 }}
-              animate={isSelected ? {
-                scale: [1, 1.1, 1],
-                rotate: [0, -5, 5, -5, 0],
-              } : {}}
+              animate={
+                isSelected
+                  ? {
+                      scale: [1, 1.1, 1],
+                      rotate: [0, -5, 5, -5, 0],
+                    }
+                  : {}
+              }
               transition={{
                 duration: 0.5,
                 ease: 'easeInOut',
@@ -90,7 +104,12 @@ function AchievementSelector({ achievements, onSelect, selectedId }: Achievement
                     : 'bg-card-light border-2 border-transparent hover:bg-card-light/80'
                 }`}
               >
-                <Icon icon={emojiIcon} width={48} height={48} className="mb-2" />
+                <Icon
+                  icon={emojiIcon}
+                  width={48}
+                  height={48}
+                  className="mb-2"
+                />
                 <Text className="text-white text-xs font-bbh text-center leading-tight line-clamp-2">
                   {achievement.title}
                 </Text>
@@ -202,7 +221,14 @@ function ShareBottomSheetContent({
   )
 }
 
-function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCardProps) {
+function FlexxCard({
+  type,
+  data,
+  username,
+  userAvatarUrl,
+  achievement,
+  rewind,
+}: FlexxCardProps) {
   const today = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -219,6 +245,8 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
         return 'from-orange-600 via-red-700 to-pink-900'
       case 'achievement':
         return 'from-yellow-600 via-amber-700 to-orange-900'
+      case 'rewind':
+        return 'from-pink-700 via-rose-800 to-teal-950'
       default:
         return 'from-purple-600 via-purple-700 to-indigo-900'
     }
@@ -229,7 +257,7 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
       const emojiIcon = getEmojiIcon(achievement.badgeIcon)
       return <Icon icon={emojiIcon} width={size} height={size} />
     }
-    
+
     switch (type) {
       case 'daily':
         return <RiFlashlightFill size={size} className="text-white/90" />
@@ -237,6 +265,8 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
         return <RiTrophyFill size={size} className="text-white/90" />
       case 'streak':
         return <RiFireFill size={size} className="text-white/90" />
+      case 'rewind':
+        return <RiHeart2Line size={size} className="text-white/90" />
       default:
         return <RiTrophyFill size={size} className="text-white/90" />
     }
@@ -245,7 +275,7 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
   // Dynamic font sizing based on number length for scalability
   const getHeroFontSize = (value: number) => {
     const digits = value.toString().length
-    if (digits <= 2) return 'text-[70px]'  // 0-99
+    if (digits <= 2) return 'text-[70px]' // 0-99
     if (digits === 3) return 'text-[60px]' // 100-999
     return 'text-[50px]' // 1000+
   }
@@ -259,20 +289,20 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
 
   const getGridFontSize = (value: number | string) => {
     const str = value.toString()
-    if (str.length <= 2) return 'text-6xl'  // 0-99
+    if (str.length <= 2) return 'text-6xl' // 0-99
     if (str.length === 3) return 'text-5xl' // 100-999
     return 'text-4xl' // 1000+
   }
 
   // Different layouts for each card type
   if (type === 'daily') {
-  return (
+    return (
       <View className="size-full relative overflow-hidden">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-              style={{
+          style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -294,7 +324,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
             <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-4">
               Today's Discipline
             </Text>
-            <Text className={`text-white ${getHeroFontSize(data.totalCheckIns)} leading-none font-bbh font-bold mb-2`}>
+            <Text
+              className={`text-white ${getHeroFontSize(data.totalCheckIns)} leading-none font-bbh font-bold mb-2`}
+            >
               {data.totalCheckIns}
             </Text>
             <Text className="text-white/80 text-lg font-bbh tracking-wide">
@@ -361,13 +393,13 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
   }
 
   if (type === 'weekly') {
-              return (
+    return (
       <View className="size-full relative overflow-hidden">
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-                  style={{
+          style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -395,7 +427,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Total Goals
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.totalGoals)} font-bbh font-bold leading-none `}>
+              <Text
+                className={`text-white ${getGridFontSize(data.totalGoals)} font-bbh font-bold leading-none `}
+              >
                 {data.totalGoals}
               </Text>
             </View>
@@ -404,7 +438,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Check-ins
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}>
+              <Text
+                className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}
+              >
                 {data.totalCheckIns}
               </Text>
             </View>
@@ -413,7 +449,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Progress
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.averageProgress)} font-bbh font-bold leading-none`}>
+              <Text
+                className={`text-white ${getGridFontSize(data.averageProgress)} font-bbh font-bold leading-none`}
+              >
                 {Math.round(data.averageProgress)}
                 <span className="text-2xl">%</span>
               </Text>
@@ -423,7 +461,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide mb-2">
                 Streak
               </Text>
-              <Text className={`text-white ${getGridFontSize(data.currentStreak)} font-bbh font-bold leading-none break-all`}>
+              <Text
+                className={`text-white ${getGridFontSize(data.currentStreak)} font-bbh font-bold leading-none break-all`}
+              >
                 {data.currentStreak}
                 <span className="text-xl">d</span>
               </Text>
@@ -454,8 +494,8 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
             </View>
           </View>
         </View>
-                </View>
-              )
+      </View>
+    )
   }
 
   if (type === 'streak') {
@@ -465,7 +505,7 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
         <div
-              style={{
+          style={{
             background: 'url(/assets/framernoise.png)',
             backgroundSize: '300px',
             opacity: 0.15,
@@ -493,7 +533,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.3em] mb-4">
                 Current Streak
               </Text>
-              <Text className={`text-white ${getStreakFontSize(data.currentStreak)} leading-none font-bbh font-bold break-all`}>
+              <Text
+                className={`text-white ${getStreakFontSize(data.currentStreak)} leading-none font-bbh font-bold break-all`}
+              >
                 {data.currentStreak}
               </Text>
               <Text className="text-white text-5xl font-bbh font-bold mt-3 tracking-wider">
@@ -504,7 +546,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
             {/* Mini Stats Row - Flexible */}
             <View className="flex-row items-stretch justify-between w-full max-w-[90%] mt-20 gap-3">
               <View className="text-center flex-1 flex flex-col items-center">
-                <Text className={`text-white ${getGridFontSize(data.longestStreak)} font-bbh font-bold leading-none break-all`}>
+                <Text
+                  className={`text-white ${getGridFontSize(data.longestStreak)} font-bbh font-bold leading-none break-all`}
+                >
                   {data.longestStreak}
                 </Text>
                 <Text className="text-white/60 text-[10px] font-bbh uppercase mt-2 tracking-wide">
@@ -515,7 +559,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <View className="w-px self-stretch bg-white/20 my-1" />
 
               <View className="text-center flex-1 flex flex-col items-center">
-                <Text className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}>
+                <Text
+                  className={`text-white ${getGridFontSize(data.totalCheckIns)} font-bbh font-bold leading-none `}
+                >
                   {data.totalCheckIns}
                 </Text>
                 <Text className="text-white/60 text-[10px] font-bbh uppercase mt-2 tracking-wide">
@@ -526,7 +572,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
               <View className="w-px self-stretch bg-white/20 my-1" />
 
               <View className="text-center flex-1 flex flex-col items-center">
-                <Text className={`text-white ${getGridFontSize(data.completionRate)} font-bbh font-bold leading-none break-all`}>
+                <Text
+                  className={`text-white ${getGridFontSize(data.completionRate)} font-bbh font-bold leading-none break-all`}
+                >
                   {Math.round(data.completionRate)}
                   <span className="text-xl">%</span>
                 </Text>
@@ -569,7 +617,9 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
     if (!achievement) {
       return (
         <View className="size-full relative overflow-hidden">
-          <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`} />
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+          />
           <div
             style={{
               background: 'url(/assets/framernoise.png)',
@@ -603,15 +653,20 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
       )
     }
 
-    const earnedDate = new Date(achievement.earnedAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
+    const earnedDate = new Date(achievement.earnedAt).toLocaleDateString(
+      'en-US',
+      {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      },
+    )
 
     return (
       <View className="size-full relative overflow-hidden">
-        <div className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`} />
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+        />
         <div
           style={{
             background: 'url(/assets/framernoise.png)',
@@ -638,13 +693,13 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
             <motion.div
               key={achievement.id}
               initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ 
-                scale: 1, 
+              animate={{
+                scale: 1,
                 opacity: 1,
                 rotate: [0, -3, 3, -3, 0],
                 y: [0, -10, 0, -5, 0],
               }}
-              transition={{ 
+              transition={{
                 scale: { duration: 0.6, type: 'spring', stiffness: 200 },
                 opacity: { duration: 0.4 },
                 rotate: { duration: 0.8, ease: 'easeInOut', delay: 0.3 },
@@ -665,11 +720,11 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
                 }}
                 className="absolute inset-0 bg-yellow-400/30 rounded-full blur-3xl scale-150"
               />
-              
+
               <View className="relative z-10 flex items-center justify-center">
-                <Icon 
-                  icon={getEmojiIcon(achievement.badgeIcon)} 
-                  width={160} 
+                <Icon
+                  icon={getEmojiIcon(achievement.badgeIcon)}
+                  width={160}
                   height={160}
                 />
               </View>
@@ -688,9 +743,12 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
             {/* Milestone Badge */}
             <View className="mt-8 bg-white backdrop-blur-sm rounded-full px-6 py-3">
               <Text className="text-black text-lg font-bbh font-bold">
-                {achievement.type === 'streak_milestone' && `${achievement.milestone} Day Streak`}
-                {achievement.type === 'total_goals' && `${achievement.milestone} Goals`}
-                {achievement.type === 'total_checkins' && `${achievement.milestone} Check-ins`}
+                {achievement.type === 'streak_milestone' &&
+                  `${achievement.milestone} Day Streak`}
+                {achievement.type === 'total_goals' &&
+                  `${achievement.milestone} Goals`}
+                {achievement.type === 'total_checkins' &&
+                  `${achievement.milestone} Check-ins`}
                 {achievement.type === 'perfect_week' && 'Perfect Week'}
                 {achievement.type === 'comeback' && 'Comeback'}
                 {achievement.type === 'early_bird' && 'Early Bird'}
@@ -727,22 +785,142 @@ function FlexxCard({ type, data, username, userAvatarUrl, achievement }: FlexxCa
     )
   }
 
+  if (type === 'rewind') {
+    const completedSessions = rewind?.coverage.completedSessions ?? 0
+    const consistency = rewind?.progress?.consistency ?? 0
+    const reflection =
+      rewind?.contextualInsight ??
+      'A little reflection can reveal what your days are asking for.'
+
+    return (
+      <View className="size-full relative overflow-hidden">
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
+        />
+        <div
+          style={{
+            background: 'url(/assets/framernoise.png)',
+            backgroundSize: '300px',
+            opacity: 0.15,
+            mixBlendMode: 'overlay',
+          }}
+          className="absolute inset-0"
+        />
+
+        <View className="relative z-10 flex-1 size-full flex flex-col p-6">
+          <View className="flex-row items-start justify-between mb-8">
+            <View>
+              <Text className="text-white/50 text-sm font-bbh">
+                Last 7 days
+              </Text>
+              <Text className="text-white text-2xl font-bbh font-bold mt-2">
+                Rewind reflection
+              </Text>
+            </View>
+            {getIcon(42)}
+          </View>
+
+          <View className="flex-1 justify-center">
+            <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-4">
+              Sessions completed
+            </Text>
+            <Text
+              className={`text-white ${getHeroFontSize(completedSessions)} leading-none font-bbh font-bold`}
+            >
+              {completedSessions}
+            </Text>
+            <Text className="text-white/80 text-lg font-bbh mt-2">
+              moments made to notice yourself
+            </Text>
+
+            <View className="mt-14 gap-3">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-white/60 text-xs font-bbh uppercase tracking-wide">
+                  Reflection consistency
+                </Text>
+                <Text className="text-white text-xl font-bbh font-bold">
+                  {Math.round(consistency)}%
+                </Text>
+              </View>
+              <View className="h-2 w-full overflow-hidden rounded-full bg-white/20">
+                <View
+                  className="h-full rounded-full bg-white"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, consistency))}%`,
+                  }}
+                />
+              </View>
+            </View>
+
+            <View className="mt-10 rounded-2xl bg-black/20 p-5">
+              <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-2">
+                What is showing up
+              </Text>
+              <Text className="text-white text-base font-bbh leading-6 line-clamp-3">
+                {reflection}
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row items-center justify-between pt-4">
+            <View className="flex-row gap-3 items-center">
+              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
+              <View>
+                {username && (
+                  <Text className="text-white text-base font-bbh font-semibold">
+                    @{username}
+                  </Text>
+                )}
+                <Text className="text-white/40 text-xs font-bbh">
+                  Made with Vybaa
+                </Text>
+              </View>
+            </View>
+            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+              <img
+                src="/assets/icon-foreground.png"
+                className="w-6 h-6 brightness-[100]"
+                alt="Vybaa"
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    )
+  }
+
   // Fallback (shouldn't reach here)
   return null
 }
 
 export function FlexxV2AppScreen() {
   const [activeCardIndex, setActiveCardIndex] = useState(0)
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([null, null, null, null])
+  const [selectedAchievement, setSelectedAchievement] =
+    useState<Achievement | null>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([
+    null,
+    null,
+    null,
+    null,
+    null,
+  ])
   const swiperRef = useRef<SwiperType | null>(null)
   const { exportCardFromElement } = useFlexxExport()
   const { present, dismiss } = useBottomSheet()
   const { user } = useAuth()
   const { data: insightsData, isLoading } = useInsights()
-  const { data: achievements = [], isLoading: achievementsLoading } = useAchievements()
+  const { data: rewindInsightsData, isLoading: rewindInsightsLoading } =
+    useRewindInsights('7d')
+  const { data: achievements = [], isLoading: achievementsLoading } =
+    useAchievements()
 
-  const cards: CardType[] = ['daily', 'weekly', 'streak', 'achievement']
+  const cards: CardType[] = [
+    'daily',
+    'weekly',
+    'streak',
+    'rewind',
+    'achievement',
+  ]
 
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveCardIndex(swiper.activeIndex)
@@ -757,6 +935,8 @@ export function FlexxV2AppScreen() {
       case 2: // Streak - Orange/Red
         return 'from-orange-900/30 via-red-950/20 to-cardd'
       case 3: // Achievement - Yellow/Gold
+        return 'from-pink-900/30 via-rose-950/20 to-cardd'
+      case 4: // Achievement - Yellow/Gold
         return 'from-yellow-900/30 via-amber-950/20 to-cardd'
       default:
         return 'from-purple-900/30 via-purple-950/20 to-cardd'
@@ -779,7 +959,7 @@ export function FlexxV2AppScreen() {
         onSelect={handleAchievementSelect}
         selectedId={selectedAchievement?.id}
       />,
-      { title: 'Choose Your Achievement' }
+      { title: 'Choose Your Achievement' },
     )
   }
 
@@ -798,7 +978,7 @@ export function FlexxV2AppScreen() {
     )
   }
 
-  if (isLoading || achievementsLoading) {
+  if (isLoading || achievementsLoading || rewindInsightsLoading) {
     return (
       <View className="flex-1 bg-cardd items-center justify-center">
         <Spinner size={32} />
@@ -828,7 +1008,7 @@ export function FlexxV2AppScreen() {
         transition={{ duration: 0.6 }}
         className={`absolute inset-0 bg-gradient-to-br ${getBackgroundGradient()}`}
       />
-      
+
       {/* Noise Overlay */}
       <div
         style={{
@@ -841,7 +1021,6 @@ export function FlexxV2AppScreen() {
       />
 
       <View className="relative z-10 flex-1">
-       
         <View className="h-full overflow-hidden">
           <View className="">
             <TabHeader title="Flexx On'Em ">
@@ -855,8 +1034,6 @@ export function FlexxV2AppScreen() {
           </View>
 
           <View className="h-full w-full overflow-y-hidden flex flex-col">
-           
-           
             {/* Cards Container with Swiper */}
             <View className="h-full overflow-y-hidden">
               <Swiper
@@ -868,26 +1045,37 @@ export function FlexxV2AppScreen() {
                 className="flexx-swiper"
                 style={{ height: '100%', width: '100%' }}
               >
-              {cards.map((cardType, index) => (
-                <SwiperSlide key={cardType}>
-                  <div
-                    ref={(el) => (cardRefs.current[index] = el)}
-                    style={{
-                      width: '100%',
-                    }}
-                    className="rounded-3xxl size-full overflow-hidden shadow-2xl"
-                    onClick={cardType === 'achievement' ? handleAchievementCardClick : undefined}
-                  >
-                    <FlexxCard
-                      type={cardType}
-                      data={stats}
-                      username={user?.username}
-                      userAvatarUrl={user?.avatarUrl}
-                      achievement={cardType === 'achievement' ? selectedAchievement : undefined}
-                    />
-                  </div>
-                </SwiperSlide>
-              ))}
+                {cards.map((cardType, index) => (
+                  <SwiperSlide key={cardType}>
+                    <div
+                      ref={(el) => (cardRefs.current[index] = el)}
+                      style={{
+                        width: '100%',
+                      }}
+                      className="rounded-3xxl size-full overflow-hidden shadow-2xl"
+                      onClick={
+                        cardType === 'achievement'
+                          ? handleAchievementCardClick
+                          : undefined
+                      }
+                    >
+                      <FlexxCard
+                        type={cardType}
+                        data={stats}
+                        username={user?.username}
+                        userAvatarUrl={user?.avatarUrl}
+                        achievement={
+                          cardType === 'achievement'
+                            ? selectedAchievement
+                            : undefined
+                        }
+                        rewind={
+                          cardType === 'rewind' ? rewindInsightsData : undefined
+                        }
+                      />
+                    </div>
+                  </SwiperSlide>
+                ))}
               </Swiper>
             </View>
 
