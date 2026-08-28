@@ -5,6 +5,7 @@ import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
+import { featureFlags } from '@/shared/config/feature-flags.config'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
@@ -45,6 +46,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
+          enabled: featureFlags.communities,
         },
         {
           id: 'communities',

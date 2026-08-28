@@ -1,18 +1,23 @@
 /**
  * Feature Flags Configuration
- * 
+ *
  * Centralized feature flag management for the application.
  * Toggle features on/off by setting the corresponding flag to true/false.
- * 
+ *
  * Usage:
  *   import { featureFlags } from '@/shared/config/feature-flags.config'
- *   
+ *
  *   if (featureFlags.journal) {
  *     // Journal feature code
  *   }
  */
 
 export interface FeatureFlags {
+  /**
+   * Communities feature - discovery, membership, and community activity
+   */
+  communities: boolean
+
   /**
    * Journal feature - allows users to create and manage journal entries
    * Routes: /journal, /journal/$date
@@ -34,12 +39,13 @@ export interface FeatureFlags {
 
 /**
  * Feature flags configuration
- * 
+ *
  * Set to true to enable a feature, false to disable it.
  * When disabled, routes and UI elements related to that feature will be hidden.
  */
 const journalChillEnabled = false
 export const featureFlags: FeatureFlags = {
+  communities: false,
   journal: false,
   chill: journalChillEnabled,
   insights: journalChillEnabled,
