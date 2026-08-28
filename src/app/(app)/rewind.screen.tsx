@@ -29,6 +29,7 @@ import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
 import ENV from '@/env'
 import { useRewindRoutine } from '@/hooks/use-rewind.hook'
 import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
@@ -226,46 +227,124 @@ async function getRealtimeMicrophoneStream(
   })
 }
 
-function PersonaCard({
+function PersonaThumbnail({
   persona,
   onSelect,
+  selected,
   disabled,
 }: {
   persona: RewindPersona
   onSelect: (id: RewindPersonaId) => void
+  selected: boolean
   disabled?: boolean
 }): ReactElement {
   const $color = seededColor(persona.id)
   const color = adjustColor($color, { lightness: -10, saturation: -20 })
-  const darkColor = adjustColor(color, { lightness: -30, saturation: -20 })
 
   return (
     <Pressable
       style={
         {
           '--tw-themecolor': color,
-          '--tw-themecolor-dark': darkColor,
         } as CSSProperties
       }
       disabled={disabled}
       onPress={() => onSelect(persona.id)}
       accessibilityLabel={`Choose ${persona.name}. ${persona.perspective}`}
       className={cn(
-        'w-full flex flex-col rounded-xl relative overflow-hidden aspect-square items-end justify-end',
-        'bg-[var(--tw-themecolor)]',
+        'relative size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-cardx',
+        selected &&
+          'ring-2 ring-[var(--tw-themecolor)] ring-offset-2 ring-offset-cardd',
       )}
     >
-      <View className="w-20 rounded-full absolute scale-150 top-0 left-0 brightness-0 items-center justify-center">
+      <View
+        className="absolute inset-0 opacity-70"
+        style={{
+          background:
+            'radial-gradient(circle at 30% 20%, var(--tw-themecolor), transparent 72%)',
+        }}
+      />
+      <View className="z-10 items-center justify-center">
         <Icon
           icon={getEmojiIcon(persona.emoji)}
-          className="text-white opacity-20"
-          style={{ fontSize: '94px' }}
+          className="text-white"
+          style={{ fontSize: '34px' }}
         />
       </View>
-      <Text className="mt-3 z-10 text-white text-[var(--tw-themecolor-dark)] font-extrabold text-2xl p-5">
+      <Text className="absolute bottom-1.5 z-10 font-bbh text-[10px] font-bold text-white">
         {persona.name}
       </Text>
     </Pressable>
+  )
+}
+
+function PersonaArtwork({
+  persona,
+  onChoose,
+  disabled,
+}: {
+  persona: RewindPersona
+  onChoose: () => void
+  disabled?: boolean
+}): ReactElement {
+  const color = adjustColor(seededColor(persona.id), {
+    lightness: -10,
+    saturation: -20,
+  })
+  const darkColor = adjustColor(color, { lightness: -25, saturation: -20 })
+
+  return (
+    <View
+      style={
+        {
+          '--persona-color': color,
+          '--persona-dark-color': darkColor,
+        } as CSSProperties
+      }
+      className="relative w-full overflow-hidden rounded-[40px] bg-cardx"
+    >
+      <View
+        className="absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 15%, var(--persona-color), transparent 68%)',
+          maskImage:
+            'linear-gradient(to bottom, black 0%, black 55%, transparent 100%)',
+        }}
+      />
+      <View
+        className="absolute inset-2 rounded-[36px] border-2 border-[var(--persona-color)] opacity-70"
+        style={{
+          maskImage:
+            'linear-gradient(to bottom, transparent 0%, black 45%, transparent 100%)',
+        }}
+      />
+      <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
+        <View className="mb-5 items-center justify-center">
+          <Icon
+            icon={getEmojiIcon(persona.emoji)}
+            className="text-white"
+            style={{ fontSize: '112px' }}
+          />
+        </View>
+        <Text className="font-bbh text-2xl font-extrabold text-white">
+          {persona.name}
+        </Text>
+        <Text className="mt-2 max-w-[280px] text-center font-bbh text-sm leading-5 text-card-lighter-3">
+          {persona.perspective}
+        </Text>
+        <Pressable
+          onPress={onChoose}
+          disabled={disabled}
+          accessibilityLabel={`Choose ${persona.name} as your Rewind partner`}
+          className="mt-6 min-h-11 min-w-[190px] items-center justify-center rounded-full bg-white px-6"
+        >
+          <Text className="font-bbh font-bold text-cardd">
+            {disabled ? 'Saving...' : `Choose ${persona.name}`}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   )
 }
 
@@ -279,6 +358,8 @@ export default function RewindScreen(): ReactElement {
   const routineQuery = useRewindRoutine()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
+  const [previewPersonaId, setPreviewPersonaId] =
+    useState<RewindPersonaId>('ella')
   const [resolvedPersonaUserId, setResolvedPersonaUserId] = useState<
     string | null
   >(null)
@@ -388,6 +469,11 @@ export default function RewindScreen(): ReactElement {
     setPersonaId(nextPersona)
     await persistPersonaMutation.mutateAsync(nextPersona)
   }
+
+  const previewPersona = useMemo(
+    () => getRewindPersona(previewPersonaId),
+    [previewPersonaId],
+  )
 
   const clearPersona = async () => {
     shouldReconnectRef.current = false
@@ -1170,7 +1256,7 @@ export default function RewindScreen(): ReactElement {
   }
 
   if (!isAuthenticated || !user) {
-    return null
+    return <></>
   }
 
   if (resolvedPersonaUserId !== user.id) {
@@ -1205,15 +1291,26 @@ export default function RewindScreen(): ReactElement {
                 </Text>
               </View>
 
-              <View className="grid grid-cols-2 h-[calc(100%-40vh)] items-center [&>div]:shrink-0 overflow-y-auto gap-3 !gap-y-0 mt-mg">
-                {REWIND_PERSONAS.map((p) => (
-                  <PersonaCard
-                    key={p.id}
-                    persona={p}
-                    onSelect={selectPersona}
-                    disabled={persistPersonaMutation.isPending}
-                  />
-                ))}
+              <View className="mt-mg gap-5">
+                <View className="flex-row gap-3 overflow-x-auto px-1 pb-2 no-scrollbar">
+                  {REWIND_PERSONAS.map((p) => (
+                    <PersonaThumbnail
+                      key={p.id}
+                      persona={p}
+                      selected={previewPersonaId === p.id}
+                      onSelect={setPreviewPersonaId}
+                      disabled={persistPersonaMutation.isPending}
+                    />
+                  ))}
+                </View>
+
+                <PersonaArtwork
+                  persona={previewPersona}
+                  onChoose={() => {
+                    void selectPersona(previewPersona.id)
+                  }}
+                  disabled={persistPersonaMutation.isPending}
+                />
               </View>
             </View>
           </View>
@@ -1306,24 +1403,23 @@ export default function RewindScreen(): ReactElement {
             <View className="items-center justify-center ">
               <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
                 <Text className="text-[var(--theme)]">@</Text>
-                {persona.name}
+                {user?.username}<UserCheckmark/>
               </Text>
 
               <Text className="mt-3 text-white font-bbh text-2xl font-extrabold">
-                <Text className="text-card-lighter-3">Rewinding W/</Text>{' '}
+                <Text className="text-card-lighter-3">Is Rewinding W/</Text>{' '}
                 <Text className="text-accent-400">@</Text>
-                <Text className="">{user?.username}</Text>
+                <Text className=""> {persona.name}</Text>
               </Text>
             </View>
 
             <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
-              <View className="px-3 py-2 rounded-full bg-cardx">
-                <Text className="text-white/80 font-bold font-bbh text-xs">
+              <View className="px-3 py-2 rounded-xl bg-card-light/30">
+                <Text className="text-white/80 px-2 font-bold font-bbh text-xs">
                   {rewindSessionDateKey
                     ? `Rewind ${rewindSessionDateKey.slice(5)}`
                     : routineStatus}{' '}
-                  -{' '}
-                  <View className="">
+                  <View className="flex flex-row justify-center mt-1">
                     <Text
                       className={cn(
                         ['connected', 'listening'].includes(
