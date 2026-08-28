@@ -1,6 +1,7 @@
 export type RewindPersonaId = 'ella' | 'lyra' | 'jake' | 'ariel'
 
 export type RewindPersona = {
+  color: string
   id: RewindPersonaId
   name: string
   emoji: string
@@ -10,6 +11,7 @@ export type RewindPersona = {
 
 export const REWIND_PERSONAS: Array<RewindPersona> = [
   {
+    color: '#C43D78',
     id: 'ella',
     name: 'Ella',
     emoji: '🌸',
@@ -17,6 +19,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'A gentle space to hear what your day felt like.',
   },
   {
+    color: '#5B4A9E',
     id: 'lyra',
     name: 'Lyra',
     emoji: '🌙',
@@ -24,6 +27,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'Step back and notice what your day may be showing you.',
   },
   {
+    color: '#C9782A',
     id: 'jake',
     name: 'Jake',
     emoji: '⚡',
@@ -31,6 +35,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'Talk it through clearly and leave with what matters.',
   },
   {
+    color: '#2B9A8A',
     id: 'ariel',
     name: 'Ariel',
     emoji: '🌊',

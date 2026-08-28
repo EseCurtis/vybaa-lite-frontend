@@ -1,5 +1,6 @@
 import type { RewindSession } from '@/shared/api/rewind.api'
-import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
+import { adjustColor } from '@/shared/utils/helpers.util'
+import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
 import type { RewindAccentStyle, RewindDayGroup } from './rewind-history.types'
 
@@ -55,7 +56,7 @@ export function getSessionAccent(personaId: RewindSession['personaId']): {
   accent: string
   accentSoft: string
 } {
-  const accent = adjustColor(seededColor(personaId), {
+  const accent = adjustColor(getRewindPersona(personaId).color, {
     lightness: -6,
     saturation: -18,
   })

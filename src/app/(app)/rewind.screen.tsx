@@ -57,7 +57,7 @@ import {
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
+import { adjustColor, cn } from '@/shared/utils/helpers.util'
 
 type RewindConversationStage =
   | 'ARRIVING'
@@ -238,7 +238,7 @@ function PersonaThumbnail({
   selected: boolean
   disabled?: boolean
 }): ReactElement {
-  const $color = seededColor(persona.id)
+  const $color = persona.color
   const color = adjustColor($color, { lightness: -10, saturation: -20 })
 
   return (
@@ -252,23 +252,20 @@ function PersonaThumbnail({
       onPress={() => onSelect(persona.id)}
       accessibilityLabel={`Choose ${persona.name}. ${persona.perspective}`}
       className={cn(
-        'relative size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-[24px] bg-cardx',
+        'relative  shrink-0 items-center justify-center mt-2 aspect-square overflow-hidden rounded-xl bg-cardx',
         selected &&
           'ring-2 ring-[var(--tw-themecolor)] ring-offset-2 ring-offset-cardd',
       )}
     >
-      <View
-        className="absolute inset-0 opacity-70"
-        style={{
-          background:
-            'radial-gradient(circle at 30% 20%, var(--tw-themecolor), transparent 72%)',
-        }}
-      />
-      <View className="z-10 items-center justify-center">
+      <View className="absolute inset-0 opacity-70 bg-[var(--tw-themecolor)]" />
+      <View className="z-10 items-center justify-center mb-3 opacity-40">
         <Icon
           icon={getEmojiIcon(persona.emoji)}
           className="text-white"
-          style={{ fontSize: '34px' }}
+          style={{
+            fontSize: '34px',
+            filter: 'brightness(0)',
+          }}
         />
       </View>
       <Text className="absolute bottom-1.5 z-10 font-bbh text-[10px] font-bold text-white">
@@ -287,7 +284,7 @@ function PersonaArtwork({
   onChoose: () => void
   disabled?: boolean
 }): ReactElement {
-  const color = adjustColor(seededColor(persona.id), {
+  const color = adjustColor(persona.color, {
     lightness: -10,
     saturation: -20,
   })
@@ -304,7 +301,7 @@ function PersonaArtwork({
       className="relative w-full overflow-hidden rounded-[40px] bg-cardx"
     >
       <View
-        className="absolute inset-0"
+        className="absolute opacity-30 top-10 inset-0"
         style={{
           background:
             'radial-gradient(circle at 50% 15%, var(--persona-color), transparent 68%)',
@@ -313,25 +310,25 @@ function PersonaArtwork({
         }}
       />
       <View
-        className="absolute inset-2 rounded-[36px] border-2 border-[var(--persona-color)] opacity-70"
+        className="absolute inset-2   rounded-[36px] border-2 border-[var(--persona-color)] opacity-70"
         style={{
           maskImage:
             'linear-gradient(to bottom, transparent 0%, black 45%, transparent 100%)',
         }}
       />
       <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
-        <View className="mb-5 items-center justify-center">
+        <View className="mb-5 items-center opacity-40 absolute scale-[1.7] top-0 right-1/2 translate-x-1/2 justify-center">
           <Icon
             icon={getEmojiIcon(persona.emoji)}
             className="text-white"
-            style={{ fontSize: '112px' }}
+            style={{ fontSize: '112px', filter: 'brightness(0)' }}
           />
         </View>
-        <Text className="font-bbh text-2xl font-extrabold text-white">
+        <Text className="font-bbh relative z-10 text-2xl font-extrabold text-white">
           {persona.name}
         </Text>
-        <Text className="mt-2 max-w-[280px] text-center font-bbh text-sm leading-5 text-card-lighter-3">
-          {persona.perspective}
+        <Text className="mt-2  relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
+          {persona.name} {persona.perspective.toLowerCase()}
         </Text>
         <Pressable
           onPress={onChoose}
@@ -458,7 +455,7 @@ export default function RewindScreen(): ReactElement {
 
   const personaTheme = useMemo(() => {
     if (!persona) return null
-    const $color = seededColor(persona.id)
+    const $color = persona.color
     const color = adjustColor($color, { lightness: -10, saturation: -20 })
     const darkColor = adjustColor(color, { lightness: -30, saturation: -20 })
     return { color, darkColor }
@@ -1292,7 +1289,15 @@ export default function RewindScreen(): ReactElement {
               </View>
 
               <View className="mt-mg gap-5">
-                <View className="flex-row gap-3 overflow-x-auto px-1 pb-2 no-scrollbar">
+                <PersonaArtwork
+                  persona={previewPersona}
+                  onChoose={() => {
+                    void selectPersona(previewPersona.id)
+                  }}
+                  disabled={persistPersonaMutation.isPending}
+                />
+
+                <View className="grid grid-cols-4 gap-2 overflow-x-auto px-1 pb-2 no-scrollbar">
                   {REWIND_PERSONAS.map((p) => (
                     <PersonaThumbnail
                       key={p.id}
@@ -1303,14 +1308,6 @@ export default function RewindScreen(): ReactElement {
                     />
                   ))}
                 </View>
-
-                <PersonaArtwork
-                  persona={previewPersona}
-                  onChoose={() => {
-                    void selectPersona(previewPersona.id)
-                  }}
-                  disabled={persistPersonaMutation.isPending}
-                />
               </View>
             </View>
           </View>
@@ -1376,8 +1373,11 @@ export default function RewindScreen(): ReactElement {
                     onPress={clearPersona}
                     disabled={persistPersonaMutation.isPending}
                     accessibilityLabel="Change Rewind partner"
-                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
+                    className="py-3 pl-4 pr-3 !bg-[var(--theme)] gap-1 rounded-3xl items-center justify-center "
                   >
+                    <Text className="text-white font-bold text-sm">
+                      {persona.name}
+                    </Text>
                     <RiRefreshLine
                       size={18}
                       className={cn(
@@ -1402,14 +1402,19 @@ export default function RewindScreen(): ReactElement {
             </View>
             <View className="items-center justify-center ">
               <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
-                <Text className="text-[var(--theme)]">@</Text>
-                {user?.username}<UserCheckmark/>
+                <View className="flex-row items-center">
+                  <Text className=" text-accent-400">@</Text>
+                  {user?.username}
+                  <UserCheckmark />
+                </View>
               </Text>
 
-              <Text className="mt-3 text-white font-bbh text-2xl font-extrabold">
-                <Text className="text-card-lighter-3">Is Rewinding W/</Text>{' '}
-                <Text className="text-accent-400">@</Text>
-                <Text className=""> {persona.name}</Text>
+              <Text className="mt-0 text-white font-bbh text-xl font-extrabold">
+                <Text className="text-card-lighter-3">you're Rewinding W/</Text>{' '}
+                <Text className="">
+                  <Text className="text-[var(--theme)]">@</Text>
+                  {persona.name}
+                </Text>
               </Text>
             </View>
 
