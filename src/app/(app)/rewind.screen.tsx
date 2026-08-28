@@ -251,7 +251,7 @@ function PersonaCard({
       onPress={() => onSelect(persona.id)}
       accessibilityLabel={`Choose ${persona.name}. ${persona.perspective}`}
       className={cn(
-        'w-full flex flex-col rounded-[50px] relative overflow-hidden aspect-square items-end justify-end',
+        'w-full flex flex-col rounded-xl relative overflow-hidden aspect-square items-end justify-end',
         'bg-[var(--tw-themecolor)]',
       )}
     >
@@ -270,7 +270,12 @@ function PersonaCard({
 }
 
 export default function RewindScreen(): ReactElement {
-  const { user, refreshSession } = useAuth()
+  const {
+    user,
+    refreshSession,
+    isAuthenticated,
+    isLoading: isAuthLoading,
+  } = useAuth()
   const routineQuery = useRewindRoutine()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
@@ -1145,6 +1150,25 @@ export default function RewindScreen(): ReactElement {
     liveSessionRef.current?.readyState === WebSocket.OPEN ||
     isConnectingRef.current
 
+  if (isAuthLoading) {
+    return (
+      <View className="flex-1 bg-cardd">
+        <NoiseComponent>
+          <View className="flex-1 items-center justify-center px-mg">
+            <Mirage size="96" speed="4.2" color="#ffffff" />
+            <Text className="mt-4 muted font-bbh text-sm">
+              Loading your Rewind...
+            </Text>
+          </View>
+        </NoiseComponent>
+      </View>
+    )
+  }
+
+  if (!isAuthenticated || !user) {
+    return null
+  }
+
   if (!persona) {
     return (
       <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
@@ -1162,7 +1186,7 @@ export default function RewindScreen(): ReactElement {
                 </Text>
               </View>
 
-              <View className="grid grid-cols-2 h-[calc(100%-40vh)] items-center [&>div]:shrink-0 overflow-y-auto gap-3 mt-mg">
+              <View className="grid grid-cols-2 h-[calc(100%-40vh)] items-center [&>div]:shrink-0 overflow-y-auto gap-3 !gap-y-0 mt-mg">
                 {REWIND_PERSONAS.map((p) => (
                   <PersonaCard
                     key={p.id}
