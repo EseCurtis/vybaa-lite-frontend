@@ -28,6 +28,7 @@ import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-histor
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppJournalRouteImport } from './routes/app/journal'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
@@ -36,6 +37,7 @@ import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
+import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
@@ -143,6 +145,11 @@ const AppProfileRoute = AppProfileRouteImport.update({
   path: '/app/profile',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppJournalRoute = AppJournalRouteImport.update({
+  id: '/app/journal',
+  path: '/app/journal',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
   id: '/app/insights',
   path: '/app/insights',
@@ -182,6 +189,11 @@ const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
   id: '/app/r/$sessionId',
   path: '/app/r/$sessionId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppJournalDateRoute = AppJournalDateRouteImport.update({
+  id: '/$date',
+  path: '/$date',
+  getParentRoute: () => AppJournalRoute,
 } as any)
 const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
   id: '/app/invite/$code',
@@ -248,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/journal': typeof AppJournalRouteWithChildren
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -268,6 +281,7 @@ export interface FileRoutesByFullPath {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -287,6 +301,7 @@ export interface FileRoutesByTo {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/journal': typeof AppJournalRouteWithChildren
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -307,6 +322,7 @@ export interface FileRoutesByTo {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -327,6 +343,7 @@ export interface FileRoutesById {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/journal': typeof AppJournalRouteWithChildren
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -347,6 +364,7 @@ export interface FileRoutesById {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -368,6 +386,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/journal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -388,6 +407,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -407,6 +427,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/journal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -427,6 +448,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -446,6 +468,7 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/journal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -466,6 +489,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -486,6 +510,7 @@ export interface RootRouteChildren {
   AppGoalRoute: typeof AppGoalRoute
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
+  AppJournalRoute: typeof AppJournalRouteWithChildren
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
@@ -651,6 +676,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/journal': {
+      id: '/app/journal'
+      path: '/app/journal'
+      fullPath: '/app/journal'
+      preLoaderRoute: typeof AppJournalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/insights': {
       id: '/app/insights'
       path: '/app/insights'
@@ -706,6 +738,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/r/$sessionId'
       preLoaderRoute: typeof AppRSessionIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/journal/$date': {
+      id: '/app/journal/$date'
+      path: '/$date'
+      fullPath: '/app/journal/$date'
+      preLoaderRoute: typeof AppJournalDateRouteImport
+      parentRoute: typeof AppJournalRoute
     }
     '/app/invite/$code': {
       id: '/app/invite/$code'
@@ -792,6 +831,18 @@ const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
   AppCommunitiesRouteChildren,
 )
 
+interface AppJournalRouteChildren {
+  AppJournalDateRoute: typeof AppJournalDateRoute
+}
+
+const AppJournalRouteChildren: AppJournalRouteChildren = {
+  AppJournalDateRoute: AppJournalDateRoute,
+}
+
+const AppJournalRouteWithChildren = AppJournalRoute._addFileChildren(
+  AppJournalRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementSimulatorRoute: AchievementSimulatorRoute,
@@ -801,6 +852,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppGoalRoute: AppGoalRoute,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
+  AppJournalRoute: AppJournalRouteWithChildren,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,

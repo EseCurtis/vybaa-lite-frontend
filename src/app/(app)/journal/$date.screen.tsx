@@ -25,13 +25,12 @@ import {
   RiSaveLine,
   RiStopCircleLine,
 } from '@remixicon/react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import moment from 'moment'
 import { useEffect, useState } from 'react'
 
-export default function JournalEditorScreen() {
-  const { date } = useParams({ from: '/journal/$date' })
+export default function JournalEditorScreen({ date }: { date: string }) {
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -65,7 +64,9 @@ export default function JournalEditorScreen() {
   useEffect(() => {
     if (!journal) {
       // For new entries, any content means there are changes
-      setHasChanges(content.trim().length > 0 || mood !== null || voiceNote !== null)
+      setHasChanges(
+        content.trim().length > 0 || mood !== null || voiceNote !== null,
+      )
     } else {
       // For existing entries, check if different from saved
       const changed =
@@ -97,8 +98,13 @@ export default function JournalEditorScreen() {
     }
 
     try {
-      console.log('Saving journal...', { hasJournal: !!journal, content, mood, date })
-      
+      console.log('Saving journal...', {
+        hasJournal: !!journal,
+        content,
+        mood,
+        date,
+      })
+
       if (journal) {
         // Update existing
         await updateJournal({
@@ -118,7 +124,7 @@ export default function JournalEditorScreen() {
       }
 
       console.log('Journal saved successfully')
-      navigate({ to: '/journal' })
+      navigate({ to: '/app/journal' })
     } catch (error) {
       console.error('Error saving journal:', error)
       alert('Failed to save journal entry')
@@ -135,7 +141,7 @@ export default function JournalEditorScreen() {
 
     try {
       await deleteJournal(journal.id)
-      navigate({ to: '/journal' })
+      navigate({ to: '/app/journal' })
     } catch (error) {
       console.error('Error deleting journal:', error)
     }
@@ -189,7 +195,7 @@ export default function JournalEditorScreen() {
                 <RiDeleteBin6Line size={18} className="text-danger-400" />
               </button>
             )}
-             <motion.button
+            <motion.button
               onClick={handleSave}
               disabled={!hasChanges || isCreating || isUpdating}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center transition-all disabled:opacity-30 disabled:bg-white/30 hover:scale-105"
@@ -272,8 +278,8 @@ export default function JournalEditorScreen() {
                           Voice note preview
                         </Text>
                         <Text className="text-white/50 text-xs font-bbh">
-                          {Math.max(1, Math.round(voiceNote.durationMs / 1000))}s
-                          {' • '}
+                          {Math.max(1, Math.round(voiceNote.durationMs / 1000))}
+                          s{' • '}
                           {voiceNote.mimeType}
                         </Text>
                       </View>
@@ -286,10 +292,15 @@ export default function JournalEditorScreen() {
                       </button>
                     </View>
 
-                    <audio controls src={voiceNote.audioUrl} className="w-full" />
+                    <audio
+                      controls
+                      src={voiceNote.audioUrl}
+                      className="w-full"
+                    />
 
                     <Text className="text-white/45 text-xs font-bbh">
-                      This voice note stays local for now and is not saved with the journal entry yet.
+                      This voice note stays local for now and is not saved with
+                      the journal entry yet.
                     </Text>
                   </View>
                 )}
@@ -302,11 +313,11 @@ export default function JournalEditorScreen() {
                   maxLength={5000}
                 />
 
-                 <Text className="text-white/40 text-xs font-bbh text-right">
-                   {content.length} / 5000
-                 </Text>
-               </View>
-             </View>
+                <Text className="text-white/40 text-xs font-bbh text-right">
+                  {content.length} / 5000
+                </Text>
+              </View>
+            </View>
           )}
         </View>
       </NoiseComponent>

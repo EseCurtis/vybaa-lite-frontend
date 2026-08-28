@@ -46,17 +46,16 @@ export default function JournalListScreen() {
   //@ts-ignore
   const pagination = journalsData?.pagination
 
-
-  console.log(journals);
+  console.log(journals)
 
   const handleCreateToday = () => {
     const today = moment().format('YYYY-MM-DD')
-    navigate({ to: `/journal/${today}` })
+    navigate({ to: `/app/journal/${today}` })
   }
 
   const handleOpenEntry = (journal: Journal) => {
     const dateStr = moment(journal.date).format('YYYY-MM-DD')
-    navigate({ to: `/journal/${dateStr}` })
+    navigate({ to: `/app/journal/${dateStr}` })
   }
 
   const getMoodIcon = (mood?: string) => {
@@ -79,9 +78,10 @@ export default function JournalListScreen() {
         <TabHeader title="Journal">
           <button
             onClick={handleCreateToday}
-            className="p-2 rounded-full bg-primary-500/20 hover:bg-primary-500/30 transition-colors"
+            className="p-2 flex flex-row text-white bg-cardd pl-4 items-center gap-1 rounded-full  hover:bg-primary-500/30 transition-colors"
           >
-            <RiAddLine size={20} className="text-primary-300" />
+            <Text className="">New</Text>
+            <RiAddLine size={26} className="text-white" />
           </button>
         </TabHeader>
 
@@ -160,7 +160,11 @@ export default function JournalListScreen() {
               </View>
             ) : journals.length === 0 ? (
               <View className="flex items-center justify-center py-12">
-                <Icon icon={notebook} className="text-white/60 mb-4" style={{ fontSize: '64px' }} />
+                <Icon
+                  icon={notebook}
+                  className="text-white/60 mb-4"
+                  style={{ fontSize: '64px' }}
+                />
                 <Text className="text-white/60 text-lg font-bbh text-center mb-2">
                   No journal entries yet
                 </Text>
@@ -169,10 +173,10 @@ export default function JournalListScreen() {
                 </Text>
                 <Button
                   label="Write Today's Entry"
-                  leftIcon={<RiAddLine size={18} color='#ffffff' />}
+                  leftIcon={<RiAddLine size={18} color="#ffffff" />}
                   onClick={handleCreateToday}
                   className="!bg-gradient-to-r !from-pink-500 !to-rose-500 px-4"
-                  textClassName='!text-white'
+                  textClassName="!text-white"
                 />
               </View>
             ) : (
@@ -257,7 +261,9 @@ function JournalCard({
       frustrated: 'from-red-500/20 to-orange-500/10',
       neutral: 'from-gray-500/20 to-slate-500/10',
     }
-    return mood ? gradients[mood] || 'from-card-700/40 to-card-light/20' : 'from-card-700/40 to-card-light/20'
+    return mood
+      ? gradients[mood] || 'from-card-700/40 to-card-light/20'
+      : 'from-card-700/40 to-card-light/20'
   }
 
   const wordCount = journal?.entry?.trim()?.split(/\s+/)?.length || 0
@@ -276,14 +282,16 @@ function JournalCard({
     >
       {/* Decorative gradient overlay */}
       <View className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/5 to-transparent rounded-full blur-2xl" />
-      
+
       {/* Content */}
       <View className="relative z-10">
         {/* Header */}
         <View className="flex flex-row items-start justify-between gap-4 mb-3">
           <View className="flex-1">
             <View className="flex flex-row items-center gap-2 mb-1">
-              <Text className={`font-bbh font-bold text-base ${isToday ? 'text-pink-300' : 'text-white'}`}>
+              <Text
+                className={`font-bbh font-bold text-base ${isToday ? 'text-pink-300' : 'text-white'}`}
+              >
                 {moment(date).format('MMM D')}
               </Text>
               <Text className="text-white/40 text-sm font-bbh">
@@ -291,7 +299,9 @@ function JournalCard({
               </Text>
               {isToday && (
                 <View className="bg-pink-500/30 rounded-full px-2 py-0.5">
-                  <Text className="text-pink-200 text-xs font-bbh font-bold">Today</Text>
+                  <Text className="text-pink-200 text-xs font-bbh font-bold">
+                    Today
+                  </Text>
                 </View>
               )}
             </View>
@@ -303,9 +313,9 @@ function JournalCard({
           {/* Mood Emoji Badge */}
           <View className="flex items-center justify-center">
             <View className="w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm">
-              <Icon 
-                icon={getMoodIcon(journal.mood || undefined)} 
-                className="text-white" 
+              <Icon
+                icon={getMoodIcon(journal.mood || undefined)}
+                className="text-white"
                 style={{ fontSize: '28px' }}
               />
             </View>

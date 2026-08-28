@@ -8,7 +8,7 @@ export function AppLayout() {
   const location = useLocation()
   const { isAuthenticated, isLoading } = useAuth()
   const tabBarHideMatches = location.pathname.match(
-    /\/app\/(home|goal|communities|rewards|profile)(\/.*)?$/,
+    /\/app\/(home|goal|communities|rewards|journal|profile)(\/.*)?$/,
   )
 
   // Only show tab bar on app routes
