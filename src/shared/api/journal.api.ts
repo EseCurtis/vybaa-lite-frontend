@@ -19,6 +19,13 @@ class JournalAPI {
     return data
   }
 
+  async getJournalById(journalId: string): Promise<JournalResponse> {
+    const { data } = await http.get<JournalResponse>(
+      `${this.base}/${encodeURIComponent(journalId)}`,
+    )
+    return data
+  }
+
   async getJournalsPage(pageParam, limit) {
      const { data } = await http.get<any>(`${this.base}/date`)
     return data
@@ -84,5 +91,4 @@ class JournalAPI {
 }
 
 export const journalAPI = new JournalAPI()
-
 

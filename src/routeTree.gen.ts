@@ -39,6 +39,7 @@ import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-prof
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
+import { Route as AppJournalPreviewIdRouteImport } from './routes/app/journal-preview.$id'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
@@ -201,6 +202,11 @@ const AppJournalDateRoute = AppJournalDateRouteImport.update({
   path: '/$date',
   getParentRoute: () => AppJournalRoute,
 } as any)
+const AppJournalPreviewIdRoute = AppJournalPreviewIdRouteImport.update({
+  id: '/app/journal-preview/$id',
+  path: '/app/journal-preview/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
   id: '/app/invite/$code',
   path: '/app/invite/$code',
@@ -287,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -328,6 +335,7 @@ export interface FileRoutesByTo {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -371,6 +379,7 @@ export interface FileRoutesById {
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -415,6 +424,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
@@ -498,6 +509,7 @@ export interface FileRouteTypes {
     | '/app/communities/my'
     | '/app/community/$communityId'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
     | '/app/sub-profile/insights'
@@ -540,6 +552,7 @@ export interface RootRouteChildren {
   AppAdminFeatureFlagsRoute: typeof AppAdminFeatureFlagsRoute
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppInviteCodeRoute: typeof AppInviteCodeRoute
+  AppJournalPreviewIdRoute: typeof AppJournalPreviewIdRoute
   AppRSessionIdRoute: typeof AppRSessionIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
@@ -763,6 +776,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJournalDateRouteImport
       parentRoute: typeof AppJournalRoute
     }
+    '/app/journal-preview/$id': {
+      id: '/app/journal-preview/$id'
+      path: '/app/journal-preview/$id'
+      fullPath: '/app/journal-preview/$id'
+      preLoaderRoute: typeof AppJournalPreviewIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/invite/$code': {
       id: '/app/invite/$code'
       path: '/app/invite/$code'
@@ -891,6 +911,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppAdminFeatureFlagsRoute: AppAdminFeatureFlagsRoute,
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppInviteCodeRoute: AppInviteCodeRoute,
+  AppJournalPreviewIdRoute: AppJournalPreviewIdRoute,
   AppRSessionIdRoute: AppRSessionIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,

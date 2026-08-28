@@ -63,6 +63,7 @@ export function getAppParentPath(pathname: string): string | null {
   }
   if (pathname === '/app/rewind') return '/app/home'
   if (pathname.startsWith('/app/journal/')) return '/app/journal'
+  if (pathname.startsWith('/app/journal-preview/')) return '/app/journal'
   if (pathname === '/app/actions/flexx') return '/app/home'
   if (pathname === '/notifications') return '/app/home'
   if (pathname === '/achievements') return '/app/profile'
