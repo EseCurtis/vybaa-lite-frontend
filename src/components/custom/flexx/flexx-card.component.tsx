@@ -1,9 +1,11 @@
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
 import type { Achievement } from '@/shared/api/achievement.api'
 import type { RewindInsights } from '@/shared/api/rewind.api'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { Icon } from '@iconify/react'
 import {
   RiFireFill,
@@ -12,6 +14,7 @@ import {
   RiTrophyFill,
 } from '@remixicon/react'
 import { motion } from 'framer-motion'
+import type { ReactElement } from 'react'
 
 export type CardType = 'daily' | 'weekly' | 'streak' | 'achievement' | 'rewind'
 
@@ -31,6 +34,45 @@ export interface FlexxCardProps {
   userAvatarUrl?: string
   achievement?: Achievement | null
   rewind?: RewindInsights | null
+}
+
+interface FlexxCardFooterProps {
+  username?: string
+  userAvatarUrl?: string
+  avatarSize?: number
+  label?: string
+  className?: string
+}
+
+function FlexxCardFooter({
+  username,
+  userAvatarUrl,
+  avatarSize = 36,
+  label = 'Made with Vybaa',
+  className,
+}: FlexxCardFooterProps): ReactElement {
+  return (
+    <View className={cn('flex-row items-center justify-between', className)}>
+      <View className="flex-row gap-3 items-center">
+        {userAvatarUrl && <Avatar url={userAvatarUrl} size={avatarSize} />}
+        <View>
+          {username && (
+            <Text className="text-white text-base font-bbh font-semibold">
+              @{username} <UserCheckmark/>
+            </Text>
+          )}
+          <Text className="text-white/40 text-xs font-bbh">{label}</Text>
+        </View>
+      </View>
+      <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+        <img
+          src="/assets/icon-foreground.png"
+          className="w-6 h-6 brightness-[100]"
+          alt="Vybaa"
+        />
+      </View>
+    </View>
+  )
 }
 
 export function FlexxCard({
@@ -176,29 +218,12 @@ export function FlexxCard({
             </View>
           </View>
 
-          {/* Bottom - User Info */}
-          <View className="flex-row items-center justify-between pt-4">
-            <View className="flex-row gap-3 items-center">
-              {userAvatarUrl && <Avatar url={userAvatarUrl} size={40} />}
-              <View>
-                {username && (
-                  <Text className="text-white text-base font-bbh font-semibold">
-                    @{username}
-                  </Text>
-                )}
-                <Text className="text-white/40 text-xs font-bbh">
-                  Made with Vybaa
-                </Text>
-              </View>
-            </View>
-            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <img
-                src="/assets/icon-foreground.png"
-                className="w-6 h-6 brightness-[100]"
-                alt="Vybaa"
-              />
-            </View>
-          </View>
+          <FlexxCardFooter
+            username={username}
+            userAvatarUrl={userAvatarUrl}
+            avatarSize={40}
+            className="pt-4"
+          />
         </View>
       </View>
     )
@@ -282,29 +307,11 @@ export function FlexxCard({
             </View>
           </View>
 
-          {/* Bottom */}
-          <View className="flex-row items-center justify-between border-t border-white/10 pt-5">
-            <View className="flex-row gap-3 items-center">
-              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
-              <View>
-                {username && (
-                  <Text className="text-white text-base font-bbh font-semibold">
-                    @{username}
-                  </Text>
-                )}
-                <Text className="text-white/40 text-xs font-bbh">
-                  Made with Vybaa
-                </Text>
-              </View>
-            </View>
-            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <img
-                src="/assets/icon-foreground.png"
-                className="w-6 h-6 brightness-[100]"
-                alt="Vybaa"
-              />
-            </View>
-          </View>
+          <FlexxCardFooter
+            username={username}
+            userAvatarUrl={userAvatarUrl}
+            className="border-t border-white/10 pt-5"
+          />
         </View>
       </View>
     )
@@ -397,29 +404,12 @@ export function FlexxCard({
             </View>
           </View>
 
-          {/* Bottom */}
-          <View className="flex-row items-center justify-between pt-4">
-            <View className="flex-row gap-3 items-center">
-              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
-              <View>
-                {username && (
-                  <Text className="text-white text-base font-bbh font-semibold">
-                    @{username}
-                  </Text>
-                )}
-                <Text className="text-white/40 text-xs font-bbh">
-                  Streak Power • Vybaa
-                </Text>
-              </View>
-            </View>
-            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <img
-                src="/assets/icon-foreground.png"
-                className="w-6 h-6 brightness-[100]"
-                alt="Vybaa"
-              />
-            </View>
-          </View>
+          <FlexxCardFooter
+            username={username}
+            userAvatarUrl={userAvatarUrl}
+            label="Streak Power • Vybaa"
+            className="pt-4"
+          />
         </View>
       </View>
     )
@@ -569,29 +559,12 @@ export function FlexxCard({
             </View>
           </View>
 
-          {/* Bottom */}
-          <View className="flex-row items-center justify-between pt-4 border-t border-white/10">
-            <View className="flex-row gap-3 items-center">
-              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
-              <View>
-                {username && (
-                  <Text className="text-white text-base font-bbh font-semibold">
-                    @{username}
-                  </Text>
-                )}
-                <Text className="text-white/40 text-xs font-bbh">
-                  Achievement • Vybaa
-                </Text>
-              </View>
-            </View>
-            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <img
-                src="/assets/icon-foreground.png"
-                className="w-6 h-6 brightness-[100]"
-                alt="Vybaa"
-              />
-            </View>
-          </View>
+          <FlexxCardFooter
+            username={username}
+            userAvatarUrl={userAvatarUrl}
+            label="Achievement • Vybaa"
+            className="pt-4 border-t border-white/10"
+          />
         </View>
       </View>
     )
@@ -674,28 +647,11 @@ export function FlexxCard({
             </View>
           </View>
 
-          <View className="flex-row items-center justify-between pt-4">
-            <View className="flex-row gap-3 items-center">
-              {userAvatarUrl && <Avatar url={userAvatarUrl} size={36} />}
-              <View>
-                {username && (
-                  <Text className="text-white text-base font-bbh font-semibold">
-                    @{username}
-                  </Text>
-                )}
-                <Text className="text-white/40 text-xs font-bbh">
-                  Made with Vybaa
-                </Text>
-              </View>
-            </View>
-            <View className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-              <img
-                src="/assets/icon-foreground.png"
-                className="w-6 h-6 brightness-[100]"
-                alt="Vybaa"
-              />
-            </View>
-          </View>
+          <FlexxCardFooter
+            username={username}
+            userAvatarUrl={userAvatarUrl}
+            className="pt-4"
+          />
         </View>
       </View>
     )
