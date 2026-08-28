@@ -66,7 +66,9 @@ export default function AppScreen() {
     }
   }
 
-  if (stale) {
+  // The root route is an auth boundary. Never mount onboarding while a
+  // session is being resolved or after authentication has been confirmed.
+  if (stale || isLoading || isAuthenticated) {
     return null
   }
 
