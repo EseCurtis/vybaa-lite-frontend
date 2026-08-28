@@ -1,17 +1,10 @@
-import JournalListScreen from '@/app/(app)/journal/index.screen'
-import { ProtectedRoute } from '@/components/common/protected-route.component'
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { featureFlags } from '@/shared/config/feature-flags.config'
+import { View } from '@/components/layout/view.component'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/app/journal')({
-  beforeLoad: () => {
-    if (!featureFlags.journal) {
-      throw redirect({ to: '/app/home' })
-    }
-  },
   component: () => (
-    <ProtectedRoute requireAuth redirectTo="/">
-      <JournalListScreen />
-    </ProtectedRoute>
+    <View className="flex-1">
+      <Outlet />
+    </View>
   ),
 })

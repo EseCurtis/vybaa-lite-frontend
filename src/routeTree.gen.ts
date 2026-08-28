@@ -33,6 +33,7 @@ import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
+import { Route as AppJournalIndexRouteImport } from './routes/app/journal.index'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
@@ -170,6 +171,11 @@ const AppCommunitiesRoute = AppCommunitiesRouteImport.update({
   path: '/app/communities',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppJournalIndexRoute = AppJournalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppJournalRoute,
+} as any)
 const AppUUsernameRoute = AppUUsernameRouteImport.update({
   id: '/app/u/$username',
   path: '/app/u/$username',
@@ -286,6 +292,7 @@ export interface FileRoutesByFullPath {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -301,7 +308,6 @@ export interface FileRoutesByTo {
   '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
-  '/app/journal': typeof AppJournalRouteWithChildren
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -327,6 +333,7 @@ export interface FileRoutesByTo {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/journal': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -369,6 +376,7 @@ export interface FileRoutesById {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
@@ -412,6 +420,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -427,7 +436,6 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
-    | '/app/journal'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -453,6 +461,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/journal'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -494,6 +503,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
@@ -711,6 +721,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/journal/': {
+      id: '/app/journal/'
+      path: '/'
+      fullPath: '/app/journal/'
+      preLoaderRoute: typeof AppJournalIndexRouteImport
+      parentRoute: typeof AppJournalRoute
+    }
     '/app/u/$username': {
       id: '/app/u/$username'
       path: '/app/u/$username'
@@ -833,10 +850,12 @@ const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
 
 interface AppJournalRouteChildren {
   AppJournalDateRoute: typeof AppJournalDateRoute
+  AppJournalIndexRoute: typeof AppJournalIndexRoute
 }
 
 const AppJournalRouteChildren: AppJournalRouteChildren = {
   AppJournalDateRoute: AppJournalDateRoute,
+  AppJournalIndexRoute: AppJournalIndexRoute,
 }
 
 const AppJournalRouteWithChildren = AppJournalRoute._addFileChildren(
