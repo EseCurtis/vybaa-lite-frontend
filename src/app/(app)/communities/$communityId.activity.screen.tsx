@@ -105,6 +105,7 @@ export default function CommunityActivityScreen() {
         <TabHeader canGoBack title="Community activity" onBack={handleBack} />
         <View className="flex-1 px-mg ">
           <ActivityTab
+            communityId={communityId}
             activities={activities}
             isLoading={isLoadingActivity || isFetchingNextPage}
             onReact={reactToActivity}

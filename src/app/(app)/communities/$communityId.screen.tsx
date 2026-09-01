@@ -485,6 +485,7 @@ export default function CommunityDetailScreen() {
 
                   {activeTab === 'activity' && (
                     <ActivityTab
+                      communityId={communityId}
                       activities={activities.slice(0, 4)}
                       isLoading={isLoadingActivity}
                       onReact={handleReact}

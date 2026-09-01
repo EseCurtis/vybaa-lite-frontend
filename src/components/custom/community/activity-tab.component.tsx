@@ -11,6 +11,7 @@ import { Dimensions } from '@/shared/utils/dimensions.util'
 import { RiTimeLine } from '@remixicon/react'
 
 interface ActivityTabProps {
+  communityId?: string
   activities: CommunityActivity[]
   isLoading: boolean
   onReact: (activityId: string) => void
@@ -23,6 +24,7 @@ interface ActivityTabProps {
 }
 
 export function ActivityTab({
+  communityId,
   activities,
   isLoading,
   onReact,
@@ -70,6 +72,7 @@ export function ActivityTab({
           <ActivityItem
             key={activity.id}
             activity={activity}
+            communityId={communityId}
             onReact={onReact}
             onComment={onComment}
             isReacting={reactingActivityId === activity.id}
@@ -102,6 +105,7 @@ export function ActivityTab({
           <ActivityItem
             key={activity.id}
             activity={activity}
+            communityId={communityId}
             onReact={onReact}
             onComment={onComment}
             isReacting={reactingActivityId === activity.id}

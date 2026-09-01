@@ -3,6 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityActivity } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
+import { useBlockUser, useReportContent } from '@/hooks/use-communities.hook'
 import { formatCompactNumber } from '@/shared/utils/number-format.util'
 import {
   RiChat3Line,
@@ -13,6 +14,7 @@ import {
   RiHeartFill,
   RiHeartLine,
   RiIndeterminateCircleLine,
+  RiMore2Line,
   RiTrophyLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
@@ -24,19 +26,21 @@ interface ActivityItemProps {
   onComment?: (activityId: string) => void
   isReacting?: boolean
   isLastItem?: boolean
+  communityId?: string
 }
 
-const activityIcons: Record<CommunityActivity['type'], RemixiconComponentType> = {
-  GOAL_STARTED: RiFireLine,
-  GOAL_CHECK_IN: RiFireLine,
-  GOAL_COMPLETED: RiTrophyLine,
-  GOAL_DELETED: RiIndeterminateCircleLine,
-  MEMBER_LEFT: RiDoorOpenLine,
-  ACHIEVEMENT_EARNED: RiTrophyLine,
-  TEMPLATE_CREATED: RiFileAddLine,
-  GOAL_STREAK_RESET: RiErrorWarningLine,
-  MILESTONE_REACHED: RiTrophyLine,
-}
+const activityIcons: Record<CommunityActivity['type'], RemixiconComponentType> =
+  {
+    GOAL_STARTED: RiFireLine,
+    GOAL_CHECK_IN: RiFireLine,
+    GOAL_COMPLETED: RiTrophyLine,
+    GOAL_DELETED: RiIndeterminateCircleLine,
+    MEMBER_LEFT: RiDoorOpenLine,
+    ACHIEVEMENT_EARNED: RiTrophyLine,
+    TEMPLATE_CREATED: RiFileAddLine,
+    GOAL_STREAK_RESET: RiErrorWarningLine,
+    MILESTONE_REACHED: RiTrophyLine,
+  }
 
 const activityLabels = {
   GOAL_STREAK_RESET: 'lost a streak',
@@ -56,6 +60,7 @@ export function ActivityItem({
   onComment,
   isReacting,
   isLastItem,
+  communityId,
 }: ActivityItemProps) {
   const Icon = activityIcons[activity.type]
   const baseLabel = activityLabels[activity.type] || activity.type
@@ -102,6 +107,28 @@ export function ActivityItem({
   }
 
   const seedColor = seededColor(activity.type)
+  const reportContent = useReportContent()
+  const blockUser = useBlockUser(communityId)
+
+  const openModerationActions = () => {
+    const shouldBlock = window.confirm(
+      'Block this user? Their content will be removed from your feed.',
+    )
+    if (shouldBlock) {
+      void blockUser.mutateAsync(activity.userId)
+      return
+    }
+    const shouldReport = window.confirm(
+      'Report this activity to Vybaa for review?',
+    )
+    if (shouldReport) {
+      void reportContent.mutateAsync({
+        targetType: 'activity',
+        targetId: activity.id,
+        reason: 'other',
+      })
+    }
+  }
 
   return (
     <View className="mb-1 rounded-2xl">
@@ -142,9 +169,19 @@ export function ActivityItem({
                 {moment(activity.createdAt).fromNow()}
               </Text>
             </View>
-            <Text className="text-card-lighter-3/90 text-xs font-bbh">
-              {label}
-            </Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="flex-1 text-card-lighter-3/90 text-xs font-bbh">
+                {label}
+              </Text>
+              <button
+                type="button"
+                aria-label="More activity actions"
+                onClick={openModerationActions}
+                className="p-1 text-card-lighter-3/60"
+              >
+                <RiMore2Line size={18} />
+              </button>
+            </View>
           </View>
           <View className="">
             <View className="flex-row justify-ensd items-center gap-4 mt-3">

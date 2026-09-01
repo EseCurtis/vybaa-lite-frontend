@@ -11,18 +11,37 @@ import {
   type UpdateCommunityRequest,
   type UpdateMemberRoleRequest,
   type UpdateTemplateRequest,
+  type CreateModerationReportRequest,
 } from '@/shared/api/community.api'
 import { communityQueryKeys } from '@/shared/api/community.query-keys'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import type { InfiniteData, QueryClient } from '@tanstack/react-query'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
-function invalidateCommunityCollections(queryClient: QueryClient, communityId: string) {
-  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
-  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.membersRoot(communityId) })
-  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.templatesRoot(communityId) })
-  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.activityRoot(communityId) })
-  void queryClient.invalidateQueries({ queryKey: communityQueryKeys.stats(communityId) })
+function invalidateCommunityCollections(
+  queryClient: QueryClient,
+  communityId: string,
+) {
+  void queryClient.invalidateQueries({
+    queryKey: communityQueryKeys.detail(communityId),
+  })
+  void queryClient.invalidateQueries({
+    queryKey: communityQueryKeys.membersRoot(communityId),
+  })
+  void queryClient.invalidateQueries({
+    queryKey: communityQueryKeys.templatesRoot(communityId),
+  })
+  void queryClient.invalidateQueries({
+    queryKey: communityQueryKeys.activityRoot(communityId),
+  })
+  void queryClient.invalidateQueries({
+    queryKey: communityQueryKeys.stats(communityId),
+  })
 }
 function updateActivityReactionCache(
   oldData: InfiniteData<ActivityFeedResponse> | undefined,
@@ -61,11 +80,21 @@ function updateActivityReactionCache(
 
 // ==================== Communities ====================
 
-export function useCommunities(page: number = 1, limit: number = 10, isPublic?: boolean, category?: string) {
+export function useCommunities(
+  page: number = 1,
+  limit: number = 10,
+  isPublic?: boolean,
+  category?: string,
+) {
   return useQuery({
     queryKey: communityQueryKeys.list(page, limit, isPublic, category),
     queryFn: async () => {
-      const response = await communityAPI.getCommunities(page, limit, isPublic, category)
+      const response = await communityAPI.getCommunities(
+        page,
+        limit,
+        isPublic,
+        category,
+      )
       return response
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -100,7 +129,8 @@ export function useCreateCommunity() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (data: CreateCommunityRequest) => communityAPI.createCommunity(data),
+    mutationFn: (data: CreateCommunityRequest) =>
+      communityAPI.createCommunity(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
@@ -118,16 +148,26 @@ export function useUpdateCommunity() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ communityId, data }: { communityId: string; data: UpdateCommunityRequest }) =>
-      communityAPI.updateCommunity(communityId, data),
+    mutationFn: ({
+      communityId,
+      data,
+    }: {
+      communityId: string
+      data: UpdateCommunityRequest
+    }) => communityAPI.updateCommunity(communityId, data),
     onSuccess: (_response, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(variables.communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.detail(variables.communityId),
+      })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
       toast.success('Community updated successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to update community'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to update community'
       toast.error(message)
     },
   })
@@ -138,14 +178,18 @@ export function useDeleteCommunity() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (communityId: string) => communityAPI.deleteCommunity(communityId),
+    mutationFn: (communityId: string) =>
+      communityAPI.deleteCommunity(communityId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
       toast.success('Community deleted successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to delete community'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to delete community'
       toast.error(message)
     },
   })
@@ -158,16 +202,24 @@ export function useJoinCommunity() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (communityId: string) => communityAPI.joinCommunity(communityId),
+    mutationFn: (communityId: string) =>
+      communityAPI.joinCommunity(communityId),
     onSuccess: (_response, communityId) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.detail(communityId),
+      })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.members(communityId),
+      })
       toast.success('Joined community successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to join community'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to join community'
       toast.error(message)
     },
   })
@@ -178,29 +230,45 @@ export function useLeaveCommunity() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (communityId: string) => communityAPI.leaveCommunity(communityId),
+    mutationFn: (communityId: string) =>
+      communityAPI.leaveCommunity(communityId),
     onSuccess: (_response, communityId) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.detail(communityId),
+      })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.my() })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.members(communityId),
+      })
       toast.success('Left community successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to leave community'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to leave community'
       toast.error(message)
     },
   })
 }
 
-export function useCommunityMembers(communityId: string, limit: number = 20, enabled: boolean | number = true) {
+export function useCommunityMembers(
+  communityId: string,
+  limit: number = 20,
+  enabled: boolean | number = true,
+) {
   const isEnabled = typeof enabled === 'boolean' ? enabled : true
 
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.members(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await communityAPI.getCommunityMembers(communityId, pageParam, limit)
+      const response = await communityAPI.getCommunityMembers(
+        communityId,
+        pageParam,
+        limit,
+      )
       return response
     },
     getNextPageParam: (lastPage) => {
@@ -219,15 +287,27 @@ export function useUpdateMemberRole() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ communityId, data }: { communityId: string; data: UpdateMemberRoleRequest }) =>
-      communityAPI.updateMemberRole(communityId, data),
+    mutationFn: ({
+      communityId,
+      data,
+    }: {
+      communityId: string
+      data: UpdateMemberRoleRequest
+    }) => communityAPI.updateMemberRole(communityId, data),
     onSuccess: (_response, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.members(variables.communityId) })
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.detail(variables.communityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.members(variables.communityId),
+      })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.detail(variables.communityId),
+      })
       toast.success('Member role updated successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to update member role'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to update member role'
       toast.error(message)
     },
   })
@@ -235,12 +315,20 @@ export function useUpdateMemberRole() {
 
 // ==================== Templates ====================
 
-export function useTemplates(communityId: string, limit: number = 20, enabled: boolean = true) {
+export function useTemplates(
+  communityId: string,
+  limit: number = 20,
+  enabled: boolean = true,
+) {
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.templates(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await communityAPI.getTemplates(communityId, pageParam, limit)
+      const response = await communityAPI.getTemplates(
+        communityId,
+        pageParam,
+        limit,
+      )
       return response
     },
     getNextPageParam: (lastPage) => {
@@ -271,14 +359,22 @@ export function useCreateTemplate() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ communityId, data }: { communityId: string; data: CreateTemplateRequest }) =>
-      communityAPI.createTemplate(communityId, data),
+    mutationFn: ({
+      communityId,
+      data,
+    }: {
+      communityId: string
+      data: CreateTemplateRequest
+    }) => communityAPI.createTemplate(communityId, data),
     onSuccess: (_response, variables) => {
       invalidateCommunityCollections(queryClient, variables.communityId)
       toast.success('Template created successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to create template'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to create template'
       toast.error(message)
     },
   })
@@ -289,18 +385,28 @@ export function useUpdateTemplate() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ templateId, data }: { templateId: string; data: UpdateTemplateRequest }) =>
-      communityAPI.updateTemplate(templateId, data),
+    mutationFn: ({
+      templateId,
+      data,
+    }: {
+      templateId: string
+      data: UpdateTemplateRequest
+    }) => communityAPI.updateTemplate(templateId, data),
     onSuccess: (_response, variables) => {
       // Refresh this template
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.template(variables.templateId),
+      })
       // Refresh all community details and lists that might include this template
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.details() })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.lists() })
       toast.success('Template updated successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to update template'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to update template'
       toast.error(message)
     },
   })
@@ -318,7 +424,10 @@ export function useDeleteTemplate() {
       toast.success('Template deleted successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to delete template'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to delete template'
       toast.error(message)
     },
   })
@@ -329,16 +438,25 @@ export function useStartGoalFromTemplate() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ templateId, data }: { templateId: string; data?: StartGoalFromTemplateRequest }) =>
-      communityAPI.startGoalFromTemplate(templateId, data),
+    mutationFn: ({
+      templateId,
+      data,
+    }: {
+      templateId: string
+      data?: StartGoalFromTemplateRequest
+    }) => communityAPI.startGoalFromTemplate(templateId, data),
     onSuccess: (_response, variables) => {
       // Invalidate goals list to show new goal
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
       queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
       // Invalidate template to update startedGoals count
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.template(variables.templateId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.template(variables.templateId),
+      })
       // Invalidate template participants
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.templateParticipants(variables.templateId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.templateParticipants(variables.templateId),
+      })
       // Invalidate community activity feed
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('Goal started successfully!')
@@ -350,12 +468,20 @@ export function useStartGoalFromTemplate() {
   })
 }
 
-export function useTemplateParticipants(templateId: string, _page: number = 1, limit: number = 20) {
+export function useTemplateParticipants(
+  templateId: string,
+  _page: number = 1,
+  limit: number = 20,
+) {
   return useInfiniteQuery({
-   initialPageParam: 1,
+    initialPageParam: 1,
     queryKey: communityQueryKeys.templateParticipants(templateId, limit),
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await communityAPI.getTemplateParticipants(templateId, pageParam, limit)
+      const response = await communityAPI.getTemplateParticipants(
+        templateId,
+        pageParam,
+        limit,
+      )
       return response
     },
     getNextPageParam: (lastPage) => {
@@ -371,12 +497,20 @@ export function useTemplateParticipants(templateId: string, _page: number = 1, l
 
 // ==================== Activity ====================
 
-export function useActivityFeed(communityId: string, limit: number = 20, enabled: boolean = true) {
+export function useActivityFeed(
+  communityId: string,
+  limit: number = 20,
+  enabled: boolean = true,
+) {
   return useInfiniteQuery({
     initialPageParam: 1,
     queryKey: communityQueryKeys.activity(communityId, limit),
     queryFn: async ({ pageParam = 1 }) => {
-      const response = await communityAPI.getActivityFeed(communityId, pageParam, limit)
+      const response = await communityAPI.getActivityFeed(
+        communityId,
+        pageParam,
+        limit,
+      )
       return response
     },
     getNextPageParam: (lastPage) => {
@@ -395,7 +529,8 @@ export function useReactToActivity(communityId?: string) {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: (activityId: string) => communityAPI.reactToActivity(activityId),
+    mutationFn: (activityId: string) =>
+      communityAPI.reactToActivity(activityId),
     onSuccess: (response, activityId) => {
       // Optimistically update activity feed for this community
       if (communityId) {
@@ -404,7 +539,11 @@ export function useReactToActivity(communityId?: string) {
             queryKey: communityQueryKeys.activityRoot(communityId),
           },
           (oldData: InfiniteData<ActivityFeedResponse> | undefined) =>
-            updateActivityReactionCache(oldData, activityId, response.data.reacted),
+            updateActivityReactionCache(
+              oldData,
+              activityId,
+              response.data.reacted,
+            ),
         )
       }
 
@@ -415,7 +554,8 @@ export function useReactToActivity(communityId?: string) {
       // }
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to react'
+      const message =
+        error?.response?.data?.msg || error?.message || 'Failed to react'
       toast.error(message)
     },
     // We rely on the optimistic cache update; no heavy invalidation needed here
@@ -427,21 +567,74 @@ export function useCreateComment() {
   const toast = useToast()
 
   return useMutation({
-    mutationFn: ({ activityId, data }: { activityId: string; data: CreateCommentRequest }) =>
-      communityAPI.createComment(activityId, data),
+    mutationFn: ({
+      activityId,
+      data,
+    }: {
+      activityId: string
+      data: CreateCommentRequest
+    }) => communityAPI.createComment(activityId, data),
     onSuccess: (_response, variables) => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.comments(variables.activityId) })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.comments(variables.activityId),
+      })
       queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('Comment added!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to add comment'
+      const message =
+        error?.response?.data?.msg || error?.message || 'Failed to add comment'
       toast.error(message)
     },
   })
 }
 
-export function useComments(activityId: string, page: number = 1, limit: number = 20) {
+export function useReportContent() {
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (data: CreateModerationReportRequest) =>
+      communityAPI.reportContent(data),
+    onSuccess: (response) => toast.success(response.msg || 'Report submitted'),
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.msg || 'Unable to submit report'),
+  })
+}
+
+export function useBlockUser(communityId?: string) {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn: (userId: string) => communityAPI.blockUser(userId),
+    onSuccess: (_response, userId) => {
+      if (communityId) {
+        queryClient.setQueriesData(
+          { queryKey: communityQueryKeys.activityRoot(communityId) },
+          (oldData: InfiniteData<ActivityFeedResponse> | undefined) =>
+            oldData
+              ? {
+                  ...oldData,
+                  pages: oldData.pages.map((page) => ({
+                    ...page,
+                    data: page.data.filter(
+                      (activity) => activity.userId !== userId,
+                    ),
+                  })),
+                }
+              : oldData,
+        )
+      }
+      toast.success('User blocked. Their content is hidden.')
+    },
+    onError: (error: any) =>
+      toast.error(error?.response?.data?.msg || 'Unable to block user'),
+  })
+}
+
+export function useComments(
+  activityId: string,
+  page: number = 1,
+  limit: number = 20,
+) {
   return useQuery({
     queryKey: communityQueryKeys.comments(activityId, page, limit),
     queryFn: async () => {
@@ -464,7 +657,10 @@ export function useDeleteComment() {
       toast.success('Comment deleted successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to delete comment'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to delete comment'
       toast.error(message)
     },
   })
@@ -472,7 +668,10 @@ export function useDeleteComment() {
 
 // ==================== Stats ====================
 
-export function useCommunityStats(communityId: string, enabled: boolean = true) {
+export function useCommunityStats(
+  communityId: string,
+  enabled: boolean = true,
+) {
   return useQuery({
     queryKey: communityQueryKeys.stats(communityId),
     queryFn: async () => {
@@ -489,10 +688,18 @@ export function useCommunityStats(communityId: string, enabled: boolean = true) 
 export function useCreateInvite() {
   const toast = useToast()
   return useMutation({
-    mutationFn: ({ communityId, data }: { communityId: string; data?: CreateInviteRequest }) =>
-      communityAPI.createInvite(communityId, data),
+    mutationFn: ({
+      communityId,
+      data,
+    }: {
+      communityId: string
+      data?: CreateInviteRequest
+    }) => communityAPI.createInvite(communityId, data),
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to create invite'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to create invite'
       toast.error(message)
     },
   })
@@ -522,7 +729,10 @@ export function useJoinByInviteCode() {
       toast.success(response.msg || 'Joined successfully!')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to join community'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to join community'
       toast.error(message)
     },
   })
@@ -546,11 +756,16 @@ export function useRevokeInvite() {
   return useMutation({
     mutationFn: (inviteId: string) => communityAPI.revokeInvite(inviteId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: communityQueryKeys.invitesRoot() })
+      queryClient.invalidateQueries({
+        queryKey: communityQueryKeys.invitesRoot(),
+      })
       toast.success('Invite revoked')
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.msg || error?.message || 'Failed to revoke invite'
+      const message =
+        error?.response?.data?.msg ||
+        error?.message ||
+        'Failed to revoke invite'
       toast.error(message)
     },
   })
