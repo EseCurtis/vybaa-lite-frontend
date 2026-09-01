@@ -34,6 +34,7 @@ import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
 import { Route as AppJournalIndexRouteImport } from './routes/app/journal.index'
+import { Route as AppGoalIndexRouteImport } from './routes/app/goal/index'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
@@ -41,6 +42,8 @@ import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
 import { Route as AppJournalPreviewIdRouteImport } from './routes/app/journal-preview.$id'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
+import { Route as AppGoalCreateRouteImport } from './routes/app/goal/create'
+import { Route as AppGoalGoalIdRouteImport } from './routes/app/goal/$goalId'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
 import { Route as AppAdminFeatureFlagsRouteImport } from './routes/app/admin.feature-flags'
@@ -177,6 +180,11 @@ const AppJournalIndexRoute = AppJournalIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppJournalRoute,
 } as any)
+const AppGoalIndexRoute = AppGoalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppGoalRoute,
+} as any)
 const AppUUsernameRoute = AppUUsernameRouteImport.update({
   id: '/app/u/$username',
   path: '/app/u/$username',
@@ -211,6 +219,16 @@ const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
   id: '/app/invite/$code',
   path: '/app/invite/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppGoalCreateRoute = AppGoalCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AppGoalRoute,
+} as any)
+const AppGoalGoalIdRoute = AppGoalGoalIdRouteImport.update({
+  id: '/$goalId',
+  path: '/$goalId',
+  getParentRoute: () => AppGoalRoute,
 } as any)
 const AppCommunityCommunityIdRoute = AppCommunityCommunityIdRouteImport.update({
   id: '/app/community/$communityId',
@@ -269,7 +287,7 @@ export interface FileRoutesByFullPath {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
+  '/app/goal': typeof AppGoalRouteWithChildren
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/journal': typeof AppJournalRouteWithChildren
@@ -292,6 +310,8 @@ export interface FileRoutesByFullPath {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
@@ -299,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal/': typeof AppGoalIndexRoute
   '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
@@ -312,7 +333,6 @@ export interface FileRoutesByTo {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/profile': typeof AppProfileRoute
@@ -334,6 +354,8 @@ export interface FileRoutesByTo {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
@@ -341,6 +363,7 @@ export interface FileRoutesByTo {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal': typeof AppGoalIndexRoute
   '/app/journal': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
@@ -355,7 +378,7 @@ export interface FileRoutesById {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
+  '/app/goal': typeof AppGoalRouteWithChildren
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/journal': typeof AppJournalRouteWithChildren
@@ -378,6 +401,8 @@ export interface FileRoutesById {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
@@ -385,6 +410,7 @@ export interface FileRoutesById {
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal/': typeof AppGoalIndexRoute
   '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
@@ -423,6 +449,8 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
@@ -430,6 +458,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal/'
     | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
@@ -443,7 +472,6 @@ export interface FileRouteTypes {
     | '/achievements'
     | '/notifications'
     | '/app/communities'
-    | '/app/goal'
     | '/app/home'
     | '/app/insights'
     | '/app/profile'
@@ -465,6 +493,8 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
@@ -472,6 +502,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal'
     | '/app/journal'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
@@ -508,6 +539,8 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
@@ -515,6 +548,7 @@ export interface FileRouteTypes {
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal/'
     | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
@@ -529,7 +563,7 @@ export interface RootRouteChildren {
   AchievementsRoute: typeof AchievementsRoute
   NotificationsRoute: typeof NotificationsRoute
   AppCommunitiesRoute: typeof AppCommunitiesRouteWithChildren
-  AppGoalRoute: typeof AppGoalRoute
+  AppGoalRoute: typeof AppGoalRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppJournalRoute: typeof AppJournalRouteWithChildren
@@ -741,6 +775,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJournalIndexRouteImport
       parentRoute: typeof AppJournalRoute
     }
+    '/app/goal/': {
+      id: '/app/goal/'
+      path: '/'
+      fullPath: '/app/goal/'
+      preLoaderRoute: typeof AppGoalIndexRouteImport
+      parentRoute: typeof AppGoalRoute
+    }
     '/app/u/$username': {
       id: '/app/u/$username'
       path: '/app/u/$username'
@@ -789,6 +830,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/invite/$code'
       preLoaderRoute: typeof AppInviteCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/goal/create': {
+      id: '/app/goal/create'
+      path: '/create'
+      fullPath: '/app/goal/create'
+      preLoaderRoute: typeof AppGoalCreateRouteImport
+      parentRoute: typeof AppGoalRoute
+    }
+    '/app/goal/$goalId': {
+      id: '/app/goal/$goalId'
+      path: '/$goalId'
+      fullPath: '/app/goal/$goalId'
+      preLoaderRoute: typeof AppGoalGoalIdRouteImport
+      parentRoute: typeof AppGoalRoute
     }
     '/app/community/$communityId': {
       id: '/app/community/$communityId'
@@ -868,6 +923,21 @@ const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
   AppCommunitiesRouteChildren,
 )
 
+interface AppGoalRouteChildren {
+  AppGoalGoalIdRoute: typeof AppGoalGoalIdRoute
+  AppGoalCreateRoute: typeof AppGoalCreateRoute
+  AppGoalIndexRoute: typeof AppGoalIndexRoute
+}
+
+const AppGoalRouteChildren: AppGoalRouteChildren = {
+  AppGoalGoalIdRoute: AppGoalGoalIdRoute,
+  AppGoalCreateRoute: AppGoalCreateRoute,
+  AppGoalIndexRoute: AppGoalIndexRoute,
+}
+
+const AppGoalRouteWithChildren =
+  AppGoalRoute._addFileChildren(AppGoalRouteChildren)
+
 interface AppJournalRouteChildren {
   AppJournalDateRoute: typeof AppJournalDateRoute
   AppJournalIndexRoute: typeof AppJournalIndexRoute
@@ -888,7 +958,7 @@ const rootRouteChildren: RootRouteChildren = {
   AchievementsRoute: AchievementsRoute,
   NotificationsRoute: NotificationsRoute,
   AppCommunitiesRoute: AppCommunitiesRouteWithChildren,
-  AppGoalRoute: AppGoalRoute,
+  AppGoalRoute: AppGoalRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppJournalRoute: AppJournalRouteWithChildren,

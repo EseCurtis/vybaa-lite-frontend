@@ -1,4 +1,5 @@
 import { http } from '@/shared/api/http'
+import type { GoalSchedule, GoalTarget } from '@/shared/api/goal.api'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 const API_V1 = '/api/v1'
@@ -32,9 +33,68 @@ export type RewindSession = {
   journalSavedAt: string | null
   transcriptAvailable?: boolean
   turns?: RewindTurn[]
+  recommendations?: RewindRecommendation[]
   createdAt: string
   updatedAt: string
 }
+
+export type RewindRecommendation =
+  | {
+      acceptedAt: string | null
+      createdAt: string
+      dismissedAt: string | null
+      expiredAt: string | null
+      id: string
+      payload: {
+        amount?: number
+        goalId: string
+        notes?: string
+        occurrenceId: string
+      }
+      rationale: string
+      status: RewindRecommendationStatus
+      title: string
+      type: 'GOAL_PROGRESS'
+    }
+  | {
+      acceptedAt: string | null
+      createdAt: string
+      dismissedAt: string | null
+      expiredAt: string | null
+      id: string
+      payload: {
+        description?: string
+        reminderTimes: string[]
+        schedule: GoalSchedule
+        target: GoalTarget
+        title: string
+      }
+      rationale: string
+      status: RewindRecommendationStatus
+      title: string
+      type: 'NEW_GOAL'
+    }
+  | {
+      acceptedAt: string | null
+      createdAt: string
+      dismissedAt: string | null
+      expiredAt: string | null
+      id: string
+      payload: {
+        achievementId?: string
+        cardType: 'achievement' | 'daily' | 'rewind' | 'streak' | 'weekly'
+      }
+      rationale: string
+      status: RewindRecommendationStatus
+      title: string
+      type: 'FLEXX'
+    }
+
+export type RewindRecommendationStatus =
+  | 'ACCEPTED'
+  | 'DISMISSED'
+  | 'EXPIRED'
+  | 'PENDING'
 
 export type RewindTurn = {
   id: string
@@ -197,6 +257,19 @@ export type AddRewindToJournalResponse = {
 }
 
 class RewindAPI {
+  async acceptRecommendation(
+    sessionId: string,
+    recommendationId: string,
+  ): Promise<{ data: RewindRecommendation; msg: string }> {
+    const { data: response } = await http.post<{
+      data: RewindRecommendation
+      msg: string
+    }>(
+      `${API_V1}/rewind/sessions/${sessionId}/recommendations/${recommendationId}/accept`,
+    )
+    return response
+  }
+
   async createLiveToken(
     personaId: RewindPersonaId,
     sessionId?: string | null,
@@ -251,12 +324,27 @@ class RewindAPI {
     return res
   }
 
-  async getInsights(range: RewindInsightsRange): Promise<RewindInsightsResponse> {
+  async getInsights(
+    range: RewindInsightsRange,
+  ): Promise<RewindInsightsResponse> {
     const { data: res } = await http.get<RewindInsightsResponse>(
       `${API_V1}/rewind/insights`,
       { params: { range } },
     )
     return res
+  }
+
+  async dismissRecommendation(
+    sessionId: string,
+    recommendationId: string,
+  ): Promise<{ data: RewindRecommendation; msg: string }> {
+    const { data: response } = await http.post<{
+      data: RewindRecommendation
+      msg: string
+    }>(
+      `${API_V1}/rewind/sessions/${sessionId}/recommendations/${recommendationId}/dismiss`,
+    )
+    return response
   }
 
   async addSessionToJournal(

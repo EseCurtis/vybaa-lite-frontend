@@ -1,6 +1,6 @@
 import { http } from '@/shared/api/http'
 import type {
-  AISuggestion,
+  GoalSuggestion,
   AuthResponse,
   EmailCheckResponse,
   ForgotPasswordRequest,
@@ -87,9 +87,9 @@ class AuthAPI {
     return res
   }
 
-  async getSuggestions(data: Omit<OnboardingRequest, 'selectedTasks'>): Promise<{ msg: string, data: { suggestedTasks: AISuggestion[] } }> {
-    const { data: res } = await http.post(`${API_V1}/auth/suggestions`, data)
-    return res as any
+  async getSuggestions(data: Omit<OnboardingRequest, 'selectedGoals'>): Promise<{ msg: string, data: { suggestedGoals: GoalSuggestion[] } }> {
+    const { data: res } = await http.post<{ msg: string, data: { suggestedGoals: GoalSuggestion[] } }>(`${API_V1}/auth/suggestions`, data)
+    return res
   }
 
   async completeOnboarding(data: OnboardingRequest): Promise<OnboardingResponse> {

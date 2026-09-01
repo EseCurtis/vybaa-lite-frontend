@@ -23,13 +23,56 @@ import type { Achievement } from '@/shared/api/achievement.api'
 import '@/styles/swiper-custom.css'
 import { RiUpload2Fill } from '@remixicon/react'
 import { motion } from 'framer-motion'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Swiper as SwiperType } from 'swiper'
 import 'swiper/css'
 import { Swiper, SwiperSlide } from 'swiper/react'
 
+const flexxCards: CardType[] = [
+  'daily',
+  'weekly',
+  'streak',
+  'rewind',
+  'achievement',
+]
+
+function isFlexxCardType(value: unknown): value is CardType {
+  return typeof value === 'string' && flexxCards.some((card) => card === value)
+}
+
+function getRecommendedFlexxSelection(): {
+  achievementId?: string
+  cardIndex: number
+} {
+  if (typeof window === 'undefined') return { cardIndex: 0 }
+  const stored = window.sessionStorage.getItem('rewind:flexx-recommendation')
+  if (!stored) return { cardIndex: 0 }
+  window.sessionStorage.removeItem('rewind:flexx-recommendation')
+  try {
+    const parsed: unknown = JSON.parse(stored)
+    const cardType =
+      typeof parsed === 'object' && parsed && 'cardType' in parsed
+        ? parsed.cardType
+        : undefined
+    const achievementId =
+      typeof parsed === 'object' &&
+      parsed &&
+      'achievementId' in parsed &&
+      typeof parsed.achievementId === 'string'
+        ? parsed.achievementId
+        : undefined
+    const index = isFlexxCardType(cardType) ? flexxCards.indexOf(cardType) : -1
+    return { achievementId, cardIndex: index >= 0 ? index : 0 }
+  } catch {
+    return { cardIndex: 0 }
+  }
+}
+
 export function FlexxV2AppScreen() {
-  const [activeCardIndex, setActiveCardIndex] = useState(0)
+  const [recommendedSelection] = useState(getRecommendedFlexxSelection)
+  const [activeCardIndex, setActiveCardIndex] = useState(
+    recommendedSelection.cardIndex,
+  )
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([
@@ -49,13 +92,15 @@ export function FlexxV2AppScreen() {
   const { data: achievements = [], isLoading: achievementsLoading } =
     useAchievements()
 
-  const cards: CardType[] = [
-    'daily',
-    'weekly',
-    'streak',
-    'rewind',
-    'achievement',
-  ]
+  useEffect(() => {
+    if (!recommendedSelection.achievementId || selectedAchievement) return
+    const achievement = achievements.find(
+      (item) => item.id === recommendedSelection.achievementId,
+    )
+    if (achievement) setSelectedAchievement(achievement)
+  }, [achievements, recommendedSelection.achievementId, selectedAchievement])
+
+  const cards = flexxCards
 
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveCardIndex(swiper.activeIndex)
@@ -179,6 +224,7 @@ export function FlexxV2AppScreen() {
                 spaceBetween={20}
                 slidesPerView={1.2}
                 centeredSlides={true}
+                initialSlide={activeCardIndex}
                 onSwiper={(swiper) => (swiperRef.current = swiper)}
                 onSlideChange={handleSlideChange}
                 className="flexx-swiper"

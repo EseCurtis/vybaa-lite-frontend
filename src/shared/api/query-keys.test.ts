@@ -3,18 +3,14 @@ import { communityQueryKeys } from './community.query-keys'
 import { goalQueryKeys } from './goal.query-keys'
 
 describe('goal query keys', () => {
-  it('keeps paged and infinite filter state inside the key factory', () => {
-    expect(goalQueryKeys.list(2, 20, true)).toEqual([
-      'goals',
-      'list',
-      { page: 2, limit: 20, canCheckIn: true },
-    ])
+  it('keeps lifecycle filters and occurrence history in stable keys', () => {
+    expect(goalQueryKeys.list('DUE')).toEqual(['goals-v2', 'list', 'DUE'])
 
-    expect(goalQueryKeys.infinite(20, false, 'user-1')).toEqual([
-      'goals',
-      'list',
-      'infinite',
-      { limit: 20, canCheckIn: false, userId: 'user-1' },
+    expect(goalQueryKeys.occurrences('goal-1')).toEqual([
+      'goals-v2',
+      'detail',
+      'goal-1',
+      'occurrences',
     ])
   })
 })

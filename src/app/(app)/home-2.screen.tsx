@@ -26,7 +26,7 @@ export function Home2Screen() {
         <View className="bg-cardd flex flex-col rounded-b-[30px]">
           <TopNotch />
           <HomeHeader user={user} />
-          <HomeGoals user={user} />
+          <HomeGoals />
         </View>
         <HomeGreetings userName={userName} />
 

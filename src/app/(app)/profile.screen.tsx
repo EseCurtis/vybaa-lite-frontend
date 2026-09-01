@@ -10,10 +10,8 @@ import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { View } from '@/components/layout/view.component'
-import { useGoalOperations } from '@/hooks/use-goals.hook'
 import { useTabBar } from '@/hooks/use-tab-bar.hook'
 import { useAuth } from '@/providers/auth.provider'
-import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
@@ -105,7 +103,6 @@ const profileQuickActions: ProfileQuickAction[] = [
 export default function ProfileScreen() {
   const { user, refreshSession } = useAuth()
   const toast = useToast()
-  useGoalOperations(1, 100)
   const [updatedProfileImage, setUpdatedProfileImage] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState<ProfileFormData>(
@@ -115,8 +112,6 @@ export default function ProfileScreen() {
   const [imagePreview, setImagePreview] = useState<string | null>(null)
 
   const { hide, show } = useTabBar()
-
-  const { isPro } = useSubscription()
 
   useEffect(() => {
     if (user) {

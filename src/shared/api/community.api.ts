@@ -1,4 +1,10 @@
 import { http } from '@/shared/api/http'
+import type {
+  Goal,
+  GoalRewardReleasePolicy,
+  GoalSchedule,
+  GoalTarget,
+} from '@/shared/api/goal.api'
 
 const API_V1 = '/api/v1'
 
@@ -55,6 +61,13 @@ export interface GoalTemplate {
   goalText: string // Aligned with Goal model
   targetDays: number
   reminderTime: string | null // Format: "HH:MM" (24-hour format)
+  reminderTimes?: string[]
+  modelVersion?: number
+  scheduleType?: GoalSchedule['type']
+  weekdays?: number[]
+  targetType?: GoalTarget['type']
+  targetValue?: number
+  unit?: string | null
   createdBy: string
   createdAt: string
   updatedAt: string
@@ -173,6 +186,9 @@ export interface CreateTemplateRequest {
   goalText: string // Aligned with goal creation
   targetDays: number
   reminderTime?: string // Format: "HH:MM" (24-hour format)
+  reminderTimes?: string[]
+  schedule?: GoalSchedule
+  target?: GoalTarget
   milestones?: {
     id?: string
     name: string
@@ -191,6 +207,9 @@ export interface UpdateTemplateRequest {
   goalText?: string
   targetDays?: number
   reminderTime?: string | null
+  reminderTimes?: string[]
+  schedule?: GoalSchedule
+  target?: GoalTarget
   milestones?: {
     id?: string
     name: string
@@ -206,7 +225,9 @@ export interface UpdateTemplateRequest {
 }
 
 export interface StartGoalFromTemplateRequest {
-  reminderTime?: string
+  reminderTimes?: string[]
+  rewardReleasePolicy?: GoalRewardReleasePolicy
+  schedule?: GoalSchedule
 }
 
 export interface UpdateMemberRoleRequest {
@@ -530,8 +551,8 @@ class CommunityAPI {
   async startGoalFromTemplate(
     templateId: string,
     data?: StartGoalFromTemplateRequest,
-  ): Promise<{ msg: string; data: any }> {
-    const { data: res } = await http.post<{ msg: string; data: any }>(
+  ): Promise<{ msg: string; data: Goal }> {
+    const { data: res } = await http.post<{ msg: string; data: Goal }>(
       `${API_V1}/communities/templates/${templateId}/start`,
       data || {},
     )

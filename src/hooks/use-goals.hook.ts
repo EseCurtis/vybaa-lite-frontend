@@ -1,308 +1,230 @@
-import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { goalAPI, type CreateGoalRequest, type UpdateGoalRequest } from '@/shared/api/goal.api'
+import {
+  goalAPI,
+  type Attachment,
+  type CreateGoalRequest,
+  type GoalListFilter,
+  type GoalsListResponse,
+} from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
 import { isSubscriptionApiError } from '@/shared/api/http'
-import type { QueryClient } from '@tanstack/react-query'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
-function invalidateGoalCollections(queryClient: QueryClient) {
-  void queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
-  void queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
-  void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
-  void queryClient.invalidateQueries({ queryKey: ['rewards'] })
-}
-/**
- * Hook to fetch all goals with pagination and optional canCheckIn filter
- */
-export function useGoals(page: number = 1, limit: number = 10, canCheckIn?: boolean) {
-  return useQuery({
-    queryKey: goalQueryKeys.list(page, limit, canCheckIn),
-    queryFn: async () => {
-      const response = await goalAPI.getAllGoals(page, limit, canCheckIn)
-      return response
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  })
+function getErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof Error ? error.message : fallback
 }
 
-/**
- * Hook to fetch goals with infinite scrolling and optional canCheckIn filter
- */
-export function useInfiniteGoals({ limit = 10, canCheckIn }: { limit?: number; canCheckIn?: boolean } = {}) {
-  const { user } = useAuth();
+export function useInfiniteGoals({
+  filter = 'ACTIVE',
+  limit = 20,
+}: {
+  filter?: GoalListFilter
+  limit?: number
+} = {}) {
   return useInfiniteQuery({
-    queryKey: goalQueryKeys.infinite(limit, canCheckIn, user?.id),
-    queryFn: async ({ pageParam = 1 }) => {
-      const response = await goalAPI.getAllGoals(pageParam, limit, canCheckIn)
-      return response
-    },
-    getNextPageParam: (lastPage) => {
-      if (lastPage.pagination?.hasNextPage) {
-        return lastPage.pagination.page + 1
-      }
-      return undefined
-    },
-    getPreviousPageParam: (firstPage) => {
-      if (firstPage.pagination?.hasPrevPage) {
-        return firstPage.pagination.page - 1
-      }
-      return undefined
-    },
-    initialPageParam: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  })
-}
-/**
- * Hook to fetch current active goal
- */
-export function useCurrentGoal() {
-  return useQuery({
-    queryKey: goalQueryKeys.current(),
-    queryFn: async () => {
-      const response = await goalAPI.getCurrentGoal()
-      return response.data
-    },
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    getNextPageParam: (lastPage: GoalsListResponse) =>
+      lastPage.pagination.nextCursor ?? undefined,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }): Promise<GoalsListResponse> =>
+      goalAPI.list(filter, pageParam, limit),
+    queryKey: goalQueryKeys.list(filter),
   })
 }
 
-/**
- * Hook to create a new goal
- */
+export function useGoal(goalId?: string) {
+  return useQuery({
+    enabled: Boolean(goalId),
+    queryFn: async () => (await goalAPI.get(goalId!)).data,
+    queryKey: goalQueryKeys.detail(goalId ?? 'none'),
+  })
+}
+
+export function useLegacyGoals(enabled = true) {
+  return useQuery({
+    enabled,
+    queryFn: async () => (await goalAPI.listLegacy()).data,
+    queryKey: goalQueryKeys.legacy(),
+  })
+}
+
+export function useGoalOccurrences(goalId: string) {
+  return useQuery({
+    queryFn: async () => (await goalAPI.listOccurrences(goalId)).data,
+    queryKey: goalQueryKeys.occurrences(goalId),
+  })
+}
+
+function useGoalMutation<TInput, TResult>(
+  mutationFn: (input: TInput) => Promise<TResult>,
+  successMessage: string,
+) {
+  const queryClient = useQueryClient()
+  const toast = useToast()
+  return useMutation({
+    mutationFn,
+    onError: (error: unknown) =>
+      toast.error(getErrorMessage(error, 'Goal update failed')),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
+      void queryClient.invalidateQueries({ queryKey: ['rewards'] })
+      toast.success(successMessage)
+    },
+  })
+}
+
 export function useCreateGoal() {
   const queryClient = useQueryClient()
   const toast = useToast()
-
   return useMutation({
-    mutationFn: (data: CreateGoalRequest) => goalAPI.createGoal(data),
-    onSuccess: (response) => {
-      invalidateGoalCollections(queryClient)
-      // Update current goal if created
-      if (response.data) {
-        queryClient.setQueryData(goalQueryKeys.current(), response.data)
-      }
-      toast.success('Goal created successfully!')
-    },
-    onError: (error: Error) => {
+    mutationFn: (input: CreateGoalRequest) => goalAPI.create(input),
+    onError: (error: unknown) => {
       if (isSubscriptionApiError(error)) return
-      toast.error(error.message || 'Failed to create goal')
+      toast.error(getErrorMessage(error, 'Failed to create goal'))
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
+      toast.success('Goal created successfully')
     },
   })
 }
 
-/**
- * Hook to check in for the day
- */
-export function useCheckIn() {
-  const queryClient = useQueryClient()
-  const toast = useToast()
-
-  return useMutation({
-    mutationFn: ({
-      goalId,
-      notes,
-      attachments,
-    }: {
-      goalId?: string
+export function useRecordGoalProgress() {
+  return useGoalMutation(
+    (input: {
+      amount?: number
+      attachments?: Array<{
+        name?: string
+        publicId?: string
+        type: 'audio' | 'image'
+        url: string
+      }>
+      goalId: string
       notes?: string
-      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
-    } = {}) => goalAPI.checkIn(goalId, notes, attachments),
-    onSuccess: (response) => {
-      invalidateGoalCollections(queryClient)
-      // Update goals list if needed
-      if (response.data) {
-        queryClient.setQueryData(goalQueryKeys.current(), response.data)
-      }
-      toast.success('Check-in successful! Keep it up!')
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Check-in failed')
-    },
-  })
+      occurrenceId: string
+    }) =>
+      goalAPI.recordProgress(input.goalId, input.occurrenceId, {
+        amount: input.amount,
+        attachments: input.attachments,
+        notes: input.notes,
+      }),
+    'Progress recorded',
+  )
 }
 
-/**
- * Hook to reset a goal
- */
-export function useResetGoal() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: () => goalAPI.resetGoal(),
-    onSuccess: (response) => {
-      invalidateGoalCollections(queryClient)
-      // Update goals list if needed
-      if (response.data) {
-        queryClient.setQueryData(goalQueryKeys.current(), response.data)
-      }
-    },
-  })
+export function useCorrectGoalProgress() {
+  return useGoalMutation(
+    (input: {
+      amount?: number
+      goalId: string
+      notes?: string
+      occurrenceId: string
+    }) =>
+      goalAPI.correctProgress(input.goalId, input.occurrenceId, {
+        amount: input.amount,
+        notes: input.notes,
+      }),
+    'Progress corrected',
+  )
 }
 
-/**
- * Hook to update a goal
- */
-export function useUpdateGoal() {
-  const queryClient = useQueryClient()
-  const toast = useToast()
-
-  return useMutation({
-    mutationFn: ({ goalId, data }: { goalId: string; data: UpdateGoalRequest }) =>
-      goalAPI.updateGoal(goalId, data),
-    onSuccess: (response) => {
-      invalidateGoalCollections(queryClient)
-      // Update current goal if it was the one updated
-      if (response.data) {
-        queryClient.invalidateQueries({ queryKey: goalQueryKeys.detail(response.data.id) })
-      }
-      toast.success('Goal updated successfully!')
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to update goal')
-    },
-  })
+export function useUndoGoalProgress() {
+  return useGoalMutation(
+    (input: { goalId: string; occurrenceId: string }) =>
+      goalAPI.undoProgress(input.goalId, input.occurrenceId),
+    'Progress undone',
+  )
 }
 
-/**
- * Hook to delete a goal
- */
-export function useDeleteGoal() {
-  const queryClient = useQueryClient()
-  const toast = useToast()
-
-  return useMutation({
-    mutationFn: (goalId: string) => goalAPI.deleteGoal(goalId),
-    onSuccess: (_, goalId) => {
-      invalidateGoalCollections(queryClient)
-      // Remove from cache
-      queryClient.removeQueries({ queryKey: goalQueryKeys.detail(goalId) })
-      toast.success('Goal deleted successfully')
-    },
-    onError: (error: any) => {
-      toast.error(error.message || 'Failed to delete goal')
-    },
-  })
+export function useRescheduleGoalOccurrence() {
+  return useGoalMutation(
+    (input: { dueDate: string; goalId: string; occurrenceId: string }) =>
+      goalAPI.reschedule(input.goalId, input.occurrenceId, input.dueDate),
+    'Occurrence rescheduled',
+  )
 }
 
-/**
- * Combined hook for goal operations
- * Provides all goal-related queries and mutations in one place
- */
-export function useGoalOperations(page: number = 1, limit: number = 10, canCheckIn?: boolean) {
-  const goalsQuery = useGoals(page, limit, canCheckIn)
-  const currentGoalQuery = useCurrentGoal()
-  const createGoalMutation = useCreateGoal()
-  const checkInMutation = useCheckIn()
-  const resetGoalMutation = useResetGoal()
-  const updateGoalMutation = useUpdateGoal()
-  const deleteGoalMutation = useDeleteGoal()
-
-  return {
-    // Queries
-    goals: goalsQuery.data?.data || [],
-    pagination: goalsQuery.data?.pagination,
-    currentGoal: currentGoalQuery.data,
-    isLoading: goalsQuery.isLoading || currentGoalQuery.isLoading,
-    isFetching: goalsQuery.isFetching || currentGoalQuery.isFetching,
-    error: goalsQuery.error || currentGoalQuery.error,
-
-    // Mutations
-    createGoal: createGoalMutation.mutate,
-    createGoalAsync: createGoalMutation.mutateAsync,
-    isCreating: createGoalMutation.isPending,
-
-    checkIn: (
-      goalId?: string,
-      notes?: string,
-      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
-    ) => checkInMutation.mutate({ goalId, notes, attachments }),
-    checkInAsync: (
-      goalId?: string,
-      notes?: string,
-      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
-    ) => checkInMutation.mutateAsync({ goalId, notes, attachments }),
-    isCheckingIn: checkInMutation.isPending,
-
-    resetGoal: resetGoalMutation.mutate,
-    resetGoalAsync: resetGoalMutation.mutateAsync,
-    isResetting: resetGoalMutation.isPending,
-
-    updateGoal: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutate({ goalId, data }),
-    updateGoalAsync: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutateAsync({ goalId, data }),
-    isUpdating: updateGoalMutation.isPending,
-
-    deleteGoal: deleteGoalMutation.mutate,
-    deleteGoalAsync: deleteGoalMutation.mutateAsync,
-    isDeleting: deleteGoalMutation.isPending,
-
-    // Refetch functions
-    refetchGoals: goalsQuery.refetch,
-    refetchCurrentGoal: currentGoalQuery.refetch,
-  }
+export function usePauseGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.pause(goalId),
+    'Goal paused',
+  )
 }
 
-/**
- * Combined hook for goal operations with infinite scrolling
- * Provides all goal-related queries and mutations with infinite query support
- */
-export function useGoalOperationsInfinite(limit: number = 10, canCheckIn?: boolean) {
-  const goalsQuery = useInfiniteGoals({ limit, canCheckIn })
-  const currentGoalQuery = useCurrentGoal()
-  const createGoalMutation = useCreateGoal()
-  const checkInMutation = useCheckIn()
-  const resetGoalMutation = useResetGoal()
-  const updateGoalMutation = useUpdateGoal()
-  const deleteGoalMutation = useDeleteGoal()
+export function useResumeGoal() {
+  return useGoalMutation(
+    (input: {
+      deadlinePolicy: 'KEEP_DEADLINE' | 'SHIFT_DEADLINE'
+      goalId: string
+    }) => goalAPI.resume(input.goalId, input.deadlinePolicy),
+    'Goal resumed',
+  )
+}
 
-  // Flatten pages for easier consumption
-  const goals = goalsQuery.data?.pages.flatMap(page => page.data) || []
-  const lastPage = goalsQuery.data?.pages[goalsQuery.data.pages.length - 1]
+export function useAbandonGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.abandon(goalId),
+    'Goal moved to history',
+  )
+}
 
-  return {
-    // Queries
-    goals,
-    pagination: lastPage?.pagination,
-    currentGoal: currentGoalQuery.data,
-    isLoading: goalsQuery.isLoading || currentGoalQuery.isLoading,
-    isFetching: goalsQuery.isFetching || currentGoalQuery.isFetching,
-    isFetchingNextPage: goalsQuery.isFetchingNextPage,
-    hasNextPage: goalsQuery.hasNextPage,
-    fetchNextPage: goalsQuery.fetchNextPage,
-    error: goalsQuery.error || currentGoalQuery.error,
+export function useArchiveGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.archive(goalId),
+    'Goal archived',
+  )
+}
 
-    // Mutations
-    createGoal: createGoalMutation.mutate,
-    createGoalAsync: createGoalMutation.mutateAsync,
-    isCreating: createGoalMutation.isPending,
+export function usePermanentlyDeleteGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.permanentlyDelete(goalId),
+    'Goal permanently deleted',
+  )
+}
 
-    checkIn: (
-      goalId?: string,
-      notes?: string,
-      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
-    ) => checkInMutation.mutate({ goalId, notes, attachments }),
-    checkInAsync: (
-      goalId?: string,
-      notes?: string,
-      attachments?: Array<{ type: 'image' | 'audio'; url: string; publicId?: string; name?: string }>
-    ) => checkInMutation.mutateAsync({ goalId, notes, attachments }),
-    isCheckingIn: checkInMutation.isPending,
+export function useReopenGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.reopen(goalId),
+    'New goal run started',
+  )
+}
 
-    resetGoal: resetGoalMutation.mutate,
-    resetGoalAsync: resetGoalMutation.mutateAsync,
-    isResetting: resetGoalMutation.isPending,
+export function useSaveGoalReview() {
+  return useGoalMutation(
+    (input: {
+      attachments?: Attachment[]
+      goalId: string
+      nextStep?: string | null
+      rating?: number | null
+      reflection?: string | null
+    }) => goalAPI.saveReview(input.goalId, input),
+    'Review saved',
+  )
+}
 
-    updateGoal: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutate({ goalId, data }),
-    updateGoalAsync: (goalId: string, data: UpdateGoalRequest) => updateGoalMutation.mutateAsync({ goalId, data }),
-    isUpdating: updateGoalMutation.isPending,
+export function useArchiveLegacyGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.archiveLegacy(goalId),
+    'Legacy goal archived',
+  )
+}
 
-    deleteGoal: deleteGoalMutation.mutate,
-    deleteGoalAsync: deleteGoalMutation.mutateAsync,
-    isDeleting: deleteGoalMutation.isPending,
+export function useReopenLegacyGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.reopenLegacy(goalId),
+    'New goal run started',
+  )
+}
 
-    // Refetch functions
-    refetchGoals: goalsQuery.refetch,
-    refetchCurrentGoal: currentGoalQuery.refetch,
-  }
+export function useDeleteLegacyGoal() {
+  return useGoalMutation(
+    (goalId: string) => goalAPI.deleteLegacy(goalId),
+    'Legacy goal permanently deleted',
+  )
 }

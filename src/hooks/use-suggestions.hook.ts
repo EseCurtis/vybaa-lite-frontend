@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query'
 
 export const useGetSuggestions = () => {
   return useMutation({
-    mutationFn: (data: Omit<OnboardingRequest, 'selectedTasks'>) => 
+    mutationFn: (data: Omit<OnboardingRequest, 'selectedGoals'>) =>
       authAPI.getSuggestions(data),
   })
 }

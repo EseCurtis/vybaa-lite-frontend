@@ -447,8 +447,7 @@ export function useStartGoalFromTemplate() {
     }) => communityAPI.startGoalFromTemplate(templateId, data),
     onSuccess: (_response, variables) => {
       // Invalidate goals list to show new goal
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: goalQueryKeys.current() })
+      queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
       // Invalidate template to update startedGoals count
       queryClient.invalidateQueries({
         queryKey: communityQueryKeys.template(variables.templateId),

@@ -124,7 +124,7 @@ export interface OnboardingAnswer {
   answer: string
 }
 
-export interface AISuggestion {
+export interface GoalSuggestion {
   title: string
   description: string
   frequency: 'DAILY' | 'WEEKLY'
@@ -133,61 +133,13 @@ export interface AISuggestion {
 export interface OnboardingRequest {
   answers: Array<OnboardingAnswer>
   username?: string
-  selectedTasks?: Array<AISuggestion>
+  selectedGoals?: Array<GoalSuggestion>
 }
 
 export interface OnboardingResponse {
   msg: string
   data: {
     user: User
-  }
-}
-
-// Task Management Types
-export type TaskStatus = 'ACTIVE' | 'COMPLETED' | 'SKIPPED'
-export type TaskFrequency = 'DAILY' | 'WEEKLY'
-export type TaskSource = 'AI' | 'USER'
-
-export interface Task {
-  id: string
-  userId: string
-  title: string
-  description?: string
-  emoji?: string
-  source: TaskSource
-  frequency: TaskFrequency
-  status: TaskStatus
-  scheduledFor: string
-  completedAt?: string
-  createdAt: string
-}
-
-export interface CreateTaskRequest {
-  title: string
-  description?: string
-  frequency: TaskFrequency
-  emoji?: string
-}
-
-export interface UpdateTaskRequest {
-  title?: string
-  description?: string
-  frequency?: TaskFrequency
-  emoji?: string
-  status?: TaskStatus
-}
-
-export interface TasksResponse {
-  msg: string
-  data: {
-    tasks: Array<Task>
-  }
-}
-
-export interface TaskResponse {
-  msg: string
-  data: {
-    task: Task
   }
 }
 

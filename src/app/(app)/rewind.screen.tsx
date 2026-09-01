@@ -52,6 +52,7 @@ import {
   getRewindCaptureFrameSize,
   REWIND_CAPTURE_WORKLET_NAME,
 } from '@/shared/rewind/rewind-audio-worklet'
+import { shouldAcknowledgeRewindClosing } from '@/shared/rewind/rewind-closing.util'
 import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
 import {
   getRewindPersona,
@@ -102,6 +103,10 @@ type RewindSocketMessage =
     }
   | { type: 'reconnected' }
   | { type: 'reconnecting' }
+  | { type: 'closing_started' }
+  | { type: 'closing_turn_complete' }
+  | { type: 'closing_cancelled' }
+  | { type: 'closing_save_failed'; message: string }
   | { type: 'turn_complete' }
   | { type: 'interrupted' }
   | { type: 'session_paused'; sessionId?: string }
@@ -398,6 +403,10 @@ export default function RewindScreen(): ReactElement {
   const isSessionPausedByToolRef = useRef(false)
   const isSessionCompleteRef = useRef(false)
   const isFinishingSessionRef = useRef(false)
+  const isClosingRef = useRef(false)
+  const closingTurnCompleteRef = useRef(false)
+  const closingPlaybackAckSentRef = useRef(false)
+  const closingSaveRetryRef = useRef(false)
   const shouldReconnectRef = useRef(false)
   const disconnectNoticeShownRef = useRef(false)
   const reconnectAttemptsRef = useRef(0)
@@ -577,6 +586,26 @@ export default function RewindScreen(): ReactElement {
     activeAudioSourcesRef.current.clear()
   }, [])
 
+  const sendClosingPlaybackComplete = useCallback((): void => {
+    if (
+      !shouldAcknowledgeRewindClosing({
+        acknowledgementSent: closingPlaybackAckSentRef.current,
+        activeSourceCount: activeAudioSourcesRef.current.size,
+        closing: isClosingRef.current,
+        playingQueue: isPlayingAudioQueueRef.current,
+        queuedChunkCount: audioQueueRef.current.length,
+        turnComplete: closingTurnCompleteRef.current,
+      })
+    ) {
+      return
+    }
+    const socket = liveSessionRef.current
+    if (!socket || socket.readyState !== WebSocket.OPEN) return
+    closingPlaybackAckSentRef.current = true
+    socket.send(JSON.stringify({ type: 'closing_playback_complete' }))
+    setStatusText('Saving reflection')
+  }, [])
+
   const playNextAudioChunk = useCallback(async () => {
     if (isPlayingAudioQueueRef.current) return
     if (isConversationPausedRef.current) return
@@ -637,6 +666,7 @@ export default function RewindScreen(): ReactElement {
             audioQueueRef.current.length === 0
           ) {
             setStatusText('Listening')
+            sendClosingPlaybackComplete()
           }
         }
         source.start(startAt)
@@ -654,7 +684,7 @@ export default function RewindScreen(): ReactElement {
         queueMicrotask(() => void playNextAudioChunk())
       }
     }
-  }, [])
+  }, [sendClosingPlaybackComplete])
 
   const connectMicrophone = useCallback(
     async (ws: WebSocket) => {
@@ -844,16 +874,22 @@ export default function RewindScreen(): ReactElement {
       return
     }
 
-    isConversationPausedRef.current = true
+    isClosingRef.current = true
+    closingTurnCompleteRef.current = false
+    closingPlaybackAckSentRef.current = false
     isFinishingSessionRef.current = true
-    setIsConversationPaused(true)
     setIsFinishingSession(true)
-    setFinalizationStage('saving_conversation')
-    setStatusText('Saving conversation')
-    clearPlayback()
+    setStatusText('Wrapping up')
     cleanupAudioPipeline()
-    liveSession.send(JSON.stringify({ type: 'finish_session' }))
-  }, [cleanupAudioPipeline, clearPlayback, isFinishingSession])
+    liveSession.send(
+      JSON.stringify({
+        type: closingSaveRetryRef.current
+          ? 'retry_finalization'
+          : 'finish_session',
+      }),
+    )
+    closingSaveRetryRef.current = false
+  }, [cleanupAudioPipeline, isFinishingSession])
 
   useEffect(() => {
     if (!persona) {
@@ -985,6 +1021,51 @@ export default function RewindScreen(): ReactElement {
             return
           }
 
+          if (payload.type === 'closing_started') {
+            isClosingRef.current = true
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            closingSaveRetryRef.current = false
+            isFinishingSessionRef.current = true
+            setIsFinishingSession(true)
+            setConversationStage('CLOSING')
+            setStatusText('Wrapping up')
+            cleanupAudioPipeline()
+            return
+          }
+
+          if (payload.type === 'closing_turn_complete') {
+            closingTurnCompleteRef.current = true
+            setStatusText('Finishing closing message')
+            sendClosingPlaybackComplete()
+            return
+          }
+
+          if (payload.type === 'closing_cancelled') {
+            isClosingRef.current = false
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            isFinishingSessionRef.current = false
+            setIsFinishingSession(false)
+            setConversationStage('UNPACKING')
+            setStatusText('Listening')
+            void connectMicrophone(ws)
+            return
+          }
+
+          if (payload.type === 'closing_save_failed') {
+            isClosingRef.current = false
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            closingSaveRetryRef.current = true
+            isFinishingSessionRef.current = false
+            setIsFinishingSession(false)
+            setFinalizationStage(null)
+            setStatusText('Tap Finish to retry saving')
+            toast.error(payload.message)
+            return
+          }
+
           if (payload.type === 'reconnecting') {
             setStatusText('Reconnecting')
             return
@@ -1011,6 +1092,7 @@ export default function RewindScreen(): ReactElement {
 
           if (payload.type === 'session_ended') {
             isSessionCompleteRef.current = true
+            isClosingRef.current = false
             shouldReconnectRef.current = false
             clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
@@ -1062,7 +1144,10 @@ export default function RewindScreen(): ReactElement {
             payload.type === 'session_missed' ||
             payload.type === 'session_unavailable'
           ) {
+            const completedSpokenClose =
+              payload.type === 'session_missed' && isClosingRef.current
             isSessionCompleteRef.current = true
+            isClosingRef.current = false
             shouldReconnectRef.current = false
             clearPausedRewindSessionId(persona.id)
             setIsFinishingSession(false)
@@ -1076,6 +1161,13 @@ export default function RewindScreen(): ReactElement {
             cleanupAudioPipeline()
             void routineQuery.refetch()
             liveSessionRef.current?.close(1000, 'Rewind window closed')
+            if (completedSpokenClose && payload.sessionId) {
+              void navigate({
+                params: { sessionId: payload.sessionId },
+                search: { from: 'rewind' },
+                to: '/app/r/$sessionId',
+              })
+            }
             return
           }
 

@@ -1,21 +1,18 @@
-import { getProfileDisplayName } from '@/app/(app)/profile.screen'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { featureFlags } from '@/shared/config/feature-flags.config'
-import { randomGreetings } from '@/shared/goal/goal.util.shared'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import {
-  RiEmotionLaughLine, RiFireLine,
+  RiEmotionLaughLine,
+  RiFireLine,
   RiHeart2Line,
   RiRewindLine,
   RiTempColdLine,
-  type RemixiconComponentType
+  type RemixiconComponentType,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { CreateGoalSheet } from '../goal/create-goal-sheet.component'
 
 function HomeActionCard({
   name,
@@ -30,9 +27,12 @@ function HomeActionCard({
   onAction?: () => void
   filled?: boolean
 }) {
-  const {user} = useAuth()
+  const { user } = useAuth()
   const Icon = icon
-  const color = seededColor(JSON.stringify(name), user?.username || user?.email || 'default')
+  const color = seededColor(
+    JSON.stringify(name),
+    user?.username || user?.email || 'default',
+  )
   const darkColor = adjustColor(color, { lightness: -5 })
 
   return (
@@ -50,13 +50,15 @@ function HomeActionCard({
     >
       <Pressable
         onPress={onAction}
-        className={cn(!filled && "aspect-square ", "w-full overflow-hidden flex-col  relative items-center justify-center h-[140%] bg-cardx rounded-[40px] p-mg")}
+        className={cn(
+          !filled && 'aspect-square ',
+          'w-full overflow-hidden flex-col  relative items-center justify-center h-[140%] bg-cardx rounded-[40px] p-mg',
+        )}
       >
         <View
           className="border-2 size-full absolute z-[99] rounded-[42px] border-[var(--color)]"
           style={{
             maskImage: `linear-gradient(to bottom, transparent 0%, transparent 10%, black 130%)`,
-          
           }}
         ></View>
         <View
@@ -79,14 +81,9 @@ function HomeActionCard({
 }
 
 export function HomeActions() {
-  const bottomSheet = useBottomSheet()
-  const {user} = useAuth();
   const navigate = useNavigate()
   const handleCreateGoal = () => {
-    bottomSheet.present(<CreateGoalSheet onSuccess={bottomSheet.dismiss} />, {
-      title: randomGreetings(getProfileDisplayName(user)),
-      elevation: 999,
-    })
+    navigate({ to: '/app/goal/create' })
   }
 
   const actions = [
@@ -122,7 +119,7 @@ export function HomeActions() {
       name: 'Wellbeing',
       description: 'See your progress patterns',
       icon: RiHeart2Line,
-       //enabled: featureFlags.insights,
+      //enabled: featureFlags.insights,
       onAction() {
         navigate({
           to: '/app/sub-profile/insights',

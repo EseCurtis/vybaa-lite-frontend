@@ -7,7 +7,7 @@ export interface UserStats {
   points: number
   activeDays: number
   currentMood: string | null
-  totalTasksCompleted: number
+  totalGoalsCompleted: number
   totalJournals: number
 }
 
