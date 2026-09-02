@@ -39,7 +39,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
         ref={ref}
         rows={1}
         className={cn(
-          'w-full bg-transparent !p-3 text-white font-bbh text-[17px] outline-none resize-none  placeholder:text-card-lighter-3/40',
+          'w-full rounded-xl bg-card-light-50 !p-3 text-white font-bbh text-[17px] outline-none resize-none placeholder:text-card-lighter-3/70',
           className,
         )}
         {...props}

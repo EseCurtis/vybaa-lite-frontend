@@ -5,6 +5,7 @@ import {
   type CreateGoalRequest,
   type GoalListFilter,
   type GoalsListResponse,
+  type GoalOccurrencesResponse,
 } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
@@ -53,9 +54,14 @@ export function useLegacyGoals(enabled = true) {
   })
 }
 
-export function useGoalOccurrences(goalId: string) {
-  return useQuery({
-    queryFn: async () => (await goalAPI.listOccurrences(goalId)).data,
+export function useGoalOccurrences(goalId: string, enabled = true) {
+  return useInfiniteQuery({
+    enabled,
+    getNextPageParam: (lastPage: GoalOccurrencesResponse) =>
+      lastPage.pagination.nextCursor ?? undefined,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }): Promise<GoalOccurrencesResponse> =>
+      goalAPI.listOccurrences(goalId, pageParam),
     queryKey: goalQueryKeys.occurrences(goalId),
   })
 }

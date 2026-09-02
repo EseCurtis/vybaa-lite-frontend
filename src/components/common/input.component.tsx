@@ -5,7 +5,10 @@ import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
 import React, { useState } from 'react'
 
-interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+interface InputProps extends Omit<
+  React.InputHTMLAttributes<HTMLInputElement>,
+  'size'
+> {
   label?: string
   error?: string
   helperText?: string
@@ -30,7 +33,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       disabled = false,
       ...props
     },
-    ref
+    ref,
   ) => {
     const [showPassword, setShowPassword] = useState(false)
     const isPassword = type === 'password'
@@ -43,12 +46,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {label}
           </Text>
         )}
-        
+
         <View
           className={cn(
-            'relative flex flex-row items-center bg-cardd border-4 border-card-light-50/5 rounded-xl px-1 overflow-hidden transition-all',
+            'relative flex flex-row items-center bg-card-light-50 border-0 rounded-xl px-1 overflow-hidden transition-all',
             disabled && 'opacity-50 cursor-not-allowed',
-            className
+            className,
           )}
         >
           {leftIcon && (
@@ -63,10 +66,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             disabled={disabled}
             className={cn(
               'w-full px-4 py-3  bg-transparent text-white font-bbh text-[17px] outline-none',
-              'placeholder:text-card-lighter-3/40',
+              'placeholder:text-card-lighter-3/70',
               leftIcon && 'pl-10',
               (rightIcon || isPassword) && 'pr-10',
-              inputClassName
+              inputClassName,
             )}
             {...props}
           />
@@ -94,9 +97,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </View>
 
         {error && (
-          <Text className="text-danger-500 text-xs font-bbh mt-1">
-            {error}
-          </Text>
+          <Text className="text-danger-500 text-xs font-bbh mt-1">{error}</Text>
         )}
 
         {helperText && !error && (
@@ -106,8 +107,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
       </View>
     )
-  }
+  },
 )
 
 Input.displayName = 'Input'
-

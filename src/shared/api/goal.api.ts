@@ -171,6 +171,12 @@ export interface GoalOccurrence {
   status: 'CANCELLED' | 'COMPLETED' | 'GRACE' | 'MISSED' | 'PENDING'
 }
 
+export interface GoalOccurrencesResponse {
+  data: GoalOccurrence[]
+  msg: string
+  pagination: { hasMore: boolean; nextCursor: string | null }
+}
+
 export interface CreateGoalRequest {
   description?: string
   hardStopDate?: string
@@ -239,9 +245,12 @@ export const goalAPI = {
   },
   listOccurrences: async (
     goalId: string,
-  ): Promise<{ data: GoalOccurrence[] }> => {
-    const response = await http.get<{ data: GoalOccurrence[] }>(
+    cursor?: string,
+    limit = 20,
+  ): Promise<GoalOccurrencesResponse> => {
+    const response = await http.get<GoalOccurrencesResponse>(
       `${GOALS_V2}/${goalId}/occurrences`,
+      { params: { cursor, limit } },
     )
     return response.data
   },

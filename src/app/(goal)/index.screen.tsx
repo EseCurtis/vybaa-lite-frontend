@@ -11,10 +11,15 @@ import {
   useReopenLegacyGoal,
 } from '@/hooks/use-goals.hook'
 import type { Goal, GoalListFilter, LegacyGoal } from '@/shared/api/goal.api'
-import { cn, seededColor } from '@/shared/utils/helpers.util'
+import {
+  cn,
+  contrastingTextColor,
+  seededColor,
+} from '@/shared/utils/helpers.util'
 import {
   RiAddLine,
   RiArchiveLine,
+  RiArrowRightSLine,
   RiCalendarCheckLine,
   RiPauseLine,
 } from '@remixicon/react'
@@ -31,38 +36,59 @@ function GoalCard({
   onOpen: (goal: Goal) => void
 }) {
   const color = seededColor(goal.title)
+  const textColor = contrastingTextColor(color)
+  const progress = Math.min(100, Math.max(0, goal.progress.percentage))
+  const targetSummary =
+    goal.target.type === 'QUANTITY'
+      ? `${goal.progress.value.toLocaleString()} / ${goal.target.amount.toLocaleString()} ${goal.target.unit ?? ''}`
+      : goal.target.type === 'CHECK_IN_COUNT'
+        ? `${goal.progress.completedOccurrences} / ${goal.target.count} check-ins`
+        : `${Math.round(goal.progress.adherenceRate)}% adherence`
+  const nextSummary = goal.nextOccurrence
+    ? `Next ${new Date(goal.nextOccurrence.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+    : targetSummary
   return (
     <Pressable
-      className="mb-3 flex flex-col rounded-2xl p-4"
+      className="mb-2 flex flex-col gap-2 text-left rounded-2xl bg-card-light-50 pt-1 p-2 pr-3"
       onPress={() => onOpen(goal)}
-      style={{ backgroundColor: color }}
     >
-      <View className="flex-col items-start justify-between gap-3">
-        <Text className="flex-1 font-bold text-black text-left">
-          {goal.title}
-        </Text>
-        <Text className="rounded-full bg-black/10 px-2 py-1 text-[10px] font-bold text-black/60">
-          {goal.status.replace('_', ' ')}
-        </Text>
-      </View>
-      <View className="">
-        <View className="mt-2 flex-row justify-between">
-          <Text className="text-xs text-black/60">
-            {Math.round(goal.progress.percentage)}% complete
-          </Text>
-          <Text className="text-xs text-black/60">
-            {goal.nextOccurrence
-              ? `Next ${goal.nextOccurrence.dueDate}`
-              : `${goal.progress.completedOccurrences} check-ins`}
+      <View className="flex-row items-center   gap-3">
+        <View
+          className="size-11 items-center justify-center rounded-lg overflow-hidden"
+          style={{ backgroundColor: color }}
+        >
+          <Text
+            className="text-lg font-bold scale-[3.5] opacity-35 rotate-45"
+            style={{ color: textColor }}
+          >
+            {goal.title.trim().charAt(0).toUpperCase() || 'G'}
           </Text>
         </View>
+        <View className="min-w-0 flex-1 gap-1">
+          <View className="flex-row items-center gap-2">
+            <Text className="flex-1 text-left truncate text-base font-bold text-white">
+              {goal.title}
+            </Text>
+          </View>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-[11px] font-bold text-card-lighter-2">
+              {Math.round(progress)}%
+            </Text>
+            <View className="h-1 w-full max-w-[75%] overflow-hidden rounded-full bg-card-light">
+              <View
+                className="h-full rounded-full bg-card-lighter-3"
+                style={{ width: `${progress}%` }}
+              />
+            </View>
+          </View>
+        </View>
+        <RiArrowRightSLine className="text-card-lighter-2 hidden" size={20} />
       </View>
-
-      <View className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-black/10">
-        <View
-          className="h-full bg-black"
-          style={{ width: `${goal.progress.percentage}%` }}
-        />
+      <View className="px-1 flex-row w-full justify-between truncate text-[11px] text-card-lighter-2">
+        <Text className="text-[10px] font-bold capitalize text-card-lighter-2">
+          {goal.status.replace('_', ' ').toLowerCase()}
+        </Text>
+        <Text className="">{nextSummary}</Text>
       </View>
     </Pressable>
   )
@@ -250,7 +276,10 @@ export default function GoalsAppScreen() {
                   key={item.value}
                   onPress={() => setActiveFilter(item.value)}
                 >
-                  <item.icon size={13} className='text-[var(--tw-active-border-color)]' />
+                  <item.icon
+                    size={13}
+                    className="text-[var(--tw-active-border-color)]"
+                  />
                   <Text className="text-xs">{item.label}</Text>
                 </Pressable>
               ))}

@@ -1,19 +1,37 @@
 import { NoiseComponent } from '@/components/common/noise.component'
-import { TabHeader } from '@/components/common/tab-header.component'
 import { Skeleton } from '@/components/common/skeleton.component'
-import { GoalDetailsSheet } from '@/components/custom/goal/goal-details-sheet.component'
+import { TabHeader } from '@/components/common/tab-header.component'
+import {
+  GoalActionsSheet,
+  GoalDetailsSheet,
+} from '@/components/custom/goal/goal-details-sheet.component'
 import { Button } from '@/components/layout/button.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoal } from '@/hooks/use-goals.hook'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { colors } from '@/shared/colors.shared'
+import { RiRefreshLine, RiSettings3Line } from '@remixicon/react'
 import { useNavigate, useParams } from '@tanstack/react-router'
-import { RiRefreshLine } from '@remixicon/react'
 
 export default function GoalDetailScreen() {
   const navigate = useNavigate()
   const { goalId } = useParams({ from: '/app/goal/$goalId' })
   const goal = useGoal(goalId)
+  const bottomSheet = useBottomSheetController()
+
+  function openGoalActions(): void {
+    if (!goal.data) return
+    bottomSheet.present(
+      <GoalActionsSheet
+        goal={goal.data}
+        onAbandon={() => navigate({ replace: true, to: '/app/goal' })}
+        onDone={() => bottomSheet.dismiss()}
+      />,
+      { size: 'default', title: ' ' },
+    )
+  }
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
@@ -22,7 +40,17 @@ export default function GoalDetailScreen() {
           canGoBack
           onBack={() => navigate({ replace: true, to: '/app/goal' })}
           title="Goal details"
-        />
+        >
+          {goal.data && ['ACTIVE', 'PAUSED'].includes(goal.data.status) ? (
+            <Pressable
+              accessibilityLabel="Open goal settings"
+              className="size-10 items-center justify-center rounded-full bg-card-light-50"
+              onPress={openGoalActions}
+            >
+              <RiSettings3Line className="text-white" size={19} />
+            </Pressable>
+          ) : null}
+        </TabHeader>
         <View className="flex-1 overflow-y-auto px-mg pb-[120px]">
           <View className="mx-auto w-full max-w-3xl">
             {goal.isLoading ? (

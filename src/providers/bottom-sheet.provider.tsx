@@ -129,7 +129,7 @@ export const BottomSheetProvider = ({
         }
       : undefined
 
-      const {isKeyboardVisible} = useKeyboard()
+  const { isKeyboardVisible } = useKeyboard()
 
   return (
     <BottomSheetContext.Provider value={value}>
@@ -145,21 +145,22 @@ export const BottomSheetProvider = ({
             className="fixed  inset-0 max-w-[400px] w-full flex-1 mx-auto"
             style={{ zIndex: sheetZIndex, top: '0' }}
           >
-               <div
-            className="fixed top-0  z-10 inset-0"
-            onClick={dismiss}
-          />
-            <div className='bottom-05-mg z-[10] max-h-[calc(100vh-(var(--safe-area-inset-top)+20px))] flex flex-col absolute left-1/2 !-translate-x-1/2 w-[calc(100%-17px)]'>
-
+            <div className="fixed top-0  z-10 inset-0" onClick={dismiss} />
+            <div className="bottom-05-mg z-[10] max-h-[calc(100vh-(var(--safe-area-inset-top)+20px))] flex flex-col absolute left-1/2 !-translate-x-1/2 w-[calc(100%-17px)]">
               <div
                 className={cn(
-                  'bg-cardd  border-2 border-card-light/30 rounded-[30px] rounded-b-[40px] p-5  w-full',
+                  'bg-card-light-50 rounded-[30px] rounded-b-[40px] p-5 w-full',
                   topSize === 'semi-full' && '',
                 )}
                 style={shadow}
               >
                 <>
-                  <View className={cn("flex-row items-center justify-between ", isKeyboardVisible && "mb-7")}>
+                  <View
+                    className={cn(
+                      'flex-row items-center justify-between ',
+                      isKeyboardVisible && 'mb-7',
+                    )}
+                  >
                     {top?.title ? (
                       <Text className="text-white text-lg font-bold font-bbh">
                         {top.title}
