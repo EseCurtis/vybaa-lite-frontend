@@ -276,6 +276,11 @@ function PersonaThumbnail({
           'ring-2 ring-[var(--tw-themecolor)] ring-offset-2 ring-offset-cardd',
       )}
     >
+      <img
+        src={persona.avatar}
+        alt=""
+        className="absolute inset-0 size-full object-cover"
+      />
       <View className="absolute inset-0 opacity-70 bg-[var(--tw-themecolor)]" />
       <View className="z-10 items-center justify-center mb-3 opacity-40">
         <PersonaIcon size={34} color="white" />
@@ -301,7 +306,6 @@ function PersonaArtwork({
     saturation: -20,
   })
   const darkColor = adjustColor(color, { lightness: -25, saturation: -20 })
-  const PersonaIcon = REWIND_PERSONA_ICONS[persona.icon]
 
   return (
     <View
@@ -330,13 +334,17 @@ function PersonaArtwork({
         }}
       />
       <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
-        <View className="mb-5 items-center  justify-center">
-          <PersonaIcon size={112} color="var(--persona-color)" />
+        <View className="mb-5 size-44 overflow-hidden rounded-full border-4 border-[var(--persona-color)] shadow-lg">
+          <img
+            src={persona.avatar}
+            alt={`${persona.name} avatar`}
+            className="size-full object-cover"
+          />
         </View>
         <Text className="font-display relative z-10 text-2xl font-extrabold text-white">
           {persona.name}
         </Text>
-        <Text className="mt-2  relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
+        <Text className="mt-2 !text-center relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
           {persona.name} {persona.perspective.toLowerCase()}
         </Text>
         <Pressable
@@ -1375,10 +1383,7 @@ export default function RewindScreen(): ReactElement {
             <TabHeader title="Rewind" />
             <View className="flex-1 px-mg pb-xl">
               <View className="mt-lg mb-xl items-center">
-                <Text className="text-white font-bbh text-2xl font-bold text-center">
-                  Choose your Rewind partner
-                </Text>
-                <Text className="muted mt-2 font-bbh text-base text-center">
+                <Text className="muted  mt-2 font-bbh text-base text-white text-center">
                   Pick a custom-tuned persona to start your live rewind
                   conversations.
                 </Text>

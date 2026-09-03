@@ -1,7 +1,6 @@
 import {
   RiArrowRightSLine,
   RiTimeLine,
-  RiUserVoiceLine,
 } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import type { ReactElement } from 'react'
@@ -53,7 +52,11 @@ export function RewindSessionRow({
             className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
             style={{ backgroundColor: accentSoft }}
           >
-            <RiUserVoiceLine size={20} style={{ color: accent }} />
+            <img
+              src={persona.avatar}
+              alt=""
+              className="size-full rounded-full object-cover"
+            />
           </View>
 
           <View className="min-w-0 flex-1 gap-2">

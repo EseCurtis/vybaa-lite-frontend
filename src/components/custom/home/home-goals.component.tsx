@@ -3,11 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import type { Goal } from '@/shared/api/goal.api'
-import {
-  contrastingTextColor,
-  seededColor,
-  smartTruncate,
-} from '@/shared/utils/helpers.util'
+import { seededColor, smartTruncate } from '@/shared/utils/helpers.util'
 import {
   RiAddCircleFill,
   RiArrowRightCircleFill,
@@ -18,17 +14,15 @@ import { GoalDurationPill } from '../goal/duration-pill.component'
 
 function HomeGoalItem({
   title,
-  currentDay,
-  targetDays,
+  progressLabel,
   onOpen,
 }: {
   title: string
-  currentDay: number
-  targetDays: number
+  progressLabel: string
   onOpen: () => void
 }) {
   const color = seededColor(title)
-  const textColor = contrastingTextColor(color)
+
   return (
     <Pressable
       style={{
@@ -37,15 +31,12 @@ function HomeGoalItem({
       onPress={onOpen}
       className=" snap-center  max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
     >
-      <GoalDurationPill currentDay={currentDay} targetDays={targetDays} />
-      <Text
-        className="limit-text-to-two-lines leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden text-left"
-        style={{ color: textColor }}
-      >
+      <GoalDurationPill currentDay={0} label={progressLabel} targetDays={0} />
+      <Text className="limit-text-to-two-lines text-black leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden text-left">
         {smartTruncate(title, 23)}
       </Text>
-      <View className="">
-        <RiArrowRightUpLine color={textColor} size={27} />
+      <View className="text-black">
+        <RiArrowRightUpLine size={24} />
       </View>
     </Pressable>
   )
@@ -69,16 +60,17 @@ export function HomeGoals() {
     <View className="pt-mg">
       <View className="overflow-x-scroll bg-cardd py-3 rounded-full snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar  ">
         {goals.map((goal, index) => {
+          const progressLabel =
+            goal.target.type === 'CHECK_IN_COUNT'
+              ? `${goal.progress.completedOccurrences}/${goal.target.count}`
+              : goal.target.type === 'QUANTITY'
+                ? `${goal.progress.value.toLocaleString()}/${goal.target.amount.toLocaleString()} ${goal.target.unit ?? ''}`
+                : `${Math.round(goal.progress.percentage)}%`
           return (
             <HomeGoalItem
               key={index}
+              progressLabel={progressLabel}
               title={goal.title}
-              currentDay={goal.progress.completedOccurrences}
-              targetDays={
-                goal.target.type === 'CHECK_IN_COUNT'
-                  ? goal.target.count
-                  : Math.max(1, Math.round(goal.progress.value || 1))
-              }
               onOpen={() => {
                 handleGoalClick(goal)
               }}

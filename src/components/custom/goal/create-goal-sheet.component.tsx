@@ -17,6 +17,7 @@ import type {
   GoalTarget,
 } from '@/shared/api/goal.api'
 import { randomCreateGoalPlaceholder } from '@/shared/goal/goal.util.shared'
+import { hapticFeedback } from '@/shared/haptic.util'
 import { cn } from '@/shared/utils/helpers.util'
 import * as Tooltip from '@radix-ui/react-tooltip'
 import { RiLoader4Line } from '@remixicon/react'
@@ -46,7 +47,7 @@ interface GoalCreationDraft {
   scheduleType: ScheduleChoice
   selectedWeekdays: number[]
   startDate: string
-  step: 1 | 2 | 3
+  step: 1 | 2 | 3 | 4
   targetType: TargetChoice
   targetValue: string
   title: string
@@ -206,7 +207,10 @@ function ChoicePressable({
         'flex flex-row items-center justify-between',
         className,
       )}
-      onPress={onPress}
+      onPress={(...all) => {
+        hapticFeedback.light()
+        onPress(...all)
+      }}
     >
       <Text
         className={cn(
@@ -319,7 +323,6 @@ function DateSheet({ initialDate, minDate, onDone, title }: DateSheetProps) {
   const [date, setDate] = useState(initialDate)
   return (
     <View className="space-y-5 pb-4">
-      {title ? <Text className="text-lg font-bold">{title}</Text> : null}
       <Input
         autoFocus
         min={minDate}
@@ -404,7 +407,7 @@ function CustomizeRulesSheet({
                     ? 'No streak'
                     : mode[0] + mode.slice(1).toLowerCase()
                 }
-                className="!justify-center py-3"
+                className="!justify-center py-3 [&_*]:!text-xs"
                 onPress={() => {
                   setMissMode(mode)
                   setGraceHours(mode === 'FLEXIBLE' ? '24' : '0')
@@ -441,16 +444,31 @@ function CustomizeRulesSheet({
         </View>
       </Pressable>
       <Pressable
-        className="rounded-2xl flex flex-col text-left bg-cardd p-4"
+        className="rounded-2xl flex items-center text-left bg-cardd p-4"
         onPress={() => setShowAdvanced(!showAdvanced)}
       >
-        <Text className="font-bold">Advanced miss rules</Text>
-        <Text className="mt-1 text-xs text-card-lighter-2">
-          Grace period, streak behavior, and auto-abandon.
-        </Text>
+        <View className="">
+          <Text className="font-bold">Advanced miss rules</Text>
+          <Text className="mt-1 text-xs text-card-lighter-2">
+            Grace period, streak behavior, and auto-abandon.
+          </Text>
+        </View>
+        <View
+          className={cn(
+            'h-7 w-12 rounded-full p-1',
+            showAdvanced ? 'bg-green-500' : 'bg-card-lighter',
+          )}
+        >
+          <View
+            className={cn(
+              'size-5 rounded-full bg-white',
+              showAdvanced ? 'ml-5' : '',
+            )}
+          />
+        </View>
       </Pressable>
       {showAdvanced ? (
-        <View className="space-y-4 rounded-2xl bg-card-light-50 p-4">
+        <View className="space-y-4  bg-card-light-50 p-4 px-0 border-t border-card-light">
           <View className="space-y-2">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-1">
@@ -572,7 +590,7 @@ export function CreateGoalSheet({
     : undefined
   const initialTarget = draftValues?.target ?? initialValues?.target
   const initialSchedule = draftValues?.schedule ?? initialValues?.schedule
-  const [step, setStep] = useState<1 | 2 | 3>(savedDraft?.step ?? 1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(savedDraft?.step ?? 1)
   const [title, setTitle] = useState(
     draftValues?.title ?? savedDraft?.title ?? initialValues?.title ?? '',
   )
@@ -784,6 +802,12 @@ export function CreateGoalSheet({
       toast.warning('Choose a valid schedule')
       return
     }
+    const selectedEndDate = target.type === 'UNTIL_DATE' ? target.endDate : endDate
+    const selectedStartDate = schedule.type === 'ONE_TIME' ? schedule.date : schedule.startDate
+    if (selectedEndDate && selectedEndDate < selectedStartDate) {
+      toast.warning('Your end date is before the start date. Update it before creating this goal.')
+      return
+    }
     const payload: CreateGoalRequest = {
       description: description.trim() || undefined,
       hardStopDate:
@@ -825,7 +849,7 @@ export function CreateGoalSheet({
       toast.warning('Choose how you will track progress')
       return
     }
-    setStep((current) => (current === 3 ? 3 : ((current + 1) as 2 | 3)))
+    setStep((current) => (current === 4 ? 4 : ((current + 1) as 2 | 3 | 4)))
   }
 
   const progressExplanation = progressInfo(
@@ -836,17 +860,19 @@ export function CreateGoalSheet({
   )
 
   return (
-    <View className="space-y-6 pb-24 ">
+    <View className="space-y-6 pb-24 z-10 relative">
       <View className="flex-row items-center justify-between">
         <Text className="text-lg font-bold">
           {step === 1
             ? 'What do you want to do?'
             : step === 2
               ? 'How will you track progress?'
-              : 'When will you do it?'}
+              : step === 3
+                ? 'When will you do it?'
+                : 'Review your goal'}
         </Text>
         <Text className="text-xs font-bold text-card-lighter-2">
-          {step} of 3
+          {step} of 4
         </Text>
       </View>
 
@@ -888,7 +914,7 @@ export function CreateGoalSheet({
       ) : null}
 
       {step === 2 ? (
-        <View className="space-y-4">
+        <View className="space-y-4 relative z-10">
           <View className="space-y-2">
             <ChoicePressable
               active={targetType === 'CHECK_IN_COUNT'}
@@ -955,7 +981,7 @@ export function CreateGoalSheet({
       ) : null}
 
       {step === 3 ? (
-        <View className="space-y-4">
+        <View className="space-y-4 z-10">
           <View className="flex-row flex-wrap gap-2">
             <ChoicePressable
               active={scheduleType === 'DAILY'}
@@ -1109,7 +1135,7 @@ export function CreateGoalSheet({
       ) : null}
 
       {step === 3 ? (
-        <View className="space-y-2">
+        <View className="space-y-2 relative z-10">
           <View className="flex-row items-center justify-between">
             <View className="mx-3">
               <Text className="font-bold">Reminder</Text>
@@ -1178,18 +1204,92 @@ export function CreateGoalSheet({
         </Pressable>
       ) : null}
 
+      {step === 4 ? (
+        <View className="space-y-3">
+          <Text className="text-sm text-card-lighter-2">
+            Everything is ready. You can go back to change any detail.
+          </Text>
+          <View className="space-y-2 rounded-2xl bg-card-light-50 p-4">
+            <View className="space-y-1">
+              <Text className="text-xs text-card-lighter-2">Goal</Text>
+              <Text className="font-bold">{title.trim()}</Text>
+              {description.trim() ? (
+                <Text className="text-sm text-card-lighter-2">
+                  {description.trim()}
+                </Text>
+              ) : null}
+            </View>
+            <View className="h-px bg-card-light" />
+            <View className="flex-row justify-between gap-4">
+              <View className="flex-1">
+                <Text className="text-xs text-card-lighter-2">Target</Text>
+                <Text className="mt-1 font-bold">
+                  {targetType === 'CHECK_IN_COUNT'
+                    ? `${targetValue || '0'} check-ins`
+                    : targetType === 'QUANTITY'
+                      ? `${targetValue || '0'} ${unit || 'units'}`
+                      : `By ${endDate || 'a selected date'}`}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs text-card-lighter-2">Schedule</Text>
+                <Text className="mt-1 font-bold">
+                  {scheduleType === 'DAILY'
+                    ? 'Daily'
+                    : scheduleType === 'WEEKLY'
+                      ? `Weekly · ${weekdays.find((day) => day.value === weeklyDay)?.label ?? ''}`
+                      : scheduleType === 'SELECTED_WEEKDAYS'
+                        ? `${selectedWeekdays.length} selected days`
+                        : 'One-time'}
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row justify-between gap-4">
+              <View className="flex-1">
+                <Text className="text-xs text-card-lighter-2">Starts</Text>
+                <Text className="mt-1 font-bold">
+                  {formatDateLabel(startDate)}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-xs text-card-lighter-2">Reminders</Text>
+                <Text className="mt-1 font-bold">
+                  {reminders.length ? reminders.join(', ') : 'Off'}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View className="rounded-2xl bg-card-light p-4">
+            <Text className="text-xs text-card-lighter-2">Goal settings</Text>
+            <Text className="mt-1 text-sm font-bold">
+              {missMode === 'NO_STREAK'
+                ? 'No streak'
+                : missMode === 'FLEXIBLE'
+                  ? 'Flexible misses'
+                  : 'Strict misses'}
+              {' · '}
+              {releaseImmediately
+                ? 'Points released immediately'
+                : 'Points released on completion'}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+
       <View
         className="fixed bottom-0 left-1/2 z-30 w-full max-w-[400px] -translate-x-1/2 flex-row items-center gap-3 bg-cardd p-mg"
-        style={{
-          bottom: isKeyboardVisible ? keyboardHeight : 0,
-        }}
+        style={
+          {
+            // bottom: !IS_WEB && isKeyboardVisible ? keyboardHeight : 0,
+          }
+        }
       >
         {step > 1 ? (
           <Pressable
             className="rounded-full bg-card-light-50 px-5 py-4"
             onPress={() =>
               setStep((current) =>
-                current === 1 ? 1 : ((current - 1) as 1 | 2),
+                current === 1 ? 1 : ((current - 1) as 1 | 2 | 3),
               )
             }
           >
@@ -1197,15 +1297,15 @@ export function CreateGoalSheet({
           </Pressable>
         ) : null}
         <Pressable
-          className="flex-1 disabled:opacity-40 py-4 items-center justify-center rounded-full bg-white px-6"
+          className="flex-1 disabled:opacity-40 py-4 text-sm items-center justify-center rounded-full bg-white px-6"
           disabled={createGoal.isPending || (step === 1 && !title.trim())}
-          onPress={step === 3 ? handleSubmit : handleContinue}
+          onPress={step === 4 ? handleSubmit : handleContinue}
         >
           {createGoal.isPending ? (
             <RiLoader4Line className="animate-spin text-black" size={20} />
           ) : (
             <Text className="font-bold text-black">
-              {step === 3 ? 'Create goal' : 'Continue'}
+              {step === 4 ? 'Create goal' : step === 3 ? 'Review' : 'Continue'}
             </Text>
           )}
         </Pressable>

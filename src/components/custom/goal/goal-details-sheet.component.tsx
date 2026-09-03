@@ -186,7 +186,7 @@ export function GoalActionsSheet({
           </Text>
           <View className="flex-row gap-2">
             <Button
-              className="flex-1"
+              className="flex-1 py-3"
               disabled={resumeGoal.isPending}
               label="Keep deadline"
               onClick={async () => {
@@ -199,7 +199,7 @@ export function GoalActionsSheet({
               size="sm"
             />
             <Button
-              className="flex-1"
+              className="flex-1 py-3"
               disabled={resumeGoal.isPending}
               label="Shift deadline"
               onClick={async () => {
@@ -267,6 +267,14 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
     goal.conclusion?.reflection ?? '',
   )
   const [nextStep, setNextStep] = useState(goal.conclusion?.nextStep ?? '')
+  const [reviewSaved, setReviewSaved] = useState(
+    Boolean(
+      goal.conclusion?.rating ||
+      goal.conclusion?.reflection ||
+      goal.conclusion?.nextStep ||
+      goal.conclusion?.attachments?.length,
+    ),
+  )
   const occurrenceList =
     occurrences.data?.pages.flatMap((page) => page.data) ?? []
   const ended = ['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(
@@ -300,6 +308,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
       rating: rating || null,
       reflection: reflection.trim() || null,
     })
+    setReviewSaved(true)
   }
 
   function beginCorrection(occurrence: GoalOccurrence): void {
@@ -331,12 +340,12 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
   return (
     <View className="space-y-5 pb-6">
       {showCelebration ? (
-        <View className="rounded-3xl bg-green-500/20 p-6 text-center">
+        <View className="rounded-xl bg-green-950 p-6 text-center">
           <RiTrophyLine className="mx-auto text-green-300" size={40} />
-          <Text className="mt-3 text-xl font-bold">
+          <Text className="mt-3   !text-center text-xl font-bold">
             You completed this goal!
           </Text>
-          <Text className="mt-1 text-sm text-card-lighter-2">
+          <Text className="mt-1 !text-center text-sm text-green-400">
             Your conclusion and earned rewards are now saved.
           </Text>
         </View>
@@ -405,6 +414,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
                   type="number"
                   value={amount}
                   onChange={(event) => setAmount(event.target.value)}
+                  className="bg-cardd"
                 />
               ) : null}
               <TextArea
@@ -413,6 +423,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
                 rows={3}
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
+                className="bg-cardd"
               />
               <AttachmentPicker
                 attachments={attachments}
@@ -682,9 +693,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
           {occurrences.hasNextPage ? (
             <Button
               disabled={occurrences.isFetchingNextPage}
-              label={
-                occurrences.isFetchingNextPage ? 'Loading…' : 'Load older days'
-              }
+              label={occurrences.isFetchingNextPage ? 'Loading…' : 'Load more'}
               onClick={() => void occurrences.fetchNextPage()}
               size="sm"
               variant="secondary"
@@ -694,9 +703,16 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
       ) : null}
 
       {activeTab === 'review' && ended && goal.conclusion ? (
-        <View className="space-y-4 rounded-2xl bg-card-light-50 p-4">
+        <View className="space-y-4 rounded-2xl bg-cardd p-4">
           <View>
-            <Text className="font-bold">Conclusion</Text>
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="font-bold">Conclusion</Text>
+              {reviewSaved ? (
+                <Text className="text-xs font-bold text-success-green">
+                  Review saved
+                </Text>
+              ) : null}
+            </View>
             <Text className="text-sm text-card-lighter-2">
               {goal.conclusion.completedOccurrences} completed ·{' '}
               {goal.conclusion.missedOccurrences} missed ·{' '}
@@ -738,25 +754,33 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
             maxAttachments={5}
             onAttachmentsChange={setReviewAttachments}
           />
+          {reviewSaved ? (
+            <View className="rounded-xl bg-card-light px-3 py-2">
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                This reflection is part of the goal’s history and can still be
+                edited.
+              </Text>
+            </View>
+          ) : null}
           <Button
             fullWidth
-            label="Save review"
+            label={reviewSaved ? 'Update review' : 'Save review'}
             loading={saveReview.isPending}
             onClick={saveConclusionReview}
           />
           <View className="flex-row gap-2">
             <Pressable
-              className="flex-1 rounded-full bg-card-light p-3"
+              className="flex-1 rounded-full  !text-center flex justify-center bg-success-green/20 p-3"
               onPress={() => reopenGoal.mutate(goal.id)}
             >
               <Text className="text-center">Start again</Text>
             </Pressable>
             {!goal.archivedAt ? (
               <Pressable
-                className="flex-1 rounded-full bg-card-light p-3"
+                className="flex-1 rounded-full  !text-center flex justify-center bg-warning-yellow/20 p-3"
                 onPress={() => archiveGoal.mutate(goal.id)}
               >
-                <Text className="text-center">Archive</Text>
+                <Text className="text-center text-warning-yellow">Archive</Text>
               </Pressable>
             ) : null}
           </View>

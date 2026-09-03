@@ -2,6 +2,7 @@ export type RewindPersonaId = 'ella' | 'lyra' | 'jake' | 'ariel'
 export type RewindPersonaIcon = 'emotion' | 'flashlight' | 'moon' | 'water'
 
 export type RewindPersona = {
+  avatar: string
   color: string
   id: RewindPersonaId
   icon: RewindPersonaIcon
@@ -12,6 +13,7 @@ export type RewindPersona = {
 
 export const REWIND_PERSONAS: Array<RewindPersona> = [
   {
+    avatar: '/assets/rewind/ella.png',
     color: '#C43D78',
     id: 'ella',
     icon: 'emotion',
@@ -20,6 +22,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'A gentle space to hear what your day felt like.',
   },
   {
+    avatar: '/assets/rewind/lyra.png',
     color: '#5B4A9E',
     id: 'lyra',
     icon: 'moon',
@@ -28,6 +31,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'Step back and notice what your day may be showing you.',
   },
   {
+    avatar: '/assets/rewind/jake.png',
     color: '#C9782A',
     id: 'jake',
     icon: 'flashlight',
@@ -36,6 +40,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     welcome: 'Talk it through clearly and leave with what matters.',
   },
   {
+    avatar: '/assets/rewind/ariel.png',
     color: '#2B9A8A',
     id: 'ariel',
     icon: 'water',

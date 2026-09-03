@@ -63,11 +63,6 @@ export function useProAccess(): ProAccessResult {
     async (error: unknown, retry?: () => Promise<void>): Promise<boolean> => {
       if (!isSubscriptionApiError(error)) return false
 
-      if (!isSupported) {
-        toast.info('This action is not available in this build.')
-        return true
-      }
-
       if (error.code === 'SUBSCRIPTION_UNAVAILABLE') {
         toast.error(error.message)
         return true
@@ -75,6 +70,27 @@ export function useProAccess(): ProAccessResult {
 
       if (error.code === 'PLAN_LIMIT_REACHED') {
         toast.info(error.message)
+        return true
+      }
+
+      if (error.code === 'FREE_LIMIT_REACHED') {
+        const limitMessage =
+          'You have reached the 3 active-goal limit on the free plan. Upgrade to Vybaa Pro to create more.'
+        if (!isSupported) {
+          toast.info(
+            `${limitMessage} Pro upgrades are available in the mobile app.`,
+          )
+          return true
+        }
+        toast.info(limitMessage)
+        await requestProAccess(retry)
+        return true
+      }
+
+      if (!isSupported) {
+        toast.info(
+          `${error.message} Vybaa Pro is available in supported app builds.`,
+        )
         return true
       }
 

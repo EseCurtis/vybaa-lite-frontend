@@ -14,6 +14,76 @@ import {
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 
+export const homeActions = (
+  navigate?: (...params: any) => void,
+  handleCreateGoal?: () => void,
+) =>
+  [
+    {
+      name: 'New Goal',
+      description: 'Commit to a new cause',
+      icon: RiFireLine,
+      onAction() {
+        handleCreateGoal?.()
+      },
+    },
+    {
+      name: 'Rewind',
+      description: 'Chat with your Rewind partner',
+      icon: RiRewindLine,
+      onAction() {
+        navigate?.({
+          to: '/app/rewind',
+        })
+      },
+    },
+    {
+      name: 'Flexx',
+      description: 'Share stats to flexx on socials',
+      icon: RiEmotionLaughLine,
+      onAction() {
+        navigate?.({
+          to: '/app/actions/flexx',
+        })
+      },
+    },
+    {
+      name: 'Wellbeing',
+      description: 'See your progress patterns',
+      icon: RiHeart2Line,
+      //enabled: featureFlags.insights,
+      onAction() {
+        navigate?.({
+          to: '/app/sub-profile/insights',
+        })
+      },
+    },
+    // {
+    //   name: 'Journal',
+    //   description: 'Reflect on your day and track your thoughts',
+    //   icon: RiFileMarkedLine,
+    //   enabled: featureFlags.journal,
+    //   onAction() {
+    //     // Navigate directly to today's journal entry
+    //     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+    //     navigate({
+    //       to: `/journal/${today}`,
+    //     })
+    //   },
+    // },
+    {
+      name: 'Chill',
+      description: 'Calm down and regulate your emotions',
+      icon: RiTempColdLine,
+      enabled: featureFlags.chill,
+      onAction() {
+        navigate?.({
+          to: '/chill',
+        })
+      },
+    },
+  ].filter((action) => action.enabled !== false) // Filter out disabled features
+
 function HomeActionCard({
   name,
   description,
@@ -86,71 +156,8 @@ export function HomeActions() {
     navigate({ to: '/app/goal/create' })
   }
 
-  const actions = [
-    {
-      name: 'New Goal',
-      description: 'Commit to a new cause',
-      icon: RiFireLine,
-      onAction() {
-        handleCreateGoal()
-      },
-    },
-    {
-      name: 'Rewind',
-      description: 'Chat with your Rewind partner',
-      icon: RiRewindLine,
-      onAction() {
-        navigate({
-          to: '/app/rewind',
-        })
-      },
-    },
-    {
-      name: 'Flexx',
-      description: 'Share stats to flexx on socials',
-      icon: RiEmotionLaughLine,
-      onAction() {
-        navigate({
-          to: '/app/actions/flexx',
-        })
-      },
-    },
-    {
-      name: 'Wellbeing',
-      description: 'See your progress patterns',
-      icon: RiHeart2Line,
-      //enabled: featureFlags.insights,
-      onAction() {
-        navigate({
-          to: '/app/sub-profile/insights',
-        })
-      },
-    },
-    // {
-    //   name: 'Journal',
-    //   description: 'Reflect on your day and track your thoughts',
-    //   icon: RiFileMarkedLine,
-    //   enabled: featureFlags.journal,
-    //   onAction() {
-    //     // Navigate directly to today's journal entry
-    //     const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
-    //     navigate({
-    //       to: `/journal/${today}`,
-    //     })
-    //   },
-    // },
-    {
-      name: 'Chill',
-      description: 'Calm down and regulate your emotions',
-      icon: RiTempColdLine,
-      enabled: featureFlags.chill,
-      onAction() {
-        navigate({
-          to: '/chill',
-        })
-      },
-    },
-  ].filter((action) => action.enabled !== false) // Filter out disabled features
+  const actions = homeActions(navigate, handleCreateGoal)
+
   return (
     <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-2 ">
       {actions.map((item, index) => {

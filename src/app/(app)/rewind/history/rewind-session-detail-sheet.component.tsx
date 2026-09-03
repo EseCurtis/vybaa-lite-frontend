@@ -5,7 +5,6 @@ import {
   RiLoader4Line,
   RiSparklingLine,
   RiTimeLine,
-  RiUserVoiceLine,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -355,7 +354,11 @@ export function RewindSessionDetail({
           className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: accentSoft }}
         >
-          <RiUserVoiceLine size={19} style={{ color: accent }} />
+          <img
+            src={persona.avatar}
+            alt=""
+            className="size-full rounded-full object-cover"
+          />
         </View>
         <View className="min-w-0 flex-1 gap-1">
           <Text className="font-bbh text-base font-bold text-white">

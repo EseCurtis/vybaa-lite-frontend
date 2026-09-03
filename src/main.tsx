@@ -69,8 +69,10 @@ if (rootElement && !rootElement.innerHTML) {
     )
   }
 
-  document.body.classList.add('loaded')
   loadBody()
+  // Let React commit the first screen before fading the static loader away.
+  // This prevents a black gap between the HTML shell and the app's first paint.
+  requestAnimationFrame(() => document.body.classList.add('loaded'))
 }
 
 // If you want to start measuring performance in your app, pass a function
