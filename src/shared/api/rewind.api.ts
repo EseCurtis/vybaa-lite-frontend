@@ -244,6 +244,102 @@ export type RewindInsightsResponse = {
   data: RewindInsights
 }
 
+export type RewindActivitySource =
+  | 'ACHIEVEMENT'
+  | 'FLEXX'
+  | 'GOAL'
+  | 'JOURNAL'
+  | 'REWARD'
+  | 'REWIND_CHAT'
+  | 'REWIND_ROUTINE'
+  | 'REWIND_VOICE'
+
+export type RewindObservationEvidence = {
+  description: string
+  eventType: string
+  happenedAt: string
+  id: string
+  sourceId: string
+  sourceType: RewindActivitySource
+}
+
+export type RewindObservation = {
+  confidence: number
+  createdAt: string
+  description: string
+  dismissedAt: string | null
+  evidence: RewindObservationEvidence[]
+  id: string
+  journalDraft: string | null
+  localDateKey: string
+  observations: string[]
+  personaId: RewindPersonaId | null
+  reflection: string | null
+  sourceTypes: RewindActivitySource[]
+  updatedAt: string
+}
+
+export type RewindHomeGreeting = {
+  date: string
+  message: string
+  personaId: RewindPersonaId | null
+  sourceTypes: RewindActivitySource[]
+  title: string
+}
+
+export type RewindChatMessage = {
+  content: string
+  createdAt: string
+  id: string
+  localDateKey: string
+  mentions: RewindPersonaId[]
+  personaId: RewindPersonaId | null
+  role: 'PARTNER' | 'SYSTEM' | 'USER'
+}
+
+export type RewindChat = {
+  archivedAt: string | null
+  createdAt: string
+  id: string
+  lastMessage: RewindChatMessage | null
+  lastMessageAt: string | null
+  personaId: RewindPersonaId | null
+  threadKey: string
+  title: string
+  type: 'GROUP' | 'PARTNER'
+  updatedAt: string
+}
+
+export type RewindObservationsResponse = {
+  data: {
+    items: RewindObservation[]
+    nextCursor: string | null
+  }
+  msg: string
+}
+
+export type RewindChatsResponse = {
+  data: { chats: RewindChat[] }
+  msg: string
+}
+
+export type RewindChatMessagesResponse = {
+  data: {
+    chat: RewindChat
+    items: RewindChatMessage[]
+    nextCursor: string | null
+  }
+  msg: string
+}
+
+export type SendRewindChatMessageResponse = {
+  data: {
+    partnerMessage: RewindChatMessage
+    userMessage: RewindChatMessage
+  }
+  msg: string
+}
+
 export type AddRewindToJournalResponse = {
   msg: string
   data: {
@@ -332,6 +428,85 @@ class RewindAPI {
       { params: { range } },
     )
     return res
+  }
+
+  async getHomeGreeting(): Promise<{
+    data: RewindHomeGreeting | null
+    msg: string
+  }> {
+    const { data: res } = await http.get<{
+      data: RewindHomeGreeting | null
+      msg: string
+    }>(`${API_V1}/rewind/home-greeting`)
+    return res
+  }
+
+  async getObservations(
+    cursor?: string,
+    limit: number = 12,
+  ): Promise<RewindObservationsResponse> {
+    const { data: res } = await http.get<RewindObservationsResponse>(
+      `${API_V1}/rewind/observations`,
+      { params: { cursor, limit } },
+    )
+    return res
+  }
+
+  async dismissObservation(observationId: string): Promise<{ msg: string }> {
+    const { data: res } = await http.delete<{ msg: string }>(
+      `${API_V1}/rewind/observations/${observationId}`,
+    )
+    return res
+  }
+
+  async getChats(): Promise<RewindChatsResponse> {
+    const { data: res } = await http.get<RewindChatsResponse>(
+      `${API_V1}/rewind/chats`,
+    )
+    return res
+  }
+
+  async getChatMessages(
+    chatId: string,
+    cursor?: string,
+    limit: number = 30,
+  ): Promise<RewindChatMessagesResponse> {
+    const { data: res } = await http.get<RewindChatMessagesResponse>(
+      `${API_V1}/rewind/chats/${chatId}/messages`,
+      { params: { cursor, limit } },
+    )
+    return res
+  }
+
+  async sendChatMessage(
+    chatId: string,
+    input: { content: string; idempotencyKey: string },
+  ): Promise<SendRewindChatMessageResponse> {
+    const { data: res } = await http.post<SendRewindChatMessageResponse>(
+      `${API_V1}/rewind/chats/${chatId}/messages`,
+      input,
+    )
+    return res
+  }
+
+  async archiveChat(
+    chatId: string,
+    archived: boolean,
+  ): Promise<{ msg: string }> {
+    const { data: res } = await http.patch<{ msg: string }>(
+      `${API_V1}/rewind/chats/${chatId}`,
+      { archived },
+    )
+    return res
+  }
+
+  async recordFlexxActivity(input: {
+    description: string
+    eventType: 'FLEXX_CREATED' | 'FLEXX_SHARED'
+    happenedAt?: string
+    sourceId: string
+  }): Promise<void> {
+    await http.post(`${API_V1}/rewind/activity`, input)
   }
 
   async dismissRecommendation(

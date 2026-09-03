@@ -159,7 +159,7 @@ export function HomeActions() {
   const actions = homeActions(navigate, handleCreateGoal)
 
   return (
-    <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-2 ">
+    <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-4 ">
       {actions.map((item, index) => {
         return (
           <HomeActionCard

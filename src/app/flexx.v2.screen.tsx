@@ -20,6 +20,7 @@ import { useInsights } from '@/hooks/use-insights.hook'
 import { useRewindInsights } from '@/hooks/use-rewind.hook'
 import { useAuth } from '@/providers/auth.provider'
 import type { Achievement } from '@/shared/api/achievement.api'
+import { rewindAPI } from '@/shared/api/rewind.api'
 import '@/styles/swiper-custom.css'
 import { RiUpload2Fill } from '@remixicon/react'
 import { motion } from 'framer-motion'
@@ -151,7 +152,22 @@ export function FlexxV2AppScreen() {
       <ShareBottomSheetContent
         cardRef={currentCardRef}
         cardType={cards[activeCardIndex]}
-        onShare={exportCardFromElement}
+        onShare={async (element) => {
+          const shared = await exportCardFromElement(element)
+          if (!shared) return false
+          try {
+            const cardType = cards[activeCardIndex]
+            await rewindAPI.recordFlexxActivity({
+              description: `Shared a ${cardType} Flexx card.`,
+              eventType: 'FLEXX_SHARED',
+              happenedAt: new Date().toISOString(),
+              sourceId: `${cardType}:${Date.now()}`,
+            })
+          } catch (error: unknown) {
+            console.warn('Unable to record Flexx activity', error)
+          }
+          return true
+        }}
         onDismiss={dismiss}
       />,
       { title: 'Share Your Flexx' },

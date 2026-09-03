@@ -23,8 +23,10 @@ import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-pas
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
 import { Route as AppRewindRoutineRouteImport } from './routes/app/rewind-routine'
+import { Route as AppRewindObservationsRouteImport } from './routes/app/rewind-observations'
 import { Route as AppRewindHistorySessionsRouteImport } from './routes/app/rewind-history-sessions'
 import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-history'
+import { Route as AppRewindChatsRouteImport } from './routes/app/rewind-chats'
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
@@ -38,6 +40,7 @@ import { Route as AppGoalIndexRouteImport } from './routes/app/goal/index'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppRewindChatChatIdRouteImport } from './routes/app/rewind-chat.$chatId'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
 import { Route as AppJournalPreviewIdRouteImport } from './routes/app/journal-preview.$id'
@@ -124,6 +127,11 @@ const AppRewindRoutineRoute = AppRewindRoutineRouteImport.update({
   path: '/app/rewind-routine',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRewindObservationsRoute = AppRewindObservationsRouteImport.update({
+  id: '/app/rewind-observations',
+  path: '/app/rewind-observations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRewindHistorySessionsRoute =
   AppRewindHistorySessionsRouteImport.update({
     id: '/app/rewind-history-sessions',
@@ -133,6 +141,11 @@ const AppRewindHistorySessionsRoute =
 const AppRewindHistoryRoute = AppRewindHistoryRouteImport.update({
   id: '/app/rewind-history',
   path: '/app/rewind-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindChatsRoute = AppRewindChatsRouteImport.update({
+  id: '/app/rewind-chats',
+  path: '/app/rewind-chats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRewindRoute = AppRewindRouteImport.update({
@@ -198,6 +211,11 @@ const AppSubProfileSettingsRoute = AppSubProfileSettingsRouteImport.update({
 const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   id: '/app/sub-profile/insights',
   path: '/app/sub-profile/insights',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindChatChatIdRoute = AppRewindChatChatIdRouteImport.update({
+  id: '/app/rewind-chat/$chatId',
+  path: '/app/rewind-chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
@@ -294,8 +312,10 @@ export interface FileRoutesByFullPath {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
   '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
@@ -316,6 +336,7 @@ export interface FileRoutesByFullPath {
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -338,8 +359,10 @@ export interface FileRoutesByTo {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
   '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
@@ -360,6 +383,7 @@ export interface FileRoutesByTo {
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -385,8 +409,10 @@ export interface FileRoutesById {
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
   '/app/rewind-history': typeof AppRewindHistoryRoute
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
@@ -407,6 +433,7 @@ export interface FileRoutesById {
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
@@ -433,8 +460,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
     | '/app/rewind-history'
     | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
     | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
@@ -455,6 +484,7 @@ export interface FileRouteTypes {
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -477,8 +507,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
     | '/app/rewind-history'
     | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
     | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
@@ -499,6 +531,7 @@ export interface FileRouteTypes {
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -523,8 +556,10 @@ export interface FileRouteTypes {
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
     | '/app/rewind-history'
     | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
     | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
@@ -545,6 +580,7 @@ export interface FileRouteTypes {
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
     | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
@@ -570,8 +606,10 @@ export interface RootRouteChildren {
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
+  AppRewindChatsRoute: typeof AppRewindChatsRoute
   AppRewindHistoryRoute: typeof AppRewindHistoryRoute
   AppRewindHistorySessionsRoute: typeof AppRewindHistorySessionsRoute
+  AppRewindObservationsRoute: typeof AppRewindObservationsRoute
   AppRewindRoutineRoute: typeof AppRewindRoutineRoute
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
@@ -588,6 +626,7 @@ export interface RootRouteChildren {
   AppInviteCodeRoute: typeof AppInviteCodeRoute
   AppJournalPreviewIdRoute: typeof AppJournalPreviewIdRoute
   AppRSessionIdRoute: typeof AppRSessionIdRoute
+  AppRewindChatChatIdRoute: typeof AppRewindChatChatIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
   AppUUsernameRoute: typeof AppUUsernameRoute
@@ -698,6 +737,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRewindRoutineRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewind-observations': {
+      id: '/app/rewind-observations'
+      path: '/app/rewind-observations'
+      fullPath: '/app/rewind-observations'
+      preLoaderRoute: typeof AppRewindObservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/rewind-history-sessions': {
       id: '/app/rewind-history-sessions'
       path: '/app/rewind-history-sessions'
@@ -710,6 +756,13 @@ declare module '@tanstack/react-router' {
       path: '/app/rewind-history'
       fullPath: '/app/rewind-history'
       preLoaderRoute: typeof AppRewindHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-chats': {
+      id: '/app/rewind-chats'
+      path: '/app/rewind-chats'
+      fullPath: '/app/rewind-chats'
+      preLoaderRoute: typeof AppRewindChatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/rewind': {
@@ -801,6 +854,13 @@ declare module '@tanstack/react-router' {
       path: '/app/sub-profile/insights'
       fullPath: '/app/sub-profile/insights'
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-chat/$chatId': {
+      id: '/app/rewind-chat/$chatId'
+      path: '/app/rewind-chat/$chatId'
+      fullPath: '/app/rewind-chat/$chatId'
+      preLoaderRoute: typeof AppRewindChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/r/$sessionId': {
@@ -965,8 +1025,10 @@ const rootRouteChildren: RootRouteChildren = {
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,
+  AppRewindChatsRoute: AppRewindChatsRoute,
   AppRewindHistoryRoute: AppRewindHistoryRoute,
   AppRewindHistorySessionsRoute: AppRewindHistorySessionsRoute,
+  AppRewindObservationsRoute: AppRewindObservationsRoute,
   AppRewindRoutineRoute: AppRewindRoutineRoute,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
@@ -983,6 +1045,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppInviteCodeRoute: AppInviteCodeRoute,
   AppJournalPreviewIdRoute: AppJournalPreviewIdRoute,
   AppRSessionIdRoute: AppRSessionIdRoute,
+  AppRewindChatChatIdRoute: AppRewindChatChatIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
   AppUUsernameRoute: AppUUsernameRoute,

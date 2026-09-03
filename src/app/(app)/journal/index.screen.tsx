@@ -18,7 +18,6 @@ import relievedFace from '@iconify-icons/twemoji/relieved-face'
 import sleepingFace from '@iconify-icons/twemoji/sleeping-face'
 import { Icon } from '@iconify/react'
 import {
-  RiAddCircleLine,
   RiAddLine,
   RiArrowLeftSLine,
   RiArrowRightSLine,
@@ -78,13 +77,12 @@ export default function JournalListScreen() {
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader title="Journal">
+        <TabHeader canGoBack={false} title="Journals">
           <button
             onClick={handleCreateToday}
-            className="p-3 flex flex-row text-white bg-card-light/60 pr-4 items-center gap-2 rounded-full"
+            className="p-2 flex flex-row text-white bg-white  items-center gap-2 rounded-full"
           >
-            <RiAddCircleLine size={18} className="text-white" />
-            <Text className="text-sm">New</Text>
+            <RiAddLine size={24} className="text-black" />
           </button>
         </TabHeader>
 

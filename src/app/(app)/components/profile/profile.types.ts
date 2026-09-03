@@ -17,7 +17,11 @@ export interface ProfileQuickAction {
     bg2: string
   }
   title: string
-  to: '/achievements' | '/app/sub-profile/insights' | '/app/sub-profile/settings'
+  to:
+    | '/achievements'
+    | '/app/rewards'
+    | '/app/sub-profile/insights'
+    | '/app/sub-profile/settings'
 }
 
 export type ProfileUser = User | null

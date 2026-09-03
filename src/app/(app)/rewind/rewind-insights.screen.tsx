@@ -26,6 +26,7 @@ import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
 
 import { RewindRadarChart } from './history/rewind-radar-chart.component'
+import { RewindIntelligenceTabs } from './rewind-intelligence-tabs.component'
 
 const INSIGHT_RANGES: Array<{ label: string; value: RewindInsightsRange }> = [
   { label: '7 days', value: '7d' },
@@ -97,6 +98,7 @@ export default function RewindInsightsScreen(): ReactElement {
 
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
           <View className="mx-auto w-full max-w-3xl gap-7">
+            <RewindIntelligenceTabs selected="insights" />
             <View className="gap-2 px-1">
               <Text className="font-bbh text-2xl font-bold text-white">
                 Your reflection pattern

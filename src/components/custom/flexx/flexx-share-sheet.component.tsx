@@ -16,7 +16,7 @@ import type { CardType } from './flexx-card.component'
 export interface ShareBottomSheetContentProps {
   cardRef: HTMLDivElement
   cardType: CardType
-  onShare: (element: HTMLElement) => Promise<void>
+  onShare: (element: HTMLElement) => Promise<boolean>
   onDismiss: () => void
 }
 

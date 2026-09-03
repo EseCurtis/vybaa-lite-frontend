@@ -4,9 +4,13 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
+import type { InfiniteData } from '@tanstack/react-query'
 
 import type {
+  RewindChatMessage,
+  RewindChatMessagesResponse,
   RewindInsightsRange,
+  RewindObservationsResponse,
   UpdateRewindRoutineInput,
   RewindSessionsFilters,
 } from '@/shared/api/rewind.api'
@@ -91,6 +95,150 @@ export function useRewindInsights(range: RewindInsightsRange) {
     },
     staleTime: 1000 * 60,
   })
+}
+
+export function useRewindHomeGreeting() {
+  return useQuery({
+    queryFn: async () => {
+      const response = await rewindAPI.getHomeGreeting()
+      return response.data
+    },
+    queryKey: rewindQueryKeys.homeGreeting(),
+    staleTime: 1000 * 60 * 10,
+  })
+}
+
+export function useRewindObservations(limit: number = 12) {
+  return useInfiniteQuery<
+    RewindObservationsResponse['data'],
+    Error,
+    InfiniteData<RewindObservationsResponse['data'], string>,
+    ReturnType<typeof rewindQueryKeys.observations>,
+    string
+  >({
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: '',
+    queryFn: async ({
+      pageParam,
+    }): Promise<RewindObservationsResponse['data']> => {
+      const response = await rewindAPI.getObservations(
+        pageParam || undefined,
+        limit,
+      )
+      return response.data
+    },
+    queryKey: rewindQueryKeys.observations(),
+    staleTime: 1000 * 60 * 5,
+  })
+}
+
+export function useDismissRewindObservation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (observationId: string) =>
+      rewindAPI.dismissObservation(observationId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.observations(),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        }),
+      ])
+    },
+  })
+}
+
+export function useRewindChats() {
+  return useQuery({
+    queryFn: async () => {
+      const response = await rewindAPI.getChats()
+      return response.data.chats
+    },
+    queryKey: rewindQueryKeys.chats(),
+    staleTime: 1000 * 30,
+  })
+}
+
+export function useRewindChatMessages(chatId: string, limit: number = 30) {
+  return useInfiniteQuery<
+    RewindChatMessagesResponse['data'],
+    Error,
+    InfiniteData<RewindChatMessagesResponse['data'], string>,
+    ReturnType<typeof rewindQueryKeys.chatMessages>,
+    string
+  >({
+    enabled: Boolean(chatId),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    initialPageParam: '',
+    queryFn: async ({
+      pageParam,
+    }): Promise<RewindChatMessagesResponse['data']> => {
+      const response = await rewindAPI.getChatMessages(
+        chatId,
+        pageParam || undefined,
+        limit,
+      )
+      return response.data
+    },
+    queryKey: rewindQueryKeys.chatMessages(chatId),
+    staleTime: 1000 * 15,
+  })
+}
+
+export function useSendRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { content: string; idempotencyKey: string }) =>
+      rewindAPI.sendChatMessage(chatId, input),
+    onSuccess: (response) => {
+      const newMessages: RewindChatMessage[] = [
+        response.data.userMessage,
+        response.data.partnerMessage,
+      ]
+      queryClient.setQueryData(
+        rewindQueryKeys.chatMessages(chatId),
+        (current: unknown) =>
+          appendMessagesToInfiniteQuery(current, newMessages),
+      )
+      void queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() })
+    },
+  })
+}
+
+function appendMessagesToInfiniteQuery(
+  current: unknown,
+  messages: RewindChatMessage[],
+): unknown {
+  if (!isInfiniteMessageData(current)) return current
+  const firstPage = current.pages[0]
+  if (!firstPage) return current
+  const knownIds = new Set(firstPage.items.map((message) => message.id))
+  const additions = messages.filter((message) => !knownIds.has(message.id))
+  return {
+    ...current,
+    pages: [
+      { ...firstPage, items: [...firstPage.items, ...additions] },
+      ...current.pages.slice(1),
+    ],
+  }
+}
+
+type InfiniteMessageData = {
+  pages: Array<{
+    chat: unknown
+    items: RewindChatMessage[]
+    nextCursor: string | null
+  }>
+  pageParams: unknown[]
+}
+
+function isInfiniteMessageData(value: unknown): value is InfiniteMessageData {
+  if (!value || typeof value !== 'object') return false
+  return 'pages' in value && Array.isArray(value.pages)
 }
 
 export function useRewindRoutine() {

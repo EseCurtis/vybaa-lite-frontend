@@ -48,7 +48,7 @@ export const ProtectedRoute = ({
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-black">
-        <Text className="text-white text-lg font-bbh">Loading...</Text>
+        <Text className="text-accent-600 text-lg font-bbh">VYBAA</Text>
       </View>
     )
   }

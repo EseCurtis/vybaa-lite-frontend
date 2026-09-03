@@ -1,4 +1,6 @@
 import {
+  RiChat3Fill,
+  RiChat3Line,
   RiEmotionHappyLine,
   RiFlashlightLine,
   RiHistoryLine,
@@ -1304,6 +1306,10 @@ export default function RewindScreen(): ReactElement {
     })
   }, [navigate])
 
+  const openRewindChats = useCallback(() => {
+    void navigate({ to: '/app/rewind-chats' })
+  }, [navigate])
+
   const routineStatus = useMemo(() => {
     const formatOccurrenceTime = (value: string | null): string => {
       if (!value) return ''
@@ -1380,7 +1386,18 @@ export default function RewindScreen(): ReactElement {
       <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
         <NoiseComponent>
           <View className="flex-1">
-            <TabHeader title="Rewind" />
+            <TabHeader
+              title="Rewind"
+              children={
+                <Pressable
+                  accessibilityLabel="Open Rewind text chats"
+                  className="size-11 items-center justify-center rounded-full bg-cardx"
+                  onPress={openRewindChats}
+                >
+                  <RiChat3Line size={19} className="text-card-lighter-2" />
+                </Pressable>
+              }
+            />
             <View className="flex-1 px-mg pb-xl">
               <View className="mt-lg mb-xl items-center">
                 <Text className="muted  mt-2 font-bbh text-base text-white text-center">
@@ -1463,6 +1480,13 @@ export default function RewindScreen(): ReactElement {
                 </Pressable>
               ) : (
                 <>
+                  <Pressable
+                    onPress={openRewindChats}
+                    accessibilityLabel="Open Rewind text chats"
+                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
+                  >
+                    <RiChat3Fill size={18} className="text-white" />
+                  </Pressable>
                   <Pressable
                     onPress={openRewindInsights}
                     accessibilityLabel="Open Rewind insights"
@@ -1637,23 +1661,43 @@ export default function RewindScreen(): ReactElement {
               ) : null}
 
               {!hasActiveSession ? (
-                <Pressable
-                  onPress={openRoutineSettings}
-                  className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
-                >
-                  <View className="min-w-0 flex-1 gap-1">
-                    <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
-                      Rewind routine
-                    </Text>
-                    <Text className="muted font-bbh text-xs line-clamp-2">
-                      {routineStatus}
-                    </Text>
-                  </View>
-                  <RiSettings3Line
-                    size={18}
-                    className="ml-3 shrink-0 text-white/60"
-                  />
-                </Pressable>
+                <>
+                  <Pressable
+                    accessibilityLabel="Open anytime Rewind text chats"
+                    onPress={openRewindChats}
+                    className="w-full hidden flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
+                  >
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text className="font-bbh text-[10px] uppercase tracking-[0.18em] text-card-lighter-3">
+                        Anytime text chat
+                      </Text>
+                      <Text className="font-bbh text-xs text-card-lighter-2 line-clamp-2">
+                        Talk with one partner or bring it to the group
+                      </Text>
+                    </View>
+                    <RiChat3Line
+                      size={18}
+                      className="ml-3 shrink-0 text-card-lighter-2"
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={openRoutineSettings}
+                    className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
+                  >
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
+                        Rewind routine
+                      </Text>
+                      <Text className="muted font-bbh text-xs line-clamp-2">
+                        {routineStatus}
+                      </Text>
+                    </View>
+                    <RiSettings3Line
+                      size={18}
+                      className="ml-3 shrink-0 text-white/60"
+                    />
+                  </Pressable>
+                </>
               ) : null}
 
               <Pressable

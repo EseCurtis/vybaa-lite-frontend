@@ -28,9 +28,12 @@ export function Home2Screen() {
           <HomeHeader user={user} />
           <HomeGoals />
         </View>
-        <HomeGreetings userName={userName} />
+        <HomeGreetings
+          rewindPersona={user.rewindPersona}
+          userName={userName}
+        />
 
-       <View className="bg-cardd flex flex-col rounded-t-[30px]">
+       <View className="bg-cardd flex flex-col rounded-t-[40px]">
          <HomeActions />
         <BottomNotchWithTab />
        </View>

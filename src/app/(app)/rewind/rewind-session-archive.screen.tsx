@@ -1,4 +1,3 @@
-import { RiArrowDownSLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useMemo } from 'react'
@@ -55,9 +54,6 @@ export default function RewindSessionArchiveScreen(): ReactElement {
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
           <View className="mx-auto w-full max-w-3xl gap-5">
             <View className="gap-1 px-1">
-              <Text className="font-bbh text-xl font-bold text-white">
-                Past Rewinds
-              </Text>
               <Text className="muted font-bbh text-sm leading-6">
                 Your saved conversations, in the order they happened.
               </Text>
@@ -101,18 +97,17 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                 ))}
 
                 {hasNextPage ? (
-                  <View className="px-1 py-2">
+                  <View className="px-1 py-2 flex-row justify-center">
                     <Button
                       disabled={isFetchingNextPage}
                       label={isFetchingNextPage ? 'Loading…' : 'Load more'}
                       onClick={() => {
                         void fetchNextPage()
                       }}
-                      rightIcon={
-                        <RiArrowDownSLine size={20} className="text-white" />
-                      }
+                    
                       variant="secondary"
-                      fullWidth
+                     className='!py-3  !h-auto'
+
                     />
                   </View>
                 ) : null}

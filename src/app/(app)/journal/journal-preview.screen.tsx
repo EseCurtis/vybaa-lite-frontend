@@ -1,12 +1,14 @@
+import moment from 'moment'
+import type { ReactElement } from 'react'
+
 import { NoiseComponent } from '@/components/common/noise.component'
-import { TabHeader } from '@/components/common/tab-header.component'
 import { SkeletonCard } from '@/components/common/skeleton.component'
+import { TabHeader } from '@/components/common/tab-header.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useJournal } from '@/hooks/use-journal.hook'
 import { RiBookOpenLine } from '@remixicon/react'
-import moment from 'moment'
-import type { ReactElement } from 'react'
+import { MarkdownContent } from '@/shared/utils/markdown.util'
 
 export default function JournalPreviewScreen({
   journalId,
@@ -19,7 +21,12 @@ export default function JournalPreviewScreen({
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader title="Journal preview" />
+        <TabHeader
+          title={
+            moment(journal?.date).format(' MMMM D, YYYY') ||
+            'Journal preview'
+          }
+        />
 
         <View className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-3">
           {isLoading ? (
@@ -36,14 +43,11 @@ export default function JournalPreviewScreen({
             </View>
           ) : (
             <View className="mx-auto w-full max-w-2xl gap-5">
-              <View className="gap-2">
-                <Text className="font-display text-3xl font-bold text-white">
-                  {moment(journal.date).format('dddd, MMMM D')}
+              <View className="gap-0">
+                <Text className="font-display  text-3xl font-bold text-white">
+                  {moment(journal.date).format('dddd')}
                 </Text>
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-sm text-card-lighter-3">
-                    {moment(journal.date).format('YYYY')}
-                  </Text>
+                <View className="flex-row items-center justify-end gap-2">
                   {journal.mood ? (
                     <Text className="rounded-full bg-cardx px-3 py-1 text-xs capitalize text-card-lighter-2">
                       {journal.mood}
@@ -52,10 +56,8 @@ export default function JournalPreviewScreen({
                 </View>
               </View>
 
-              <View className="rounded-2xl bg-cardx px-5 py-6">
-                <Text className="whitespace-pre-line text-base leading-7 text-white/90">
-                  {journal.entry}
-                </Text>
+              <View className="rounded-2xl  py-0">
+                <MarkdownContent content={journal.entry.trim()} />
               </View>
 
               {journal.aiSummary ? (
@@ -63,9 +65,7 @@ export default function JournalPreviewScreen({
                   <Text className="text-xs font-semibold uppercase tracking-[0.16em] text-card-lighter-3">
                     Reflection
                   </Text>
-                  <Text className="whitespace-pre-line text-sm leading-6 text-card-lighter-2">
-                    {journal.aiSummary}
-                  </Text>
+                  <MarkdownContent content={journal.aiSummary} />
                 </View>
               ) : null}
             </View>

@@ -15,17 +15,13 @@ export default function CreateGoalScreen() {
   )
 
   function handleBack(): void {
-    if (window.history.length > 1) {
-      window.history.back()
-      return
-    }
     navigate({ to: '/app/goal' })
   }
 
   return (
     <View className="flex-1 bg-cardd">
       <TopNotch />
-      <View className="flex-1 overflow-y-auto px-mg">
+      <View className="flex-1 overflow-y-auto px-mg z-10">
         <View className="mb-5 mt-mg pb-mg flex-row items-center gap-3">
           <Pressable
             accessibilityLabel="Back to goals"
@@ -35,7 +31,7 @@ export default function CreateGoalScreen() {
             <RiArrowLeftLine className="text-black" size={20} />
           </Pressable>
           <View>
-            <Text className="text-2xl font-bold">Set a goal</Text>
+            <Text className="text-2xl font-bold">Set Goal</Text>
             {/* <Text className="text-sm text-card-lighter-2">
               A small, clear commitment.
             </Text> */}

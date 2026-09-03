@@ -5,6 +5,11 @@ import type {
 
 export const rewindQueryKeys = {
   all: ['rewind'] as const,
+  chats: () => [...rewindQueryKeys.all, 'chats'] as const,
+  chatMessages: (chatId: string) =>
+    [...rewindQueryKeys.chats(), chatId, 'messages'] as const,
+  homeGreeting: () => [...rewindQueryKeys.all, 'home-greeting'] as const,
+  observations: () => [...rewindQueryKeys.all, 'observations'] as const,
   routine: () => [...rewindQueryKeys.all, 'routine'] as const,
   sessions: () => [...rewindQueryKeys.all, 'sessions'] as const,
   session: (sessionId: string) =>

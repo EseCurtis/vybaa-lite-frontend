@@ -23,6 +23,11 @@ describe('app navigation hierarchy', () => {
       '/app/rewind-history',
     )
     expect(getAppParentPath('/app/rewind-history')).toBe('/app/rewind')
+    expect(getAppParentPath('/app/rewind-observations')).toBe('/app/rewind')
+    expect(getAppParentPath('/app/rewind-chats')).toBe('/app/rewind')
+    expect(getAppParentPath('/app/rewind-chat/chat_123')).toBe(
+      '/app/rewind-chats',
+    )
   })
 
   it('does not treat one root tab as a child of another tab', () => {

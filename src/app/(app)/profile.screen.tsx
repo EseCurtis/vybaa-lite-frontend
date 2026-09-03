@@ -15,7 +15,12 @@ import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
-import { RiHeart3Fill, RiSettings3Fill, RiTrophyFill } from '@remixicon/react'
+import {
+  RiCoinsLine,
+  RiHeart3Fill,
+  RiSettings3Fill,
+  RiTrophyFill,
+} from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 
@@ -72,6 +77,16 @@ function validateProfileFormData(formData: ProfileFormData): string | null {
 }
 
 const profileQuickActions: ProfileQuickAction[] = [
+  {
+    title: 'Play rewards',
+    description: 'View your Play Points wallet',
+    to: '/app/rewards',
+    icon: <RiCoinsLine size={20} className="text-white" />,
+    colorScheme: {
+      bg1: 'bg-accent-600',
+      bg2: 'bg-accent-700',
+    },
+  },
   {
     title: 'Achievements',
     description: 'View your earned badges',

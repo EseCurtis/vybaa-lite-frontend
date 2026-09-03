@@ -4,7 +4,6 @@ export const APP_TAB_ROOTS = [
   '/app/home',
   '/app/goal',
   '/app/communities',
-  '/app/rewards',
   '/app/journal',
   '/app/wellness',
   '/app/profile',
@@ -57,11 +56,15 @@ export function getAppParentPath(pathname: string): string | null {
     return '/app/rewind-history'
   }
   if (pathname === '/app/rewind-history') return '/app/rewind'
+  if (pathname === '/app/rewind-observations') return '/app/rewind'
+  if (pathname.startsWith('/app/rewind-chat/')) return '/app/rewind-chats'
+  if (pathname === '/app/rewind-chats') return '/app/rewind'
   if (pathname === '/app/rewind-routine') return '/app/rewind'
   if (pathname.startsWith('/app/r/')) {
     return '/app/rewind-history-sessions'
   }
   if (pathname === '/app/rewind') return '/app/home'
+  if (pathname === '/app/rewards') return '/app/profile'
   if (pathname.startsWith('/app/journal/')) return '/app/journal'
   if (pathname.startsWith('/app/journal-preview/')) return '/app/journal'
   if (pathname === '/app/actions/flexx') return '/app/home'

@@ -8,11 +8,13 @@ import {
   RiTimeLine,
   RiVipCrownLine,
 } from '@remixicon/react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
+import { Switch } from '@/components/common/switch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -20,6 +22,8 @@ import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
+import { authAPI } from '@/shared/api/auth.api'
+import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import {
   publicUrls,
   type LegalDocumentType,
@@ -27,11 +31,33 @@ import {
 import { getSubscriptionDisplayLabel } from '@/shared/subscription/subscription.util'
 
 export default function SettingsScreen() {
-  const { logout, deleteAccount } = useAuth()
+  const { deleteAccount, logout, refreshSession, user } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [isManagingSubscription, setIsManagingSubscription] = useState(false)
+  const personalizationMutation = useMutation({
+    mutationFn: async (enabled: boolean) =>
+      authAPI.updateProfile({ rewindPersonalizationEnabled: enabled }),
+    onError: (error: Error) => {
+      toast.error(error.message || 'Could not update Rewind personalization')
+    },
+    onSuccess: async (response) => {
+      if (!response.data.rewindPersonalizationEnabled) {
+        queryClient.setQueryData(rewindQueryKeys.homeGreeting(), null)
+      }
+      await queryClient.invalidateQueries({
+        queryKey: rewindQueryKeys.homeGreeting(),
+      })
+      await refreshSession()
+      toast.success(
+        response.data.rewindPersonalizationEnabled
+          ? 'Rewind personalization is on'
+          : 'Rewind personalization is off',
+      )
+    },
+  })
   const {
     isLoading: isSubscriptionLoading,
     isPresentingPaywall,
@@ -200,6 +226,32 @@ export default function SettingsScreen() {
                   </View>
                   <RiArrowRightSLine size={20} className="text-white/40" />
                 </Pressable>
+              </motion.div>
+
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                transition={{ delay: 0.2 }}
+              >
+                <View className="w-full flex-row items-center justify-between gap-4 rounded-2xl bg-cardx px-5 py-4">
+                  <View className="min-w-0 flex-1 gap-1">
+                    <Text className="font-bbh text-sm font-semibold text-white">
+                      Personalize Rewind
+                    </Text>
+                    <Text className="font-bbh text-xs leading-5 text-card-lighter-2">
+                      Use my Vybaa activity to personalize Rewind
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="Use my Vybaa activity to personalize Rewind"
+                    checked={user?.rewindPersonalizationEnabled ?? true}
+                    className="shrink-0"
+                    disabled={personalizationMutation.isPending}
+                    onChange={(enabled) => {
+                      personalizationMutation.mutate(enabled)
+                    }}
+                  />
+                </View>
               </motion.div>
             </View>
 

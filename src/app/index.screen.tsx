@@ -139,7 +139,7 @@ export default function AppScreen() {
                     <View
                       className="border-2 size-full absolute z-[99] rounded-[var(--roundness)] border-[var(--color)]"
                       style={{
-                        maskImage: `linear-gradient(to bottom, transparent 0%, transparent 10%, black 130%)`,
+                        maskImage: `linear-gradient(to top, transparent 0%, transparent 10%, black 130%)`,
                       }}
                     ></View>
                     <View
@@ -170,6 +170,10 @@ export default function AppScreen() {
             )
           })}
           <View className="flex relative overflow-hidden z-10 flex-col gap-3 text-center bg-[#05090f] rounded-[27px] pt-7 pb-10 shadow-[0px_0px_30px_#000] shadow-black border-2 border-cardx/20">
+            <View className="size-full absolute top-0 left-0  p-2">
+              <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30"/>
+            </View>
+            
             {(loginError || error) && (
               <Text className="text-pink-700 bg-pink-500/10 mx-auto px-3 py-1 rounded-full text-sm font-bbh text-center mt-2">
                 {loginError || error}

@@ -3,6 +3,8 @@ import React from 'react'
 
 // Base pressable interface
 interface BasePressableProps {
+  'aria-expanded'?: boolean
+  'aria-pressed'?: boolean
   children?: React.ReactNode
   className?: string
   disabled?: boolean

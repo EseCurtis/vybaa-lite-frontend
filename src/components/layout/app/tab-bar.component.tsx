@@ -7,19 +7,18 @@ import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
 //import { shouldAnimate } from '@/shared/utils/animation.util'
+import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
-import { BookOpenCheck, CoinsIcon } from 'lucide-react'
+import { BookOpenCheck, Plus } from 'lucide-react'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
 import { LinearGradient } from '../linear-gradient.component'
 import { TouchableOpacity } from '../pressables.component'
 import { Text } from '../text.component'
 import { View } from '../view.component'
-
-const shouldAnimate = false
 
 export const TabBar = memo(({ className }: { className?: string }) => {
   const navigate = useNavigate()
@@ -50,6 +49,16 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           matchAllRoot: true,
           enabled: true,
         },
+
+        {
+          id: 'create-goal',
+          route: '/app/goal/create',
+          icon: Plus,
+          label: 'Create goal',
+          isSpecial: true,
+          badge: null,
+          enabled: true,
+        },
         // {
         //   id: 'communities',
         //   route: '/app/communities',
@@ -59,15 +68,6 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         //   badge: null,
         //   matchAllRoot: true,
         // },
-        {
-          id: 'rewards',
-          route: '/app/rewards',
-          icon: CoinsIcon,
-          label: 'Play Points',
-          isSpecial: false,
-          badge: null,
-          matchAllRoot: true,
-        },
         {
           id: 'journal',
           route: '/app/journal',
@@ -160,18 +160,37 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         />
 
         <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
-          <Moti.div className="  px-7 flex flex-row items-center w-full justify-center ">
+          <Moti.div className="  px-2 flex flex-row items-center w-full justify-center ">
             {tabs.map((tab) => {
               const isActive = isActiveTab(
                 tab.route,
                 tab?.matchAllRoot,
                 tab?.matchAlso,
               )
+              let iconColor = colors['card-lighter-3']
+              let iconFill = 'transparent'
+
+              if (tab.isSpecial) {
+                iconColor = colors.white
+                iconFill = colors.white
+              } else if (isActive) {
+                iconColor = colors.accent[400]
+                iconFill = colors.accent[700] + '7a'
+              }
+              const accessibilityLabel = tab.isSpecial
+                ? 'Create a new goal'
+                : `Navigate to ${tab.label || tab.id} tab`
+              const accessibilityHint = tab.isSpecial
+                ? 'Double tap to create a new goal'
+                : `Double tap to switch to ${tab.label || tab.id} screen`
 
               return (
                 <Moti.div
                   key={tab.id}
-                  className="relative  border-t-3 py-4 px-1"
+                  className={cn(
+                    'relative border-t-3 py-4 px-2',
+                    tab.isSpecial && ' z-20',
+                  )}
                   whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
                   transition={
                     shouldAnimate
@@ -180,7 +199,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                   }
                 >
                   {/* Active indicator background */}
-                  {isActive && (
+                  {isActive && !tab.isSpecial && (
                     <Moti.div
                       className="absolute top-[-3px]  inset-0   flex items-start justify-center mt-full "
                       layoutId={shouldAnimate ? 'activeTab' : undefined}
@@ -208,15 +227,18 @@ export const TabBar = memo(({ className }: { className?: string }) => {
 
                   <TouchableOpacity
                     className={cn(
-                      isActive ? '  ' : '',
-                      ` px-4 items-center flex trasnition-all  justify-center flex-row  rounded-full py-2 `,
+                      'items-center flex overflow-hidden relative justify-center flex-row transition-all',
+                      tab.isSpecial
+                        ? 'p-1 py-0.5 mx-2 rounded-md bg-accent-400  shadow-black/30'
+                        : 'rounded-full px-4 py-2',
                     )}
                     onPress={() => handleTabPress(tab.route)}
-                    accessibilityLabel={`Navigate to ${tab.label || tab.id} tab`}
+                    accessibilityLabel={accessibilityLabel}
                     accessibilityRole="button"
-                    accessibilityHint={`Double tap to switch to ${tab.label || tab.id} screen`}
+                    accessibilityHint={accessibilityHint}
                     testID={`tab-${tab.id}`}
                   >
+                   
                     <>
                       {/* Icon with animation */}
                       <Moti.div
@@ -224,7 +246,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           shouldAnimate
                             ? {
                                 opacity: isActive ? 1 : 0.7,
-                                scale: isActive ? 1.1 : 1,
+                                scale: isActive ? 1 : 1,
                               }
                             : false
                         }
@@ -242,21 +264,15 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           !shouldAnimate
                             ? {
                                 opacity: isActive ? 1 : 0.7,
-                                scale: isActive ? 1.1 : 1,
+                                scale: isActive ? 1 : 1,
                               }
                             : undefined
                         }
                       >
                         <tab.icon
-                          color={
-                            isActive
-                              ? colors.accent[400]
-                              : colors['card-lighter-3']
-                          }
-                          size={27}
-                          fill={
-                            isActive ? colors.accent[700] + '7a' : 'transparent'
-                          }
+                          color={iconColor}
+                          size={tab.isSpecial ? 27 : 27}
+                          fill={iconFill}
                           className="relative z-10"
                         />
                         {/* Notification Badge */}

@@ -362,9 +362,7 @@ export default function GoalsAppScreen() {
           <View className="mb-5 mt-2 flex-row items-center justify-between">
             <View>
               <Text className="text-2xl font-bold">Goals</Text>
-              <Text className="text-sm text-card-lighter-2">
-                Progress with a proper finish.
-              </Text>
+              
             </View>
             <Pressable
               className="size-11 items-center justify-center rounded-full bg-white"

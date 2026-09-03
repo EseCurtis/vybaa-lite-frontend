@@ -103,7 +103,7 @@ export function FlexxCard({
       case 'achievement':
         return 'from-yellow-600 via-amber-700 to-orange-900'
       case 'rewind':
-        return 'from-pink-700 via-rose-800 to-teal-950'
+        return 'from-pink-700 via-rose-800 to-blue-950'
       default:
         return 'from-purple-600 via-purple-700 to-indigo-900'
     }
@@ -132,8 +132,8 @@ export function FlexxCard({
   // Dynamic font sizing based on number length for scalability
   const getHeroFontSize = (value: number) => {
     const digits = value.toString().length
-    if (digits <= 2) return 'text-[70px]' // 0-99
-    if (digits === 3) return 'text-[60px]' // 100-999
+    if (digits <= 2) return 'text-[40px]' // 0-99
+    if (digits === 3) return 'text-[20px]' // 100-999
     return 'text-[50px]' // 1000+
   }
 
@@ -151,10 +151,12 @@ export function FlexxCard({
     return 'text-4xl' // 1000+
   }
 
+  const className = "rounded-3xl "
+
   // Different layouts for each card type
   if (type === 'daily') {
     return (
-      <View className="size-full relative overflow-hidden">
+      <View className={cn("size-full relative overflow-hidden", className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -234,7 +236,7 @@ export function FlexxCard({
 
   if (type === 'weekly') {
     return (
-      <View className="size-full relative overflow-hidden">
+      <View className={cn("size-full relative overflow-hidden", className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -322,7 +324,7 @@ export function FlexxCard({
 
   if (type === 'streak') {
     return (
-      <View className="size-full relative overflow-hidden">
+      <View className={cn("size-full relative overflow-hidden", className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -421,7 +423,7 @@ export function FlexxCard({
   if (type === 'achievement') {
     if (!achievement) {
       return (
-        <View className="size-full relative overflow-hidden">
+        <View className={cn("size-full relative overflow-hidden", className)}>
           <div
             className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
           />
@@ -468,7 +470,7 @@ export function FlexxCard({
     )
 
     return (
-      <View className="size-full relative overflow-hidden">
+      <View className={cn("size-full relative overflow-hidden", className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -536,18 +538,18 @@ export function FlexxCard({
             </motion.div>
 
             {/* Title */}
-            <Text className="text-white text-4xl font-bbh font-bold text-center mb-3 leading-tight">
+            <Text className="text-white !text-center text-4xl font-bbh font-bold text-center mb-3 leading-tight">
               {achievement.title}
             </Text>
 
             {/* Description */}
-            <Text className="text-white/70 text-base font-bbh text-center max-w-[85%] leading-relaxed">
+            <Text className="text-white/70 !text-center   text-base font-bbh text-center max-w-[85%] leading-relaxed">
               {achievement.description}
             </Text>
 
             {/* Milestone Badge */}
-            <View className="mt-8 bg-white backdrop-blur-sm rounded-full px-6 py-3">
-              <Text className="text-black text-lg font-bbh font-bold">
+            <View className="mt-8 bg-white backdrop-blur-sm !text-center  w-full px-6 py-3">
+              <Text className="text-black text-lg font-bbh !text-center  font-bold">
                 {achievement.type === 'streak_milestone' &&
                   `${achievement.milestone} Day Streak`}
                 {achievement.type === 'total_goals' &&
@@ -581,7 +583,7 @@ export function FlexxCard({
       'A little reflection can reveal what your days are asking for.'
 
     return (
-      <View className="size-full relative overflow-hidden">
+      <View className={cn("size-full relative overflow-hidden", className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -601,7 +603,7 @@ export function FlexxCard({
               <Text className="text-white/50 text-sm font-bbh">
                 Last 7 days
               </Text>
-              <Text className="text-white text-2xl font-bbh font-bold mt-2">
+              <Text className="text-white text-sm font-bbh font-bold mt-2">
                 Rewind reflection
               </Text>
             </View>
@@ -610,7 +612,7 @@ export function FlexxCard({
 
           <View className="flex-1 justify-center">
             <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-4">
-              Sessions completed
+              Sessions 
             </Text>
             <Text
               className={`text-white ${getHeroFontSize(completedSessions)} leading-none font-bbh font-bold`}

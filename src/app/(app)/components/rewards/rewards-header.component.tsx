@@ -8,7 +8,7 @@ interface RewardsHeaderProps {
 
 export function RewardsHeader({ onRefresh }: RewardsHeaderProps) {
   return (
-    <TabHeader title="Play rewards" canGoBack={false}>
+    <TabHeader title="Play rewards">
       <Pressable
         onPress={onRefresh}
         className="text-white p-2 hover:bg-white/10 rounded-full transition-colors"
