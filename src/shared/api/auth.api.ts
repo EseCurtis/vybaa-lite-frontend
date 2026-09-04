@@ -147,6 +147,8 @@ class AuthAPI {
     profileImageId?: string
     rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | null
     rewindPersonalizationEnabled?: boolean
+    rewindProactiveChatEnabled?: boolean
+    rewindProactiveChatExplainedAt?: string | null
     timezone?: string
   }): Promise<{ msg: string; data: User }> {
     const { data: res } = await http.put<{ msg: string; data: User }>(

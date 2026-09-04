@@ -6,7 +6,12 @@ export interface Notification {
   id: string
   userId: string
   goalId?: string
-  type: 'goal_reminder' | 'goal_completed' | 'streak_milestone' | 'system'
+  type:
+    | 'goal_completed'
+    | 'goal_reminder'
+    | 'rewind_chat_message'
+    | 'streak_milestone'
+    | 'system'
   title: string
   message: string
   data?: Record<string, unknown> | null
@@ -36,19 +41,7 @@ export interface UnreadCountResponse {
   }
 }
 
-export interface AblyAuthResponse {
-  msg: string
-  data: any // Ably token request
-}
-
 class NotificationAPI {
-  async getAblyAuth(): Promise<AblyAuthResponse> {
-    const { data: res } = await http.get<AblyAuthResponse>(
-      `${API_V1}/notifications/auth/ably`,
-    )
-    return res
-  }
-
   async getNotifications(
     page: number = 1,
     limit: number = 50,

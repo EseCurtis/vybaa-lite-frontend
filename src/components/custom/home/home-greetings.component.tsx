@@ -49,7 +49,6 @@ export function HomeGreetings({
             className="size-full  object-cover"
           />
           <Moti.div
-          
             initial={{
               backgroundPosition: '-200% 0%',
             }}
@@ -73,24 +72,39 @@ export function HomeGreetings({
           ></Moti.div>
         </Pressable>
         <Pressable
-          accessibilityLabel={`${greetingTitle}. ${greetingMessage}. Open Rewind`}
+          accessibilityLabel={
+            contextualGreeting
+              ? `${greetingMessage}. Open Rewind`
+              : `${greetingTitle}. ${greetingMessage}. Open Rewind`
+          }
           className="relative z-10 max-w-[80%]  h-full my-auto flex-col items-start bg-cardx p-2 px-4 rounded-3xl justify-center"
           onPress={openRewind}
         >
-          <Text
-            lines={2}
-            className="text-contrast-outline break-words text-wrap font-mona-sans-x block truncate font-bold text-card-lighter-2 text-sm"
-          >
-            {greetingTitle}
-          </Text>
-          <View className="flex-row min-w-0 items-center justify-start gap-2">
+          {contextualGreeting ? (
             <Text
-              lines={2}
-              className="text-contrast-outline  leading-tight font-mona-sans-x min-w-0 font-bold text-card-lighter-2 text-sm"
+              lines={4}
+              className="text-contrast-outline min-w-0 font-mona-sans-x text-sm font-bold leading-tight text-card-lighter-2"
             >
               {greetingMessage}
             </Text>
-          </View>
+          ) : (
+            <>
+              <Text
+                lines={1}
+                className="text-contrast-outline block truncate text-wrap break-words font-mona-sans-x text-sm font-bold text-card-lighter-2"
+              >
+                {greetingTitle}
+              </Text>
+              <View className="min-w-0 flex-row items-center justify-start gap-2">
+                <Text
+                  lines={1}
+                  className="text-contrast-outline min-w-0 font-mona-sans-x text-sm font-bold leading-tight text-card-lighter-2"
+                >
+                  {greetingMessage}
+                </Text>
+              </View>
+            </>
+          )}
           <View className="bg-cardx p-3 rounded-full absolute top-3 -right-3"></View>
           <View className="bg-cardx p-1.5 rounded-full absolute top-8 -right-5"></View>
         </Pressable>

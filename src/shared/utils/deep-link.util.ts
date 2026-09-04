@@ -8,6 +8,7 @@ export type DeepLinkRouteName =
   | 'invite'
   | 'profile'
   | 'rewind'
+  | 'rewindChat'
   | 'rewindHistory'
   | 'rewindHistorySessions'
   | 'rewindRoutine'
@@ -15,6 +16,7 @@ export type DeepLinkRouteName =
   | 'rewards'
 
 export type DeepLinkTarget = {
+  chatId?: string
   code?: string
   communityId?: string
   goalId?: string
@@ -141,6 +143,17 @@ function getTargetFromPath(
       requiresAuth: true,
       route: 'rewindSession',
       sessionId,
+    }
+  }
+
+  const rewindChatMatch = pathname.match(/^\/app\/rewind-chat\/([^/]+)$/)
+  const chatId = rewindChatMatch?.[1]?.trim()
+  if (chatId) {
+    return {
+      chatId,
+      path: `/app/rewind-chat/${chatId}`,
+      requiresAuth: true,
+      route: 'rewindChat',
     }
   }
 

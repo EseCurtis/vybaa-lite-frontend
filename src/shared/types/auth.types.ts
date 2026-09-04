@@ -49,6 +49,8 @@ export interface User {
   currentMood?: string
   rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
   rewindPersonalizationEnabled?: boolean
+  rewindProactiveChatEnabled?: boolean
+  rewindProactiveChatExplainedAt?: string
   timezone?: string
   // OAuth fields
   googleId?: string

@@ -1,4 +1,5 @@
 import { RiChatSmile3Line, RiRefreshLine } from '@remixicon/react'
+import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import moment from 'moment'
 import type { ReactElement } from 'react'
@@ -10,6 +11,8 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useRewindChats } from '@/hooks/use-rewind.hook'
+import { useAuth } from '@/providers/auth.provider'
+import { authAPI } from '@/shared/api/auth.api'
 import type { RewindChat } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
@@ -33,10 +36,11 @@ function getChatPreview(chat: RewindChat): string {
 
 function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
   const navigate = useNavigate()
+  console.log(chat)
   return (
     <Pressable
       accessibilityLabel={`Open ${chat.title} chat`}
-      className="min-h-20 w-full flex-row items-center gap-4  pt-2 px-4 pb-5 text-left"
+      className="min-h-20 w-full flex-row items-center gap-4 border-b-cardx border-b px-4 py-3 text-left"
       onPress={() => {
         void navigate({
           params: { chatId: chat.id },
@@ -45,10 +49,10 @@ function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
       }}
     >
       <RewindChatAvatar chat={chat} />
-      <View className="min-w-0 flex-1 gap-0 border-b border-b-card-light">
+      <View className="min-w-0 flex-1 gap-0">
         <View className="flex-row items-center justify-between gap-0 ">
           <Text
-            className="min-w-0 flex-1 font-bbh text-base leading-light font-bold text-white"
+            className="min-w-0 flex-1 font-bbh text-base text-sm leading-light font-bold text-white"
             lines={1}
           >
             {chat.title}
@@ -58,6 +62,13 @@ function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
               {moment(chat.lastMessageAt).fromNow()}
             </Text>
           )}
+          {chat.unreadCount ? (
+            <View className="min-w-5 items-center justify-center rounded-full bg-accent-600 px-1.5 py-0.5">
+              <Text className="font-bbh text-[10px] font-bold text-white">
+                {chat.unreadCount > 99 ? '99+' : chat.unreadCount}
+              </Text>
+            </View>
+          ) : null}
         </View>
         <Text
           className="font-bbh text-xs leading-light leading-5 text-card-lighter-2"
@@ -72,6 +83,16 @@ function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
 
 export default function RewindChatsScreen(): ReactElement {
   const chatsQuery = useRewindChats()
+  const { refreshSession, user } = useAuth()
+  const explanationMutation = useMutation({
+    mutationFn: () =>
+      authAPI.updateProfile({
+        rewindProactiveChatExplainedAt: new Date().toISOString(),
+      }),
+    onSuccess: () => {
+      void refreshSession()
+    },
+  })
 
   return (
     <View className="flex-1 bg-cardd">
@@ -84,10 +105,35 @@ export default function RewindChatsScreen(): ReactElement {
                 Your partners are here
               </Text>
               <Text className="font-bbh text-sm leading-6 text-card-lighter-2">
-                Talk anytime. Invite a specific partner with an @mention in the
-                group.
+                Drop a thought into the room. Any partner can respond.
               </Text>
             </View>
+
+            {!user?.rewindProactiveChatExplainedAt ? (
+              <View className="mx-mg gap-3 rounded-2xl bg-cardx px-4 py-4">
+                <View className="gap-1">
+                  <Text className="font-bbh text-sm font-bold text-white">
+                    Your partners may check in first
+                  </Text>
+                  <Text className="font-bbh text-xs leading-5 text-card-lighter-2">
+                    They only speak when there is something useful to add. Mute
+                    any chat whenever you want.
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityLabel="Dismiss partner messaging explanation"
+                  className="self-start rounded-full bg-white px-4 py-2"
+                  disabled={explanationMutation.isPending}
+                  onPress={() => {
+                    explanationMutation.mutate()
+                  }}
+                >
+                  <Text className="font-bbh text-xs font-bold text-cardd">
+                    Got it
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null}
 
             {chatsQuery.isLoading ? (
               <View className="gap-3">
@@ -123,7 +169,7 @@ export default function RewindChatsScreen(): ReactElement {
                 </Pressable>
               </View>
             ) : chatsQuery.data?.length ? (
-              <View className="gap-0">
+              <View className="gap-2 px-mg">
                 {chatsQuery.data.map((chat) => (
                   <ChatRow chat={chat} key={chat.id} />
                 ))}

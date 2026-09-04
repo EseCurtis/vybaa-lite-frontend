@@ -15,8 +15,8 @@ export function RewindChatAvatar({
   chat: Pick<RewindChat, 'personaId' | 'type'>
   className?: string
 }): ReactElement {
-  if (chat.type === 'PARTNER' && chat.personaId) {
-    const persona = getRewindPersona(chat.personaId)
+  if (chat.type === 'PARTNER' && chat?.personaId) {
+    const persona =  getRewindPersona(chat?.personaId)
     return (
       <img
         alt={`${persona.name} avatar`}
@@ -30,7 +30,7 @@ export function RewindChatAvatar({
     <View
       aria-label="Ella, Lyra, Jake, and Ariel"
       className={cn(
-        'grid size-[60px] grid-cols-2 overflow-hidden gap-0.5 rounded-full bg-card-light',
+        'grid size-[60px] grid-cols-2  gap-1',
         className,
       )}
       role="img"
@@ -38,7 +38,7 @@ export function RewindChatAvatar({
       {REWIND_PERSONAS.map((persona) => (
         <img
           alt=""
-          className="col-span-1 object-contain"
+          className="col-span-1 rounded-full overflow-hidden object-contain"
           key={persona.id}
           src={persona.avatar}
         />

@@ -25,6 +25,18 @@ export async function navigateToDeepLinkTarget(
     return
   }
 
+  if (target.route === 'rewindChat' && target.chatId) {
+    const chatId = target.chatId
+    if (chatId) {
+      await router.navigate({
+        params: { chatId },
+        replace: true,
+        to: '/app/rewind-chat/$chatId',
+      })
+      return
+    }
+  }
+
   if (target.route === 'community' && target.communityId) {
     await router.navigate({
       hash: target.hash ?? '',

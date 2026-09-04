@@ -1,30 +1,34 @@
-import { useAuth } from '@/providers/auth.provider'
-import { useToast } from '@/providers/toast.provider'
-import {
-  notificationAPI,
-  type Notification,
-} from '@/shared/api/notification.api'
-import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
-import {
-  claimInAppNotificationDisplay,
-  formatInAppNotification,
-} from '@/shared/notifications/in-app-notification.util'
 import { useQueryClient } from '@tanstack/react-query'
 import {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from 'react'
 
+import { useAuth } from '@/providers/auth.provider'
+import { useToast } from '@/providers/toast.provider'
+import type { Notification } from '@/shared/api/notification.api'
+import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
+import type { RewindChatRealtimeEvent } from '@/shared/api/rewind.api'
+import {
+  claimInAppNotificationDisplay,
+  formatInAppNotification,
+} from '@/shared/notifications/in-app-notification.util'
+import { RealtimeSocketClient } from '@/shared/realtime/realtime-socket.client'
+
 interface NotificationContextValue {
-  notifications: Notification[]
-  unreadCount: number
-  isConnected: boolean
   addNotification: (notification: Notification) => void
+  isConnected: boolean
+  notifications: Notification[]
+  subscribeRewindChat: (
+    listener: (event: RewindChatRealtimeEvent) => void,
+  ) => () => void
+  unreadCount: number
 }
 
 interface NotificationPreview {
@@ -41,60 +45,24 @@ interface NotificationRealtimeSignal {
 }
 
 const NotificationContext = createContext<NotificationContextValue | null>(null)
-
 const NOTIFICATION_POLL_INTERVAL_MS = 60_000
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
-}
-
-function getNotificationPreview(value: unknown): NotificationPreview | null {
-  if (!isRecord(value)) return null
-
-  const { createdAt, id, message, title, type } = value
-  if (
-    typeof createdAt !== 'string' ||
-    typeof id !== 'string' ||
-    typeof message !== 'string' ||
-    typeof title !== 'string' ||
-    typeof type !== 'string'
-  ) {
-    return null
-  }
-
-  return { createdAt, id, message, title, type }
-}
-
-function getNotificationRealtimeSignal(
-  value: unknown,
-): NotificationRealtimeSignal | null {
-  if (!isRecord(value) || typeof value.notificationCount !== 'number')
-    return null
-
-  const latestNotification = getNotificationPreview(value.latestNotification)
-  if (!latestNotification) return null
-
-  return { latestNotification, notificationCount: value.notificationCount }
-}
-
-export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isAuthenticated } = useAuth()
-  const toast = useToast()
+export function NotificationProvider({
+  children,
+}: {
+  children: ReactNode
+}): ReactNode {
+  const { isAuthenticated, user } = useAuth()
   const queryClient = useQueryClient()
-
+  const toast = useToast()
+  const [isConnected, setIsConnected] = useState(false)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [isConnected, setIsConnected] = useState(false)
+  const rewindListenersRef = useRef<
+    Set<(event: RewindChatRealtimeEvent) => void>
+  >(new Set())
 
-  const ablyRef = useRef<any>(null)
-  const channelRef = useRef<any>(null)
-  const connectionListenersRef = useRef<{
-    connected?: any
-    disconnected?: any
-    failed?: any
-  }>({})
-
-  const refreshNotificationData = useCallback(() => {
+  const refreshNotificationData = useCallback((): void => {
     void queryClient.invalidateQueries({
       queryKey: notificationQueryKeys.lists(),
     })
@@ -103,11 +71,10 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     })
   }, [queryClient])
 
-  const handleRealtimeNotificationPulse = useCallback(
-    (data: unknown) => {
-      const signal = getNotificationRealtimeSignal(data)
+  const handleRealtimeNotification = useCallback(
+    (signal: NotificationRealtimeSignal): void => {
       if (
-        signal &&
+        signal.latestNotification.type !== 'rewind_chat_message' &&
         claimInAppNotificationDisplay(signal.latestNotification.id)
       ) {
         toast.info(
@@ -116,179 +83,75 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             : `${signal.notificationCount} new notifications are ready.`,
         )
       }
-
       refreshNotificationData()
     },
     [refreshNotificationData, toast],
   )
 
-  // Note: FCM push notifications are handled by Capacitor plugin
-  // See: app/src/plugins/capacitor/plugins/push-notification.plugin.ts
-  // The plugin automatically registers FCM tokens and syncs to backend
+  const handleRewindEvent = useCallback(
+    (event: RewindChatRealtimeEvent): void => {
+      for (const listener of rewindListenersRef.current) listener(event)
+    },
+    [],
+  )
 
-  // Connect to Ably when user is authenticated
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
+      setIsConnected(false)
       return
     }
-
-    let isMounted = true
-
-    const connectToAbly = async () => {
-      try {
-        console.log('Initializing Ably connection for user:', user.id)
-
-        // Dynamically import Ably (only on client side)
-        const Ably = (await import('ably')).default
-
-        // Create Ably client with token auth
-        const ablyClient = new Ably.Realtime({
-          authCallback: async (_tokenParams, callback) => {
-            try {
-              const response = await notificationAPI.getAblyAuth()
-              callback(null, response.data)
-            } catch (error: any) {
-              console.error('Ably auth error:', error)
-              callback(error, null)
-            }
-          },
-        })
-
-        if (!isMounted) {
-          ablyClient.close()
-          return
-        }
-
-        ablyRef.current = ablyClient
-
-        // Subscribe to user's channel
-        const channel = ablyClient.channels.get(`user:${user.id}`)
-        channelRef.current = channel
-
-        // Connection event handlers
-        const onConnected = () => {
-          console.log('✅ Connected to Ably')
-          if (isMounted) {
-            setIsConnected(true)
-          }
-        }
-
-        const onDisconnected = () => {
-          console.log('❌ Disconnected from Ably')
-          if (isMounted) {
-            setIsConnected(false)
-          }
-        }
-
-        const onFailed = (stateChange: any) => {
-          console.error('⚠️ Ably connection failed:', stateChange.reason)
-          if (isMounted) {
-            setIsConnected(false)
-          }
-        }
-
-        // Store references for cleanup
-        connectionListenersRef.current = {
-          connected: onConnected,
-          disconnected: onDisconnected,
-          failed: onFailed,
-        }
-
-        // Listen for connection state changes
-        ablyClient.connection.on('connected', onConnected)
-        ablyClient.connection.on('disconnected', onDisconnected)
-        ablyClient.connection.on('failed', onFailed)
-
-        // One pulse can represent many notification writes; the API remains canonical.
-        channel.subscribe(
-          'notifications_changed',
-          (message: { data?: unknown }) => {
-            if (!isMounted) return
-
-            handleRealtimeNotificationPulse(message.data)
-          },
-        )
-
-        console.log('🔔 Subscribed to notifications channel')
-      } catch (error) {
-        console.error('❌ Error connecting to Ably:', error)
-        if (isMounted) {
-          setIsConnected(false)
-        }
-      }
-    }
-
-    connectToAbly()
+    const client = new RealtimeSocketClient({
+      onConnected: () => setIsConnected(true),
+      onDisconnected: () => setIsConnected(false),
+      onNotification: handleRealtimeNotification,
+      onRewindEvent: handleRewindEvent,
+    })
+    client.start()
     const notificationPoll = window.setInterval(
       refreshNotificationData,
       NOTIFICATION_POLL_INTERVAL_MS,
     )
-
-    // Cleanup function
     return () => {
-      console.log('🧹 Cleaning up Ably connection')
-      isMounted = false
-
-      // Unsubscribe from channel
-      if (channelRef.current) {
-        try {
-          channelRef.current.unsubscribe('notifications_changed')
-          channelRef.current.detach()
-        } catch (error) {
-          console.error('Error unsubscribing from channel:', error)
-        }
-      }
-
-      // Remove connection event listeners
-      if (ablyRef.current && connectionListenersRef.current) {
-        const conn = ablyRef.current.connection
-        if (connectionListenersRef.current.connected) {
-          conn.off('connected', connectionListenersRef.current.connected)
-        }
-        if (connectionListenersRef.current.disconnected) {
-          conn.off('disconnected', connectionListenersRef.current.disconnected)
-        }
-        if (connectionListenersRef.current.failed) {
-          conn.off('failed', connectionListenersRef.current.failed)
-        }
-      }
-
-      // Close Ably connection
-      if (ablyRef.current) {
-        try {
-          ablyRef.current.close()
-        } catch (error) {
-          console.error('Error closing Ably connection:', error)
-        }
-      }
-
-      // Reset refs
-      ablyRef.current = null
-      channelRef.current = null
-      connectionListenersRef.current = {}
       window.clearInterval(notificationPoll)
-      setIsConnected(false)
+      client.stop()
     }
   }, [
-    handleRealtimeNotificationPulse,
+    handleRealtimeNotification,
+    handleRewindEvent,
     isAuthenticated,
     refreshNotificationData,
     user?.id,
   ])
 
-  const addNotification = useCallback((notification: Notification) => {
-    setNotifications((prev) => [notification, ...prev])
-    if (!notification.isRead) {
-      setUnreadCount((prev) => prev + 1)
-    }
+  const addNotification = useCallback((notification: Notification): void => {
+    setNotifications((current) => [notification, ...current])
+    if (!notification.isRead) setUnreadCount((current) => current + 1)
   }, [])
 
-  const value: NotificationContextValue = {
-    notifications,
-    unreadCount,
-    isConnected,
-    addNotification,
-  }
+  const subscribeRewindChat = useCallback(
+    (listener: (event: RewindChatRealtimeEvent) => void): (() => void) => {
+      rewindListenersRef.current.add(listener)
+      return () => rewindListenersRef.current.delete(listener)
+    },
+    [],
+  )
+
+  const value = useMemo<NotificationContextValue>(
+    () => ({
+      addNotification,
+      isConnected,
+      notifications,
+      subscribeRewindChat,
+      unreadCount,
+    }),
+    [
+      addNotification,
+      isConnected,
+      notifications,
+      subscribeRewindChat,
+      unreadCount,
+    ],
+  )
 
   return (
     <NotificationContext.Provider value={value}>
@@ -297,7 +160,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
   )
 }
 
-export const useNotificationContext = () => {
+export function useNotificationContext(): NotificationContextValue {
   const context = useContext(NotificationContext)
   if (!context) {
     throw new Error(
