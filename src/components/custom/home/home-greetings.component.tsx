@@ -6,7 +6,12 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
 import { Moti } from '@/shared/constants.shared'
-import { randomGreetings } from '@/shared/home/home.util.shared'
+import {
+  formatRewindContextualGreeting,
+  randomGreetings,
+  randomRewindGreetings,
+  resolveRewindHomePersona,
+} from '@/shared/home/home.util.shared'
 import {
   getRewindPersona,
   type RewindPersonaId,
@@ -21,15 +26,29 @@ export function HomeGreetings({
   userName: string
 }) {
   const navigate = useNavigate()
-  const contextualGreetingQuery = useRewindHomeGreeting()
-  const greetings = randomGreetings(userName.split(' ')[0])
-  const emoji = greetings[2]
+  const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
+  const firstName = userName.trim().split(/\s+/)[0] ?? 'friend'
+  const genericGreetings = randomGreetings(firstName)
   const contextualGreeting = contextualGreetingQuery.data
-  const activePersonaId =
-    contextualGreeting?.personaId ?? rewindPersona ?? 'ella'
+  const activePersonaId = resolveRewindHomePersona(
+    rewindPersona,
+    contextualGreeting?.personaId,
+  )
   const persona = getRewindPersona(activePersonaId)
+  const partnerGreetings = randomRewindGreetings(activePersonaId, firstName)
+  const greetings =
+    rewindPersona || contextualGreeting?.personaId
+      ? partnerGreetings
+      : genericGreetings
+  const emoji = greetings[2]
   const greetingTitle = contextualGreeting?.title ?? greetings[0]
-  const greetingMessage = contextualGreeting?.message ?? greetings[1]
+  const greetingMessage = contextualGreeting
+    ? formatRewindContextualGreeting(
+        activePersonaId,
+        firstName,
+        contextualGreeting.message,
+      )
+    : greetings[1]
 
   const openRewind = (): void => {
     void navigate({ to: '/app/rewind' })

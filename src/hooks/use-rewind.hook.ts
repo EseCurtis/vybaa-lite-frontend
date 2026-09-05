@@ -19,6 +19,7 @@ import type {
 } from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
+import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 export function usePaginatedRewindSessions(
   page: number = 1,
@@ -100,13 +101,13 @@ export function useRewindInsights(range: RewindInsightsRange) {
   })
 }
 
-export function useRewindHomeGreeting() {
+export function useRewindHomeGreeting(personaId?: RewindPersonaId | null) {
   return useQuery({
     queryFn: async () => {
       const response = await rewindAPI.getHomeGreeting()
       return response.data
     },
-    queryKey: rewindQueryKeys.homeGreeting(),
+    queryKey: [...rewindQueryKeys.homeGreeting(), personaId ?? 'unselected'],
     staleTime: 1000 * 60 * 10,
   })
 }
