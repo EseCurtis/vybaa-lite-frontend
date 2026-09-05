@@ -1,9 +1,12 @@
 import { Icon } from '@iconify/react'
+import { RiChatSmile3Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import type { ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
 import { Moti } from '@/shared/constants.shared'
 import {
@@ -14,9 +17,61 @@ import {
 } from '@/shared/home/home.util.shared'
 import {
   getRewindPersona,
+  type RewindPersona,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+
+function HomeGreetingSheet({
+  greetingMessage,
+  greetingTitle,
+  onOpenRewind,
+  persona,
+}: {
+  greetingMessage: string
+  greetingTitle: string
+  onOpenRewind: () => void
+  persona: RewindPersona
+}): ReactElement {
+  return (
+    <View className="gap-5 pb-2 pt-3">
+      <View className="flex-row hidden items-center gap-3">
+        <img
+          alt={`${persona.name} avatar`}
+          className="size-10 rounded-full object-cover"
+          src={persona.avatar}
+        />
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text className="font-mona-sans-x text-xs font-bold text-card-lighter-3">
+            @{persona.name}
+          </Text>
+          {greetingTitle && (
+            <Text className="font-mona-sans-x text-base font-bold text-white">
+              {greetingTitle}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      <View className="rounded-[24px] bg-cardx  py-4 ">
+        <Text className="font-mona-sans-x text-base text-card-lighter-2 font-bold leading-6 text-card-lighter-1">
+          {greetingMessage}
+        </Text>
+      </View>
+
+      <Pressable
+        accessibilityLabel={`Open Rewind with ${persona.name}`}
+        className="min-h-12 flex-row items-center justify-center gap-2 rounded-full bg-white px-5"
+        onPress={onOpenRewind}
+      >
+        <RiChatSmile3Line className="text-cardd" size={18} />
+        <Text className="font-bbh text-sm font-bold text-cardd">
+          Open Rewind
+        </Text>
+      </Pressable>
+    </View>
+  )
+}
 
 export function HomeGreetings({
   rewindPersona = 'ella',
@@ -24,8 +79,9 @@ export function HomeGreetings({
 }: {
   rewindPersona?: RewindPersonaId | null
   userName: string
-}) {
+}): ReactElement {
   const navigate = useNavigate()
+  const bottomSheet = useBottomSheet()
   const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
   const firstName = userName.trim().split(/\s+/)[0] ?? 'friend'
   const genericGreetings = randomGreetings(firstName)
@@ -54,13 +110,31 @@ export function HomeGreetings({
     void navigate({ to: '/app/rewind' })
   }
 
+  const openRewindFromSheet = (): void => {
+    bottomSheet.dismiss()
+    openRewind()
+  }
+  console.log('THAMKYO', contextualGreeting?.message)
+
+  const expandGreeting = (): void => {
+    bottomSheet.present(
+      <HomeGreetingSheet
+        greetingMessage={greetingMessage}
+        greetingTitle={greetingTitle}
+        onOpenRewind={openRewindFromSheet}
+        persona={persona}
+      />,
+      { title: `@${persona.name} Says.` },
+    )
+  }
+
   return (
     <View className="[&_*]:!break-words px-mg text-left py-5 relative ">
       <View className="flex-row-reverse gap-3 items-center">
         <Pressable
-          className="size-12 border-[0.5px] border-white/20  scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative overflow-hidden rounded-[19px] "
+          className="size-10 border-[0.5px] border-white/20  scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative overflow-hidden rounded-full "
           accessibilityLabel={`Open Rewind with ${persona.name}`}
-          onPress={openRewind}
+          onPress={expandGreeting}
         >
           <img
             src={persona.avatar}
@@ -93,11 +167,11 @@ export function HomeGreetings({
         <Pressable
           accessibilityLabel={
             contextualGreeting
-              ? `${greetingMessage}. Open Rewind`
-              : `${greetingTitle}. ${greetingMessage}. Open Rewind`
+              ? `${greetingMessage}. Expand message from ${persona.name}`
+              : `${greetingTitle}. ${greetingMessage}. Expand message from ${persona.name}`
           }
           className="relative z-10 max-w-[80%]  h-full my-auto flex-col items-start bg-cardx p-2 px-4 rounded-3xl justify-center"
-          onPress={openRewind}
+          onPress={expandGreeting}
         >
           {contextualGreeting ? (
             <Text

@@ -16,23 +16,38 @@
   <body class="font-mona-sans-x text-white [&_*]:text-left">
     <style>
       .loader {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 100vw;
-        height: 100vh;
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        background: #060509;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+          opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+          visibility 0s linear 0.6s;
+      }
+
+      .loader-content {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        justify-content: center;
-        transform: translate(-50%, -50%);
-        transition: all 0.5s ease;
-        background-color: #06050960;
-        border-color: transparent;
+        gap: 24px;
+        transform: translateY(0);
+        transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
       }
 
       .loaded .loader {
         opacity: 0;
-        border-color: transparent;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      .loaded .loader-content {
+        transform: translateY(-10px) scale(0.97);
       }
 
       body.loaded #app {
@@ -40,35 +55,212 @@
       }
 
       #app {
-        opacity: 1;
-        border-color: transparent;
+        opacity: 0;
+        transition: opacity 0.45s ease;
       }
 
-      .transit {
-        transition: all 1s ease;
-        animation: transit 0.4s ease;
+      .loader-mark {
+        position: relative;
+        width: 92px;
+        height: 92px;
+        display: grid;
+        place-items: center;
+        isolation: isolate;
       }
 
-      .loader span {
-        color: #FF266F;
-        font-weight: bolder;
+      .loader-mark::before {
+        content: '';
+        position: absolute;
+        inset: 13px;
+        border-radius: 27px;
+        background: #161620;
+        animation: mark-breathe 2.8s ease-in-out infinite;
+      }
+
+      .loader-mark::after {
+        content: 'V';
+        position: relative;
+        z-index: 1;
+        color: #ffffff;
         font-family: Arial, Helvetica, sans-serif;
-        transform: scaleX(1.3);
-         animation: transit 0.4s ease;
-         font-size: large;
+        font-size: 31px;
+        font-weight: 800;
+        letter-spacing: -0.12em;
+        line-height: 1;
+        transform: translateX(-2px) rotate(-8deg);
+        animation: mark-letter 2.8s ease-in-out infinite;
       }
 
-      @keyframes transit {
-        0% {
-          opacity: 0;
-        }
+      .loader-orbit {
+        position: absolute;
+        inset: 0;
+        animation: orbit-spin 5.5s linear infinite;
+      }
+
+      .loader-orbit span {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ff266f;
+        transform: translateX(-50%);
+      }
+
+      .loader-orbit span:nth-child(2) {
+        top: auto;
+        right: 2px;
+        bottom: 18px;
+        left: auto;
+        width: 5px;
+        height: 5px;
+        background: #ff7da7;
+      }
+
+      .loader-orbit span:nth-child(3) {
+        top: auto;
+        bottom: 8px;
+        left: 22px;
+        width: 4px;
+        height: 4px;
+        background: #ffffff;
+      }
+
+      .loader-wordmark {
+        display: flex;
+        align-items: center;
+        color: #ff266f;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.42em;
+        line-height: 1;
+        padding-left: 0.42em;
+        
+      }
+
+      .loader-wordmark span {
+        display: inline-block;
+        transform: scaleX(1.3);
+        animation: wordmark-pulse 1.8s ease-in-out infinite;
+      }
+
+
+
+      .loader-wordmark span:nth-child(2) {
+        animation-delay: 0.08s;
+      }
+      .loader-wordmark span:nth-child(3) {
+        animation-delay: 0.16s;
+      }
+      .loader-wordmark span:nth-child(4) {
+        animation-delay: 0.24s;
+      }
+      .loader-wordmark span:nth-child(5) {
+        animation-delay: 0.32s;
+      }
+
+      .loader-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #8f8fa6;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 11px;
+        letter-spacing: 0.02em;
+      }
+
+      .loader-status i {
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #ff266f;
+        animation: status-dot 1.2s ease-in-out infinite;
+      }
+
+      .loader-status i:nth-child(2) {
+        animation-delay: 0.16s;
+      }
+      .loader-status i:nth-child(3) {
+        animation-delay: 0.32s;
+      }
+
+      @keyframes mark-breathe {
+        0%,
         100% {
+          transform: scale(0.96);
+        }
+        50% {
+          transform: scale(1.04);
+        }
+      }
+
+      @keyframes mark-letter {
+        0%,
+        100% {
+          opacity: 0.72;
+          transform: translateX(-2px) rotate(-8deg) scale(0.96);
+        }
+        50% {
           opacity: 1;
+          transform: translateX(-2px) rotate(-8deg) scale(1.04);
+        }
+      }
+
+      @keyframes orbit-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes wordmark-pulse {
+        0%,
+        100% {
+          opacity: 0.48;
+          transform: translateY(1px);
+        }
+        50% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes status-dot {
+        0%,
+        100% {
+          opacity: 0.25;
+          transform: scale(0.8);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.25);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .loader,
+        .loader-content,
+        #app {
+          transition: none;
+        }
+
+        .loader-mark::before,
+        .loader-mark::after,
+        .loader-orbit,
+        .loader-wordmark span,
+        .loader-status i {
+          animation: none;
         }
       }
     </style>
-    <div class="loader">
-      <span>VYBAA</span>
+    <div class="loader" role="status" aria-label="Loading Vybaa">
+      <div class="loader-content">
+        <div class="loader-status" aria-hidden="true">
+          <i></i><i></i><i></i>
+        </div>
+      </div>
     </div>
     <div id="app"></div>
     <script type="module" src="/src/main.tsx"></script>

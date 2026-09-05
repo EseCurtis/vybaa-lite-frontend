@@ -48,6 +48,8 @@ export interface User {
   avatarUrl?: string
   currentMood?: string
   rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
+  rewindPersonaCanChange?: boolean
+  rewindPersonaNextChangeAt?: string
   rewindPersonalizationEnabled?: boolean
   rewindProactiveChatEnabled?: boolean
   rewindProactiveChatExplainedAt?: string

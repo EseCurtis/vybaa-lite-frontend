@@ -126,7 +126,7 @@ function HomeActionCard({
         )}
       >
         <View
-          className="border-2 size-full absolute z-[99] rounded-[42px] border-[var(--color)]"
+          className="border-2 size-full absolute z-[99] rounded-[42px]  border-[var(--color)]"
           style={{
             maskImage: `linear-gradient(to bottom, transparent 0%, transparent 10%, black 130%)`,
           }}

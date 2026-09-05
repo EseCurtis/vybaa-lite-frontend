@@ -55,6 +55,10 @@
 	<string>Vybaa accesses only the photos you choose for your profile or to share in the app.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Vybaa saves images to your photo library only when you explicitly choose to save them.</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>INSendMessageIntent</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

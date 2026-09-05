@@ -1,7 +1,4 @@
-import {
-  RiArrowRightSLine,
-  RiTimeLine,
-} from '@remixicon/react'
+import { RiArrowRightSLine, RiTimeLine } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import type { ReactElement } from 'react'
 
@@ -16,6 +13,7 @@ import {
   createAccentStyle,
   formatSessionDate,
   formatSessionTime,
+  getRewindSessionStatusPresentation,
   getSessionAccent,
 } from './rewind-history.utils'
 
@@ -30,6 +28,7 @@ export function RewindSessionRow({
 }): ReactElement {
   const persona = getRewindPersona(session.personaId)
   const { accent, accentSoft } = getSessionAccent(session.personaId)
+  const status = getRewindSessionStatusPresentation(session)
 
   return (
     <Pressable
@@ -76,20 +75,16 @@ export function RewindSessionRow({
                     <View
                       className="size-1.5 rounded-full"
                       style={{
-                        backgroundColor: session.completed
-                          ? colors['success-green']
-                          : colors['warning-yellow'],
+                        backgroundColor: status.color,
                       }}
                     />
                     <Text
                       className="font-bbh text-[10px] font-bold"
                       style={{
-                        color: session.completed
-                          ? colors['success-green']
-                          : colors['warning-yellow'],
+                        color: status.color,
                       }}
                     >
-                      {session.completed ? 'Saved' : 'Pending'}
+                      {status.label}
                     </Text>
                   </View>
                 </View>

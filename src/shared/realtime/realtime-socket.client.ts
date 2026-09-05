@@ -6,9 +6,10 @@ import {
 } from '@/shared/api/rewind.api'
 import { joinApiUrl } from '@/shared/api/api-url.util'
 
-interface NotificationRealtimeSignal {
+export interface NotificationRealtimeSignal {
   latestNotification: {
     createdAt: string
+    data?: Record<string, unknown>
     id: string
     message: string
     title: string
@@ -67,6 +68,7 @@ function getNotificationSignal(
   return {
     latestNotification: {
       createdAt: notification.createdAt,
+      data: isRecord(notification.data) ? notification.data : undefined,
       id: notification.id,
       message: notification.message,
       title: notification.title,

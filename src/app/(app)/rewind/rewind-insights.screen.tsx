@@ -1,6 +1,6 @@
 import {
   RiArrowRightLine,
-  RiFileList3Line,
+  RiBookOpenLine,
   RiInformationLine,
   RiRefreshLine,
   RiVipCrownLine,
@@ -15,8 +15,8 @@ import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useRewindInsights } from '@/hooks/use-rewind.hook'
 import { useProAccess } from '@/hooks/use-pro-access.hook'
+import { useRewindInsights } from '@/hooks/use-rewind.hook'
 import { useSubscription } from '@/providers/subscription.provider'
 import type {
   RewindInsightsRange,
@@ -26,7 +26,6 @@ import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
 
 import { RewindRadarChart } from './history/rewind-radar-chart.component'
-import { RewindIntelligenceTabs } from './rewind-intelligence-tabs.component'
 
 const INSIGHT_RANGES: Array<{ label: string; value: RewindInsightsRange }> = [
   { label: '7 days', value: '7d' },
@@ -98,63 +97,78 @@ export default function RewindInsightsScreen(): ReactElement {
 
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
           <View className="mx-auto w-full max-w-3xl gap-7">
-            <RewindIntelligenceTabs selected="insights" />
-            <View className="gap-2 px-1">
-              <Text className="font-bbh text-2xl font-bold text-white">
-                Your reflection pattern
-              </Text>
-              <Text className="muted max-w-xl font-bbh text-sm leading-6">
-                A simple read of what you have shared in Rewind.
-              </Text>
+            <View className="flex- bg-cardx rounded-xl !p-3 items-center justify-between gap-4 px-1">
+              <View className="min-w-0 flex-1 gap-2 p-3">
+                <Text className="font-bbh text-2xl font-bold text-white">
+                  Your reflection pattern
+                </Text>
+                <Text className="muted max-w-xl font-bbh text-sm leading-6">
+                  A simple read of what you have shared in Rewind.
+                </Text>
+              </View>
+              <Pressable
+                accessibilityLabel="Open saved Rewind reflections"
+                className="min-h-11 shrink-0 rounded-full w-full flex-row items-center gap-2  bg-card-light px-3"
+                onPress={() => navigate({ to: '/app/rewind-history-sessions' })}
+              >
+                <RiBookOpenLine size={17} className="text-white" />
+                <Text className="font-bbh mx-auto text-xs font-bold text-white">
+                  See Reflections and history
+                </Text>
+                <RiArrowRightLine size={15} className="text-card-lighter-2 ml-auto" />
+              </Pressable>
             </View>
 
-            <View
-              className="flex-row rounded-lg p-1"
-              style={{ backgroundColor: colors.cardx }}
-            >
-              {visibleInsightRanges.map((option) => {
-                const isSelected = option.value === range
-                const requiresPro = option.value !== '7d'
-                return (
-                  <Pressable
-                    key={option.value}
-                    accessibilityLabel={`Show ${option.label} of Rewind insights`}
-                    className={cn(
-                      'min-h-11 flex-1 items-center justify-center rounded-md px-2',
-                      isSelected ? 'bg-white' : '',
-                    )}
-                    onPress={() => {
-                      if (!requiresPro || isPro) {
-                        setRange(option.value)
-                        return
-                      }
+            <View className="sticky top-0 z-20 bg-cardd py-2">
+              <View
+                className="flex-row rounded-lg p-1"
+                style={{ backgroundColor: colors.cardx }}
+              >
+                {visibleInsightRanges.map((option) => {
+                  const isSelected = option.value === range
+                  const requiresPro = option.value !== '7d'
+                  return (
+                    <Pressable
+                      key={option.value}
+                      accessibilityLabel={`Show ${option.label} of Rewind insights`}
+                      aria-pressed={isSelected}
+                      className={cn(
+                        'min-h-11 flex-1 items-center justify-center rounded-md px-2',
+                        isSelected ? 'bg-white' : '',
+                      )}
+                      onPress={() => {
+                        if (!requiresPro || isPro) {
+                          setRange(option.value)
+                          return
+                        }
 
-                      void requestProAccess().then((granted) => {
-                        if (granted) setRange(option.value)
-                      })
-                    }}
-                  >
-                    <View className="flex-row items-center gap-1">
-                      <Text
-                        className={cn(
-                          'font-bbh text-xs font-bold',
-                          isSelected ? 'text-cardd' : 'muted',
-                        )}
-                      >
-                        {option.label}
-                      </Text>
-                      {requiresPro && !isPro ? (
-                        <RiVipCrownLine
-                          size={11}
-                          className={
-                            isSelected ? 'text-cardd' : 'text-accent-300'
-                          }
-                        />
-                      ) : null}
-                    </View>
-                  </Pressable>
-                )
-              })}
+                        void requestProAccess().then((granted) => {
+                          if (granted) setRange(option.value)
+                        })
+                      }}
+                    >
+                      <View className="flex-row items-center gap-1">
+                        <Text
+                          className={cn(
+                            'font-bbh text-xs font-bold',
+                            isSelected ? 'text-cardd' : 'muted',
+                          )}
+                        >
+                          {option.label}
+                        </Text>
+                        {requiresPro && !isPro ? (
+                          <RiVipCrownLine
+                            size={11}
+                            className={
+                              isSelected ? 'text-cardd' : 'text-accent-300'
+                            }
+                          />
+                        ) : null}
+                      </View>
+                    </Pressable>
+                  )
+                })}
+              </View>
             </View>
 
             {isLoading ? (
@@ -299,29 +313,6 @@ export default function RewindInsightsScreen(): ReactElement {
                 </View>
               </>
             ) : null}
-
-            <Pressable
-              accessibilityLabel="Open Rewind transcript history"
-              className="min-h-16 flex-row items-center justify-between rounded-2xl px-4 py-4"
-              style={{ backgroundColor: colors.cardx }}
-              onPress={() => navigate({ to: '/app/rewind-history-sessions' })}
-            >
-              <View className="min-w-0 flex-1 flex-row items-center gap-3 pr-3">
-                <RiFileList3Line size={19} style={{ color: colors.white }} />
-                <View className="min-w-0 flex-1 gap-0.5">
-                  <Text className="font-bbh text-sm font-bold text-white">
-                    Transcript history
-                  </Text>
-                  <Text className="muted font-bbh text-xs" lines={2}>
-                    Open past Rewinds and their saved reflections
-                  </Text>
-                </View>
-              </View>
-              <RiArrowRightLine
-                size={18}
-                style={{ color: colors['card-lighter-2'] }}
-              />
-            </Pressable>
           </View>
         </View>
       </NoiseComponent>

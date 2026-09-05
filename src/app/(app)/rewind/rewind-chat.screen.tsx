@@ -29,11 +29,11 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
   useEnqueueRewindChatMessage,
+  useMarkRewindChatRead,
   useMuteRewindChat,
+  useReactToRewindChatMessage,
   useRewindChatMessages,
   useRewindChats,
-  useMarkRewindChatRead,
-  useReactToRewindChatMessage,
 } from '@/hooks/use-rewind.hook'
 import { useNotificationContext } from '@/providers/notification.provider'
 import { useToast } from '@/providers/toast.provider'
@@ -44,10 +44,15 @@ import type {
 } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import {
+  getRewindChatReactionActorLabel,
+  getRewindChatReactionEmoji,
+} from '@/shared/rewind/rewind-chat-reactions.util'
+import {
   getRewindPersona,
   REWIND_PERSONAS,
 } from '@/shared/rewind/rewind-personas'
 
+import { cn } from '@/shared/utils/helpers.util'
 import { RewindChatAvatar } from './rewind-chat-avatar.component'
 
 function createMessageKey(): string {
@@ -183,16 +188,6 @@ function createReactionPickerState(
   }
 }
 
-function getReactionEmoji(kind: RewindChatReactionKind): string {
-  return REACTION_OPTIONS.find((option) => option.kind === kind)?.emoji ?? '👍'
-}
-
-function getReactionActorLabel(reaction: RewindChatReaction): string {
-  if (reaction.actor === 'USER') return 'You'
-  if (reaction.personaId) return getRewindPersona(reaction.personaId).name
-  return 'Partner'
-}
-
 type PendingMessageState = {
   content: string
   id: string
@@ -248,7 +243,7 @@ function MentionText({
 }): ReactElement {
   const segments = content.split(MENTION_PATTERN)
   return (
-    <Text className={className} style={style}>
+    <Text className={cn(className, 'break-words')} style={style}>
       {segments.map((segment, index) => {
         const isMention = /^@(ella|lyra|jake|ariel)$/i.test(segment)
         return isMention ? (
@@ -265,18 +260,24 @@ function MentionText({
 
 function ChatMessageBubble({
   deliveryStatus,
+  isReactionOverlayOpen,
   isReactionPickerOpen,
+  isGroup,
   message,
   onReply,
+  onShowReactions,
   onToggleReactionPicker,
   replyTo,
   showIdentity,
   showTime,
 }: {
   deliveryStatus?: MessageDeliveryStatus
+  isReactionOverlayOpen: boolean
   isReactionPickerOpen: boolean
+  isGroup?: boolean;
   message: RewindChatMessage
   onReply: (message: RewindChatMessage) => void
+  onShowReactions: (message: RewindChatMessage) => void
   onToggleReactionPicker: (
     message: RewindChatMessage,
     anchor: HTMLButtonElement | null,
@@ -297,21 +298,21 @@ function ChatMessageBubble({
   const reactionLabel = reactions
     .map(
       (reaction) =>
-        `${getReactionActorLabel(reaction)} reacted ${getReactionEmoji(reaction.kind)}`,
+        `${getRewindChatReactionActorLabel(reaction)} reacted ${getRewindChatReactionEmoji(reaction.kind)}`,
     )
     .join(', ')
 
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      className={`flex w-full ${isReactionPickerOpen ? 'relative z-50' : ''} ${isUser ? 'justify-end' : 'justify-start'}`}
+      className={`flex w-full ${isReactionOverlayOpen ? 'relative z-50' : ''} ${isUser ? 'justify-end' : 'justify-start'}  [&_*]:!break-words [&_*]:!text-wrap overflow-x-hidden`}
       data-message-id={message.id}
       initial={{ opacity: 0, scale: 0.98, y: 8 }}
       layout
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
-      <View className="max-w-[82%] flex-row items-end gap-2">
-        {!isUser && persona && showIdentity ? (
+      <View className="max-w-[85%]  overflow-hidden flex-row items-end gap-2">
+        { isGroup &&(!isUser && persona && showIdentity? (
           <img
             alt={`${persona.name} avatar`}
             className="size-7 shrink-0 rounded-full object-cover"
@@ -319,7 +320,7 @@ function ChatMessageBubble({
           />
         ) : !isUser ? (
           <View className="w-7 shrink-0" />
-        ) : null}
+        ) : null)}
         <View className={`gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
           {!isUser && persona && showIdentity ? (
             <Text
@@ -330,21 +331,23 @@ function ChatMessageBubble({
             </Text>
           ) : null}
           <View
-            className={`flex-row items-center gap-1 ${isUser ? 'flex-row-reverse' : ''}`}
+            className={`flex-row relative  min-w-[100px] items-center gap-1  ${isUser ? 'flex-row-reverse item-end' : ''}`}
           >
             <motion.button
               aria-label={`Reply to ${getReplyAuthor(message)}`}
-              className={
+              className={cn(
+                 'flex   appearance-none w-full  flex-col gap-1 rounded-[11px] px-1 py-1 text-left',
                 isUser
-                  ? 'flex appearance-none flex-col gap-1 rounded-[18px] rounded-br-md bg-accent-700 px-4 py-2.5 text-left'
-                  : 'flex appearance-none flex-col gap-1 rounded-[18px] rounded-bl-md bg-card-light px-4 py-2.5 text-left'
-              }
+                  ? ' rounded-br-md bg-accent-700'
+                  : 'rounded-bl-md bg-card-light',
+               
+              )}
               onClick={() => onReply(message)}
               ref={bubbleRef}
               type="button"
             >
               {replyTo ? (
-                <View className="rounded-xl bg-cardx px-3 py-2">
+                <View className="rounded-lg bg-cardx px-3 py-2">
                   <Text className="font-bbh text-[10px] font-black text-card-lighter-3">
                     {getReplyAuthor(replyTo)}
                   </Text>
@@ -357,15 +360,56 @@ function ChatMessageBubble({
                 </View>
               ) : null}
               <MentionText
-                className="whitespace-pre-wrap font-bbh text-[15px] leading-6"
+                className="whitespace-pre-wrap max-w-[70vw] font-bbh text-[15px] px-2 py-1 leading-6"
                 content={message.content}
                 style={{ color: colors.white }}
               />
+
+              {showTime || deliveryStatus ? (
+                <View
+                  className={cn(
+                    isUser && 'ml-auto',
+                    'flex-row items-center gap-1 px-1',
+                  )}
+                >
+                  {showTime ? (
+                    <Text
+                      className={cn(
+                        isUser ? 'text-white/70' : 'text-card-lighter-3',
+                        'font-bbh text-[10px] ',
+                      )}
+                    >
+                      {formatMessageTime(message.createdAt)}
+                    </Text>
+                  ) : null}
+                  {deliveryStatus ? (
+                    <span
+                      aria-label={deliveryLabel}
+                      className="inline-flex text-card-lighter-3"
+                      role="img"
+                      style={
+                        deliveryStatus === 'READ'
+                          ? { color: READ_RECEIPT_COLOR }
+                          : undefined
+                      }
+                    >
+                      {hasDoubleTick ? (
+                        <RiCheckDoubleLine size={14} />
+                      ) : (
+                        <RiCheckLine size={14} />
+                      )}
+                    </span>
+                  ) : null}
+                </View>
+              ) : null}
             </motion.button>
+          </View>
+
+          <View className="flex-row items-center gap-1">
             <Pressable
               accessibilityLabel={`React to ${getReplyAuthor(message)}'s message`}
               aria-expanded={isReactionPickerOpen}
-              className={`size-11 shrink-0 items-center justify-center rounded-full ${isReactionPickerOpen ? 'bg-white' : 'bg-cardx'}`}
+              className={`size-11  shrink-0 items-center justify-center rounded-full ${isReactionPickerOpen ? 'bg-white' : 'bg-cardx'} ${isUser ? 'left-0' : 'right-0'}`}
               onPress={() => onToggleReactionPicker(message, bubbleRef.current)}
             >
               <RiEmotionHappyLine
@@ -375,58 +419,126 @@ function ChatMessageBubble({
                 size={16}
               />
             </Pressable>
+
+            {reactions.length ? (
+              <Pressable
+                accessibilityLabel={`View reactions. ${reactionLabel}`}
+                className={`flex h-11 min-w-11 flex-row items-center gap-1 rounded-full bg-card-light p-2 px-3 ${isUser ? 'self-end' : 'self-start'}`}
+                onPress={() => onShowReactions(message)}
+              >
+                {REACTION_OPTIONS.map((option) => {
+                  const count = reactions.filter(
+                    (reaction) => reaction.kind === option.kind,
+                  ).length
+                  if (!count) return null
+                  return (
+                    <Text
+                      className="font-bbh text-xs text-card-lighter-1"
+                      key={option.kind}
+                    >
+                      {option.emoji}
+                      {count > 1 ? ` ${count}` : ''}
+                    </Text>
+                  )
+                })}
+              </Pressable>
+            ) : null}
           </View>
-          {reactions.length ? (
-            <div
-              aria-label={reactionLabel}
-              className={`flex min-h-8 flex-row items-center gap-1 rounded-full bg-card-light px-2.5 ${isUser ? 'self-end' : 'self-start'}`}
-              role="img"
-            >
-              {REACTION_OPTIONS.map((option) => {
-                const count = reactions.filter(
-                  (reaction) => reaction.kind === option.kind,
-                ).length
-                if (!count) return null
-                return (
-                  <Text
-                    className="font-bbh text-xs text-card-lighter-1"
-                    key={option.kind}
-                  >
-                    {option.emoji}
-                    {count > 1 ? ` ${count}` : ''}
-                  </Text>
-                )
-              })}
-            </div>
-          ) : null}
-          {showTime || deliveryStatus ? (
-            <View className="flex-row items-center gap-1 px-1">
-              {showTime ? (
-                <Text className="font-bbh text-[10px] text-card-lighter-3">
-                  {formatMessageTime(message.createdAt)}
-                </Text>
-              ) : null}
-              {deliveryStatus ? (
-                <span
-                  aria-label={deliveryLabel}
-                  className="inline-flex text-card-lighter-3"
-                  role="img"
-                  style={
-                    deliveryStatus === 'READ'
-                      ? { color: READ_RECEIPT_COLOR }
-                      : undefined
-                  }
-                >
-                  {hasDoubleTick ? (
-                    <RiCheckDoubleLine size={14} />
-                  ) : (
-                    <RiCheckLine size={14} />
-                  )}
-                </span>
-              ) : null}
-            </View>
-          ) : null}
         </View>
+      </View>
+    </motion.div>
+  )
+}
+
+function ReactionDetailsDialog({
+  closeButtonRef,
+  message,
+  onClose,
+  reduceMotion,
+}: {
+  closeButtonRef: RefObject<HTMLButtonElement | null>
+  message: RewindChatMessage
+  onClose: () => void
+  reduceMotion: boolean
+}): ReactElement {
+  const reactions = message.reactions ?? []
+
+  return (
+    <motion.div
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      aria-label={`Reactions to ${getReplyAuthor(message)}'s message`}
+      aria-modal="true"
+      className="fixed bottom-[calc(var(--safe-area-inset-bottom,0px)+24px)] left-4 right-4 z-50 mx-auto max-w-sm rounded-[26px] bg-card-light px-4 pb-4 pt-3 shadow-2xl"
+      exit={{
+        opacity: 0,
+        scale: reduceMotion ? 1 : 0.97,
+        y: reduceMotion ? 0 : 8,
+      }}
+      initial={{
+        opacity: 0,
+        scale: reduceMotion ? 1 : 0.97,
+        y: reduceMotion ? 0 : 8,
+      }}
+      role="dialog"
+      transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
+    >
+      <View className="mb-2 flex-row items-center justify-between gap-3">
+        <View className="items-start">
+          <Text className="font-bbh text-sm font-black text-white">
+            Reactions
+          </Text>
+          <Text className="font-bbh text-[11px] text-card-lighter-3">
+            {reactions.length === 1
+              ? '1 person reacted'
+              : `${reactions.length} people reacted`}
+          </Text>
+        </View>
+        <Pressable
+          accessibilityLabel="Close reaction details"
+          className="size-11 items-center justify-center rounded-full bg-cardx"
+          onPress={onClose}
+          ref={closeButtonRef}
+        >
+          <RiCloseLine className="text-card-lighter-2" size={18} />
+        </Pressable>
+      </View>
+
+      <View className="gap-1">
+        {reactions.map((reaction) => {
+          const persona = reaction.personaId
+            ? getRewindPersona(reaction.personaId)
+            : null
+          const actorLabel = getRewindChatReactionActorLabel(reaction)
+          return (
+            <View
+              className="min-h-12 flex-row items-center gap-3 rounded-2xl bg-cardx px-3 py-2"
+              key={`${reaction.actor}-${reaction.personaId ?? 'user'}`}
+            >
+              {persona ? (
+                <img
+                  alt=""
+                  className="size-8 rounded-full object-cover"
+                  src={persona.avatar}
+                />
+              ) : (
+                <View className="size-8 items-center justify-center rounded-full bg-card-light">
+                  <Text className="font-bbh text-xs font-black text-white">
+                    You
+                  </Text>
+                </View>
+              )}
+              <Text className="min-w-0 flex-1 font-bbh text-sm font-bold text-card-lighter-1">
+                {actorLabel}
+              </Text>
+              <Text
+                aria-label={`${actorLabel} reacted ${getRewindChatReactionEmoji(reaction.kind)}`}
+                className="font-bbh text-xl text-white"
+              >
+                {getRewindChatReactionEmoji(reaction.kind)}
+              </Text>
+            </View>
+          )
+        })}
       </View>
     </motion.div>
   )
@@ -618,6 +730,9 @@ export default function RewindChatScreen({
   )
   const [replyingToMessage, setReplyingToMessage] =
     useState<RewindChatMessage | null>(null)
+  const [reactionDetailsMessageId, setReactionDetailsMessageId] = useState<
+    string | null
+  >(null)
   const [reactionPickerState, setReactionPickerState] =
     useState<ReactionPickerState | null>(null)
   const [reactionUpdates, setReactionUpdates] = useState<
@@ -632,6 +747,7 @@ export default function RewindChatScreen({
   )
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null)
   const firstReactionOptionRef = useRef<HTMLButtonElement | null>(null)
+  const reactionDetailsCloseRef = useRef<HTMLButtonElement | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
   const shouldStickToBottomRef = useRef(true)
   const olderScrollHeightRef = useRef<number | null>(null)
@@ -663,26 +779,33 @@ export default function RewindChatScreen({
   )
 
   useEffect(() => {
-    if (!reactionPickerState) return
+    if (!reactionPickerState && !reactionDetailsMessageId) return
 
     const animationFrame = window.requestAnimationFrame(() => {
-      firstReactionOptionRef.current?.focus({ preventScroll: true })
+      if (reactionPickerState) {
+        firstReactionOptionRef.current?.focus({ preventScroll: true })
+        return
+      }
+      reactionDetailsCloseRef.current?.focus({ preventScroll: true })
     })
-    const closeReactionPicker = (): void => setReactionPickerState(null)
-    const handleKeyDown = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') closeReactionPicker()
+    const closeReactionOverlays = (): void => {
+      setReactionDetailsMessageId(null)
+      setReactionPickerState(null)
     }
-    window.addEventListener('resize', closeReactionPicker)
-    window.addEventListener('orientationchange', closeReactionPicker)
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') closeReactionOverlays()
+    }
+    window.addEventListener('resize', closeReactionOverlays)
+    window.addEventListener('orientationchange', closeReactionOverlays)
     window.addEventListener('keydown', handleKeyDown)
 
     return () => {
       window.cancelAnimationFrame(animationFrame)
-      window.removeEventListener('resize', closeReactionPicker)
-      window.removeEventListener('orientationchange', closeReactionPicker)
+      window.removeEventListener('resize', closeReactionOverlays)
+      window.removeEventListener('orientationchange', closeReactionOverlays)
       window.removeEventListener('keydown', handleKeyDown)
     }
-  }, [reactionPickerState])
+  }, [reactionDetailsMessageId, reactionPickerState])
 
   useEffect(() => {
     return subscribeRewindChat((event) => {
@@ -869,6 +992,17 @@ export default function RewindChatScreen({
           reactionPickerBaseMessage.reactions,
       }
     : undefined
+  const reactionDetailsBaseMessage = reactionDetailsMessageId
+    ? messageLookup.get(reactionDetailsMessageId)
+    : undefined
+  const reactionDetailsMessage = reactionDetailsBaseMessage
+    ? {
+        ...reactionDetailsBaseMessage,
+        reactions:
+          reactionUpdates.get(reactionDetailsBaseMessage.id) ??
+          reactionDetailsBaseMessage.reactions,
+      }
+    : undefined
 
   useEffect(() => {
     const container = scrollContainerRef.current
@@ -949,6 +1083,7 @@ export default function RewindChatScreen({
   }
 
   const beginReply = (message: RewindChatMessage): void => {
+    setReactionDetailsMessageId(null)
     setReactionPickerState(null)
     setReplyingToMessage(message)
     setMentionsOpen(false)
@@ -980,6 +1115,7 @@ export default function RewindChatScreen({
       next.set(message.id, nextReactions)
       return next
     })
+    setReactionDetailsMessageId(null)
     setReactionPickerState(null)
     void reactionMutation
       .mutateAsync({ messageId: message.id, reaction: nextKind })
@@ -999,6 +1135,7 @@ export default function RewindChatScreen({
     message: RewindChatMessage,
     anchor: HTMLButtonElement | null,
   ): void => {
+    setReactionDetailsMessageId(null)
     if (reactionPickerState?.messageId === message.id) {
       setReactionPickerState(null)
       return
@@ -1012,6 +1149,11 @@ export default function RewindChatScreen({
         window.innerWidth,
       ),
     )
+  }
+
+  const showReactionDetails = (message: RewindChatMessage): void => {
+    setReactionPickerState(null)
+    setReactionDetailsMessageId(message.id)
   }
 
   const toggleMention = (personaName: string): void => {
@@ -1089,8 +1231,9 @@ export default function RewindChatScreen({
           />
 
           <div
-            className="min-h-0 flex-1 overflow-y-auto px-mg"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-mg"
             onScroll={(event) => {
+              if (reactionDetailsMessageId) setReactionDetailsMessageId(null)
               if (reactionPickerState) setReactionPickerState(null)
               const container = event.currentTarget
               const distanceFromBottom =
@@ -1172,11 +1315,16 @@ export default function RewindChatScreen({
                             displayedMessage,
                             seenMessageIds,
                           )}
+                          isReactionOverlayOpen={
+                            reactionPickerState?.messageId === message.id ||
+                            reactionDetailsMessageId === message.id
+                          }
                           isReactionPickerOpen={
                             reactionPickerState?.messageId === message.id
                           }
                           message={displayedMessage}
                           onReply={beginReply}
+                          onShowReactions={showReactionDetails}
                           onToggleReactionPicker={toggleReactionPicker}
                           replyTo={
                             message.replyToMessageId
@@ -1185,6 +1333,7 @@ export default function RewindChatScreen({
                           }
                           showIdentity={showIdentity}
                           showTime={showTime}
+                          isGroup={!(chat?.personaId )}
                         />
                       </View>
                     </Fragment>
@@ -1218,6 +1367,10 @@ export default function RewindChatScreen({
                       message,
                       seenMessageIds,
                     )}
+                    isReactionOverlayOpen={
+                      reactionPickerState?.messageId === message.id ||
+                      reactionDetailsMessageId === message.id
+                    }
                     isReactionPickerOpen={
                       reactionPickerState?.messageId === message.id
                     }
@@ -1231,6 +1384,7 @@ export default function RewindChatScreen({
                         : message
                     }
                     onReply={beginReply}
+                    onShowReactions={showReactionDetails}
                     onToggleReactionPicker={toggleReactionPicker}
                     replyTo={
                       message.replyToMessageId
@@ -1337,7 +1491,8 @@ export default function RewindChatScreen({
           </View>
 
           <AnimatePresence initial={false}>
-            {reactionPickerState && reactionPickerMessage ? (
+            {(reactionPickerState && reactionPickerMessage) ||
+            reactionDetailsMessage ? (
               <motion.button
                 animate={{ opacity: 1 }}
                 aria-label="Close message reactions"
@@ -1345,7 +1500,10 @@ export default function RewindChatScreen({
                 exit={{ opacity: 0 }}
                 initial={{ opacity: 0 }}
                 key="reaction-picker-backdrop"
-                onClick={() => setReactionPickerState(null)}
+                onClick={() => {
+                  setReactionDetailsMessageId(null)
+                  setReactionPickerState(null)
+                }}
                 style={{
                   backdropFilter: 'brightness(0.35)',
                   WebkitBackdropFilter: 'brightness(0.35)',
@@ -1402,6 +1560,14 @@ export default function RewindChatScreen({
                   )
                 })}
               </motion.div>
+            ) : null}
+            {reactionDetailsMessage ? (
+              <ReactionDetailsDialog
+                closeButtonRef={reactionDetailsCloseRef}
+                message={reactionDetailsMessage}
+                onClose={() => setReactionDetailsMessageId(null)}
+                reduceMotion={Boolean(shouldReduceMotion)}
+              />
             ) : null}
           </AnimatePresence>
         </View>

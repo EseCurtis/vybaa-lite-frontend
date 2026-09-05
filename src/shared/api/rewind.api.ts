@@ -25,6 +25,7 @@ export type RewindSession = {
   completed: boolean
   completedAt: string | null
   checkInAt: string | null
+  dailyObservation?: RewindObservation | null
   summary: string
   emotionalInsight: string | null
   emotionalTags: string[]

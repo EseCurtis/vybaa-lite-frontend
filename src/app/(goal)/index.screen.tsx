@@ -12,6 +12,7 @@ import {
   useReopenLegacyGoal,
 } from '@/hooks/use-goals.hook'
 import type { Goal, GoalListFilter, LegacyGoal } from '@/shared/api/goal.api'
+import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import {
   cn,
   contrastingTextColor,
@@ -61,8 +62,11 @@ function GoalCard({
   const nextSummary = goal.nextOccurrence
     ? `Next ${new Date(goal.nextOccurrence.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
     : targetSummary
+  const needsAttention = goalNeedsAttention(goal)
+  const dueLabel = goal.isOverdue ? 'Overdue' : 'Due'
   return (
     <Pressable
+      accessibilityLabel={`${goal.title}${needsAttention ? `, ${dueLabel}` : ''}`}
       className="mb-2 flex flex-col gap-2 text-left rounded-2xl bg-card-light-50 pt-1 p-2 pr-3"
       onPress={() => onOpen(goal)}
     >
@@ -83,6 +87,14 @@ function GoalCard({
             <Text className="flex-1 text-left truncate text-base font-bold text-white">
               {goal.title}
             </Text>
+            {needsAttention ? (
+              <span
+                aria-label={dueLabel}
+                className="h-2.5 w-2.5 shrink-0 rounded-full bg-danger-500"
+                role="status"
+                title={dueLabel}
+              />
+            ) : null}
           </View>
           <View className="flex-row items-center gap-2">
             <Text className="text-[11px] font-bold text-card-lighter-2">
@@ -355,14 +367,16 @@ export default function GoalsAppScreen() {
     tab === 'Paused' ? 'PAUSED' : tab === 'Ended' ? endedFilter : activeFilter
 
   return (
-    <View className="flex-1 bg-cardd">
+    <View className="flex-1 min-h-0 bg-cardd">
       <TopNotch />
       <NoiseComponent>
-        <View className="flex-1 overflow-y-auto px-mg pb-28 no-scrollbar">
+        <View
+          className="flex-1 min-h-0 overflow-y-scroll overscroll-contain px-mg pb-28 no-scrollbar"
+          style={{ height: 0, minHeight: 0 }}
+        >
           <View className="mb-5 mt-2 flex-row items-center justify-between">
             <View>
               <Text className="text-2xl font-bold">Goals</Text>
-              
             </View>
             <Pressable
               className="size-11 items-center justify-center rounded-full bg-white"
@@ -372,8 +386,8 @@ export default function GoalsAppScreen() {
             </Pressable>
           </View>
 
-          <View className="flex-row items-center justify-center">
-            <View className="mb-4 justify-center bg-cardx flex-row gap-2 p-1 rounded-full">
+          <View className="sticky top-0 z-30 -mx-mg flex-row items-center justify-center bg-cardd py-2">
+            <View className="justify-center rounded-full bg-cardx flex-row gap-2 p-1">
               {(['Active', 'Paused', 'Ended'] as GoalTab[]).map((item) => (
                 <Pressable
                   className={cn(

@@ -1,9 +1,17 @@
 import { useSafeAreaInsets } from '@/hooks/use-safe-area-insets.hook'
-import React from 'react'
-import { toast as sonnerToast, Toaster } from 'sonner'
+import { hapticFeedback } from '@/shared/haptic.util'
+import React, { useEffect } from 'react'
 import type { ExternalToast } from 'sonner'
+import { toast as sonnerToast, Toaster } from 'sonner'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info' | 'loading'
+
+export type NotificationToastOptions = {
+  avatarAlt?: string
+  avatarUrl?: string
+  duration?: number
+  onOpen?: () => void
+}
 
 type ToastContextType = {
   showToast: (
@@ -17,8 +25,7 @@ type ToastContextType = {
   info: (message: string, duration?: number) => string | number
   notification: (
     message: string,
-    onOpen?: () => void,
-    duration?: number,
+    options?: NotificationToastOptions,
   ) => string | number
   loading: (message: string) => string | number
   dismiss: (id: string | number) => void
@@ -87,15 +94,28 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   const notification = React.useCallback(
-    (message: string, onOpen?: () => void, duration = 5000) => {
-      const options: ExternalToast = {
-        action: onOpen
+    (message: string, options?: NotificationToastOptions) => {
+      const toastOptions: ExternalToast = {
+        action: options?.onOpen
           ? {
               label: 'Open',
-              onClick: onOpen,
+              onClick: options.onOpen,
             }
           : undefined,
-        duration,
+        duration: options?.duration ?? 5000,
+        classNames: {
+          icon: 'vybaa-notification-icon',
+          toast: 'vybaa-notification-toast',
+        },
+        icon: options?.avatarUrl ? (
+          <span className="inline-flex h-9 w-9 shrink-0 overflow-hidden rounded-full">
+            <img
+              alt={options.avatarAlt ?? ''}
+              className="block aspect-square h-full w-full object-cover"
+              src={options.avatarUrl}
+            />
+          </span>
+        ) : undefined,
         style: {
           borderRadius: '16px',
           maxWidth: 'calc(100vw - 24px)',
@@ -104,7 +124,8 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
         },
       }
 
-      return sonnerToast.info(message, options)
+      void hapticFeedback.light()
+      return sonnerToast.info(message, toastOptions)
     },
     [],
   )
@@ -132,9 +153,13 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
     [dismiss, error, info, loading, notification, showToast, success, warning],
   )
 
-  // useEffect(() => {
-  //  showToast('Welcome to Vybaa! Your AI companion for self-reflection and personal growth.', 'success', 5000)
-  // }, [top])
+  useEffect(() => {
+    showToast(
+      'Welcome to Vybaa! Your AI companion for self-reflection and personal growth.',
+      'success',
+      5000,
+    )
+  }, [top])
 
   //alert(top)
 
@@ -147,7 +172,7 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
         toastOptions={{
           className: 'rounded-full',
           style: {
-            borderRadius: '9999px',
+            borderRadius: '99999px',
             top: top,
             textAlign: 'center',
             // transform: `translateY(${Number(top)*4}px)`,

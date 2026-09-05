@@ -9,6 +9,7 @@ export interface Notification {
   type:
     | 'goal_completed'
     | 'goal_reminder'
+    | 'goal_v2_reminder'
     | 'rewind_chat_message'
     | 'streak_milestone'
     | 'system'

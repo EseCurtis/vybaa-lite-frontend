@@ -14,12 +14,31 @@ import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import type { Notification } from '@/shared/api/notification.api'
 import { notificationQueryKeys } from '@/shared/api/notification.query-keys'
-import type { RewindChatRealtimeEvent } from '@/shared/api/rewind.api'
+import type {
+  RewindChat,
+  RewindChatRealtimeEvent,
+} from '@/shared/api/rewind.api'
+import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import {
   claimInAppNotificationDisplay,
   formatInAppNotification,
+  getInAppNotification,
+  getRewindChatNotificationDisplayId,
+  shouldDisplayInAppNotification,
 } from '@/shared/notifications/in-app-notification.util'
-import { RealtimeSocketClient } from '@/shared/realtime/realtime-socket.client'
+import {
+  RealtimeSocketClient,
+  type NotificationRealtimeSignal,
+} from '@/shared/realtime/realtime-socket.client'
+import {
+  getRealtimeTypingParticipants,
+  type RealtimeTypingTurn,
+  type RewindChatMessagesCache,
+  updateRealtimeTypingTurns,
+  updateRewindChatsFromRealtime,
+  updateRewindMessagesFromRealtime,
+} from '@/shared/rewind/rewind-chat-realtime.util'
+import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
 interface NotificationContextValue {
   addNotification: (notification: Notification) => void
@@ -31,21 +50,16 @@ interface NotificationContextValue {
   unreadCount: number
 }
 
-interface NotificationPreview {
-  createdAt: string
-  id: string
-  message: string
-  title: string
-  type: string
-}
-
-interface NotificationRealtimeSignal {
-  latestNotification: NotificationPreview
-  notificationCount: number
-}
-
 const NotificationContext = createContext<NotificationContextValue | null>(null)
 const NOTIFICATION_POLL_INTERVAL_MS = 60_000
+
+function getRewindChatRoute(chatId: string): string {
+  return `/app/rewind-chat/${encodeURIComponent(chatId)}`
+}
+
+function openAppRoute(route: string): void {
+  window.location.assign(route)
+}
 
 export function NotificationProvider({
   children,
@@ -61,6 +75,10 @@ export function NotificationProvider({
   const rewindListenersRef = useRef<
     Set<(event: RewindChatRealtimeEvent) => void>
   >(new Set())
+  const realtimeTypingTurnsRef = useRef<
+    ReadonlyMap<string, RealtimeTypingTurn>
+  >(new Map())
+  const notifiedRewindRunIdsRef = useRef<Set<string>>(new Set())
 
   const refreshNotificationData = useCallback((): void => {
     void queryClient.invalidateQueries({
@@ -73,15 +91,38 @@ export function NotificationProvider({
 
   const handleRealtimeNotification = useCallback(
     (signal: NotificationRealtimeSignal): void => {
-      if (
-        signal.latestNotification.type !== 'rewind_chat_message' &&
-        claimInAppNotificationDisplay(signal.latestNotification.id)
-      ) {
-        toast.info(
-          signal.notificationCount === 1
-            ? formatInAppNotification(signal.latestNotification)
-            : `${signal.notificationCount} new notifications are ready.`,
-        )
+      const notification = getInAppNotification({
+        body: signal.latestNotification.message,
+        data: signal.latestNotification,
+        id: signal.latestNotification.id,
+        title: signal.latestNotification.title,
+      })
+      const isBatch = signal.notificationCount > 1
+      const route = isBatch ? '/notifications' : (notification?.route ?? null)
+      const displayId = isBatch
+        ? `notification-batch:${signal.latestNotification.id}:${signal.notificationCount}`
+        : notification?.id
+      const shouldDisplay = shouldDisplayInAppNotification(
+        route,
+        window.location.pathname,
+        document.visibilityState,
+      )
+
+      if (notification && displayId && shouldDisplay) {
+        if (claimInAppNotificationDisplay(displayId)) {
+          let message = formatInAppNotification(notification)
+          if (isBatch) {
+            message = `${signal.notificationCount} new notifications are ready.`
+          }
+          toast.notification(message, {
+            avatarAlt:
+              !isBatch && notification.sender
+                ? `${notification.sender.name} avatar`
+                : undefined,
+            avatarUrl: isBatch ? undefined : notification.sender?.avatarUrl,
+            onOpen: route ? () => openAppRoute(route) : undefined,
+          })
+        }
       }
       refreshNotificationData()
     },
@@ -90,18 +131,94 @@ export function NotificationProvider({
 
   const handleRewindEvent = useCallback(
     (event: RewindChatRealtimeEvent): void => {
+      realtimeTypingTurnsRef.current = updateRealtimeTypingTurns(
+        realtimeTypingTurnsRef.current,
+        event,
+      )
+      const activeParticipants = getRealtimeTypingParticipants(
+        realtimeTypingTurnsRef.current,
+        event.chatId,
+      )
+      const chatRoute = getRewindChatRoute(event.chatId)
+      const isChatVisible =
+        document.visibilityState === 'visible' &&
+        !shouldDisplayInAppNotification(
+          chatRoute,
+          window.location.pathname,
+          document.visibilityState,
+        )
+
+      queryClient.setQueryData<RewindChat[]>(
+        rewindQueryKeys.chats(),
+        (current) =>
+          updateRewindChatsFromRealtime(
+            current,
+            event,
+            activeParticipants,
+            isChatVisible,
+          ),
+      )
+      queryClient.setQueryData<RewindChatMessagesCache>(
+        rewindQueryKeys.chatMessages(event.chatId),
+        (current) => updateRewindMessagesFromRealtime(current, event),
+      )
+
+      if (
+        event.type === 'message_committed' &&
+        event.message.personaId &&
+        !notifiedRewindRunIdsRef.current.has(event.runId)
+      ) {
+        if (notifiedRewindRunIdsRef.current.size >= 250) {
+          notifiedRewindRunIdsRef.current = new Set()
+        }
+        notifiedRewindRunIdsRef.current.add(event.runId)
+        const displayId = getRewindChatNotificationDisplayId(event.messageId)
+        const shouldNotify = shouldDisplayInAppNotification(
+          chatRoute,
+          window.location.pathname,
+          document.visibilityState,
+        )
+        if (shouldNotify && claimInAppNotificationDisplay(displayId)) {
+          const sourcePersona = getRewindPersona(event.message.personaId)
+          toast.notification(event.message.content, {
+            avatarAlt: `${sourcePersona.name} avatar`,
+            avatarUrl: sourcePersona.avatar,
+            onOpen: () => openAppRoute(chatRoute),
+          })
+        }
+      }
+
+      if (
+        event.type === 'chat_invalidated' ||
+        event.type === 'user_message_committed' ||
+        event.type === 'run_failed' ||
+        (event.type === 'run_state' &&
+          ['CANCELLED', 'COMPLETED', 'FAILED'].includes(event.status))
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chats(),
+        })
+      }
+
       for (const listener of rewindListenersRef.current) listener(event)
     },
-    [],
+    [queryClient, toast],
   )
 
   useEffect(() => {
     if (!isAuthenticated || !user?.id) {
       setIsConnected(false)
+      notifiedRewindRunIdsRef.current = new Set()
+      realtimeTypingTurnsRef.current = new Map()
       return
     }
     const client = new RealtimeSocketClient({
-      onConnected: () => setIsConnected(true),
+      onConnected: () => {
+        setIsConnected(true)
+        void queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chats(),
+        })
+      },
       onDisconnected: () => setIsConnected(false),
       onNotification: handleRealtimeNotification,
       onRewindEvent: handleRewindEvent,
@@ -114,6 +231,8 @@ export function NotificationProvider({
     return () => {
       window.clearInterval(notificationPoll)
       client.stop()
+      notifiedRewindRunIdsRef.current = new Set()
+      realtimeTypingTurnsRef.current = new Map()
     }
   }, [
     handleRealtimeNotification,

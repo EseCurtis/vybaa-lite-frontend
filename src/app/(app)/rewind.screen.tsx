@@ -1,13 +1,16 @@
 import {
+  RiArrowRightSLine,
+  RiCalendarScheduleLine,
   RiChat3Fill,
   RiChat3Line,
+  RiCloseLine,
   RiEmotionHappyLine,
   RiFlashlightLine,
-  RiHistoryLine,
   RiMoonClearLine,
-  RiPauseLine,
-  RiPlayLine,
-  RiRefreshLine,
+  RiPauseFill,
+  RiPlayFill,
+  RiPulseLine,
+  RiSettings3Fill,
   RiSettings3Line,
   RiStopCircleLine,
   RiWaterFlashLine,
@@ -56,6 +59,7 @@ import {
 } from '@/shared/rewind/rewind-audio-worklet'
 import { shouldAcknowledgeRewindClosing } from '@/shared/rewind/rewind-closing.util'
 import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
+import { canChangeRewindPartner } from '@/shared/rewind/rewind-partner-switch.util'
 import {
   getRewindPersona,
   REWIND_PERSONAS,
@@ -295,10 +299,12 @@ function PersonaThumbnail({
 }
 
 function PersonaArtwork({
+  actionLabel,
   persona,
   onChoose,
   disabled,
 }: {
+  actionLabel?: string
   persona: RewindPersona
   onChoose: () => void
   disabled?: boolean
@@ -356,7 +362,7 @@ function PersonaArtwork({
           className="mt-6 min-h-11 min-w-[190px] items-center justify-center rounded-full bg-white px-6"
         >
           <Text className="font-bbh font-bold text-cardd">
-            {disabled ? 'Saving...' : `Choose ${persona.name}`}
+            {disabled ? 'Saving...' : (actionLabel ?? `Choose ${persona.name}`)}
           </Text>
         </Pressable>
       </View>
@@ -374,6 +380,7 @@ export default function RewindScreen(): ReactElement {
   const routineQuery = useRewindRoutine()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
+  const [isPartnerPickerOpen, setIsPartnerPickerOpen] = useState(false)
   const [previewPersonaId, setPreviewPersonaId] =
     useState<RewindPersonaId>('ella')
   const [resolvedPersonaUserId, setResolvedPersonaUserId] = useState<
@@ -453,7 +460,10 @@ export default function RewindScreen(): ReactElement {
   useEffect(() => {
     if (!user) return
 
-    setPersonaId((user.rewindPersona as RewindPersonaId | undefined) ?? null)
+    const selectedPersona =
+      (user.rewindPersona as RewindPersonaId | undefined) ?? null
+    setPersonaId(selectedPersona)
+    if (selectedPersona) setPreviewPersonaId(selectedPersona)
     setResolvedPersonaUserId(user.id)
   }, [user?.id, user?.rewindPersona])
 
@@ -475,6 +485,11 @@ export default function RewindScreen(): ReactElement {
     if (!personaId) return null
     return getRewindPersona(personaId)
   }, [personaId])
+  const canSwitchPartnerToday = (): boolean => {
+    if (user?.rewindPersonaCanChange !== false) return true
+    if (!user.rewindPersonaNextChangeAt) return false
+    return canChangeRewindPartner(user.rewindPersonaNextChangeAt)
+  }
 
   const personaTheme = useMemo(() => {
     if (!persona) return null
@@ -484,50 +499,36 @@ export default function RewindScreen(): ReactElement {
     return { color, darkColor }
   }, [persona])
 
-  const selectPersona = async (nextPersona: RewindPersonaId) => {
+  const selectPersona = async (nextPersona: RewindPersonaId): Promise<void> => {
+    if (nextPersona === personaId) {
+      setIsPartnerPickerOpen(false)
+      return
+    }
+    if (personaId && !canSwitchPartnerToday()) {
+      toast.info('You can switch your Rewind partner again tomorrow')
+      return
+    }
+
     await primePlaybackContext()
-    setPersonaId(nextPersona)
-    await persistPersonaMutation.mutateAsync(nextPersona)
+    try {
+      await persistPersonaMutation.mutateAsync(nextPersona)
+      setPersonaId(nextPersona)
+      setPreviewPersonaId(nextPersona)
+      setIsPartnerPickerOpen(false)
+      if (personaId) {
+        toast.success(
+          `${getRewindPersona(nextPersona).name} is now your Rewind partner`,
+        )
+      }
+    } catch {
+      // The mutation reports the API error and leaves the current partner intact.
+    }
   }
 
   const previewPersona = useMemo(
     () => getRewindPersona(previewPersonaId),
     [previewPersonaId],
   )
-
-  const clearPersona = async () => {
-    shouldReconnectRef.current = false
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current)
-      reconnectTimeoutRef.current = null
-    }
-    liveSessionRef.current?.close()
-    liveSessionRef.current = null
-    cleanupAudioPipeline()
-    playbackGenerationRef.current += 1
-    audioQueueRef.current = []
-    for (const source of activeAudioSourcesRef.current) {
-      try {
-        source.stop()
-      } catch {}
-    }
-    activeAudioSourcesRef.current.clear()
-    isPlayingAudioQueueRef.current = false
-    nextStartTimeRef.current = 0
-    setIsConversationPaused(false)
-    setPersonaId(null)
-    setRewindSessionDateKey(null)
-    setConversationStateNote(null)
-    setConversationStage(null)
-    setPreviousSession(null)
-    setIsSessionRestored(false)
-    setIsFinishingSession(false)
-    setFinalizationStage(null)
-    isFinishingSessionRef.current = false
-    isSessionCompleteRef.current = false
-    setStatusText('Idle')
-    await persistPersonaMutation.mutateAsync(null)
-  }
 
   const primePlaybackContext = useCallback(async () => {
     if (typeof window === 'undefined') return
@@ -938,7 +939,7 @@ export default function RewindScreen(): ReactElement {
       return
     }
     if (!routineQuery.data.currentSession) {
-      setStatusText('Not scheduled now')
+      setStatusText('Not scheduled for now')
       return
     }
 
@@ -1381,33 +1382,52 @@ export default function RewindScreen(): ReactElement {
     )
   }
 
-  if (!persona) {
+  if (!persona || isPartnerPickerOpen) {
     return (
       <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
         <NoiseComponent>
           <View className="flex-1">
             <TabHeader
-              title="Rewind"
+              canGoBack={!persona}
+              title={persona ? 'Switch partner' : 'Rewind'}
               children={
                 <Pressable
-                  accessibilityLabel="Open Rewind text chats"
+                  accessibilityLabel={
+                    persona ? 'Close partner picker' : 'Open Rewind text chats'
+                  }
                   className="size-11 items-center justify-center rounded-full bg-cardx"
-                  onPress={openRewindChats}
+                  onPress={() => {
+                    if (persona) {
+                      setIsPartnerPickerOpen(false)
+                      return
+                    }
+                    openRewindChats()
+                  }}
                 >
-                  <RiChat3Line size={19} className="text-card-lighter-2" />
+                  {persona ? (
+                    <RiCloseLine size={20} className="text-card-lighter-2" />
+                  ) : (
+                    <RiChat3Line size={19} className="text-card-lighter-2" />
+                  )}
                 </Pressable>
               }
             />
             <View className="flex-1 px-mg pb-xl">
               <View className="mt-lg mb-xl items-center">
                 <Text className="muted  mt-2 font-bbh text-base text-white text-center">
-                  Pick a custom-tuned persona to start your live rewind
-                  conversations.
+                  {persona
+                    ? 'Choose carefully. You can switch your Rewind partner once each day.'
+                    : 'Pick a custom-tuned persona to start your live Rewind conversations.'}
                 </Text>
               </View>
 
               <View className="mt-mg gap-5">
                 <PersonaArtwork
+                  actionLabel={
+                    persona?.id === previewPersona.id
+                      ? `Keep ${previewPersona.name}`
+                      : undefined
+                  }
                   persona={previewPersona}
                   onChoose={() => {
                     void selectPersona(previewPersona.id)
@@ -1453,6 +1473,11 @@ export default function RewindScreen(): ReactElement {
         } as CSSProperties
       }
     >
+      <img
+        src={persona.avatar}
+        alt=""
+        className="absolute opacity-5 inset-0 size-full object-cover"
+      />
       <NoiseComponent>
         <TabHeader
           title=""
@@ -1468,14 +1493,14 @@ export default function RewindScreen(): ReactElement {
                       : 'Pause Rewind conversation'
                   }
                   className={cn(
-                    'w-11 h-11 rounded-full items-center justify-center',
+                    'w-7 h-7 rounded-full items-center justify-center',
                     isConversationPaused ? 'bg-white' : 'bg-cardx',
                   )}
                 >
                   {isConversationPaused ? (
-                    <RiPlayLine size={18} className="text-cardd" />
+                    <RiPlayFill size={18} className="text-cardd" />
                   ) : (
-                    <RiPauseLine size={18} className="text-white/90" />
+                    <RiPauseFill size={18} className="text-white/90" />
                   )}
                 </Pressable>
               ) : (
@@ -1488,28 +1513,34 @@ export default function RewindScreen(): ReactElement {
                     <RiChat3Fill size={18} className="text-white" />
                   </Pressable>
                   <Pressable
-                    onPress={openRewindInsights}
+                    onPress={openRoutineSettings}
                     accessibilityLabel="Open Rewind insights"
                     className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
                   >
-                    <RiHistoryLine size={18} className="text-white/90" />
+                    <RiSettings3Fill size={18} className="text-white" />
                   </Pressable>
                   <Pressable
-                    onPress={clearPersona}
+                    onPress={() => {
+                      if (!canSwitchPartnerToday()) {
+                        toast.info(
+                          'You can switch your Rewind partner again tomorrow',
+                        )
+                        return
+                      }
+                      setPreviewPersonaId(persona.id)
+                      setIsPartnerPickerOpen(true)
+                    }}
                     disabled={persistPersonaMutation.isPending}
-                    accessibilityLabel="Change Rewind partner"
-                    className="py-3 pl-4 pr-3 !bg-[var(--theme)] gap-1 rounded-3xl items-center justify-center "
+                    accessibilityLabel={`Change Rewind partner. Current partner ${persona.name}`}
+                    className="min-h-11 flex-row items-center gap-2 rounded-full bg-cardx py-1.5 pr-1.5 pl-3"
                   >
-                    <Text className="text-white font-bold text-sm">
+                    <Text className="font-bbh text-sm font-bold text-white">
                       {persona.name}
                     </Text>
-                    <RiRefreshLine
-                      size={18}
-                      className={cn(
-                        persistPersonaMutation.isPending
-                          ? 'text-white/50'
-                          : 'text-white/80',
-                      )}
+                    <img
+                      alt=""
+                      className="size-8 rounded-full object-cover"
+                      src={persona.avatar}
                     />
                   </Pressable>
                 </>
@@ -1535,7 +1566,7 @@ export default function RewindScreen(): ReactElement {
               </Text>
 
               <Text className="mt-0 text-white font-display text-xl font-extrabold">
-                <Text className="text-card-lighter-3">you're Rewinding W/</Text>{' '}
+                <Text className="text-card-lighter-3">You're Rewinding W/</Text>{' '}
                 <Text className="">
                   <Text className="text-[var(--theme)]">@</Text>
                   {persona.name}
@@ -1584,7 +1615,7 @@ export default function RewindScreen(): ReactElement {
               }
               accessibilityRole="button"
               className={cn(
-                isConversationPaused && 'saturate-0 opacity-50',
+                isConversationPaused && 'saturate-0 ',
                 'relative bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full mt-16',
               )}
             >
@@ -1608,8 +1639,8 @@ export default function RewindScreen(): ReactElement {
               </motion.div>
               {!hasActiveSession || isConversationPaused ? (
                 <View className="pointer-events-none absolute inset-0 items-center justify-center">
-                  <View className="h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                    <RiPlayLine size={30} className="ml-1 text-cardd" />
+                  <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                    <RiPlayFill size={30} className="ml-1 text-cardd" />
                   </View>
                 </View>
               ) : null}
@@ -1682,41 +1713,54 @@ export default function RewindScreen(): ReactElement {
                   </Pressable>
                   <Pressable
                     onPress={openRoutineSettings}
-                    className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
+                    accessibilityLabel="Open Rewind routine settings"
+                    className="min-h-16 w-full hidden flex-row items-center gap-3 rounded-xl bg-cardx px-3 py-3 text-left"
                   >
-                    <View className="min-w-0 flex-1 gap-1">
-                      <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
+                    <View className="size-10 shrink-0 items-center justify-center rounded-xl bg-cardd">
+                      <RiCalendarScheduleLine
+                        size={19}
+                        className="text-card-lighter-2"
+                      />
+                    </View>
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em] text-card-lighter-3">
                         Rewind routine
                       </Text>
-                      <Text className="muted font-bbh text-xs line-clamp-2">
+                      <Text className="font-bbh text-xs text-white line-clamp-2">
                         {routineStatus}
                       </Text>
                     </View>
                     <RiSettings3Line
-                      size={18}
-                      className="ml-3 shrink-0 text-white/60"
+                      size={17}
+                      className="shrink-0 text-card-lighter-2"
                     />
                   </Pressable>
                 </>
               ) : null}
 
               <Pressable
+                accessibilityLabel="Open Rewind insights"
                 onPress={openRewindInsights}
-                className="w-full flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
+                className="min-h-20 w-full flex-row border border-card-light/50 items-center gap-3 rounded-[40px] bg-cardx px-4 pr-6 py-3 text-left"
               >
+                <View className="size-11 shrink-0 items-center justify-center rounded-full bg-cardd">
+                  <RiPulseLine size={20} className="text-accent-500" />
+                </View>
                 <View className="min-w-0 flex-1 gap-1">
-                  <Text className="muted font-bbh text-[10px] uppercase tracking-[0.18em]">
-                    {'Rewind insights'}
+                  <Text className="font-bbh text-sm font-bold text-white">
+                    Insights
                   </Text>
-                  <Text className="muted font-bbh text-xs line-clamp-2">
+                  <Text className="font-bbh text-xs text-card-lighter-3 line-clamp-2">
                     {previousSessionPreview ||
                       'See the patterns your reflections are beginning to show'}
                   </Text>
                 </View>
-                <RiHistoryLine
-                  size={18}
-                  className="ml-3 shrink-0 text-white/60"
-                />
+                <View className="p-0.5 bg-white rounded-full">
+                  <RiArrowRightSLine
+                    size={19}
+                    className="shrink-0 text-black"
+                  />
+                </View>
               </Pressable>
             </View>
           </View>

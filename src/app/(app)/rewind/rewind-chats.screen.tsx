@@ -1,4 +1,9 @@
-import { RiChatSmile3Line, RiRefreshLine } from '@remixicon/react'
+import {
+  RiChatSmile3Line,
+  RiCheckDoubleLine,
+  RiCheckLine,
+  RiRefreshLine,
+} from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import moment from 'moment'
@@ -15,6 +20,7 @@ import { useAuth } from '@/providers/auth.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import type { RewindChat } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
+import { formatRewindChatTypingStatus } from '@/shared/rewind/rewind-chat-realtime.util'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
 import { RewindChatAvatar } from './rewind-chat-avatar.component'
@@ -34,13 +40,25 @@ function getChatPreview(chat: RewindChat): string {
   return chat.lastMessage.content
 }
 
+function getChatMessageDeliveryStatus(
+  chat: RewindChat,
+): 'DELIVERED' | 'READ' | 'SENT' | null {
+  const message = chat.lastMessage
+  if (!message || message.role !== 'USER') return null
+  if (message.seenAt) return 'READ'
+  if (message.deliveredAt) return 'DELIVERED'
+  return 'SENT'
+}
+
 function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
   const navigate = useNavigate()
-  console.log(chat)
+  const typingStatus = formatRewindChatTypingStatus(chat.activeParticipants)
+  const deliveryStatus = getChatMessageDeliveryStatus(chat)
+
   return (
     <Pressable
       accessibilityLabel={`Open ${chat.title} chat`}
-      className="min-h-20 w-full flex-row items-center gap-4 border-b-cardx border-b px-4 py-3 text-left"
+      className="min-h-20 w-full flex-row items-center gap-4 border-b border-b-card-light-50 px-4 py-3 text-left"
       onPress={() => {
         void navigate({
           params: { chatId: chat.id },
@@ -50,9 +68,9 @@ function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
     >
       <RewindChatAvatar chat={chat} />
       <View className="min-w-0 flex-1 gap-0">
-        <View className="flex-row items-center justify-between gap-0 ">
+        <View className="flex-row items-center justify-between gap-2">
           <Text
-            className="min-w-0 flex-1 font-bbh text-base text-sm leading-light font-bold text-white"
+            className="min-w-0 flex-1 font-bbh text-sm font-bold leading-light text-white"
             lines={1}
           >
             {chat.title}
@@ -70,12 +88,47 @@ function ChatRow({ chat }: { chat: RewindChat }): ReactElement {
             </View>
           ) : null}
         </View>
-        <Text
-          className="font-bbh text-xs leading-light leading-5 text-card-lighter-2"
-          lines={1}
-        >
-          {getChatPreview(chat)}
-        </Text>
+        {typingStatus ? (
+          <Text
+            aria-live="polite"
+            className="font-bbh text-xs font-bold leading-5 text-success-green"
+            lines={1}
+            role="status"
+          >
+            {typingStatus}
+          </Text>
+        ) : (
+          <View className="min-w-0 flex-1 flex-row items-center gap-1">
+            <Text
+              className="min-w-0 flex-1 font-bbh text-xs leading-5 text-card-lighter-2"
+              lines={1}
+            >
+              {getChatPreview(chat)}
+            </Text>
+            {deliveryStatus ? (
+              <span
+                aria-label={
+                  deliveryStatus === 'READ'
+                    ? 'Read'
+                    : deliveryStatus === 'DELIVERED'
+                      ? 'Delivered'
+                      : 'Sent'
+                }
+                className="inline-flex shrink-0 text-card-lighter-3"
+                role="img"
+                style={
+                  deliveryStatus === 'READ' ? { color: '#53bdeb' } : undefined
+                }
+              >
+                {deliveryStatus === 'SENT' ? (
+                  <RiCheckLine size={14} />
+                ) : (
+                  <RiCheckDoubleLine size={14} />
+                )}
+              </span>
+            ) : null}
+          </View>
+        )}
       </View>
     </Pressable>
   )

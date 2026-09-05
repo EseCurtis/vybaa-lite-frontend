@@ -3,7 +3,7 @@ import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 export type HomeGreeting = readonly [string, string, string]
 
 const HOME_GREETING_INTERVAL_MS = 5 * 60 * 1_000
-const HOME_GREETING_MAX_LENGTH = 100
+const HOME_GREETING_MAX_LENGTH = 1000
 const REWIND_PERSONA_GREETING_SALTS: Record<RewindPersonaId, number> = {
   ariel: 0x63d4,
   ella: 0x19a7,
