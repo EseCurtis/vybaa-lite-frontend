@@ -7,7 +7,9 @@ import {
 import type { InfiniteData } from '@tanstack/react-query'
 
 import type {
+  EnqueueRewindChatMessageInput,
   RewindChatMessage,
+  RewindChatReactionKind,
   RewindV2ChatMessagesResponse,
   RewindChatStreamEvent,
   RewindInsightsRange,
@@ -192,7 +194,7 @@ export function useRewindChatMessages(chatId: string, limit: number = 30) {
 export function useEnqueueRewindChatMessage(chatId: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { content: string; idempotencyKey: string }) =>
+    mutationFn: (input: EnqueueRewindChatMessageInput) =>
       rewindAPI.enqueueV2ChatMessage(chatId, input),
     onSuccess: async () => {
       await Promise.all([
@@ -213,6 +215,22 @@ export function useMarkRewindChatRead(chatId: string) {
     onSuccess: async () => {
       await queryClient.invalidateQueries({
         queryKey: rewindQueryKeys.chats(),
+      })
+    },
+  })
+}
+
+export function useReactToRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      messageId: string
+      reaction: RewindChatReactionKind | null
+    }) =>
+      rewindAPI.updateV2ChatReaction(chatId, input.messageId, input.reaction),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: rewindQueryKeys.chatMessages(chatId),
       })
     },
   })

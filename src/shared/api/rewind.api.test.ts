@@ -41,11 +41,55 @@ describe('Rewind chat realtime events', () => {
     ).toBe(true)
   })
 
+  it('accepts a persisted user-message seen receipt', () => {
+    expect(
+      isRewindChatRealtimeEvent({
+        chatId: 'chat-1',
+        messageId: 'message-user-1',
+        runId: 'run-1',
+        seenAt: '2026-09-04T08:00:03.000Z',
+        type: 'user_message_seen',
+      }),
+    ).toBe(true)
+  })
+
+  it('accepts only the four supported reaction updates', () => {
+    expect(
+      isRewindChatRealtimeEvent({
+        chatId: 'chat-1',
+        messageId: 'message-1',
+        reactions: [
+          { actor: 'USER', kind: 'LOVE', personaId: null },
+          { actor: 'PARTNER', kind: 'LAUGH', personaId: 'jake' },
+          { actor: 'PARTNER', kind: 'CRY', personaId: 'ella' },
+          { actor: 'PARTNER', kind: 'LIKE', personaId: 'ariel' },
+        ],
+        type: 'reaction_updated',
+      }),
+    ).toBe(true)
+    expect(
+      isRewindChatRealtimeEvent({
+        chatId: 'chat-1',
+        messageId: 'message-1',
+        reactions: [{ actor: 'PARTNER', kind: 'FIRE', personaId: 'lyra' }],
+        type: 'reaction_updated',
+      }),
+    ).toBe(false)
+  })
+
   it('rejects malformed or unknown events', () => {
     expect(
       isRewindChatRealtimeEvent({ type: 'message_delta', delta: 'x' }),
     ).toBe(false)
     expect(isRewindChatRealtimeEvent({ type: 'unknown' })).toBe(false)
+    expect(
+      isRewindChatRealtimeEvent({
+        chatId: 'chat-1',
+        messageId: 'message-user-1',
+        runId: 'run-1',
+        type: 'user_message_seen',
+      }),
+    ).toBe(false)
     expect(
       isRewindChatRealtimeEvent({
         chatId: 'chat-1',

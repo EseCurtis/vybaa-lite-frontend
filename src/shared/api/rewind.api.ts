@@ -294,14 +294,31 @@ export type RewindHomeGreeting = {
 export type RewindChatMessage = {
   content: string
   createdAt: string
+  deliveredAt?: string | null
   id: string
   localDateKey: string
   mentions: RewindPersonaId[]
   personaId: RewindPersonaId | null
+  reactions?: RewindChatReaction[]
   replyToMessageId?: string | null
   role: 'PARTNER' | 'SYSTEM' | 'USER'
   runId?: string | null
+  seenAt?: string | null
   turnId?: string | null
+}
+
+export type RewindChatReactionKind = 'LOVE' | 'LAUGH' | 'CRY' | 'LIKE'
+
+export type RewindChatReaction = {
+  actor: 'PARTNER' | 'USER'
+  kind: RewindChatReactionKind
+  personaId: RewindPersonaId | null
+}
+
+export type EnqueueRewindChatMessageInput = {
+  content: string
+  idempotencyKey: string
+  replyToMessageId?: string | null
 }
 
 export type RewindChatRun = {
@@ -350,6 +367,19 @@ export type RewindChatRealtimeEvent =
       type: 'message_committed'
     }
   | { chatId: string; messageId: string; type: 'user_message_committed' }
+  | {
+      chatId: string
+      messageId: string
+      reactions: RewindChatReaction[]
+      type: 'reaction_updated'
+    }
+  | {
+      chatId: string
+      messageId: string
+      runId: string
+      seenAt: string
+      type: 'user_message_seen'
+    }
   | { chatId: string; runId: string; type: 'chat_invalidated' }
   | {
       chatId: string
@@ -462,11 +492,31 @@ function isRewindPersonaId(value: unknown): value is RewindPersonaId {
   )
 }
 
+function isRewindChatReactionKind(
+  value: unknown,
+): value is RewindChatReactionKind {
+  return (
+    value === 'CRY' || value === 'LAUGH' || value === 'LIKE' || value === 'LOVE'
+  )
+}
+
+function isRewindChatReaction(value: unknown): value is RewindChatReaction {
+  if (!isRecord(value)) return false
+  return (
+    isRewindChatReactionKind(value.kind) &&
+    ((value.actor === 'USER' && value.personaId === null) ||
+      (value.actor === 'PARTNER' && isRewindPersonaId(value.personaId)))
+  )
+}
+
 function isRewindChatMessage(value: unknown): value is RewindChatMessage {
   if (!isRecord(value)) return false
   return (
     typeof value.content === 'string' &&
     typeof value.createdAt === 'string' &&
+    (value.deliveredAt === undefined ||
+      value.deliveredAt === null ||
+      typeof value.deliveredAt === 'string') &&
     typeof value.id === 'string' &&
     typeof value.localDateKey === 'string' &&
     (value.replyToMessageId === undefined ||
@@ -475,9 +525,15 @@ function isRewindChatMessage(value: unknown): value is RewindChatMessage {
     (value.runId === undefined ||
       value.runId === null ||
       typeof value.runId === 'string') &&
+    (value.seenAt === undefined ||
+      value.seenAt === null ||
+      typeof value.seenAt === 'string') &&
     (value.turnId === undefined ||
       value.turnId === null ||
       typeof value.turnId === 'string') &&
+    (value.reactions === undefined ||
+      (Array.isArray(value.reactions) &&
+        value.reactions.every(isRewindChatReaction))) &&
     Array.isArray(value.mentions) &&
     (value.personaId === null || isRewindPersonaId(value.personaId)) &&
     (value.role === 'PARTNER' ||
@@ -521,6 +577,22 @@ export function isRewindChatRealtimeEvent(
   if (value.type === 'user_message_committed') {
     return (
       typeof value.chatId === 'string' && typeof value.messageId === 'string'
+    )
+  }
+  if (value.type === 'reaction_updated') {
+    return (
+      typeof value.chatId === 'string' &&
+      typeof value.messageId === 'string' &&
+      Array.isArray(value.reactions) &&
+      value.reactions.every(isRewindChatReaction)
+    )
+  }
+  if (value.type === 'user_message_seen') {
+    return (
+      typeof value.chatId === 'string' &&
+      typeof value.messageId === 'string' &&
+      typeof value.runId === 'string' &&
+      typeof value.seenAt === 'string'
     )
   }
   if (value.type === 'chat_invalidated') {
@@ -737,7 +809,7 @@ class RewindAPI {
 
   async enqueueV2ChatMessage(
     chatId: string,
-    input: { content: string; idempotencyKey: string },
+    input: EnqueueRewindChatMessageInput,
   ): Promise<RewindV2EnqueueResponse> {
     const { data: res } = await http.post<RewindV2EnqueueResponse>(
       `${API_V2}/rewind/chats/${chatId}/messages`,
@@ -753,6 +825,20 @@ class RewindAPI {
     await http.post(`${API_V2}/rewind/chats/${chatId}/read`, {
       throughMessageId,
     })
+  }
+
+  async updateV2ChatReaction(
+    chatId: string,
+    messageId: string,
+    reaction: RewindChatReactionKind | null,
+  ): Promise<{ data: { reactions: RewindChatReaction[] }; msg: string }> {
+    const { data: response } = await http.put<{
+      data: { reactions: RewindChatReaction[] }
+      msg: string
+    }>(`${API_V2}/rewind/chats/${chatId}/messages/${messageId}/reaction`, {
+      reaction,
+    })
+    return response
   }
 
   async updateV2ChatPreferences(
