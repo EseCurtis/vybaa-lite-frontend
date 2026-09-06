@@ -27,6 +27,7 @@ import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import { cn } from '@/shared/utils/helpers.util'
 
+import { NoiseComponent } from '@/components/common/noise.component'
 import {
   createAccentStyle,
   formatSessionDate,
@@ -326,11 +327,8 @@ function DailyObservationSection({
       </View>
 
       {observation.reflection ? (
-        <View
-          className="gap-2 rounded-2xl px-4 py-5"
-          style={{ backgroundColor: colors['card-light'] }}
-        >
-          <Text className="font-bbh text-xs font-bold text-white">
+        <View className="gap-2 rounded-2xl bg-teal-950 px-4 py-5 [&_*]:text-teal-200">
+          <Text className="font-bbh text-xs font-bold text-teal-400">
             What the day may be saying
           </Text>
           <DetailText value={observation.reflection} />
@@ -517,12 +515,14 @@ export function RewindSessionDetail({
         </View>
       </View>
 
-      <View className="sticky top-0 z-20 bg-cardd py-2">
-        <DetailSectionTabs
-          activeSection={activeSection}
-          hasJournal={Boolean(session.journalDraft)}
-          onChange={setActiveSection}
-        />
+      <View className="py-2 sticky top-0 z-20 bg-cardd">
+        <NoiseComponent>
+          <DetailSectionTabs
+            activeSection={activeSection}
+            hasJournal={Boolean(session.journalDraft)}
+            onChange={setActiveSection}
+          />
+        </NoiseComponent>
       </View>
 
       {activeSection === 'conversation' ? (
