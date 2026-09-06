@@ -173,6 +173,27 @@ describe('in-app notification payloads', () => {
     expect(formatInAppNotification(notification!)).toBe('u around? 👀')
   })
 
+  it('uses Neeja and Tobi local avatars for their message notifications', () => {
+    for (const personaId of ['neeja', 'tobi'] as const) {
+      const notification = getInAppNotification({
+        body: 'u around?',
+        data: {
+          chatId: 'chat-new-partner',
+          notificationSender: {
+            avatarUrl: 'https://example.invalid/ignored.png',
+            name: personaId === 'neeja' ? 'Neeja' : 'Tobi',
+            personaId,
+          },
+          type: 'rewind_chat_message',
+        },
+        title: 'New message',
+      })
+      expect(notification?.sender?.avatarUrl).toBe(
+        `/assets/rewind/${personaId}.png`,
+      )
+    }
+  })
+
   it('suppresses foreground banners on their active route and while hidden', () => {
     expect(
       shouldDisplayInAppNotification(

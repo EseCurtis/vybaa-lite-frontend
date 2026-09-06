@@ -7,10 +7,9 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
-import { useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
+import { useRewindChats, useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
 import { Moti } from '@/shared/constants.shared'
 import {
-  formatRewindContextualGreeting,
   randomGreetings,
   randomRewindGreetings,
   resolveRewindHomePersona,
@@ -25,12 +24,12 @@ import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 function HomeGreetingSheet({
   greetingMessage,
   greetingTitle,
-  onOpenRewind,
+  onOpenChat,
   persona,
 }: {
   greetingMessage: string
   greetingTitle: string
-  onOpenRewind: () => void
+  onOpenChat: () => void
   persona: RewindPersona
 }): ReactElement {
   return (
@@ -60,14 +59,12 @@ function HomeGreetingSheet({
       </View>
 
       <Pressable
-        accessibilityLabel={`Open Rewind with ${persona.name}`}
+        accessibilityLabel={`Open chat with ${persona.name}`}
         className="min-h-12 flex-row items-center justify-center gap-2 rounded-full bg-white px-5"
-        onPress={onOpenRewind}
+        onPress={onOpenChat}
       >
         <RiChatSmile3Line className="text-cardd" size={18} />
-        <Text className="font-bbh text-sm font-bold text-cardd">
-          Open Rewind
-        </Text>
+        <Text className="font-bbh text-sm font-bold text-cardd">Open chat</Text>
       </Pressable>
     </View>
   )
@@ -82,6 +79,7 @@ export function HomeGreetings({
 }): ReactElement {
   const navigate = useNavigate()
   const bottomSheet = useBottomSheet()
+  const chatsQuery = useRewindChats()
   const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
   const firstName = userName.trim().split(/\s+/)[0] ?? 'friend'
   const genericGreetings = randomGreetings(firstName)
@@ -97,31 +95,44 @@ export function HomeGreetings({
       ? partnerGreetings
       : genericGreetings
   const emoji = greetings[2]
-  const greetingTitle = contextualGreeting?.title ?? greetings[0]
-  const greetingMessage = contextualGreeting
-    ? formatRewindContextualGreeting(
-        activePersonaId,
-        firstName,
-        contextualGreeting.message,
-      )
-    : greetings[1]
+  const contextualMessage =
+    contextualGreeting?.personaId === activePersonaId
+      ? contextualGreeting.message
+      : null
+  const greetingTitle = contextualMessage
+    ? contextualGreeting.title
+    : greetings[0]
+  const greetingMessage = contextualMessage ?? greetings[1]
+  const partnerChat = chatsQuery.data?.find(
+    (chat) => chat.type === 'PARTNER' && chat.personaId === activePersonaId,
+  )
+  const chatId =
+    contextualGreeting?.personaId === activePersonaId
+      ? contextualGreeting.chatId
+      : partnerChat?.id
 
-  const openRewind = (): void => {
-    void navigate({ to: '/app/rewind' })
+  const openPartnerChat = (): void => {
+    if (!chatId) {
+      void navigate({ to: '/app/rewind-chats' })
+      return
+    }
+    void navigate({
+      params: { chatId },
+      to: '/app/rewind-chat/$chatId',
+    })
   }
 
-  const openRewindFromSheet = (): void => {
+  const openPartnerChatFromSheet = (): void => {
     bottomSheet.dismiss()
-    openRewind()
+    openPartnerChat()
   }
-  console.log('THAMKYO', contextualGreeting?.message)
 
   const expandGreeting = (): void => {
     bottomSheet.present(
       <HomeGreetingSheet
         greetingMessage={greetingMessage}
         greetingTitle={greetingTitle}
-        onOpenRewind={openRewindFromSheet}
+        onOpenChat={openPartnerChatFromSheet}
         persona={persona}
       />,
       { title: `@${persona.name} Says.` },
@@ -166,14 +177,14 @@ export function HomeGreetings({
         </Pressable>
         <Pressable
           accessibilityLabel={
-            contextualGreeting
-              ? `${greetingMessage}. Expand message from ${persona.name}`
-              : `${greetingTitle}. ${greetingMessage}. Expand message from ${persona.name}`
+            contextualMessage
+              ? `${greetingMessage}. Open chat with ${persona.name}`
+              : `${greetingTitle}. ${greetingMessage}. Open chat with ${persona.name}`
           }
           className="relative z-10 max-w-[80%]  h-full my-auto flex-col items-start bg-cardx p-2 px-4 rounded-3xl justify-center"
-          onPress={expandGreeting}
+          onPress={openPartnerChat}
         >
-          {contextualGreeting ? (
+          {contextualMessage ? (
             <Text
               lines={4}
               className="text-contrast-outline min-w-0 font-mona-sans-x text-sm font-bold leading-tight text-card-lighter-2"

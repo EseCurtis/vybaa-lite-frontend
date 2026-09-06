@@ -53,7 +53,9 @@ function isRewindPersonaId(value: unknown): value is RewindPersonaId {
     value === 'ella' ||
     value === 'lyra' ||
     value === 'jake' ||
-    value === 'ariel'
+    value === 'ariel' ||
+    value === 'tobi' ||
+    value === 'neeja'
   )
 }
 

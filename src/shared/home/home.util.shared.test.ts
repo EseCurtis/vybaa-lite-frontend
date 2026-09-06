@@ -13,6 +13,8 @@ const PERSONA_IDS: readonly RewindPersonaId[] = [
   'lyra',
   'jake',
   'ariel',
+  'tobi',
+  'neeja',
 ]
 
 describe('Rewind home greetings', () => {
@@ -35,6 +37,8 @@ describe('Rewind home greetings', () => {
     )
     expect(messages[2]).toMatch(/honest|excuses|truth|problem|avoiding|drag/i)
     expect(messages[3]).toMatch(/kid|checking|one thing|sort|holding|carry/i)
+    expect(messages[4]).toMatch(/gist|alive|hanging|how far|oya|saying/i)
+    expect(messages[5]).toMatch(/mind|quiet|story|check|noticed|side/i)
   })
 
   it('revoices the same context for the selected partner', () => {
@@ -48,6 +52,8 @@ describe('Rewind home greetings', () => {
       'Ese, you protected your time today. anyway 🙂',
       'Ese, straight up: you protected your time today.',
       "hey Ese, you protected your time today. i'm here if u need me",
+      'yo Ese, you protected your time today 😂',
+      'Ese, you protected your time today... tell me more 🤎',
     ])
     expect(messages.every((message) => message.length <= 100)).toBe(true)
   })

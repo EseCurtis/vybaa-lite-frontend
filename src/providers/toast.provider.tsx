@@ -154,11 +154,11 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   )
 
   useEffect(() => {
-    showToast(
-      'Welcome to Vybaa! Your AI companion for self-reflection and personal growth.',
-      'success',
-      5000,
-    )
+    // showToast(
+    //   'Welcome to Vybaa! Your AI companion for self-reflection and personal growth.',
+    //   'success',
+    //   5000,
+    // )
   }, [top])
 
   //alert(top)

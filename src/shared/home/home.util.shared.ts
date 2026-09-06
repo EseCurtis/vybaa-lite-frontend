@@ -3,12 +3,14 @@ import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 export type HomeGreeting = readonly [string, string, string]
 
 const HOME_GREETING_INTERVAL_MS = 5 * 60 * 1_000
-const HOME_GREETING_MAX_LENGTH = 1000
+const HOME_GREETING_MAX_LENGTH = 100
 const REWIND_PERSONA_GREETING_SALTS: Record<RewindPersonaId, number> = {
   ariel: 0x63d4,
   ella: 0x19a7,
   jake: 0x4e2b,
   lyra: 0x2fc1,
+  neeja: 0x73af,
+  tobi: 0x5bd2,
 }
 const REWIND_PERSONA_GREETINGS: Record<
   RewindPersonaId,
@@ -45,6 +47,22 @@ const REWIND_PERSONA_GREETINGS: Record<
     ['still alive? cool', 'come chat if u want', '🌙'],
     ['yo {name}', 'we talking or just vibing?', '🙂'],
     ["hm. you're back", "what's the situation?", '🌙'],
+  ],
+  neeja: [
+    ['hey {name}', 'something on your mind?', '🤎'],
+    ['hmm u seem quiet', 'what happened?', '👀'],
+    ['come gist me', "what's the real story?", '🤎'],
+    ['hey, quick check', 'how are u actually doing?', '🫣'],
+    ['i noticed something', 'come talk when u can', '👀'],
+    ['{name}, u around?', 'need your side of the story', '🤎'],
+  ],
+  tobi: [
+    ['yo {name} 😂', 'u alive over there?', '💬'],
+    ['abeg come gist me', "what's happening?", '😂'],
+    ['hey stranger', 'u left me hanging lol', '👀'],
+    ['{name}, my guy', 'what are we saying?', '💬'],
+    ['quick one', 'how far with today?', '😏'],
+    ['oya come here', 'i need the full gist', '😂'],
   ],
 }
 
@@ -117,6 +135,12 @@ export function formatRewindContextualGreeting(
   }
   if (personaId === 'jake') {
     return fitContextualGreeting(`${name}, straight up: `, context, '.')
+  }
+  if (personaId === 'tobi') {
+    return fitContextualGreeting(`yo ${name}, `, context, ' 😂')
+  }
+  if (personaId === 'neeja') {
+    return fitContextualGreeting(`${name}, `, context, '... tell me more 🤎')
   }
   return fitContextualGreeting(
     `hey ${name}, `,
