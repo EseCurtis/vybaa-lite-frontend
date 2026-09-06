@@ -58,6 +58,21 @@ export default function SettingsScreen() {
       )
     },
   })
+  const proactiveChatMutation = useMutation({
+    mutationFn: async (enabled: boolean) =>
+      authAPI.updateProfile({ rewindProactiveChatEnabled: enabled }),
+    onError: (error: Error) => {
+      toast.error(error.message || 'Could not update partner messaging')
+    },
+    onSuccess: async (response) => {
+      await refreshSession()
+      toast.success(
+        response.data.rewindProactiveChatEnabled
+          ? 'Partners can message you'
+          : 'Partner messages are paused',
+      )
+    },
+  })
   const {
     isLoading: isSubscriptionLoading,
     isPresentingPaywall,
@@ -249,6 +264,31 @@ export default function SettingsScreen() {
                     disabled={personalizationMutation.isPending}
                     onChange={(enabled) => {
                       personalizationMutation.mutate(enabled)
+                    }}
+                  />
+                </View>
+              </motion.div>
+              <motion.div
+                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                transition={{ delay: 0.25 }}
+              >
+                <View className="w-full flex-row items-center justify-between gap-4 rounded-2xl bg-cardx px-5 py-4">
+                  <View className="min-w-0 flex-1 gap-1">
+                    <Text className="font-bbh text-sm font-semibold text-white">
+                      Partners can message me
+                    </Text>
+                    <Text className="font-bbh text-xs leading-5 text-card-lighter-2">
+                      Let Rewind partners start a thoughtful chat during the day
+                    </Text>
+                  </View>
+                  <Switch
+                    accessibilityLabel="Let Rewind partners message me"
+                    checked={user?.rewindProactiveChatEnabled ?? true}
+                    className="shrink-0"
+                    disabled={proactiveChatMutation.isPending}
+                    onChange={(enabled) => {
+                      proactiveChatMutation.mutate(enabled)
                     }}
                   />
                 </View>

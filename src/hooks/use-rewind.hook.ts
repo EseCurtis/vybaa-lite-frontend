@@ -7,8 +7,11 @@ import {
 import type { InfiniteData } from '@tanstack/react-query'
 
 import type {
+  EnqueueRewindChatMessageInput,
   RewindChatMessage,
-  RewindChatMessagesResponse,
+  RewindChatReactionKind,
+  RewindV2ChatMessagesResponse,
+  RewindChatStreamEvent,
   RewindInsightsRange,
   RewindObservationsResponse,
   UpdateRewindRoutineInput,
@@ -16,6 +19,7 @@ import type {
 } from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
+import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 export function usePaginatedRewindSessions(
   page: number = 1,
@@ -97,13 +101,13 @@ export function useRewindInsights(range: RewindInsightsRange) {
   })
 }
 
-export function useRewindHomeGreeting() {
+export function useRewindHomeGreeting(personaId?: RewindPersonaId | null) {
   return useQuery({
     queryFn: async () => {
       const response = await rewindAPI.getHomeGreeting()
       return response.data
     },
-    queryKey: rewindQueryKeys.homeGreeting(),
+    queryKey: [...rewindQueryKeys.homeGreeting(), personaId ?? 'unselected'],
     staleTime: 1000 * 60 * 10,
   })
 }
@@ -154,7 +158,7 @@ export function useDismissRewindObservation() {
 export function useRewindChats() {
   return useQuery({
     queryFn: async () => {
-      const response = await rewindAPI.getChats()
+      const response = await rewindAPI.getV2Chats()
       return response.data.chats
     },
     queryKey: rewindQueryKeys.chats(),
@@ -164,9 +168,9 @@ export function useRewindChats() {
 
 export function useRewindChatMessages(chatId: string, limit: number = 30) {
   return useInfiniteQuery<
-    RewindChatMessagesResponse['data'],
+    RewindV2ChatMessagesResponse['data'],
     Error,
-    InfiniteData<RewindChatMessagesResponse['data'], string>,
+    InfiniteData<RewindV2ChatMessagesResponse['data'], string>,
     ReturnType<typeof rewindQueryKeys.chatMessages>,
     string
   >({
@@ -175,8 +179,8 @@ export function useRewindChatMessages(chatId: string, limit: number = 30) {
     initialPageParam: '',
     queryFn: async ({
       pageParam,
-    }): Promise<RewindChatMessagesResponse['data']> => {
-      const response = await rewindAPI.getChatMessages(
+    }): Promise<RewindV2ChatMessagesResponse['data']> => {
+      const response = await rewindAPI.getV2ChatMessages(
         chatId,
         pageParam || undefined,
         limit,
@@ -185,6 +189,114 @@ export function useRewindChatMessages(chatId: string, limit: number = 30) {
     },
     queryKey: rewindQueryKeys.chatMessages(chatId),
     staleTime: 1000 * 15,
+  })
+}
+
+export function useEnqueueRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: EnqueueRewindChatMessageInput) =>
+      rewindAPI.enqueueV2ChatMessage(chatId, input),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+      ])
+    },
+  })
+}
+
+export function useMarkRewindChatRead(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (throughMessageId: string) =>
+      rewindAPI.markV2ChatRead(chatId, throughMessageId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: rewindQueryKeys.chats(),
+      })
+    },
+  })
+}
+
+export function useReactToRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: {
+      messageId: string
+      reaction: RewindChatReactionKind | null
+    }) =>
+      rewindAPI.updateV2ChatReaction(chatId, input.messageId, input.reaction),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: rewindQueryKeys.chatMessages(chatId),
+      })
+    },
+  })
+}
+
+export function useMuteRewindChat(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (proactiveMuted: boolean) =>
+      rewindAPI.updateV2ChatPreferences(chatId, proactiveMuted),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+      ])
+    },
+  })
+}
+
+export function useRenameRewindChat(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (title: string) => rewindAPI.renameV2Chat(chatId, title),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() })
+    },
+  })
+}
+
+export function useDeleteRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (messageId: string) =>
+      rewindAPI.deleteV2ChatMessage(chatId, messageId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        }),
+      ])
+    },
+  })
+}
+
+export function useClearRewindChat(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => rewindAPI.clearV2Chat(chatId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        }),
+      ])
+    },
   })
 }
 
@@ -205,6 +317,40 @@ export function useSendRewindChatMessage(chatId: string) {
           appendMessagesToInfiniteQuery(current, newMessages),
       )
       void queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() })
+    },
+  })
+}
+
+export function useStreamRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<
+    void,
+    Error,
+    {
+      content: string
+      idempotencyKey: string
+      onEvent: (event: RewindChatStreamEvent) => void
+      signal?: AbortSignal
+    }
+  >({
+    mutationFn: (input) =>
+      rewindAPI.streamChatMessage(
+        chatId,
+        {
+          content: input.content,
+          idempotencyKey: input.idempotencyKey,
+        },
+        input.onEvent,
+        input.signal,
+      ),
+    onSettled: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+      ])
     },
   })
 }

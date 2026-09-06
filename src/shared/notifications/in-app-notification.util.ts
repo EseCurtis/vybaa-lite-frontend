@@ -1,9 +1,20 @@
 import { normalizeDeepLink } from '@/shared/utils/deep-link.util'
+import {
+  getRewindPersona,
+  type RewindPersonaId,
+} from '@/shared/rewind/rewind-personas'
+
+export type InAppNotificationSender = {
+  avatarUrl: string
+  name: string
+  personaId: RewindPersonaId
+}
 
 export type InAppNotification = {
   id: string
   message: string
   route: string | null
+  sender: InAppNotificationSender | null
   title: string
 }
 
@@ -37,6 +48,31 @@ function getString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null
 }
 
+function isRewindPersonaId(value: unknown): value is RewindPersonaId {
+  return (
+    value === 'ella' ||
+    value === 'lyra' ||
+    value === 'jake' ||
+    value === 'ariel' ||
+    value === 'tobi' ||
+    value === 'neeja'
+  )
+}
+
+function getSenderFromRecord(
+  payload: Record<string, unknown>,
+): InAppNotificationSender | null {
+  const sender = parseRecord(payload.notificationSender)
+  if (!isRewindPersonaId(sender.personaId)) return null
+
+  const persona = getRewindPersona(sender.personaId)
+  return {
+    avatarUrl: persona.avatar,
+    name: persona.name,
+    personaId: persona.id,
+  }
+}
+
 function isInternalAppRoute(route: string): boolean {
   return route.startsWith('/') && !route.startsWith('//')
 }
@@ -44,6 +80,9 @@ function isInternalAppRoute(route: string): boolean {
 function normalizeNotificationRoute(value: unknown): string | null {
   const route = getString(value)
   if (!route) return null
+  // Older notification payloads used the former app-prefixed notifications
+  // route. Keep those payloads actionable after the route moved to `/notifications`.
+  if (route === '/app/notifications') return '/notifications'
   if (isInternalAppRoute(route)) return route
 
   const target = normalizeDeepLink(route)
@@ -76,6 +115,17 @@ function getRoute(
   return getRouteFromRecord(payload) ?? getRouteFromRecord(nestedPayload)
 }
 
+function getSender(
+  payload: Record<string, unknown>,
+  nestedPayload: Record<string, unknown>,
+): InAppNotificationSender | null {
+  const notificationType =
+    getString(payload.type) ?? getString(nestedPayload.type)
+  if (notificationType !== 'rewind_chat_message') return null
+
+  return getSenderFromRecord(payload) ?? getSenderFromRecord(nestedPayload)
+}
+
 function getNotificationId(
   input: PushNotificationInput,
   payload: Record<string, unknown>,
@@ -83,12 +133,40 @@ function getNotificationId(
   title: string,
   message: string,
 ): string {
+  const notificationType =
+    getString(payload.type) ?? getString(nestedPayload.type)
+  const rewindMessageId =
+    getString(nestedPayload.messageId) ?? getString(payload.messageId)
+  if (notificationType === 'rewind_chat_message' && rewindMessageId) {
+    return getRewindChatNotificationDisplayId(rewindMessageId)
+  }
+
   return (
     getString(payload.id) ??
     getString(nestedPayload.id) ??
     getString(input.id) ??
     `${title}:${message}`
   )
+}
+
+function normalizePathname(pathname: string): string {
+  const pathWithoutQuery = pathname.split(/[?#]/, 1)[0] ?? pathname
+  if (pathWithoutQuery === '/') return pathWithoutQuery
+  return pathWithoutQuery.replace(/\/+$/, '')
+}
+
+export function getRewindChatNotificationDisplayId(messageId: string): string {
+  return `rewind-chat-message:${messageId}`
+}
+
+export function shouldDisplayInAppNotification(
+  route: string | null,
+  currentPathname: string,
+  visibilityState: DocumentVisibilityState,
+): boolean {
+  if (visibilityState !== 'visible') return false
+  if (!route) return true
+  return normalizePathname(route) !== normalizePathname(currentPathname)
 }
 
 export function claimInAppNotificationDisplay(
@@ -114,8 +192,10 @@ export function claimInAppNotificationDisplay(
 }
 
 export function formatInAppNotification(
-  notification: Pick<InAppNotification, 'message' | 'title'>,
+  notification: Pick<InAppNotification, 'message' | 'sender' | 'title'>,
 ): string {
+  if (notification.sender) return notification.message
+
   return notification.message
     ? `${notification.title}: ${notification.message}`
     : notification.title
@@ -127,6 +207,17 @@ export function getPushNotificationRoute(
   const payload = parseRecord(input.data)
   const nestedPayload = parseRecord(payload.data)
   return getRoute(payload, nestedPayload)
+}
+
+export function getNotificationSender(
+  data: unknown,
+  type: string,
+): InAppNotificationSender | null {
+  if (type !== 'rewind_chat_message') return null
+
+  const payload = parseRecord(data)
+  const nestedPayload = parseRecord(payload.data)
+  return getSenderFromRecord(payload) ?? getSenderFromRecord(nestedPayload)
 }
 
 export function getInAppNotification(
@@ -149,6 +240,7 @@ export function getInAppNotification(
     id: getNotificationId(input, payload, nestedPayload, title, message),
     message,
     route: getRoute(payload, nestedPayload),
+    sender: getSender(payload, nestedPayload),
     title,
   }
 }

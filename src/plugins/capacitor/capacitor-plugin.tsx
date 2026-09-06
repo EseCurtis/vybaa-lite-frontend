@@ -10,6 +10,7 @@ import { getDeviceTimezone, updateTimezone } from '@/shared/api/http'
 import {
   claimInAppNotificationDisplay,
   formatInAppNotification,
+  shouldDisplayInAppNotification,
   type InAppNotification,
 } from '@/shared/notifications/in-app-notification.util'
 import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
@@ -60,6 +61,15 @@ export function CapacitorPlugin({
 
   const handleForegroundPushNotification = useCallback(
     (notification: InAppNotification): void => {
+      if (
+        !shouldDisplayInAppNotification(
+          notification.route,
+          router.state.location.pathname,
+          document.visibilityState,
+        )
+      ) {
+        return
+      }
       if (!claimInAppNotificationDisplay(notification.id)) return
 
       const openNotification = notification.route
@@ -67,12 +77,15 @@ export function CapacitorPlugin({
             void handleDeepLink(`https://vybaa.app${notification.route}`)
           }
         : undefined
-      toast.notification(
-        formatInAppNotification(notification),
-        openNotification,
-      )
+      toast.notification(formatInAppNotification(notification), {
+        avatarAlt: notification.sender
+          ? `${notification.sender.name} avatar`
+          : undefined,
+        avatarUrl: notification.sender?.avatarUrl,
+        onOpen: openNotification,
+      })
     },
-    [handleDeepLink, toast],
+    [handleDeepLink, router, toast],
   )
 
   const syncDeviceTimezone = useCallback(async (): Promise<void> => {

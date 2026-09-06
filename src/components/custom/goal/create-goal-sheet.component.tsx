@@ -25,6 +25,7 @@ import { InfoIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 interface CreateGoalSheetProps {
+  initialStep?: 1 | 2 | 3 | 4
   initialValues?: Partial<CreateGoalRequest>
   onSuccess?: () => void
 }
@@ -33,6 +34,7 @@ type TargetChoice = GoalTarget['type']
 type ScheduleChoice = GoalSchedule['type']
 
 const GOAL_CREATION_DRAFT_KEY = 'goal:create-draft:v2'
+const GOAL_FIELD_SURFACE = 'bg-cardx placeholder:text-card-lighter-3'
 
 interface GoalCreationDraft {
   breakStreakOnMiss: boolean
@@ -203,8 +205,8 @@ function ChoicePressable({
     <Pressable
       className={cn(
         description ? 'w-full rounded-2xl px-4 py-3' : 'rounded-full px-3 py-2',
-        active ? 'bg-white' : 'bg-card-light-50',
-        'flex flex-row items-center justify-between',
+        active ? 'bg-white' : '',
+        'flex flex-row items-center justify-between border',
         className,
       )}
       onPress={(...all) => {
@@ -214,8 +216,8 @@ function ChoicePressable({
     >
       <Text
         className={cn(
-          'text-sm font-bold',
-          active ? 'text-black' : 'text-card-lighter-2',
+          'text-xs font-bold',
+          active ? 'text-black' : 'text-white',
         )}
       >
         {label}
@@ -224,7 +226,7 @@ function ChoicePressable({
         <Text
           className={cn(
             'mt-0.5 text-xs',
-            active ? 'text-black/60' : 'text-card-lighter-2',
+            active ? 'text-black' : 'text-card-lighter-2',
           )}
         >
           {description}
@@ -274,6 +276,7 @@ function ReminderSheet({ initialReminders, onDone }: ReminderSheetProps) {
         >
           <View className="flex-1">
             <TimeField
+              className="bg-cardx"
               value={reminder}
               onChange={(value) =>
                 setReminders(
@@ -299,7 +302,7 @@ function ReminderSheet({ initialReminders, onDone }: ReminderSheetProps) {
       ))}
       {reminders.length < 3 ? (
         <Pressable
-          className="rounded-xl bg-card-light-50 p-3 mx-auto"
+          className="rounded-xl bg-cardx p-3 mx-auto"
           onPress={addReminder}
         >
           <Text className="text-center font-bold">
@@ -325,6 +328,7 @@ function DateSheet({ initialDate, minDate, onDone, title }: DateSheetProps) {
     <View className="space-y-5 pb-4">
       <Input
         autoFocus
+        className={GOAL_FIELD_SURFACE}
         min={minDate}
         type="date"
         value={date}
@@ -349,7 +353,7 @@ function InfoHint({ label, text }: { label: string; text: string }) {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content
-            className="z-[1000002] max-w-[min(17rem,calc(100vw-2rem))] rounded-xl bg-card-light p-3 text-card-lighter-2 shadow-xl"
+            className="z-[1000002] max-w-[min(17rem,calc(100vw-2rem))] rounded-xl bg-cardx p-3 text-card-lighter-2 shadow-xl"
             sideOffset={6}
             collisionPadding={12}
           >
@@ -396,7 +400,7 @@ function CustomizeRulesSheet({
       </View>
       <View className="space-y-2">
         <Text className="text-xs hidden text-card-lighter-2">When I miss</Text>
-        <View className="grid grid-cols-3 flex-wrap gap-2 w-full bg-cardd p-1 rounded-full">
+        <View className="grid grid-cols-3 flex-wrap gap-2 w-full bg-cardx p-1 rounded-full">
           {(['STRICT', 'FLEXIBLE', 'NO_STREAK'] as GoalMissMode[]).map(
             (mode) => (
               <ChoicePressable
@@ -420,7 +424,7 @@ function CustomizeRulesSheet({
         </View>
       </View>
       <Pressable
-        className="flex-row flex text-left items-center justify-between rounded-2xl bg-cardd p-4"
+        className="flex-row flex text-left items-center justify-between rounded-2xl bg-cardx p-4"
         onPress={() => setReleaseImmediately(!releaseImmediately)}
       >
         <View className="flex-1 pr-3">
@@ -432,7 +436,7 @@ function CustomizeRulesSheet({
         <View
           className={cn(
             'h-7 w-12 rounded-full p-1',
-            releaseImmediately ? 'bg-green-500' : 'bg-card-lighter',
+            releaseImmediately ? 'bg-green-500' : 'bg-cardxer',
           )}
         >
           <View
@@ -444,7 +448,7 @@ function CustomizeRulesSheet({
         </View>
       </Pressable>
       <Pressable
-        className="rounded-2xl flex items-center text-left bg-cardd p-4"
+        className="rounded-2xl flex items-center text-left bg-cardx p-4"
         onPress={() => setShowAdvanced(!showAdvanced)}
       >
         <View className="">
@@ -456,7 +460,7 @@ function CustomizeRulesSheet({
         <View
           className={cn(
             'h-7 w-12 rounded-full p-1',
-            showAdvanced ? 'bg-green-500' : 'bg-card-lighter',
+            showAdvanced ? 'bg-green-500' : 'bg-cardxer',
           )}
         >
           <View
@@ -468,7 +472,7 @@ function CustomizeRulesSheet({
         </View>
       </Pressable>
       {showAdvanced ? (
-        <View className="space-y-4  bg-card-light-50 p-4 px-0 border-t border-card-light">
+        <View className="space-y-4 pt-2">
           <View className="space-y-2">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center gap-1">
@@ -486,7 +490,7 @@ function CustomizeRulesSheet({
               type="number"
               value={graceHours}
               onChange={(event) => setGraceHours(event.target.value)}
-              className="bg-cardd"
+              className={GOAL_FIELD_SURFACE}
             />
           </View>
           <View className="space-y-2">
@@ -511,10 +515,10 @@ function CustomizeRulesSheet({
               type="number"
               value={maxConsecutiveMisses}
               onChange={(event) => setMaxConsecutiveMisses(event.target.value)}
-              className="bg-cardd"
+              className={GOAL_FIELD_SURFACE}
             />
-            <View className="rounded-xl bg-warning-yellow/20 px-3 py-2">
-              <Text className="text-xs text-warning-yellow/90">
+            <View className="rounded-xl bg-warning-900 px-3 py-2">
+              <Text className="text-xs text-warning-200">
                 {maxConsecutiveMisses
                   ? `This goal will end after ${maxConsecutiveMisses} consecutive ${Number(maxConsecutiveMisses) === 1 ? 'miss' : 'misses'}.`
                   : 'Leave empty to keep the goal active until its deadline or maximum duration.'}
@@ -525,7 +529,7 @@ function CustomizeRulesSheet({
             <Text className="mb-2 text-xs text-card-lighter-2">
               Break streak on a final miss?
             </Text>
-            <View className="flex-row gap-2 bg-cardd p-1 rounded-full  mr-auto">
+            <View className="flex-row gap-2 bg-cardx p-1 rounded-full mr-auto">
               <ChoicePressable
                 active={breakStreakOnMiss}
                 label="Yes"
@@ -542,7 +546,7 @@ function CustomizeRulesSheet({
             <Text className="mb-2 text-xs text-card-lighter-2">
               Forfeit held rewards on a final miss?
             </Text>
-            <View className="flex-row gap-2 bg-cardd p-1 rounded-full mr-auto">
+            <View className="flex-row gap-2 bg-cardx p-1 rounded-full mr-auto">
               <ChoicePressable
                 active={forfeitPendingOnMiss}
                 label="Yes"
@@ -576,6 +580,7 @@ function CustomizeRulesSheet({
 }
 
 export function CreateGoalSheet({
+  initialStep,
   initialValues,
   onSuccess,
 }: CreateGoalSheetProps) {
@@ -584,13 +589,15 @@ export function CreateGoalSheet({
   const { isKeyboardVisible, keyboardHeight } = useKeyboard()
   const createGoal = useCreateGoal()
   const bottomSheet = useBottomSheetController()
-  const [savedDraft] = useState(readGoalCreationDraft)
-  const draftValues = initialValues?.sourceRecommendationId
-    ? initialValues
-    : undefined
+  const [savedDraft] = useState(() =>
+    initialValues ? undefined : readGoalCreationDraft(),
+  )
+  const draftValues = initialValues
   const initialTarget = draftValues?.target ?? initialValues?.target
   const initialSchedule = draftValues?.schedule ?? initialValues?.schedule
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(savedDraft?.step ?? 1)
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(
+    initialStep ?? savedDraft?.step ?? 1,
+  )
   const [title, setTitle] = useState(
     draftValues?.title ?? savedDraft?.title ?? initialValues?.title ?? '',
   )
@@ -802,10 +809,14 @@ export function CreateGoalSheet({
       toast.warning('Choose a valid schedule')
       return
     }
-    const selectedEndDate = target.type === 'UNTIL_DATE' ? target.endDate : endDate
-    const selectedStartDate = schedule.type === 'ONE_TIME' ? schedule.date : schedule.startDate
+    const selectedEndDate =
+      target.type === 'UNTIL_DATE' ? target.endDate : endDate
+    const selectedStartDate =
+      schedule.type === 'ONE_TIME' ? schedule.date : schedule.startDate
     if (selectedEndDate && selectedEndDate < selectedStartDate) {
-      toast.warning('Your end date is before the start date. Update it before creating this goal.')
+      toast.warning(
+        'Your end date is before the start date. Update it before creating this goal.',
+      )
       return
     }
     const payload: CreateGoalRequest = {
@@ -880,6 +891,7 @@ export function CreateGoalSheet({
         <View className="space-y-3">
           <Input
             autoFocus
+            className={GOAL_FIELD_SURFACE}
             maxLength={500}
             onChange={(event) => setTitle(event.target.value)}
             placeholder={`e.g ${randomCreateGoalPlaceholder()}`}
@@ -887,7 +899,7 @@ export function CreateGoalSheet({
           />
           {!showReason ? (
             <Pressable onPress={() => setShowReason(true)}>
-              <Text className="font-bold mx-auto my-3 bg-cardx text-card-lighter-3">
+              <Text className="font-bold mx-auto my-3 text-card-lighter-3">
                 + Add a reason
               </Text>
             </Pressable>
@@ -895,16 +907,16 @@ export function CreateGoalSheet({
             <View className="space-y-2">
               <Text className="text-xs text-card-lighter-2">Reason</Text>
               <TextArea
+                className={cn('min-h-[72px]', GOAL_FIELD_SURFACE)}
                 maxLength={2000}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Why does this matter to you?"
-                className="min-h-[72px]"
                 rows={2}
                 value={description}
               />
 
               <Pressable onPress={() => setShowReason(false)}>
-                <Text className="font-bold mx-auto my-3 bg-cardx text-card-lighter-3">
+                <Text className="font-bold mx-auto my-3 text-card-lighter-3">
                   Clear
                 </Text>
               </Pressable>
@@ -939,6 +951,7 @@ export function CreateGoalSheet({
             <View className="space-y-2">
               <Text className="text-xs text-card-lighter-2">Finish by</Text>
               <Input
+                className={GOAL_FIELD_SURFACE}
                 type="date"
                 value={endDate}
                 min={startDate}
@@ -952,7 +965,7 @@ export function CreateGoalSheet({
               </Text>
               <View className="flex-row gap-2">
                 <Input
-                  className="flex-1"
+                  className={cn('flex-1', GOAL_FIELD_SURFACE)}
                   min={1}
                   type="number"
                   value={targetValue}
@@ -960,7 +973,7 @@ export function CreateGoalSheet({
                 />
                 {targetType === 'QUANTITY' ? (
                   <Input
-                    className="flex-1"
+                    className={cn('flex-1', GOAL_FIELD_SURFACE)}
                     placeholder="pages, minutes…"
                     value={unit}
                     onChange={(event) => setUnit(event.target.value)}
@@ -969,11 +982,11 @@ export function CreateGoalSheet({
               </View>
             </View>
           )}
-          <View className="rounded-xl bg-warning-yellow/10 p-4">
-            <Text className="text-sm flex items-center font-bold gap-1 text-warning-yellow">
+          <View className="rounded-xl bg-warning-900 p-4">
+            <Text className="text-sm flex items-center font-bold gap-1 text-warning-200">
               <InfoIcon size={16} /> {progressExplanation.title}
             </Text>
-            <Text className="mt-2 text-sm leading-relaxed text-warning-yellow/90">
+            <Text className="mt-2 text-sm leading-relaxed text-warning-200">
               {progressExplanation.body}
             </Text>
           </View>
@@ -1005,7 +1018,7 @@ export function CreateGoalSheet({
             />
           </View>
           <Pressable
-            className="flex-row items-center justify-between rounded-xl bg-card-light-50 p-4"
+            className="flex-row items-center justify-between rounded-xl bg-cardx p-4"
             onPress={() =>
               bottomSheet.present(
                 <DateSheet
@@ -1039,7 +1052,7 @@ export function CreateGoalSheet({
                     key={day.value}
                     className={cn(
                       'size-9 items-center justify-center rounded-full',
-                      active ? 'bg-card-lighter-3' : 'bg-card-light-50',
+                      active ? 'bg-white' : 'bg-cardx',
                     )}
                     onPress={() => {
                       if (scheduleType === 'WEEKLY') {
@@ -1091,7 +1104,7 @@ export function CreateGoalSheet({
               ) : (
                 <View className="">
                   <Pressable
-                    className="flex-row items-center justify-between rounded-xl bg-card-light-50 p-4"
+                    className="flex-row items-center justify-between rounded-xl bg-cardx p-4"
                     onPress={() =>
                       bottomSheet.present(
                         <DateSheet
@@ -1146,7 +1159,7 @@ export function CreateGoalSheet({
               </Text>
             </View>
             <Pressable
-              className="size-11 items-center justify-center rounded-full bg-card-light-50"
+              className="size-11 items-center justify-center rounded-full bg-cardx"
               onPress={() =>
                 bottomSheet.present(
                   <ReminderSheet
@@ -1168,7 +1181,7 @@ export function CreateGoalSheet({
 
       {step === 3 ? (
         <Pressable
-          className="flex-row items-center justify-between rounded-2xl bg-card-light-50 p-4"
+          className="flex-row items-center justify-between rounded-2xl bg-cardx p-4"
           onPress={() =>
             bottomSheet.present(
               <CustomizeRulesSheet
@@ -1209,7 +1222,7 @@ export function CreateGoalSheet({
           <Text className="text-sm text-card-lighter-2">
             Everything is ready. You can go back to change any detail.
           </Text>
-          <View className="space-y-2 rounded-2xl bg-card-light-50 p-4">
+          <View className="space-y-2 rounded-2xl bg-cardx p-4">
             <View className="space-y-1">
               <Text className="text-xs text-card-lighter-2">Goal</Text>
               <Text className="font-bold">{title.trim()}</Text>
@@ -1219,8 +1232,7 @@ export function CreateGoalSheet({
                 </Text>
               ) : null}
             </View>
-            <View className="h-px bg-card-light" />
-            <View className="flex-row justify-between gap-4">
+            <View className="flex-row justify-between gap-4 pt-2">
               <View className="flex-1">
                 <Text className="text-xs text-card-lighter-2">Target</Text>
                 <Text className="mt-1 font-bold">
@@ -1259,7 +1271,7 @@ export function CreateGoalSheet({
               </View>
             </View>
           </View>
-          <View className="rounded-2xl bg-card-light p-4">
+          <View className="rounded-2xl bg-cardx p-4">
             <Text className="text-xs text-card-lighter-2">Goal settings</Text>
             <Text className="mt-1 text-sm font-bold">
               {missMode === 'NO_STREAK'
@@ -1286,14 +1298,14 @@ export function CreateGoalSheet({
       >
         {step > 1 ? (
           <Pressable
-            className="rounded-full bg-card-light-50 px-5 py-4"
+            className="rounded-full bg-cardx px-5 py-4"
             onPress={() =>
               setStep((current) =>
                 current === 1 ? 1 : ((current - 1) as 1 | 2 | 3),
               )
             }
           >
-            <Text className="font-bold">Back</Text>
+            <Text className="font-bold text-sm">Back</Text>
           </Pressable>
         ) : null}
         <Pressable

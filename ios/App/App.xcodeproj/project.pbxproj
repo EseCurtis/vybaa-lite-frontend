@@ -18,7 +18,33 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
+		A84BAA2FC1A4B2FE7FDF2397 /* RewindNotificationService.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = AD016E5D20F050BEF3179645 /* RewindNotificationService.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		BC4A500E6CF8F1AEA93F8857 /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E1A1848B09F63D2DA1D06C /* NotificationService.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		851162AF2E7ACBCA99D66B32 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EB0EFF7999023B36F529F04A;
+			remoteInfo = RewindNotificationService;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		863A5B4B4EAE6D9583ED00EF /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A84BAA2FC1A4B2FE7FDF2397 /* RewindNotificationService.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		0407193B2F3357D400A056DC /* AppIcon Glass.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "AppIcon Glass.icon"; sourceTree = "<group>"; };
@@ -36,12 +62,23 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		8238021ABC9804417015E25B /* Pods-Vybaa.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vybaa.debug.xcconfig"; path = "Pods/Target Support Files/Pods-Vybaa/Pods-Vybaa.debug.xcconfig"; sourceTree = "<group>"; };
+		A379586A905EFB5F5DB60AA3 /* RewindNotificationService.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = RewindNotificationService.entitlements; sourceTree = "<group>"; };
 		A3FEE159EB276B2289BB33CF /* Pods-Vybaa.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Vybaa.release.xcconfig"; path = "Pods/Target Support Files/Pods-Vybaa/Pods-Vybaa.release.xcconfig"; sourceTree = "<group>"; };
+		AD016E5D20F050BEF3179645 /* RewindNotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RewindNotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B7E1A1848B09F63D2DA1D06C /* NotificationService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
+		BED15D3274FA1721446826ED /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		12C70E66DD5B9C3D1AE01637 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		504EC3011FED79650016851F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -69,6 +106,7 @@
 				504EC3051FED79650016851F /* Products */,
 				7F8756D8B27F46E3366F6CEA /* Pods */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
+				CDCE59E83F785CA1DD43F249 /* RewindNotificationService */,
 			);
 			sourceTree = "<group>";
 		};
@@ -76,6 +114,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* Vybaa.app */,
+				AD016E5D20F050BEF3179645 /* RewindNotificationService.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -110,6 +149,16 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		CDCE59E83F785CA1DD43F249 /* RewindNotificationService */ = {
+			isa = PBXGroup;
+			children = (
+				B7E1A1848B09F63D2DA1D06C /* NotificationService.swift */,
+				BED15D3274FA1721446826ED /* Info.plist */,
+				A379586A905EFB5F5DB60AA3 /* RewindNotificationService.entitlements */,
+			);
+			path = RewindNotificationService;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -122,15 +171,34 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				9592DBEFFC6D2A0C8D5DEB22 /* [CP] Embed Pods Frameworks */,
+				863A5B4B4EAE6D9583ED00EF /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F6CC2BB2BA702B73B65DB0E0 /* PBXTargetDependency */,
 			);
 			name = Vybaa;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* Vybaa.app */;
 			productType = "com.apple.product-type.application";
+		};
+		EB0EFF7999023B36F529F04A /* RewindNotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2A6E21EF508096B624A5C2AC /* Build configuration list for PBXNativeTarget "RewindNotificationService" */;
+			buildPhases = (
+				800D6D5CDBDF59130BA91934 /* Sources */,
+				12C70E66DD5B9C3D1AE01637 /* Frameworks */,
+				F715F5223D1BDFB901BC7ED8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RewindNotificationService;
+			productName = RewindNotificationService;
+			productReference = AD016E5D20F050BEF3179645 /* RewindNotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -144,6 +212,9 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+					};
+					EB0EFF7999023B36F529F04A = {
+						CreatedOnToolsVersion = 26.2;
 					};
 				};
 			};
@@ -164,6 +235,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* Vybaa */,
+				EB0EFF7999023B36F529F04A /* RewindNotificationService */,
 			);
 		};
 /* End PBXProject section */
@@ -181,6 +253,13 @@
 				0407193C2F3357D400A056DC /* AppIcon Glass.icon in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
 				04304F8E2EB7519400554383 /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F715F5223D1BDFB901BC7ED8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -231,7 +310,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		800D6D5CDBDF59130BA91934 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BC4A500E6CF8F1AEA93F8857 /* NotificationService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F6CC2BB2BA702B73B65DB0E0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = RewindNotificationService;
+			target = EB0EFF7999023B36F529F04A /* RewindNotificationService */;
+			targetProxy = 851162AF2E7ACBCA99D66B32 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -253,6 +349,67 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1410ACA71EA9B60C09167624 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = RewindNotificationService/RewindNotificationService.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 52;
+				DEVELOPMENT_TEAM = P5W72DY92P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = RewindNotificationService/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.29.46;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app.RewindNotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		4D94DBE06C78515FD06265D7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = RewindNotificationService/RewindNotificationService.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 52;
+				DEVELOPMENT_TEAM = P5W72DY92P;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = RewindNotificationService/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.29.46;
+				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app.RewindNotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		504EC3141FED79650016851F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -370,7 +527,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 47;
+				CURRENT_PROJECT_VERSION = 52;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vybaa;
@@ -380,7 +537,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.29.41;
+				MARKETING_VERSION = 1.29.46;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -404,7 +561,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 47;
+				CURRENT_PROJECT_VERSION = 52;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vybaa;
@@ -414,7 +571,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.29.41;
+				MARKETING_VERSION = 1.29.46;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -431,6 +588,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		2A6E21EF508096B624A5C2AC /* Build configuration list for PBXNativeTarget "RewindNotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D94DBE06C78515FD06265D7 /* Release */,
+				1410ACA71EA9B60C09167624 /* Debug */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		504EC2FF1FED79650016851F /* Build configuration list for PBXProject "App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

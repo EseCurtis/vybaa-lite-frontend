@@ -6,6 +6,7 @@ export const colors = {
   cardx: '#0f1119',
   'card-light': '#292D3D',
   'card-light-50': '#0f1119',
+  'card-light-100': '#1b1f2b',
   'card-lighter': '#494f66',
   'card-lighter-2': '#6d7490',
   'card-lighter-3': '#848ba6',

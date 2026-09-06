@@ -1,17 +1,74 @@
 import { Icon } from '@iconify/react'
+import { RiChatSmile3Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import type { ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useRewindChats, useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
 import { Moti } from '@/shared/constants.shared'
-import { randomGreetings } from '@/shared/home/home.util.shared'
+import {
+  randomGreetings,
+  randomRewindGreetings,
+  resolveRewindHomePersona,
+} from '@/shared/home/home.util.shared'
 import {
   getRewindPersona,
+  type RewindPersona,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+
+function HomeGreetingSheet({
+  greetingMessage,
+  greetingTitle,
+  onOpenChat,
+  persona,
+}: {
+  greetingMessage: string
+  greetingTitle: string
+  onOpenChat: () => void
+  persona: RewindPersona
+}): ReactElement {
+  return (
+    <View className="gap-5 pb-2 pt-3">
+      <View className="flex-row hidden items-center gap-3">
+        <img
+          alt={`${persona.name} avatar`}
+          className="size-10 rounded-full object-cover"
+          src={persona.avatar}
+        />
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text className="font-mona-sans-x text-xs font-bold text-card-lighter-3">
+            @{persona.name}
+          </Text>
+          {greetingTitle && (
+            <Text className="font-mona-sans-x text-base font-bold text-white">
+              {greetingTitle}
+            </Text>
+          )}
+        </View>
+      </View>
+
+      <View className="rounded-[24px] bg-cardx  py-4 ">
+        <Text className="font-mona-sans-x text-base text-card-lighter-2 font-bold leading-6 text-card-lighter-1">
+          {greetingMessage}
+        </Text>
+      </View>
+
+      <Pressable
+        accessibilityLabel={`Open chat with ${persona.name}`}
+        className="min-h-12 flex-row items-center justify-center gap-2 rounded-full bg-white px-5"
+        onPress={onOpenChat}
+      >
+        <RiChatSmile3Line className="text-cardd" size={18} />
+        <Text className="font-bbh text-sm font-bold text-cardd">Open chat</Text>
+      </Pressable>
+    </View>
+  )
+}
 
 export function HomeGreetings({
   rewindPersona = 'ella',
@@ -19,29 +76,76 @@ export function HomeGreetings({
 }: {
   rewindPersona?: RewindPersonaId | null
   userName: string
-}) {
+}): ReactElement {
   const navigate = useNavigate()
-  const contextualGreetingQuery = useRewindHomeGreeting()
-  const greetings = randomGreetings(userName.split(' ')[0])
-  const emoji = greetings[2]
+  const bottomSheet = useBottomSheet()
+  const chatsQuery = useRewindChats()
+  const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
+  const firstName = userName.trim().split(/\s+/)[0] ?? 'friend'
+  const genericGreetings = randomGreetings(firstName)
   const contextualGreeting = contextualGreetingQuery.data
-  const activePersonaId =
-    contextualGreeting?.personaId ?? rewindPersona ?? 'ella'
+  const activePersonaId = resolveRewindHomePersona(
+    rewindPersona,
+    contextualGreeting?.personaId,
+  )
   const persona = getRewindPersona(activePersonaId)
-  const greetingTitle = contextualGreeting?.title ?? greetings[0]
-  const greetingMessage = contextualGreeting?.message ?? greetings[1]
+  const partnerGreetings = randomRewindGreetings(activePersonaId, firstName)
+  const greetings =
+    rewindPersona || contextualGreeting?.personaId
+      ? partnerGreetings
+      : genericGreetings
+  const emoji = greetings[2]
+  const contextualMessage =
+    contextualGreeting?.personaId === activePersonaId
+      ? contextualGreeting.message
+      : null
+  const greetingTitle = contextualMessage
+    ? contextualGreeting.title
+    : greetings[0]
+  const greetingMessage = contextualMessage ?? greetings[1]
+  const partnerChat = chatsQuery.data?.find(
+    (chat) => chat.type === 'PARTNER' && chat.personaId === activePersonaId,
+  )
+  const chatId =
+    contextualGreeting?.personaId === activePersonaId
+      ? contextualGreeting.chatId
+      : partnerChat?.id
 
-  const openRewind = (): void => {
-    void navigate({ to: '/app/rewind' })
+  const openPartnerChat = (): void => {
+    if (!chatId) {
+      void navigate({ to: '/app/rewind-chats' })
+      return
+    }
+    void navigate({
+      params: { chatId },
+      to: '/app/rewind-chat/$chatId',
+    })
+  }
+
+  const openPartnerChatFromSheet = (): void => {
+    bottomSheet.dismiss()
+    openPartnerChat()
+  }
+
+  const expandGreeting = (): void => {
+    bottomSheet.present(
+      <HomeGreetingSheet
+        greetingMessage={greetingMessage}
+        greetingTitle={greetingTitle}
+        onOpenChat={openPartnerChatFromSheet}
+        persona={persona}
+      />,
+      { title: `@${persona.name} Says.` },
+    )
   }
 
   return (
     <View className="[&_*]:!break-words px-mg text-left py-5 relative ">
       <View className="flex-row-reverse gap-3 items-center">
         <Pressable
-          className="size-12 border-[0.5px] border-white/20  scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative overflow-hidden rounded-[19px] "
+          className="size-10 border-[0.5px] border-white/20  scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative overflow-hidden rounded-full "
           accessibilityLabel={`Open Rewind with ${persona.name}`}
-          onPress={openRewind}
+          onPress={expandGreeting}
         >
           <img
             src={persona.avatar}
@@ -49,7 +153,6 @@ export function HomeGreetings({
             className="size-full  object-cover"
           />
           <Moti.div
-          
             initial={{
               backgroundPosition: '-200% 0%',
             }}
@@ -73,24 +176,39 @@ export function HomeGreetings({
           ></Moti.div>
         </Pressable>
         <Pressable
-          accessibilityLabel={`${greetingTitle}. ${greetingMessage}. Open Rewind`}
+          accessibilityLabel={
+            contextualMessage
+              ? `${greetingMessage}. Open chat with ${persona.name}`
+              : `${greetingTitle}. ${greetingMessage}. Open chat with ${persona.name}`
+          }
           className="relative z-10 max-w-[80%]  h-full my-auto flex-col items-start bg-cardx p-2 px-4 rounded-3xl justify-center"
-          onPress={openRewind}
+          onPress={openPartnerChat}
         >
-          <Text
-            lines={2}
-            className="text-contrast-outline break-words text-wrap font-mona-sans-x block truncate font-bold text-card-lighter-2 text-sm"
-          >
-            {greetingTitle}
-          </Text>
-          <View className="flex-row min-w-0 items-center justify-start gap-2">
+          {contextualMessage ? (
             <Text
-              lines={2}
-              className="text-contrast-outline  leading-tight font-mona-sans-x min-w-0 font-bold text-card-lighter-2 text-sm"
+              lines={4}
+              className="text-contrast-outline min-w-0 font-mona-sans-x text-sm font-bold leading-tight text-card-lighter-2"
             >
               {greetingMessage}
             </Text>
-          </View>
+          ) : (
+            <>
+              <Text
+                lines={1}
+                className="text-contrast-outline block truncate text-wrap break-words font-mona-sans-x text-sm font-bold text-card-lighter-2"
+              >
+                {greetingTitle}
+              </Text>
+              <View className="min-w-0 flex-row items-center justify-start gap-2">
+                <Text
+                  lines={1}
+                  className="text-contrast-outline min-w-0 font-mona-sans-x text-sm font-bold leading-tight text-card-lighter-2"
+                >
+                  {greetingMessage}
+                </Text>
+              </View>
+            </>
+          )}
           <View className="bg-cardx p-3 rounded-full absolute top-3 -right-3"></View>
           <View className="bg-cardx p-1.5 rounded-full absolute top-8 -right-5"></View>
         </Pressable>

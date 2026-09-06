@@ -4,8 +4,10 @@ import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { hapticFeedback } from '@/shared/haptic.util'
+import { shouldAnimate } from '@/shared/utils/animation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { RiCloseCircleFill } from '@remixicon/react'
+import { AnimatePresence, motion } from 'framer-motion'
 import {
   createContext,
   useCallback,
@@ -111,8 +113,6 @@ export const BottomSheetProvider = ({
     setStack([])
   }, [])
 
-  const isOpen = stack.length > 0
-
   const value = useMemo(
     () => ({ present, update, dismiss, dismissAll }),
     [present, update, dismiss, dismissAll],
@@ -121,6 +121,7 @@ export const BottomSheetProvider = ({
   const top = stack[stack.length - 1]
   const topElevation = top?.elevation ?? 12
   const topSize = top?.size ?? 'default'
+  const sheetTitleId = top ? `${top.id}_title` : undefined
   const sheetZIndex = BOTTOM_SHEET_BASE_Z_INDEX + Math.max(2, topElevation)
   const shadow =
     topElevation > 0
@@ -134,42 +135,76 @@ export const BottomSheetProvider = ({
   return (
     <BottomSheetContext.Provider value={value}>
       {children}
-      {isOpen && (
-        <>
-          <div
-            className="fixed top-0 bg-black/60 z-10 inset-0"
-            onClick={dismiss}
-          />
-
-          <div
-            className="fixed  inset-0 max-w-[400px] w-full flex-1 mx-auto"
-            style={{ zIndex: sheetZIndex, top: '0' }}
+      <AnimatePresence initial={false}>
+        {top && (
+          <motion.div
+            key={top.id}
+            className="fixed inset-0 mx-auto w-full max-w-[400px]"
+            style={{ zIndex: sheetZIndex }}
           >
-            <div className="fixed top-0  z-10 inset-0" onClick={dismiss} />
-            <div className="bottom-05-mg z-[10] max-h-[calc(100vh-(var(--safe-area-inset-top)+20px))] flex flex-col absolute left-1/2 !-translate-x-1/2 w-[calc(100%-17px)]">
+            <motion.div
+              aria-hidden
+              className="fixed inset-0 bg-black/60"
+              initial={shouldAnimate ? { opacity: 0 } : false}
+              animate={{ opacity: 1 }}
+              exit={shouldAnimate ? { opacity: 0 } : undefined}
+              transition={{ duration: shouldAnimate ? 0.18 : 0 }}
+              onClick={dismiss}
+            />
+            <div
+              className="fixed inset-0 mx-auto w-full max-w-[400px]"
+              onClick={dismiss}
+            >
               <div
-                className={cn(
-                  'bg-card-light-50 rounded-[30px] rounded-b-[40px] p-5 w-full',
-                  topSize === 'semi-full' && '',
-                )}
-                style={shadow}
+                className="bottom-05-mg pointer-events-none absolute left-1/2 flex max-h-[calc(100vh-(var(--safe-area-inset-top)+20px))] w-[calc(100%-17px)] !-translate-x-1/2 flex-col"
+                onClick={(event) => event.stopPropagation()}
               >
-                <>
+                <motion.div
+                  aria-labelledby={sheetTitleId}
+                  aria-modal="true"
+                  className={cn(
+                    'pointer-events-auto w-full rounded-[30px] rounded-b-[40px] bg-card-light-50 p-5',
+                    topSize === 'semi-full' && '',
+                  )}
+                  initial={
+                    shouldAnimate ? { opacity: 0, scale: 0.985, y: 36 } : false
+                  }
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={
+                    shouldAnimate
+                      ? { opacity: 0, scale: 0.99, y: 28 }
+                      : undefined
+                  }
+                  transition={
+                    shouldAnimate
+                      ? { type: 'spring', stiffness: 360, damping: 34 }
+                      : { duration: 0 }
+                  }
+                  role="dialog"
+                  style={shadow}
+                >
                   <View
                     className={cn(
-                      'flex-row items-center justify-between ',
+                      'flex-row items-center justify-between',
                       isKeyboardVisible && 'mb-7',
                     )}
                   >
-                    {top?.title ? (
-                      <Text className="text-white text-lg font-bold font-bbh">
+                    {top.title ? (
+                      <Text
+                        className="text-lg font-bold font-bbh text-white"
+                        id={sheetTitleId}
+                      >
                         {top.title}
                       </Text>
                     ) : (
                       <View />
                     )}
-                    {top?.title && (
-                      <TouchableOpacity onPress={dismiss}>
+                    {top.title && (
+                      <TouchableOpacity
+                        accessibilityLabel={`Close ${top.title}`}
+                        className="h-11 w-11 items-center justify-center"
+                        onPress={dismiss}
+                      >
                         <RiCloseCircleFill size={27} color="#ffffff" />
                       </TouchableOpacity>
                     )}
@@ -182,15 +217,15 @@ export const BottomSheetProvider = ({
                         : 'max-h-[70vh]',
                     )}
                   >
-                    {top?.content}
+                    {top.content}
                   </View>
-                </>
-                <BottomNotchPadd />
+                  <BottomNotchPadd />
+                </motion.div>
               </div>
             </div>
-          </div>
-        </>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </BottomSheetContext.Provider>
   )
 }

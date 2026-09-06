@@ -13,6 +13,10 @@ const versionFiles = new Set([
   'ios/App/App.xcodeproj/project.pbxproj',
 ])
 
+if (process.env.SKIP_APP_VERSION_BUMP === '1') {
+  process.exit(0)
+}
+
 const stagedFiles = execFileSync(
   'git',
   ['diff', '--cached', '--name-only', '--diff-filter=ACMRT'],
@@ -99,8 +103,12 @@ function incrementIosVersion(contents) {
   const buildMatches = [...contents.matchAll(buildPattern)]
   const marketingMatches = [...contents.matchAll(marketingPattern)]
 
-  if (buildMatches.length !== 2 || marketingMatches.length !== 2) {
-    throw new Error('Expected debug and release iOS version fields.')
+  if (
+    buildMatches.length < 2 ||
+    marketingMatches.length < 2 ||
+    buildMatches.length !== marketingMatches.length
+  ) {
+    throw new Error('Expected matching app and extension iOS version fields.')
   }
 
   let nextContents = contents.replace(

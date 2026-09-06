@@ -41,11 +41,20 @@ describe('normalizeDeepLink', () => {
     })
   })
 
+  it('opens a Rewind chat from a notification route', () => {
+    expect(
+      normalizeDeepLink('https://vybaa.app/app/rewind-chat/chat_123'),
+    ).toEqual({
+      chatId: 'chat_123',
+      path: '/app/rewind-chat/chat_123',
+      requiresAuth: true,
+      route: 'rewindChat',
+    })
+  })
+
   it('preserves a goal id from a reminder route', () => {
     expect(
-      normalizeDeepLink(
-        'https://vybaa.app/app/goal?goalId=goal_2026-reminder',
-      ),
+      normalizeDeepLink('https://vybaa.app/app/goal?goalId=goal_2026-reminder'),
     ).toEqual({
       goalId: 'goal_2026-reminder',
       path: '/app/goal',

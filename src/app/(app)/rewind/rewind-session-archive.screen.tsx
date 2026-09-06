@@ -48,14 +48,15 @@ export default function RewindSessionArchiveScreen(): ReactElement {
         <TabHeader
           canGoBack
           onBack={() => navigate({ replace: true, to: '/app/rewind-history' })}
-          title="Transcript history"
+          title="Reflections"
         />
 
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
           <View className="mx-auto w-full max-w-3xl gap-5">
             <View className="gap-1 px-1">
               <Text className="muted font-bbh text-sm leading-6">
-                Your saved conversations, in the order they happened.
+                Your saved Rewinds, grouped by day. Reflections from the same
+                day share one daily observation.
               </Text>
             </View>
 
@@ -97,17 +98,15 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                 ))}
 
                 {hasNextPage ? (
-                  <View className="px-1 py-2 flex-row justify-center">
+                  <View className="flex-row justify-center px-1 py-2">
                     <Button
                       disabled={isFetchingNextPage}
                       label={isFetchingNextPage ? 'Loading…' : 'Load more'}
                       onClick={() => {
                         void fetchNextPage()
                       }}
-                    
                       variant="secondary"
-                     className='!py-3  !h-auto'
-
+                      className="!h-auto !py-3"
                     />
                   </View>
                 ) : null}

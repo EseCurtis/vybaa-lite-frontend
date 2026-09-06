@@ -1,10 +1,12 @@
 import { BottomNotch } from '@/components/common/notch.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
+import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import { hapticFeedback } from '@/shared/haptic.util'
 //import { shouldAnimate } from '@/shared/utils/animation.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
@@ -24,8 +26,21 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { data: unreadCount } = useUnreadCount()
+  const dueGoals = useInfiniteGoals({ filter: 'DUE' })
+  const overdueGoals = useInfiniteGoals({ filter: 'OVERDUE' })
   const { isVisible } = useTabBarController()
   const { user } = useAuth()
+  const goalAttentionCount = useMemo(() => {
+    const attentionGoalIds = new Set<string>()
+    for (const data of [dueGoals.data, overdueGoals.data]) {
+      for (const page of data?.pages ?? []) {
+        for (const goal of page.data) {
+          if (goalNeedsAttention(goal)) attentionGoalIds.add(goal.id)
+        }
+      }
+    }
+    return attentionGoalIds.size
+  }, [dueGoals.data, overdueGoals.data])
 
   const tabs = useMemo(
     () =>
@@ -45,7 +60,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           icon: Icons.Target,
           label: 'Goals',
           isSpecial: false,
-          badge: null,
+          badge: goalAttentionCount,
           matchAllRoot: true,
           enabled: true,
         },
@@ -98,7 +113,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           matchAllRoot: true,
         },
       ].filter((tab) => tab.enabled !== false), // Filter out disabled tabs
-    [unreadCount, user],
+    [goalAttentionCount, unreadCount, user],
   )
 
   const isActiveTab = useCallback(
@@ -179,7 +194,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
               }
               const accessibilityLabel = tab.isSpecial
                 ? 'Create a new goal'
-                : `Navigate to ${tab.label || tab.id} tab`
+                : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} goals need attention` : ''}`
               const accessibilityHint = tab.isSpecial
                 ? 'Double tap to create a new goal'
                 : `Double tap to switch to ${tab.label || tab.id} screen`
@@ -238,7 +253,6 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                     accessibilityHint={accessibilityHint}
                     testID={`tab-${tab.id}`}
                   >
-                   
                     <>
                       {/* Icon with animation */}
                       <Moti.div
@@ -276,12 +290,14 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           className="relative z-10"
                         />
                         {/* Notification Badge */}
-                        {tab.badge && tab.badge > 0 && (
-                          <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                            <Text className="text-white text-[10px] font-bbh font-bold">
-                              {tab.badge > 99 ? '99+' : tab.badge}
-                            </Text>
-                          </View>
+                        {typeof tab.badge === 'number' && tab.badge > 0 && (
+                          <span
+                            aria-label={`${tab.badge} goals need attention`}
+                            className="absolute z-10 flex items-center justify-center -right-2 -top-2 min-w-5 h-5 rounded-full bg-danger-500 px-1 text-center text-[10px] leading-5 font-bold text-white"
+                            role="status"
+                          >
+                            {tab.badge > 99 ? '99+' : tab.badge}
+                          </span>
                         )}
                         <Text
                           style={{

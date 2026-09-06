@@ -1,5 +1,17 @@
-export type RewindPersonaId = 'ella' | 'lyra' | 'jake' | 'ariel'
-export type RewindPersonaIcon = 'emotion' | 'flashlight' | 'moon' | 'water'
+export type RewindPersonaId =
+  | 'ella'
+  | 'lyra'
+  | 'jake'
+  | 'ariel'
+  | 'tobi'
+  | 'neeja'
+export type RewindPersonaIcon =
+  | 'emotion'
+  | 'flashlight'
+  | 'moon'
+  | 'water'
+  | 'chat'
+  | 'pulse'
 
 export type RewindPersona = {
   avatar: string
@@ -18,8 +30,9 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     id: 'ella',
     icon: 'emotion',
     name: 'Ella',
-    perspective: 'Notices feelings beneath the surface',
-    welcome: 'A gentle space to hear what your day felt like.',
+    perspective: 'Feels things deeply and says what they stir up',
+    welcome:
+      'Bring the messy feelings. Ella will not pretend they are not there.',
   },
   {
     avatar: '/assets/rewind/lyra.png',
@@ -27,8 +40,8 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     id: 'lyra',
     icon: 'moon',
     name: 'Lyra',
-    perspective: 'Sees patterns, meaning, and quiet shifts',
-    welcome: 'Step back and notice what your day may be showing you.',
+    perspective: 'Keeps it low-key and cuts through the drama',
+    welcome: 'No big performance. Say what happened and let it breathe.',
   },
   {
     avatar: '/assets/rewind/jake.png',
@@ -36,8 +49,8 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     id: 'jake',
     icon: 'flashlight',
     name: 'Jake',
-    perspective: 'Spots decisions, momentum, and next moves',
-    welcome: 'Talk it through clearly and leave with what matters.',
+    perspective: 'Says the uncomfortable truth without dressing it up',
+    welcome: 'Expect the straight answer, even when it stings a little.',
   },
   {
     avatar: '/assets/rewind/ariel.png',
@@ -45,8 +58,30 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     id: 'ariel',
     icon: 'water',
     name: 'Ariel',
-    perspective: 'Finds resilience, balance, and possibility',
-    welcome: 'Unwind the day and reconnect with your steadier side.',
+    perspective: 'Shows up like the older sibling who has your back',
+    welcome: 'Support, perspective, and a reality check when you need one.',
+  },
+  {
+    avatar: '/assets/rewind/tobi.png',
+    color: '#316BC7',
+    id: 'tobi',
+    icon: 'chat',
+    name: 'Tobi',
+    perspective:
+      'Brings playful banter and still catches what is really going on',
+    welcome:
+      'Say it how it happened. Tobi will keep it real without killing the vibe.',
+  },
+  {
+    avatar: '/assets/rewind/neeja.png',
+    color: '#A33C58',
+    id: 'neeja',
+    icon: 'pulse',
+    name: 'Neeja',
+    perspective:
+      'Reads the room, notices the subtext, and asks the useful question',
+    welcome:
+      'Bring the full story. Neeja notices the part everyone else skipped.',
   },
 ]
 

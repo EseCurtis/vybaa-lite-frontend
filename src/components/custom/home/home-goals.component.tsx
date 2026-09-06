@@ -29,7 +29,8 @@ function HomeGoalItem({
         backgroundColor: color,
       }}
       onPress={onOpen}
-      className=" snap-center  max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2  pr-4 shrink-0"
+      accessibilityLabel={title}
+      className="relative snap-center max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2 pr-4 shrink-0"
     >
       <GoalDurationPill currentDay={0} label={progressLabel} targetDays={0} />
       <Text className="limit-text-to-two-lines text-black leading-tight text-sm max-w-[80vw] text-ellipsis overflow-hidden text-left">

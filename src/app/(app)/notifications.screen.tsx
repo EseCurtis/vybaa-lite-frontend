@@ -12,12 +12,14 @@ import {
   useNotifications,
 } from '@/hooks/use-notifications.hook'
 import type { Notification } from '@/shared/api/notification.api'
-import { getPushNotificationRoute } from '@/shared/notifications/in-app-notification.util'
+import {
+  getNotificationSender,
+  getPushNotificationRoute,
+} from '@/shared/notifications/in-app-notification.util'
 import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
 import { normalizeDeepLink } from '@/shared/utils/deep-link.util'
 import { Dimensions } from '@/shared/utils/dimensions.util'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { Icon } from '@iconify/react'
+import { RiNotification3Line } from '@remixicon/react'
 import { useRouter } from '@tanstack/react-router'
 import moment from 'moment'
 import { useEffect, useState, type ReactElement } from 'react'
@@ -42,33 +44,6 @@ function mergeNotifications(
   return [...mergedNotifications, ...appendedNotifications]
 }
 
-function getNotificationIconEmoji(notification: Notification): string {
-  if (
-    notification.type === 'system' &&
-    notification.title?.includes('Streak Reset')
-  ) {
-    return '⚠️'
-  }
-
-  if (notification.type === 'goal_completed') {
-    return '🎉'
-  }
-
-  if (notification.type === 'goal_reminder') {
-    return '⏰'
-  }
-
-  if (notification.type === 'streak_milestone') {
-    return '🔥'
-  }
-
-  if (notification.type === 'system') {
-    return '📢'
-  }
-
-  return '🔔'
-}
-
 function formatNotificationDate(dateString: string): string {
   return moment(dateString).fromNow()
 }
@@ -82,12 +57,12 @@ function NotificationItem({
   onDelete: (id: string) => void
   onOpen: (notification: Notification) => void
 }): ReactElement {
+  const sender = getNotificationSender(notification.data, notification.type)
+
   return (
     <div
-      className={`mb-3 cursor-pointer p-4 !active:opacity-50 ${
-        !notification.isRead
-          ? 'rounded-2xl bg-cardx'
-          : 'border-b border-card-light/20'
+      className={`mb-3 cursor-pointer rounded-2xl p-4 !active:opacity-50 ${
+        !notification.isRead ? 'bg-card-light-50' : 'bg-card-light'
       }`}
       onClick={() => onOpen(notification)}
       onKeyDown={(event) => {
@@ -99,11 +74,17 @@ function NotificationItem({
       tabIndex={0}
     >
       <View className="flex flex-row items-start gap-3">
-        <Icon
-          icon={getEmojiIcon(getNotificationIconEmoji(notification))}
-          className="text-white shrink-0"
-          style={{ fontSize: '32px' }}
-        />
+        {sender ? (
+          <img
+            alt={`${sender.name} avatar`}
+            className="aspect-square h-11 w-11 shrink-0 rounded-full object-cover"
+            src={sender.avatarUrl}
+          />
+        ) : (
+          <View className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card-light-50">
+            <RiNotification3Line aria-hidden size={24} color="#ffffff" />
+          </View>
+        )}
 
         <View className="flex-1">
           <Text
@@ -112,10 +93,7 @@ function NotificationItem({
           >
             {notification.title}
           </Text>
-          <Text
-            className={`text-xs mb-2 ${notification.isRead ? 'text-card-lighter-3/70' : 'text-card-lighter-3'}`}
-            lines={2}
-          >
+          <Text className="mb-2 text-xs text-card-lighter-3" lines={2}>
             {notification.message}
           </Text>
         </View>
@@ -127,8 +105,9 @@ function NotificationItem({
                 event.stopPropagation()
                 onDelete(notification.id)
               }}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
+              className="h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-card-light-50"
               title="Delete"
+              aria-label={`Delete notification from ${sender?.name ?? 'Vybaa'}`}
             >
               <Icons.Trash size="sm" color="#ef4444" />
             </button>
@@ -229,15 +208,15 @@ export default function NotificationsScreen(): ReactElement {
           </View>
         ) : notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Icon
-              icon={getEmojiIcon('🔔')}
-              className="text-white/60 mb-4"
-              style={{ fontSize: '64px' }}
+            <RiNotification3Line
+              aria-hidden
+              className="mb-4 text-card-lighter-2"
+              size={64}
             />
-            <Text className="text-white/60 text-lg font-bbh text-center">
+            <Text className="text-card-lighter-2 text-lg font-bbh text-center">
               No notifications yet
             </Text>
-            <Text className="text-white/40 text-sm font-bbh text-center mt-2">
+            <Text className="text-card-lighter-3 text-sm font-bbh text-center mt-2">
               You'll see updates about your goals here
             </Text>
           </View>
