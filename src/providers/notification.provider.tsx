@@ -190,6 +190,15 @@ export function NotificationProvider({
 
       if (
         event.type === 'chat_invalidated' ||
+        event.type === 'message_committed'
+      ) {
+        void queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        })
+      }
+
+      if (
+        event.type === 'chat_invalidated' ||
         event.type === 'user_message_committed' ||
         event.type === 'run_failed' ||
         (event.type === 'run_state' &&
@@ -215,9 +224,14 @@ export function NotificationProvider({
     const client = new RealtimeSocketClient({
       onConnected: () => {
         setIsConnected(true)
-        void queryClient.invalidateQueries({
-          queryKey: rewindQueryKeys.chats(),
-        })
+        void Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: rewindQueryKeys.chats(),
+          }),
+          queryClient.invalidateQueries({
+            queryKey: rewindQueryKeys.homeGreeting(),
+          }),
+        ])
       },
       onDisconnected: () => setIsConnected(false),
       onNotification: handleRealtimeNotification,

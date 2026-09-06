@@ -253,6 +253,53 @@ export function useMuteRewindChat(chatId: string) {
   })
 }
 
+export function useRenameRewindChat(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (title: string) => rewindAPI.renameV2Chat(chatId, title),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() })
+    },
+  })
+}
+
+export function useDeleteRewindChatMessage(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (messageId: string) =>
+      rewindAPI.deleteV2ChatMessage(chatId, messageId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        }),
+      ])
+    },
+  })
+}
+
+export function useClearRewindChat(chatId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => rewindAPI.clearV2Chat(chatId),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.chatMessages(chatId),
+        }),
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.chats() }),
+        queryClient.invalidateQueries({
+          queryKey: rewindQueryKeys.homeGreeting(),
+        }),
+      ])
+    },
+  })
+}
+
 export function useSendRewindChatMessage(chatId: string) {
   const queryClient = useQueryClient()
 

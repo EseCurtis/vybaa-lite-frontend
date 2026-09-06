@@ -3,7 +3,10 @@ import {
   RiCheckDoubleLine,
   RiCheckLine,
   RiCloseLine,
+  RiDeleteBinLine,
+  RiEditLine,
   RiEmotionHappyLine,
+  RiMore2Line,
   RiNotificationLine,
   RiNotificationOffLine,
   RiReplyLine,
@@ -21,17 +24,22 @@ import {
   type RefObject,
 } from 'react'
 
+import { Input } from '@/components/common/input.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { useKeyboard } from '@/components/layout/keyboard-avoiding-view.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
+  useClearRewindChat,
+  useDeleteRewindChatMessage,
   useEnqueueRewindChatMessage,
   useMarkRewindChatRead,
   useMuteRewindChat,
   useReactToRewindChatMessage,
+  useRenameRewindChat,
   useRewindChatMessages,
   useRewindChats,
 } from '@/hooks/use-rewind.hook'
@@ -122,7 +130,7 @@ function messagesBelongTogether(
   return Math.abs(currentTime - adjacentTime) < 5 * 60 * 1000
 }
 
-const MENTION_PATTERN = /(@(?:ella|lyra|jake|ariel)\b)/gi
+const MENTION_PATTERN = /(@(?:ella|lyra|jake|ariel|tobi|neeja)\b)/gi
 const COMPOSER_MAX_HEIGHT = 128
 const READ_RECEIPT_COLOR = '#53bdeb'
 const REACTION_PICKER_HEIGHT = 52
@@ -245,7 +253,7 @@ function MentionText({
   return (
     <Text className={cn(className, 'break-words')} style={style}>
       {segments.map((segment, index) => {
-        const isMention = /^@(ella|lyra|jake|ariel)$/i.test(segment)
+        const isMention = /^@(ella|lyra|jake|ariel|tobi|neeja)$/i.test(segment)
         return isMention ? (
           <span className="font-black" key={`${segment}-${index}`}>
             {segment}
@@ -265,6 +273,7 @@ function ChatMessageBubble({
   isGroup,
   message,
   onReply,
+  onDelete,
   onShowReactions,
   onToggleReactionPicker,
   replyTo,
@@ -274,9 +283,10 @@ function ChatMessageBubble({
   deliveryStatus?: MessageDeliveryStatus
   isReactionOverlayOpen: boolean
   isReactionPickerOpen: boolean
-  isGroup?: boolean;
+  isGroup?: boolean
   message: RewindChatMessage
   onReply: (message: RewindChatMessage) => void
+  onDelete: (message: RewindChatMessage) => void
   onShowReactions: (message: RewindChatMessage) => void
   onToggleReactionPicker: (
     message: RewindChatMessage,
@@ -312,15 +322,16 @@ function ChatMessageBubble({
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
       <View className="max-w-[85%]  overflow-hidden flex-row items-end gap-2">
-        { isGroup &&(!isUser && persona && showIdentity? (
-          <img
-            alt={`${persona.name} avatar`}
-            className="size-7 shrink-0 rounded-full object-cover"
-            src={persona.avatar}
-          />
-        ) : !isUser ? (
-          <View className="w-7 shrink-0" />
-        ) : null)}
+        {isGroup &&
+          (!isUser && persona && showIdentity ? (
+            <img
+              alt={`${persona.name} avatar`}
+              className="size-7 shrink-0 rounded-full object-cover"
+              src={persona.avatar}
+            />
+          ) : !isUser ? (
+            <View className="w-7 shrink-0" />
+          ) : null)}
         <View className={`gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
           {!isUser && persona && showIdentity ? (
             <Text
@@ -336,11 +347,10 @@ function ChatMessageBubble({
             <motion.button
               aria-label={`Reply to ${getReplyAuthor(message)}`}
               className={cn(
-                 'flex   appearance-none w-full  flex-col gap-1 rounded-[11px] px-1 py-1 text-left',
+                'flex   appearance-none w-full  flex-col gap-1 rounded-[11px] px-1 py-1 text-left',
                 isUser
                   ? ' rounded-br-md bg-accent-700'
                   : 'rounded-bl-md bg-card-light',
-               
               )}
               onClick={() => onReply(message)}
               ref={bubbleRef}
@@ -418,6 +428,14 @@ function ChatMessageBubble({
                 }
                 size={16}
               />
+            </Pressable>
+
+            <Pressable
+              accessibilityLabel={`Delete ${getReplyAuthor(message)}'s message`}
+              className="size-11 shrink-0 items-center justify-center rounded-full bg-cardx"
+              onPress={() => onDelete(message)}
+            >
+              <RiDeleteBinLine className="text-card-lighter-3" size={16} />
             </Pressable>
 
             {reactions.length ? (
@@ -723,6 +741,7 @@ export default function RewindChatScreen({
 }: {
   chatId: string
 }): ReactElement {
+  const { isKeyboardVisible } = useKeyboard()
   const [composerValue, setComposerValue] = useState('')
   const [mentionsOpen, setMentionsOpen] = useState(false)
   const [pendingMessages, setPendingMessages] = useState<PendingMessageState[]>(
@@ -745,6 +764,11 @@ export default function RewindChatScreen({
   const [seenMessageIds, setSeenMessageIds] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
   )
+  const [hiddenMessageIds, setHiddenMessageIds] = useState<ReadonlySet<string>>(
+    () => new Set<string>(),
+  )
+  const [chatMenuOpen, setChatMenuOpen] = useState(false)
+  const [chatTitleDraft, setChatTitleDraft] = useState('')
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null)
   const firstReactionOptionRef = useRef<HTMLButtonElement | null>(null)
   const reactionDetailsCloseRef = useRef<HTMLButtonElement | null>(null)
@@ -763,6 +787,9 @@ export default function RewindChatScreen({
   const markReadMutation = useMarkRewindChatRead(chatId)
   const muteMutation = useMuteRewindChat(chatId)
   const reactionMutation = useReactToRewindChatMessage(chatId)
+  const deleteMessageMutation = useDeleteRewindChatMessage(chatId)
+  const clearChatMutation = useClearRewindChat(chatId)
+  const renameChatMutation = useRenameRewindChat(chatId)
   const shouldReduceMotion = useReducedMotion()
   const { isConnected, subscribeRewindChat } = useNotificationContext()
   const chat = chatsQuery.data?.find((item) => item.id === chatId)
@@ -771,11 +798,16 @@ export default function RewindChatScreen({
   const pages = messagesQuery.data?.pages ?? []
   for (let index = pages.length - 1; index >= 0; index -= 1) {
     const page = pages[index]
-    if (page) messages.push(...page.items)
+    if (page) {
+      messages.push(
+        ...page.items.filter((message) => !hiddenMessageIds.has(message.id)),
+      )
+    }
   }
   const knownMessageIds = new Set(messages.map((message) => message.id))
   const visibleStreamMessages = streamMessages.filter(
-    (message) => !knownMessageIds.has(message.id),
+    (message) =>
+      !knownMessageIds.has(message.id) && !hiddenMessageIds.has(message.id),
   )
 
   useEffect(() => {
@@ -1090,6 +1122,72 @@ export default function RewindChatScreen({
     composerInputRef.current?.focus({ preventScroll: true })
   }
 
+  const deleteMessage = (message: RewindChatMessage): void => {
+    if (!window.confirm('Delete this message? This cannot be undone.')) return
+    setHiddenMessageIds((current) => new Set([...current, message.id]))
+    if (replyingToMessage?.id === message.id) setReplyingToMessage(null)
+    setReactionDetailsMessageId(null)
+    setReactionPickerState(null)
+    void deleteMessageMutation
+      .mutateAsync(message.id)
+      .catch((error: unknown) => {
+        setHiddenMessageIds((current) => {
+          const next = new Set(current)
+          next.delete(message.id)
+          return next
+        })
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Message could not be deleted',
+        )
+      })
+  }
+
+  const renameGroupChat = (): void => {
+    const title = chatTitleDraft.trim()
+    if (!title || title === chat?.title) return
+    void renameChatMutation
+      .mutateAsync(title)
+      .then(() => {
+        setChatMenuOpen(false)
+        toast.success('Group name updated')
+      })
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : 'Group name could not update',
+        )
+      })
+  }
+
+  const clearChat = (): void => {
+    if (
+      !window.confirm(
+        'Clear every message in this chat? This cannot be undone.',
+      )
+    )
+      return
+    void clearChatMutation
+      .mutateAsync()
+      .then(() => {
+        setChatMenuOpen(false)
+        setPendingMessages([])
+        setStreamMessages([])
+        setStreamingPartners([])
+        setReplyingToMessage(null)
+        setReactionUpdates(new Map())
+        setHiddenMessageIds(new Set())
+        toast.success('Chat cleared')
+      })
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error ? error.message : 'Chat could not be cleared',
+        )
+      })
+  }
+
   const reactToMessage = (
     message: RewindChatMessage,
     selectedKind: RewindChatReactionKind,
@@ -1186,30 +1284,44 @@ export default function RewindChatScreen({
           <TabHeader
             canGoBack
             children={
-              <Pressable
-                accessibilityLabel={
-                  chat?.proactiveMuted
-                    ? 'Unmute partner messages'
-                    : 'Mute partner messages'
-                }
-                className="size-10 items-center justify-center rounded-full bg-card-light"
-                disabled={muteMutation.isPending || !chat}
-                onPress={() => {
-                  if (chat) muteMutation.mutate(!chat.proactiveMuted)
-                }}
-              >
-                {chat?.proactiveMuted ? (
-                  <RiNotificationOffLine
-                    size={18}
-                    className="text-card-lighter-1"
-                  />
-                ) : (
-                  <RiNotificationLine
-                    size={18}
-                    className="text-card-lighter-1"
-                  />
-                )}
-              </Pressable>
+              <View className="flex-row items-center gap-1">
+                <Pressable
+                  accessibilityLabel={
+                    chat?.proactiveMuted
+                      ? 'Unmute partner messages'
+                      : 'Mute partner messages'
+                  }
+                  className="size-11 items-center justify-center rounded-full bg-card-light"
+                  disabled={muteMutation.isPending || !chat}
+                  onPress={() => {
+                    if (chat) muteMutation.mutate(!chat.proactiveMuted)
+                  }}
+                >
+                  {chat?.proactiveMuted ? (
+                    <RiNotificationOffLine
+                      size={18}
+                      className="text-card-lighter-1"
+                    />
+                  ) : (
+                    <RiNotificationLine
+                      size={18}
+                      className="text-card-lighter-1"
+                    />
+                  )}
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Chat settings"
+                  aria-expanded={chatMenuOpen}
+                  className="size-11 items-center justify-center rounded-full bg-card-light"
+                  disabled={!chat}
+                  onPress={() => {
+                    setChatTitleDraft(chat?.title ?? '')
+                    setChatMenuOpen(true)
+                  }}
+                >
+                  <RiMore2Line className="text-card-lighter-1" size={20} />
+                </Pressable>
+              </View>
             }
             title={
               chat ? (
@@ -1323,6 +1435,7 @@ export default function RewindChatScreen({
                             reactionPickerState?.messageId === message.id
                           }
                           message={displayedMessage}
+                          onDelete={deleteMessage}
                           onReply={beginReply}
                           onShowReactions={showReactionDetails}
                           onToggleReactionPicker={toggleReactionPicker}
@@ -1333,7 +1446,7 @@ export default function RewindChatScreen({
                           }
                           showIdentity={showIdentity}
                           showTime={showTime}
-                          isGroup={!(chat?.personaId )}
+                          isGroup={!chat?.personaId}
                         />
                       </View>
                     </Fragment>
@@ -1383,6 +1496,7 @@ export default function RewindChatScreen({
                           }
                         : message
                     }
+                    onDelete={deleteMessage}
                     onReply={beginReply}
                     onShowReactions={showReactionDetails}
                     onToggleReactionPicker={toggleReactionPicker}
@@ -1402,7 +1516,14 @@ export default function RewindChatScreen({
             </View>
           </div>
 
-          <View className="shrink-0 gap-2 bg-cardx px-mg pb-[calc(var(--safe-area-inset-bottom,0px)+12px)] pt-3">
+          <View
+            className={cn(
+              'shrink-0 gap-2 bg-cardx px-mg pt-3',
+              isKeyboardVisible
+                ? 'pb-3'
+                : 'pb-[calc(var(--safe-area-inset-bottom,0px)+12px)]',
+            )}
+          >
             <AnimatePresence initial={false}>
               {chat?.type === 'GROUP' && mentionsOpen ? (
                 <motion.div
@@ -1568,6 +1689,110 @@ export default function RewindChatScreen({
                 onClose={() => setReactionDetailsMessageId(null)}
                 reduceMotion={Boolean(shouldReduceMotion)}
               />
+            ) : null}
+          </AnimatePresence>
+          <AnimatePresence initial={false}>
+            {chatMenuOpen ? (
+              <>
+                <motion.button
+                  animate={{ opacity: 1 }}
+                  aria-label="Close chat settings"
+                  className="fixed inset-0 z-40 cursor-default appearance-none bg-transparent"
+                  exit={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                  onClick={() => setChatMenuOpen(false)}
+                  style={{
+                    backdropFilter: 'brightness(0.32)',
+                    WebkitBackdropFilter: 'brightness(0.32)',
+                  }}
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
+                  type="button"
+                />
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  aria-label="Chat settings"
+                  aria-modal="true"
+                  className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[28px] bg-cardd px-mg pb-[calc(var(--safe-area-inset-bottom,0px)+20px)] pt-4 shadow-2xl"
+                  exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
+                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
+                  role="dialog"
+                  transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+                >
+                  <View className="mx-auto w-full max-w-lg gap-4">
+                    <View className="flex-row items-center justify-between">
+                      <View className="items-start">
+                        <Text className="font-bbh text-lg font-black text-white">
+                          Chat settings
+                        </Text>
+                        <Text className="font-bbh text-xs text-card-lighter-3">
+                          Manage this conversation
+                        </Text>
+                      </View>
+                      <Pressable
+                        accessibilityLabel="Close chat settings"
+                        className="size-11 items-center justify-center rounded-full bg-cardx"
+                        onPress={() => setChatMenuOpen(false)}
+                      >
+                        <RiCloseLine
+                          className="text-card-lighter-2"
+                          size={19}
+                        />
+                      </Pressable>
+                    </View>
+
+                    {chat?.type === 'GROUP' ? (
+                      <View className="gap-2 rounded-2xl bg-cardx p-3">
+                        <Input
+                          aria-label="Group name"
+                          className="bg-card-light"
+                          inputClassName="text-base"
+                          maxLength={60}
+                          onChange={(event) =>
+                            setChatTitleDraft(event.target.value)
+                          }
+                          value={chatTitleDraft}
+                        />
+                        <Pressable
+                          accessibilityLabel="Save group name"
+                          className="min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-white px-4"
+                          disabled={
+                            renameChatMutation.isPending ||
+                            !chatTitleDraft.trim() ||
+                            chatTitleDraft.trim() === chat.title
+                          }
+                          onPress={renameGroupChat}
+                        >
+                          <RiEditLine className="text-cardd" size={17} />
+                          <Text className="font-bbh text-sm font-black text-cardd">
+                            Save group name
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : null}
+
+                    <View className="gap-2 rounded-2xl bg-cardx p-3">
+                      <Text className="font-bbh text-sm font-black text-danger-400">
+                        Clear conversation
+                      </Text>
+                      <Text className="font-bbh text-xs leading-5 text-card-lighter-2">
+                        Deletes every message here and stops replies already in
+                        progress. This cannot be undone.
+                      </Text>
+                      <Pressable
+                        accessibilityLabel="Clear every chat message"
+                        className="min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-danger-500 px-4"
+                        disabled={clearChatMutation.isPending}
+                        onPress={clearChat}
+                      >
+                        <RiDeleteBinLine className="text-white" size={17} />
+                        <Text className="font-bbh text-sm font-black text-white">
+                          Clear chat
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                </motion.div>
+              </>
             ) : null}
           </AnimatePresence>
         </View>
