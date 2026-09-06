@@ -75,7 +75,9 @@ const REWIND_PERSONA_ICONS: Record<
 > = {
   emotion: RiEmotionHappyLine,
   flashlight: RiFlashlightLine,
+  chat: RiChat3Line,
   moon: RiMoonClearLine,
+  pulse: RiPulseLine,
   water: RiWaterFlashLine,
 }
 

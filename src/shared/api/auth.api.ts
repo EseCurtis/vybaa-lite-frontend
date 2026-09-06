@@ -145,7 +145,7 @@ class AuthAPI {
     lastName?: string
     username?: string
     profileImageId?: string
-    rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | null
+    rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | 'tobi' | 'neeja' | null
     rewindPersonalizationEnabled?: boolean
     rewindProactiveChatEnabled?: boolean
     rewindProactiveChatExplainedAt?: string | null

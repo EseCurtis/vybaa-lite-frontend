@@ -285,8 +285,10 @@ export type RewindObservation = {
 }
 
 export type RewindHomeGreeting = {
-  date: string
-  message: string
+  chatId: string
+  date: string | null
+  message: string | null
+  messageId: string | null
   personaId: RewindPersonaId | null
   sourceTypes: RewindActivitySource[]
   title: string
@@ -489,7 +491,9 @@ function isRewindPersonaId(value: unknown): value is RewindPersonaId {
     value === 'ariel' ||
     value === 'ella' ||
     value === 'jake' ||
-    value === 'lyra'
+    value === 'lyra' ||
+    value === 'tobi' ||
+    value === 'neeja'
   )
 }
 
@@ -849,6 +853,38 @@ class RewindAPI {
     await http.patch(`${API_V2}/rewind/chats/${chatId}/preferences`, {
       proactiveMuted,
     })
+  }
+
+  async renameV2Chat(
+    chatId: string,
+    title: string,
+  ): Promise<{ data: { title: string }; msg: string }> {
+    const { data: response } = await http.patch<{
+      data: { title: string }
+      msg: string
+    }>(`${API_V2}/rewind/chats/${chatId}`, { title })
+    return response
+  }
+
+  async deleteV2ChatMessage(
+    chatId: string,
+    messageId: string,
+  ): Promise<{ data: { deletedCount: number }; msg: string }> {
+    const { data: response } = await http.delete<{
+      data: { deletedCount: number }
+      msg: string
+    }>(`${API_V2}/rewind/chats/${chatId}/messages/${messageId}`)
+    return response
+  }
+
+  async clearV2Chat(
+    chatId: string,
+  ): Promise<{ data: { deletedCount: number }; msg: string }> {
+    const { data: response } = await http.delete<{
+      data: { deletedCount: number }
+      msg: string
+    }>(`${API_V2}/rewind/chats/${chatId}/messages`)
+    return response
   }
 
   async getV2ChatLiveState(

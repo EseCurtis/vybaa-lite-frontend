@@ -47,7 +47,7 @@ export interface User {
   username?: string
   avatarUrl?: string
   currentMood?: string
-  rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
+  rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | 'tobi' | 'neeja'
   rewindPersonaCanChange?: boolean
   rewindPersonaNextChangeAt?: string
   rewindPersonalizationEnabled?: boolean
