@@ -216,12 +216,12 @@ function GoalEmptyState({
   title: string
 }) {
   return (
-    <View className="items-center rounded-3xl bg-card-light-50 px-6 py-12 text-center">
+    <View className="items-center rounded-lg bg-card-light-50 px-6 py-12 text-center">
       <View className="mb-4 size-12 items-center justify-center rounded-2xl bg-card-light">
         {icon}
       </View>
       <Text className="text-lg font-bold">{title}</Text>
-      <Text className="mt-2 max-w-xs text-center text-sm leading-5 text-card-lighter-2">
+      <Text className="mt-2 max-w-xs !text-center text-sm leading-5 text-card-lighter-2">
         {description}
       </Text>
       {actionLabel && onAction ? (
@@ -367,14 +367,11 @@ export default function GoalsAppScreen() {
     tab === 'Paused' ? 'PAUSED' : tab === 'Ended' ? endedFilter : activeFilter
 
   return (
-    <View className="flex-1 min-h-0 bg-cardd">
+    <View className="flex-1 min-h-0 overflow-hidden bg-cardd">
       <TopNotch />
       <NoiseComponent>
-        <View
-          className="flex-1 min-h-0 overflow-y-scroll overscroll-contain px-mg pb-28 no-scrollbar"
-          style={{ height: 0, minHeight: 0 }}
-        >
-          <View className="mb-5 mt-2 flex-row items-center justify-between">
+        <View className="flex h-full min-h-0 flex-col px-mg">
+          <View className="mb-5 mt-2 shrink-0 flex-row items-center justify-between">
             <View>
               <Text className="text-2xl font-bold">Goals</Text>
             </View>
@@ -386,7 +383,7 @@ export default function GoalsAppScreen() {
             </Pressable>
           </View>
 
-          <View className="sticky top-0 z-30 -mx-mg flex-row items-center justify-center bg-cardd py-2">
+          <View className="z-30 -mx-mg shrink-0 flex-row items-center justify-center  py-2">
             <View className="justify-center rounded-full bg-cardx flex-row gap-2 p-1">
               {(['Active', 'Paused', 'Ended'] as GoalTab[]).map((item) => (
                 <Pressable
@@ -411,137 +408,143 @@ export default function GoalsAppScreen() {
             </View>
           </View>
 
-          {tab === 'Active' ? (
-            <View className="mb-4 flex-row justify-end gap-2 border-y pt-2 border-card-lighter/20">
-              {(
-                [
-                  { icon: RiCalendarCheckLine, label: 'All', value: 'ACTIVE' },
-                  { icon: RiCalendarCheckLine, label: 'Due', value: 'DUE' },
-                  { icon: RiArchiveLine, label: 'Overdue', value: 'OVERDUE' },
-                ] as const
-              ).map((item) => (
-                <Pressable
-                  style={
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-28 no-scrollbar">
+            {tab === 'Active' ? (
+              <View className="mb-4 flex-row justify-end gap-2 border-y pt-2 border-card-lighter/20">
+                {(
+                  [
                     {
-                      '--tw-active-border-color': seededColor(item.value),
-                    } as any
-                  }
-                  className={cn(
-                    'flex-row border-b-2 items-center gap-1 px-3 pb-3.5 pt-1.5',
-                    activeFilter === item.value
-                      ? 'border-[var(--tw-active-border-color)]'
-                      : 'border-card-light-50',
-                  )}
-                  key={item.value}
-                  onPress={() => setActiveFilter(item.value)}
-                >
-                  <item.icon
-                    size={13}
-                    className="text-[var(--tw-active-border-color)]"
-                  />
-                  <Text className="text-xs">{item.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
-
-          {tab === 'Ended' ? (
-            <View className="mb-4 flex-row justify-end gap-2 border-y border-card-lighter/20 pt-2">
-              {(['ENDED', 'ARCHIVED'] as const).map((item) => (
-                <Pressable
-                  style={
-                    {
-                      '--tw-active-border-color': seededColor(item),
-                    } as any
-                  }
-                  className={cn(
-                    'flex-row items-center gap-1 border-b-2 px-3 pb-3.5 pt-1.5',
-                    endedFilter === item
-                      ? 'border-[var(--tw-active-border-color)]'
-                      : 'border-card-light-50',
-                  )}
-                  key={item}
-                  onPress={() => setEndedFilter(item)}
-                >
-                  {item === 'ENDED' ? (
-                    <RiCalendarCheckLine
-                      className="text-[var(--tw-active-border-color)]"
+                      icon: RiCalendarCheckLine,
+                      label: 'All',
+                      value: 'ACTIVE',
+                    },
+                    { icon: RiCalendarCheckLine, label: 'Due', value: 'DUE' },
+                    { icon: RiArchiveLine, label: 'Overdue', value: 'OVERDUE' },
+                  ] as const
+                ).map((item) => (
+                  <Pressable
+                    style={
+                      {
+                        '--tw-active-border-color': seededColor(item.value),
+                      } as any
+                    }
+                    className={cn(
+                      'flex-row border-b-2 items-center gap-1 px-3 pb-3.5 pt-1.5',
+                      activeFilter === item.value
+                        ? 'border-[var(--tw-active-border-color)]'
+                        : 'border-card-light-50',
+                    )}
+                    key={item.value}
+                    onPress={() => setActiveFilter(item.value)}
+                  >
+                    <item.icon
                       size={13}
-                    />
-                  ) : (
-                    <RiArchiveLine
                       className="text-[var(--tw-active-border-color)]"
-                      size={13}
                     />
-                  )}
-                  <Text className="text-xs">
-                    {item === 'ENDED' ? 'History' : 'Archived'}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
+                    <Text className="text-xs">{item.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
 
-          <GoalFeed filter={filter} onCreate={openCreate} onOpen={openGoal} />
+            {tab === 'Ended' ? (
+              <View className="mb-4 flex-row justify-end gap-2 border-y border-card-lighter/20 pt-2">
+                {(['ENDED', 'ARCHIVED'] as const).map((item) => (
+                  <Pressable
+                    style={
+                      {
+                        '--tw-active-border-color': seededColor(item),
+                      } as any
+                    }
+                    className={cn(
+                      'flex-row items-center gap-1 border-b-2 px-3 pb-3.5 pt-1.5',
+                      endedFilter === item
+                        ? 'border-[var(--tw-active-border-color)]'
+                        : 'border-card-light-50',
+                    )}
+                    key={item}
+                    onPress={() => setEndedFilter(item)}
+                  >
+                    {item === 'ENDED' ? (
+                      <RiCalendarCheckLine
+                        className="text-[var(--tw-active-border-color)]"
+                        size={13}
+                      />
+                    ) : (
+                      <RiArchiveLine
+                        className="text-[var(--tw-active-border-color)]"
+                        size={13}
+                      />
+                    )}
+                    <Text className="text-xs">
+                      {item === 'ENDED' ? 'History' : 'Archived'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
 
-          {tab === 'Ended' && legacy.data?.length ? (
-            <View className="mt-8">
-              <Text className="mb-1 font-bold">Legacy</Text>
-              <Text className="mb-4 text-xs text-card-lighter-2">
-                Goals from the old streak system are preserved as read-only
-                history.
-              </Text>
-              {legacy.data.map((goal) => (
-                <LegacyCard goal={goal} key={goal.id} />
-              ))}
-            </View>
-          ) : null}
+            <GoalFeed filter={filter} onCreate={openCreate} onOpen={openGoal} />
 
-          {tab === 'Ended' && !legacy.isLoading && !legacy.data?.length ? (
-            <View className="mt-8">
-              <Text className="mb-3 font-bold">Legacy</Text>
-              <GoalEmptyState
-                description="Older streak-based goals will appear here as read-only history."
-                icon={
-                  <RiArchiveLine className="text-card-lighter-2" size={20} />
-                }
-                title="No legacy goals"
-              />
-            </View>
-          ) : null}
+            {tab === 'Ended' && legacy.data?.length ? (
+              <View className="mt-8">
+                <Text className="mb-1 font-bold">Legacy</Text>
+                <Text className="mb-4 text-xs text-card-lighter-2">
+                  Goals from the old streak system are preserved as read-only
+                  history.
+                </Text>
+                {legacy.data.map((goal) => (
+                  <LegacyCard goal={goal} key={goal.id} />
+                ))}
+              </View>
+            ) : null}
 
-          {tab === 'Paused' && showPausedInfo ? (
-            <View
-              className="fixed bottom-24 left-1/2 z-20 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-row items-start gap-3 rounded-2xl p-4"
-              style={{ backgroundColor: '#4a2f12' }}
-            >
-              <RiPauseLine
-                className="mt-0.5 shrink-0 text-warning-yellow"
-                size={17}
-              />
-              <Text className="flex-1 text-xs leading-4 text-warning-yellow">
-                Paused goals take a break: no reminders, new occurrences, or
-                missed days are recorded.
-              </Text>
-              <Pressable
-                accessibilityLabel="Dismiss paused goals information"
-                className="size-6 items-center justify-center rounded-full"
-                onPress={() => {
-                  try {
-                    window.localStorage.setItem(
-                      PAUSED_INFO_DISMISSED_KEY,
-                      'true',
-                    )
-                  } catch {
-                    // Keep the dismissal effective for this session.
+            {tab === 'Ended' && !legacy.isLoading && !legacy.data?.length ? (
+              <View className="mt-8">
+                <Text className="mb-3 font-bold">Legacy</Text>
+                <GoalEmptyState
+                  description="Older streak-based goals will appear here as read-only history."
+                  icon={
+                    <RiArchiveLine className="text-card-lighter-2" size={20} />
                   }
-                  setShowPausedInfo(false)
-                }}
+                  title="No legacy goals"
+                />
+              </View>
+            ) : null}
+
+            {tab === 'Paused' && showPausedInfo ? (
+              <View
+                className="fixed bottom-32 left-1/2 z-20 w-[calc(100%-2rem)] max-w-[368px] -translate-x-1/2 flex-row items-start gap-3 rounded-2xl p-4"
+                style={{ backgroundColor: '#4a2f12' }}
               >
-                <RiCloseLine className="text-warning-yellow" size={16} />
-              </Pressable>
-            </View>
-          ) : null}
+                <RiPauseLine
+                  className="mt-0.5 shrink-0 text-warning-yellow"
+                  size={17}
+                />
+                <Text className="flex-1 text-xs leading-4 text-warning-yellow">
+                  Paused goals take a break: no reminders, new occurrences, or
+                  missed days are recorded.
+                </Text>
+                <Pressable
+                  accessibilityLabel="Dismiss paused goals information"
+                  className="size-6 items-center justify-center rounded-full"
+                  onPress={() => {
+                    try {
+                      window.localStorage.setItem(
+                        PAUSED_INFO_DISMISSED_KEY,
+                        'true',
+                      )
+                    } catch {
+                      // Keep the dismissal effective for this session.
+                    }
+                    setShowPausedInfo(false)
+                  }}
+                >
+                  <RiCloseLine className="text-warning-yellow" size={16} />
+                </Pressable>
+              </View>
+            ) : null}
+          </div>
         </View>
       </NoiseComponent>
     </View>

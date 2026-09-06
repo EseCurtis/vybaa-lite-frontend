@@ -189,6 +189,27 @@ export interface CreateGoalRequest {
   title: string
 }
 
+export interface QuickGoalSetupDraft {
+  description?: string
+  schedule: GoalSchedule
+  target: GoalTarget
+  title: string
+}
+
+export interface QuickGoalSetupAnswer {
+  answer: string
+  question: string
+}
+
+export interface QuickGoalSetupEdit {
+  draft: QuickGoalSetupDraft
+  instruction: string
+}
+
+export type QuickGoalSetupResult =
+  | { draft: QuickGoalSetupDraft; kind: 'DRAFT' }
+  | { kind: 'QUESTIONS'; questions: Array<{ question: string }> }
+
 export interface GoalsListResponse {
   data: Goal[]
   msg: string
@@ -221,6 +242,17 @@ export const goalAPI = {
   },
   create: async (input: CreateGoalRequest): Promise<GoalResponse> => {
     const response = await http.post<GoalResponse>(GOALS_V2, input)
+    return response.data
+  },
+  quickSetup: async (
+    prompt: string,
+    answers?: QuickGoalSetupAnswer[],
+    edit?: QuickGoalSetupEdit,
+  ): Promise<{ data: QuickGoalSetupResult; msg: string }> => {
+    const response = await http.post<{
+      data: QuickGoalSetupResult
+      msg: string
+    }>(`${GOALS_V2}/quick-setup`, { answers, edit, prompt })
     return response.data
   },
   get: async (goalId: string): Promise<GoalResponse> => {
