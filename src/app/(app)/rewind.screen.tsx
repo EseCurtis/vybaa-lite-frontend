@@ -95,6 +95,7 @@ type RewindSocketMessage =
       sessionDateKey?: string
       restored?: boolean
       previousSession?: RewindSessionSnapshot | null
+      provider?: 'ELEVENLABS' | 'GEMINI'
     }
   | { type: 'text'; content: string }
   | { type: 'audio'; data: string; mimeType: string }
@@ -820,6 +821,7 @@ export default function RewindScreen(): ReactElement {
   )
 
   const pauseConversation = useCallback(async () => {
+    isConversationPausedRef.current = true
     setIsConversationPaused(true)
     if (liveSessionRef.current?.readyState === WebSocket.OPEN) {
       liveSessionRef.current.send(JSON.stringify({ type: 'audio_stream_end' }))
@@ -841,6 +843,7 @@ export default function RewindScreen(): ReactElement {
   }, [clearPlayback])
 
   const resumeConversation = useCallback(async () => {
+    isConversationPausedRef.current = false
     setIsConversationPaused(false)
 
     if (
@@ -940,7 +943,7 @@ export default function RewindScreen(): ReactElement {
       openRoutineSettings()
       return
     }
-    if (!routineQuery.data.currentSession) {
+    if (!routineQuery.data?.currentSession) {
       setStatusText('Not scheduled for now')
       return
     }
@@ -1266,6 +1269,7 @@ export default function RewindScreen(): ReactElement {
         return
       }
       setStatusText('Failed')
+      toast.error(getMutationErrorMessage(error))
     }
   }, [
     cleanupAudioPipeline,
@@ -1606,13 +1610,18 @@ export default function RewindScreen(): ReactElement {
 
             <Pressable
               onPress={() => {
+                if (hasActiveSession) {
+                  void togglePauseConversation()
+                  return
+                }
                 void startSession()
               }}
+              disabled={isFinishingSession}
               accessibilityLabel={
                 hasActiveSession
                   ? isConversationPaused
                     ? 'Resume your Rewind'
-                    : 'Rewind is active'
+                    : 'Pause your Rewind'
                   : 'Start your Rewind'
               }
               accessibilityRole="button"
@@ -1639,13 +1648,15 @@ export default function RewindScreen(): ReactElement {
                   />
                 </View>
               </motion.div>
-              {!hasActiveSession || isConversationPaused ? (
-                <View className="pointer-events-none absolute inset-0 items-center justify-center">
-                  <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+              <View className="pointer-events-none absolute inset-0 items-center justify-center">
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                  {!hasActiveSession || isConversationPaused ? (
                     <RiPlayFill size={30} className="ml-1 text-cardd" />
-                  </View>
+                  ) : (
+                    <RiPauseFill size={28} className="text-cardd" />
+                  )}
                 </View>
-              ) : null}
+              </View>
             </Pressable>
 
             {!hasActiveSession ? (

@@ -10,6 +10,7 @@ const API_V2 = '/api/v2'
 export type RewindSession = {
   id: string
   userId: string
+  voiceProvider?: 'ELEVENLABS' | 'GEMINI'
   personaId: RewindPersonaId
   sessionDateKey: string | null
   scheduledFor: string | null
@@ -146,6 +147,7 @@ export type RewindLiveTokenResponse = {
     sessionDateKey: string | null
     scheduledFor: string | null
     windowEndsAt: string | null
+    provider?: 'ELEVENLABS' | 'GEMINI'
   }
 }
 
