@@ -9,6 +9,7 @@ import {
 } from '@/shared/api/goal.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import { insightsQueryKeys } from '@/shared/api/insights.query-keys'
+import { requestGoalAlarmSync } from '@/shared/goal/goal-alarm.service'
 import { isSubscriptionApiError } from '@/shared/api/http'
 import {
   useInfiniteQuery,
@@ -19,6 +20,15 @@ import {
 
 function getErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
+}
+
+function getMutationGoalId(input: unknown): string | null {
+  if (typeof input === 'string') return input
+  if (typeof input !== 'object' || input === null || !('goalId' in input)) {
+    return null
+  }
+  const goalId = input.goalId
+  return typeof goalId === 'string' ? goalId : null
 }
 
 export function useInfiniteGoals({
@@ -76,10 +86,14 @@ function useGoalMutation<TInput, TResult>(
     mutationFn,
     onError: (error: unknown) =>
       toast.error(getErrorMessage(error, 'Goal update failed')),
-    onSuccess: () => {
+    onSuccess: (_result: TResult, input: TInput) => {
       void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
       void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
       void queryClient.invalidateQueries({ queryKey: ['rewards'] })
+      const goalId = getMutationGoalId(input)
+      void requestGoalAlarmSync({
+        cancelSnoozesForGoalIds: goalId ? [goalId] : [],
+      }).catch(() => undefined)
       toast.success(successMessage)
     },
   })
@@ -96,6 +110,7 @@ export function useCreateGoal() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
+      void requestGoalAlarmSync().catch(() => undefined)
       toast.success('Goal created successfully')
     },
   })

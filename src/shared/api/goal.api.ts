@@ -177,6 +177,28 @@ export interface GoalOccurrencesResponse {
   pagination: { hasMore: boolean; nextCursor: string | null }
 }
 
+export interface GoalAlarmManifestItem {
+  body: string
+  fireAt: string
+  goalId: string
+  id: string
+  occurrenceId: string
+  route: string
+  snoozeMinutes: number
+  title: string
+}
+
+export interface GoalAlarmManifest {
+  alarms: GoalAlarmManifestItem[]
+  revision: string
+}
+
+export interface GoalAlarmRegistration {
+  alarmIds: string[]
+  enabled: boolean
+  syncedAt: string
+}
+
 export interface CreateGoalRequest {
   description?: string
   hardStopDate?: string
@@ -259,6 +281,13 @@ export const goalAPI = {
   get: async (goalId: string): Promise<GoalResponse> => {
     const response = await http.get<GoalResponse>(`${GOALS_V2}/${goalId}`)
     return response.data
+  },
+  getAlarmManifest: async (): Promise<GoalAlarmManifest> => {
+    const response = await http.get<{
+      data: GoalAlarmManifest
+      msg: string
+    }>(`${GOALS_V2}/alarm-manifest`)
+    return response.data.data
   },
   list: async (
     filter: GoalListFilter,
@@ -380,6 +409,17 @@ export const goalAPI = {
       input,
     )
     return response.data
+  },
+  updateAlarmRegistration: async (input: {
+    alarmIds: string[]
+    enabled: boolean
+    fcmToken: string
+  }): Promise<GoalAlarmRegistration> => {
+    const response = await http.put<{
+      data: GoalAlarmRegistration
+      msg: string
+    }>(`${GOALS_V2}/alarm-registration`, input)
+    return response.data.data
   },
   undoProgress: async (
     goalId: string,

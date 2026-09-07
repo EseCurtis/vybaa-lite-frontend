@@ -68,6 +68,9 @@ async function registerPushNotificationListeners(): Promise<void> {
       }
 
       await userAPI.syncFCMToken(token.value)
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('fcm-token-updated'))
+      }
     }),
     PushNotifications.addListener('registrationError', () => {
       // Permission and registration state are handled by the caller.
