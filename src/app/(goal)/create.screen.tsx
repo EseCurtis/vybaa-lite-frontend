@@ -227,6 +227,10 @@ function QuickGoalEditorSheet({
             {draft.description}
           </Text>
         ) : null}
+        <Text className="text-xs text-card-lighter-2">
+          Reminders:{' '}
+          {draft.reminderTimes?.length ? draft.reminderTimes.join(', ') : 'off'}
+        </Text>
       </View>
       <TextArea
         autoFocus
@@ -234,7 +238,7 @@ function QuickGoalEditorSheet({
         disabled={isEditing}
         maxLength={1_000}
         onChange={(event) => setInstruction(event.target.value)}
-        placeholder="e.g. make it 30 minutes, start next Monday"
+        placeholder="e.g. make it 30 minutes, start next Monday, remind me at 8pm"
         rows={3}
         value={instruction}
       />
