@@ -5,6 +5,7 @@ import {
 import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
 import { userAPI } from '@/shared/api/user.api'
+import { cancelAllDeviceAlarms } from '@/plugins/capacitor/plugins/device-alarm.plugin'
 import type {
   AuthContextValue,
   AuthResponse,
@@ -126,6 +127,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [])
 
   const clearAuthState = useCallback(() => {
+    void cancelAllDeviceAlarms().catch(() => undefined)
     localStorage.removeItem('authToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('fcmToken')

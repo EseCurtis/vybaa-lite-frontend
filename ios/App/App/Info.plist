@@ -49,6 +49,8 @@
 	<true/>
 	<key>NSCameraUsageDescription</key>
 	<string>Vybaa uses your camera when you choose to capture a profile photo or an image to share in the app.</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Vybaa uses alarms to remind you about goal activities at the times you choose.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Vybaa uses your microphone for rewind conversations and journal voice notes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -21,8 +21,10 @@ import {
   normalizeDeepLink,
   storePendingDeepLink,
 } from '@/shared/utils/deep-link.util'
+import { requestGoalAlarmSync } from '@/shared/goal/goal-alarm.service'
 
 import ConfigCapacitorApp from './config'
+import { addDeviceAlarmActionListener } from './plugins/device-alarm.plugin'
 import {
   setForegroundPushNotificationHandler,
   setPushNotificationRouteHandler,
@@ -98,6 +100,7 @@ export function CapacitorPlugin({
     try {
       await authAPI.updateProfile({ timezone })
       await refreshSession()
+      await requestGoalAlarmSync()
     } catch {
       // A later resume or authenticated request will retry the sync.
     }
@@ -135,6 +138,13 @@ export function CapacitorPlugin({
         },
       )
       const launchUrl = await App.getLaunchUrl()
+      const alarmActionListener = await addDeviceAlarmActionListener(
+        ({ route, type }) => {
+          if (type === 'opened' && route) {
+            void handleDeepLink(`https://vybaa.app${route}`)
+          }
+        },
+      )
 
       if (launchUrl?.url) {
         void handleDeepLink(launchUrl.url)
@@ -143,6 +153,7 @@ export function CapacitorPlugin({
       return (): void => {
         void appUrlOpenListener.remove()
         void backButtonListener.remove()
+        void alarmActionListener?.remove()
       }
     }
 
@@ -168,6 +179,7 @@ export function CapacitorPlugin({
     void App.addListener('appStateChange', ({ isActive }) => {
       if (isActive) {
         void syncDeviceTimezone()
+        void requestGoalAlarmSync().catch(() => undefined)
       }
     }).then((listener) => {
       appStateListener = listener
@@ -177,6 +189,22 @@ export function CapacitorPlugin({
       void appStateListener?.remove()
     }
   }, [isAuthenticated, syncDeviceTimezone, user])
+
+  useEffect(() => {
+    if (!isAuthenticated || !user) return
+
+    const handleFcmTokenUpdate = (): void => {
+      void requestGoalAlarmSync().catch(() => undefined)
+    }
+    window.addEventListener('fcm-token-updated', handleFcmTokenUpdate)
+    window.addEventListener('timezone-updated', handleFcmTokenUpdate)
+    void requestGoalAlarmSync().catch(() => undefined)
+
+    return () => {
+      window.removeEventListener('fcm-token-updated', handleFcmTokenUpdate)
+      window.removeEventListener('timezone-updated', handleFcmTokenUpdate)
+    }
+  }, [isAuthenticated, user])
 
   useEffect(() => {
     if (isLoading || !isAuthenticated) return

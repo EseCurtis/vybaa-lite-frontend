@@ -1,5 +1,7 @@
 import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 import {
+  RiAlarmLine,
   RiArrowRightSLine,
   RiDeleteBinLine,
   RiFileTextLine,
@@ -11,7 +13,7 @@ import {
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Switch } from '@/components/common/switch.component'
@@ -22,6 +24,7 @@ import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
+import type { DeviceAlarmStatus } from '@/plugins/capacitor/plugins/device-alarm.plugin'
 import { authAPI } from '@/shared/api/auth.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import {
@@ -29,6 +32,22 @@ import {
   type LegalDocumentType,
 } from '@/shared/config/public-urls.config'
 import { getSubscriptionDisplayLabel } from '@/shared/subscription/subscription.util'
+import {
+  getGoalAlarmsEnabled,
+  requestGoalAlarmSync,
+  setGoalAlarmsEnabled,
+} from '@/shared/goal/goal-alarm.service'
+
+function getGoalAlarmDescription(
+  enabled: boolean,
+  status: DeviceAlarmStatus | null,
+): string {
+  if (!enabled) return 'Goal reminders use regular notifications'
+  if (status?.permission === 'granted') {
+    return `${status.scheduledCount} upcoming alarms on this device`
+  }
+  return 'Alarm permission is needed; push reminders stay on'
+}
 
 export default function SettingsScreen() {
   const { deleteAccount, logout, refreshSession, user } = useAuth()
@@ -37,6 +56,11 @@ export default function SettingsScreen() {
   const toast = useToast()
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const [isManagingSubscription, setIsManagingSubscription] = useState(false)
+  const [goalAlarmsEnabled, setGoalAlarmsEnabledState] =
+    useState(getGoalAlarmsEnabled)
+  const [goalAlarmStatus, setGoalAlarmStatus] =
+    useState<DeviceAlarmStatus | null>(null)
+  const [isUpdatingGoalAlarms, setIsUpdatingGoalAlarms] = useState(false)
   const personalizationMutation = useMutation({
     mutationFn: async (enabled: boolean) =>
       authAPI.updateProfile({ rewindPersonalizationEnabled: enabled }),
@@ -82,6 +106,40 @@ export default function SettingsScreen() {
     presentPaywall,
     status: subscriptionStatus,
   } = useSubscription()
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    void requestGoalAlarmSync()
+      .then(setGoalAlarmStatus)
+      .catch(() => undefined)
+  }, [])
+
+  const handleGoalAlarmChange = async (enabled: boolean): Promise<void> => {
+    setIsUpdatingGoalAlarms(true)
+    try {
+      const status = await setGoalAlarmsEnabled(enabled)
+      setGoalAlarmsEnabledState(enabled)
+      setGoalAlarmStatus(status)
+      if (enabled && status.permission !== 'granted') {
+        toast.warning(
+          'Goal alarms need device permission. Push reminders stay on.',
+        )
+        return
+      }
+      toast.success(enabled ? 'Goal alarms are on' : 'Goal alarms are off')
+    } catch (error: unknown) {
+      toast.error(
+        error instanceof Error ? error.message : 'Could not update goal alarms',
+      )
+    } finally {
+      setIsUpdatingGoalAlarms(false)
+    }
+  }
+
+  const goalAlarmDescription = getGoalAlarmDescription(
+    goalAlarmsEnabled,
+    goalAlarmStatus,
+  )
 
   const handleSubscriptionPress = async (): Promise<void> => {
     if (isManagingSubscription || isSubscriptionLoading || isPresentingPaywall)
@@ -208,6 +266,38 @@ export default function SettingsScreen() {
             ) : null}
 
             <View className="space-y-3">
+              {Capacitor.isNativePlatform() ? (
+                <View className="space-y-3">
+                  <Text className="px-1 text-sm font-semibold text-card-lighter-2">
+                    Reminders
+                  </Text>
+                  <View className="w-full flex-row items-center justify-between gap-4 rounded-2xl bg-cardx px-5 py-4">
+                    <View className="flex-row min-w-0 flex-1 items-center gap-4">
+                      <View className="size-10 items-center justify-center rounded-xl bg-card-light">
+                        <RiAlarmLine className="text-white" size={20} />
+                      </View>
+                      <View className="min-w-0 flex-1 gap-1">
+                        <Text className="text-sm font-semibold text-white">
+                          Goal alarms
+                        </Text>
+                        <Text className="text-xs leading-5 text-card-lighter-2">
+                          {goalAlarmDescription}
+                        </Text>
+                      </View>
+                    </View>
+                    <Switch
+                      accessibilityLabel="Use device alarms for goal reminders"
+                      checked={goalAlarmsEnabled}
+                      className="shrink-0"
+                      disabled={isUpdatingGoalAlarms}
+                      onChange={(enabled) => {
+                        void handleGoalAlarmChange(enabled)
+                      }}
+                    />
+                  </View>
+                </View>
+              ) : null}
+
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
                 Rewind
               </Text>
