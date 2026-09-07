@@ -46,12 +46,14 @@
             android:launchMode="singleTask"
             android:showWhenLocked="true"
             android:theme="@style/AppTheme.NoActionBar"
-            android:turnScreenOn="true" />
+            android:turnScreenOn="true"
+        />
 
         <service
             android:name=".GoalAlarmRingingService"
             android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:foregroundServiceType="mediaPlayback"
+        />
 
         <receiver android:name=".GoalAlarmReceiver" android:exported="false" />
         <receiver android:name=".GoalAlarmActionReceiver" android:exported="false" />

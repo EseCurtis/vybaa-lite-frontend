@@ -2,7 +2,6 @@ import { Input } from '@/components/common/input.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { TimeField } from '@/components/common/time-field.component'
 import { Button } from '@/components/layout/button.component'
-import { useKeyboard } from '@/components/layout/keyboard-avoiding-view.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -57,7 +56,7 @@ interface GoalCreationDraft {
   weeklyDay: number
 }
 
-function readGoalCreationDraft(): GoalCreationDraft | undefined {
+export function readGoalCreationDraft(): GoalCreationDraft | undefined {
   if (typeof window === 'undefined') return undefined
   try {
     const raw = window.localStorage.getItem(GOAL_CREATION_DRAFT_KEY)
@@ -586,7 +585,6 @@ export function CreateGoalSheet({
 }: CreateGoalSheetProps) {
   const toast = useToast()
   const { handleSubscriptionError } = useProAccess()
-  const { isKeyboardVisible, keyboardHeight } = useKeyboard()
   const createGoal = useCreateGoal()
   const bottomSheet = useBottomSheetController()
   const [savedDraft] = useState(() =>
