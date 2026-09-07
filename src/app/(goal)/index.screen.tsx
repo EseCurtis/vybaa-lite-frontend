@@ -1,6 +1,7 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { Skeleton } from '@/components/common/skeleton.component'
+import { readGoalCreationDraft } from '@/components/custom/goal/create-goal-sheet.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -19,12 +20,13 @@ import {
   seededColor,
 } from '@/shared/utils/helpers.util'
 import {
-  RiAddLine,
+  RiAddFill,
   RiArchiveLine,
   RiArrowRightSLine,
   RiCalendarCheckLine,
   RiCloseLine,
   RiPauseLine,
+  RiQuillPenFill,
   RiTargetLine,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
@@ -345,6 +347,7 @@ function GoalFeed({
 
 export default function GoalsAppScreen() {
   const navigate = useNavigate()
+  const [savedDraft] = useState(() => readGoalCreationDraft())
   const [tab, setTab] = useState<GoalTab>('Active')
   const [activeFilter, setActiveFilter] = useState<
     'ACTIVE' | 'DUE' | 'OVERDUE'
@@ -366,6 +369,8 @@ export default function GoalsAppScreen() {
   const filter: GoalListFilter =
     tab === 'Paused' ? 'PAUSED' : tab === 'Ended' ? endedFilter : activeFilter
 
+
+
   return (
     <View className="flex-1 min-h-0 overflow-hidden bg-cardd">
       <TopNotch />
@@ -376,10 +381,21 @@ export default function GoalsAppScreen() {
               <Text className="text-2xl font-bold">Goals</Text>
             </View>
             <Pressable
-              className="size-11 items-center justify-center rounded-full bg-white"
+              className="size-11 relative items-center justify-center rounded-full bg-white"
               onPress={openCreate}
             >
-              <RiAddLine className="text-black" size={22} />
+              {savedDraft?.title ? (
+                <RiQuillPenFill className="text-black" size={22} />
+              ) : (
+                <RiAddFill className="text-black" size={22} />
+              )}
+
+              {savedDraft?.title && (
+                <span
+                  className="size-3 shrink-0 rounded-full absolute top-0  right-0 bg-yellow-500 border border-cardd"
+                  role="status"
+                />
+              )}
             </Pressable>
           </View>
 

@@ -217,6 +217,7 @@ export interface QuickGoalSetupDraft {
   schedule: GoalSchedule
   target: GoalTarget
   title: string
+  remarks?: string;
 }
 
 export interface QuickGoalSetupAnswer {

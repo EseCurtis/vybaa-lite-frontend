@@ -25,10 +25,11 @@ import {
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
-type GoalDraftNavigation = {
+export type GoalDraftNavigation = {
   initialStep?: 1 | 2 | 3 | 4
   quickSetupPrompt?: string
   values: Partial<CreateGoalRequest>
+  remarks?: string
 }
 
 function isQuickGoalSetupDraft(
@@ -168,11 +169,13 @@ function QuickGoalEditorSheet({
   draft,
   onEdited,
   partnerName,
+  partnerAvatar,
   prompt,
 }: {
   draft: QuickGoalSetupDraft
   onEdited: (draft: QuickGoalSetupDraft) => void
   partnerName: string | null
+  partnerAvatar: string | null
   prompt: string
 }) {
   const bottomSheet = useBottomSheetController()
@@ -212,12 +215,19 @@ function QuickGoalEditorSheet({
 
   return (
     <View className="gap-4 pb-2">
-      <Text className="text-sm text-card-lighter-2">
-        {partnerName
-          ? `Tell ${partnerName} what to change. Everything else stays as it is.`
-          : 'Tell the goal assistant what to change. Everything else stays as it is.'}
-      </Text>
-      <View className="gap-2 rounded-2xl bg-card-light p-4">
+      <View className="flex-row gap-2">
+        {partnerAvatar && (
+          <img
+            alt={`${partnerName} avatar`}
+            className="size-7 rounded-full object-cover"
+            src={partnerAvatar}
+          />
+        )}
+        <Text className="text-sm text-card-lighter-2 bg-card-light/50 p-2 rounded-xl">
+          {draft.remarks}
+        </Text>
+      </View>
+      <View className="gap-2 rounded-2xl bg-card-light p-4 hidden">
         <Text className="text-xs font-bold text-card-lighter-2">
           Current goal
         </Text>
@@ -279,7 +289,12 @@ export default function CreateGoalScreen() {
     bottomSheet.present(
       <QuickGoalSetupSheet
         onGenerated={(values, prompt) => {
-          setDraft({ initialStep: 4, quickSetupPrompt: prompt, values })
+          setDraft({
+            initialStep: 4,
+            quickSetupPrompt: prompt,
+            values,
+            remarks: values.remarks,
+          })
           setFormKey((current) => current + 1)
         }}
         partnerName={selectedPersona?.name ?? null}
@@ -304,17 +319,20 @@ export default function CreateGoalScreen() {
         draft={draft.values}
         onEdited={(values) => {
           setDraft((current) =>
-            current ? { ...current, initialStep: 4, values } : current,
+            current
+              ? { ...current, initialStep: 4, values, remarks: values.remarks }
+              : current,
           )
           setFormKey((current) => current + 1)
         }}
         partnerName={selectedPersona?.name ?? null}
+        partnerAvatar={selectedPersona?.avatar ?? null}
         prompt={draft.quickSetupPrompt}
       />,
       {
         size: 'semi-full',
         title: selectedPersona
-          ? `Adjust with ${selectedPersona.name}`
+          ? `Adjusting with ${selectedPersona.name}`
           : 'Adjust goal with AI',
       },
     )
@@ -370,6 +388,18 @@ export default function CreateGoalScreen() {
                   <RiSparkling2Line className="text-black" size={10} />
                 </View>
               ) : null}
+
+              {draft?.remarks && (
+                <View className="absolute z-20 bottom-0 left-0 translate-y-[70%] -translate-x-[100%] drop-shadow-lg p-1 w-[200px]">
+                  <View className="bg-card-light-100 relative text-[#c0c6e2] p-2 px-3 rounded-2xl text-xs max-w-[200px]">
+                    <Text lines={2} className="font-semibold">
+                      {draft?.remarks}
+                    </Text>
+                    <View className="size-5 rounded-full bg-card-light-100 top-0 absolute right-0 translate-y- translate-x-1/3"></View>
+                    <View className="size-3 rounded-full bg-card-light-100 top-0 absolute right-0 -translate-y-[20%] translate-x-[170%]"></View>
+                  </View>
+                </View>
+              )}
             </Pressable>
           </View>
           <CreateGoalSheet
@@ -384,13 +414,13 @@ export default function CreateGoalScreen() {
   )
 }
 
-function readGoalDraft(): GoalDraftNavigation | undefined {
+export function readGoalDraft(): GoalDraftNavigation | undefined {
   if (typeof window === 'undefined') return undefined
   const raw = window.sessionStorage.getItem('rewind:goal-recommendation')
   if (!raw) return undefined
   window.sessionStorage.removeItem('rewind:goal-recommendation')
   try {
-    const value: unknown = JSON.parse(raw)
+    const value: GoalDraftNavigation = JSON.parse(raw)
     if (!value || typeof value !== 'object') return undefined
     if ('values' in value && value.values && typeof value.values === 'object') {
       return {
@@ -404,7 +434,8 @@ function readGoalDraft(): GoalDraftNavigation | undefined {
       }
     }
     return { values: value as Partial<CreateGoalRequest> }
-  } catch {
+  } catch(error) {
+    alert(error)
     return undefined
   }
 }
