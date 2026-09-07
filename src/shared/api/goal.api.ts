@@ -191,6 +191,7 @@ export interface CreateGoalRequest {
 
 export interface QuickGoalSetupDraft {
   description?: string
+  reminderTimes?: string[]
   schedule: GoalSchedule
   target: GoalTarget
   title: string
