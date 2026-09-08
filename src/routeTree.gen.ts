@@ -30,6 +30,7 @@ import { Route as AppRewindChatsRouteImport } from './routes/app/rewind-chats'
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppPermissionsRouteImport } from './routes/app/permissions'
 import { Route as AppJournalRouteImport } from './routes/app/journal'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
@@ -161,6 +162,11 @@ const AppRewardsRoute = AppRewardsRouteImport.update({
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/app/profile',
   path: '/app/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppPermissionsRoute = AppPermissionsRouteImport.update({
+  id: '/app/permissions',
+  path: '/app/permissions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppJournalRoute = AppJournalRouteImport.update({
@@ -309,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/journal': typeof AppJournalRouteWithChildren
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -356,6 +363,7 @@ export interface FileRoutesByTo {
   '/app/communities': typeof AppCommunitiesRouteWithChildren
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -406,6 +414,7 @@ export interface FileRoutesById {
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
   '/app/journal': typeof AppJournalRouteWithChildren
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
@@ -457,6 +466,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/journal'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -504,6 +514,7 @@ export interface FileRouteTypes {
     | '/app/communities'
     | '/app/home'
     | '/app/insights'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/app/home'
     | '/app/insights'
     | '/app/journal'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
@@ -603,6 +615,7 @@ export interface RootRouteChildren {
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
   AppJournalRoute: typeof AppJournalRouteWithChildren
+  AppPermissionsRoute: typeof AppPermissionsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
@@ -784,6 +797,13 @@ declare module '@tanstack/react-router' {
       path: '/app/profile'
       fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/permissions': {
+      id: '/app/permissions'
+      path: '/app/permissions'
+      fullPath: '/app/permissions'
+      preLoaderRoute: typeof AppPermissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/journal': {
@@ -1022,6 +1042,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
   AppJournalRoute: AppJournalRouteWithChildren,
+  AppPermissionsRoute: AppPermissionsRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,

@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   >(),
   reconcile: vi.fn<() => Promise<{ scheduledIds: string[] }>>(),
   requestPermission: vi.fn<() => Promise<string>>(),
+  ensurePushTokenRegistered: vi.fn<() => Promise<string>>(),
   updateRegistration: vi.fn<() => Promise<void>>(),
 }))
 
@@ -28,6 +29,10 @@ vi.mock('@/plugins/capacitor/plugins/device-alarm.plugin', () => ({
   getDeviceAlarmStatus: mocks.getStatus,
   reconcileDeviceAlarms: mocks.reconcile,
   requestDeviceAlarmPermission: mocks.requestPermission,
+}))
+
+vi.mock('@/plugins/capacitor/plugins/push-notification.plugin', () => ({
+  ensurePushTokenRegistered: mocks.ensurePushTokenRegistered,
 }))
 
 vi.mock('@/shared/api/goal.api', () => ({
@@ -46,6 +51,7 @@ import {
 describe('goal alarm reconciliation', () => {
   beforeEach(() => {
     localStorage.clear()
+    localStorage.setItem('goal-alarms-enabled', 'true')
     localStorage.setItem('fcmToken', 'device-token')
     mocks.cancelAll.mockReset().mockResolvedValue()
     mocks.checkPermission.mockReset().mockResolvedValue('granted')
@@ -59,10 +65,13 @@ describe('goal alarm reconciliation', () => {
       scheduledIds: ['goal_v2:occurrence:09:00'],
     })
     mocks.requestPermission.mockReset().mockResolvedValue('granted')
+    mocks.ensurePushTokenRegistered
+      .mockReset()
+      .mockResolvedValue('device-token')
     mocks.updateRegistration.mockReset().mockResolvedValue()
   })
 
-  it('defaults on and reports only successfully scheduled alarm IDs', async () => {
+  it('reports only successfully scheduled alarm IDs when enabled', async () => {
     mocks.getManifest.mockResolvedValue({
       alarms: [
         {
@@ -83,12 +92,19 @@ describe('goal alarm reconciliation', () => {
 
     expect(getGoalAlarmsEnabled()).toBe(true)
     expect(status.scheduledCount).toBe(1)
+    expect(mocks.ensurePushTokenRegistered).toHaveBeenCalledTimes(1)
     expect(mocks.reconcile).toHaveBeenCalledWith(expect.any(Array), [])
     expect(mocks.updateRegistration).toHaveBeenCalledWith({
       alarmIds: ['goal_v2:occurrence:09:00'],
       enabled: true,
       fcmToken: 'device-token',
     })
+  })
+
+  it('defaults goal alarms off until the user opts in', () => {
+    localStorage.removeItem('goal-alarms-enabled')
+
+    expect(getGoalAlarmsEnabled()).toBe(false)
   })
 
   it('retains the last native schedule when the manifest is offline', async () => {

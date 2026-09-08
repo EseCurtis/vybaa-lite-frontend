@@ -2,6 +2,7 @@ import type { AnyRouter } from '@tanstack/react-router'
 
 import type { DeepLinkTarget } from '@/shared/utils/deep-link.util'
 import { consumePendingDeepLink } from '@/shared/utils/deep-link.util'
+import { shouldShowPermissionOnboarding } from '@/shared/permissions/permission-onboarding.util'
 
 export async function navigateToDeepLinkTarget(
   router: AnyRouter,
@@ -63,6 +64,11 @@ export async function navigateToDeepLinkTarget(
 }
 
 export async function navigateAfterAuth(router: AnyRouter): Promise<void> {
+  if (shouldShowPermissionOnboarding()) {
+    await router.navigate({ replace: true, to: '/app/permissions' })
+    return
+  }
+
   const target = consumePendingDeepLink()
 
   if (target) {

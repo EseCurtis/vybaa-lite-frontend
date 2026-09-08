@@ -21,7 +21,8 @@ import {
 type BottomSheetOptions = {
   title?: string
   elevation?: number
-  size?: 'default' | 'semi-full'
+  size?: 'default' | 'semi-full',
+  
 }
 
 type BottomSheetContextType = {

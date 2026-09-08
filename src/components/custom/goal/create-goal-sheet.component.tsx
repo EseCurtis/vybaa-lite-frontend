@@ -15,6 +15,7 @@ import type {
   GoalSchedule,
   GoalTarget,
 } from '@/shared/api/goal.api'
+import { hasSeenGoalAlarmOnboarding } from '@/shared/goal/goal-alarm.service'
 import { randomCreateGoalPlaceholder } from '@/shared/goal/goal.util.shared'
 import { hapticFeedback } from '@/shared/haptic.util'
 import { cn } from '@/shared/utils/helpers.util'
@@ -888,7 +889,7 @@ export function CreateGoalSheet({
       {step === 1 ? (
         <View className="space-y-3">
           <Input
-            autoFocus
+            autoFocus={hasSeenGoalAlarmOnboarding()}
             className={GOAL_FIELD_SURFACE}
             maxLength={500}
             onChange={(event) => setTitle(event.target.value)}

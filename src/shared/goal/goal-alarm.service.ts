@@ -8,9 +8,11 @@ import {
   requestDeviceAlarmPermission,
   type DeviceAlarmStatus,
 } from '@/plugins/capacitor/plugins/device-alarm.plugin'
+import { ensurePushTokenRegistered } from '@/plugins/capacitor/plugins/push-notification.plugin'
 import { goalAPI } from '@/shared/api/goal.api'
 
 const GOAL_ALARMS_ENABLED_KEY = 'goal-alarms-enabled'
+const GOAL_ALARMS_ONBOARDING_SEEN_KEY = 'goal-alarms-onboarding-seen'
 
 let activeSync: Promise<DeviceAlarmStatus> | null = null
 const snoozeCancellationGoalIds = new Set<string>()
@@ -45,6 +47,8 @@ async function performGoalAlarmSync(
     await updateRegistration(false, [])
     return getDeviceAlarmStatus()
   }
+
+  await ensurePushTokenRegistered()
 
   const manifest = await goalAPI.getAlarmManifest()
   if (!manifest.alarms.length) {
@@ -91,7 +95,17 @@ async function runGoalAlarmSyncLoop(): Promise<DeviceAlarmStatus> {
 
 export function getGoalAlarmsEnabled(): boolean {
   if (typeof window === 'undefined') return true
-  return localStorage.getItem(GOAL_ALARMS_ENABLED_KEY) !== 'false'
+  return localStorage.getItem(GOAL_ALARMS_ENABLED_KEY) === 'true'
+}
+
+export function hasSeenGoalAlarmOnboarding(): boolean {
+  if (typeof window === 'undefined') return true
+  return localStorage.getItem(GOAL_ALARMS_ONBOARDING_SEEN_KEY) === 'true'
+}
+
+export function markGoalAlarmOnboardingSeen(): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(GOAL_ALARMS_ONBOARDING_SEEN_KEY, 'true')
 }
 
 export function requestGoalAlarmSync(

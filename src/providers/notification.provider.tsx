@@ -32,11 +32,11 @@ import {
 } from '@/shared/realtime/realtime-socket.client'
 import {
   getRealtimeTypingParticipants,
-  type RealtimeTypingTurn,
-  type RewindChatMessagesCache,
   updateRealtimeTypingTurns,
   updateRewindChatsFromRealtime,
   updateRewindMessagesFromRealtime,
+  type RealtimeTypingTurn,
+  type RewindChatMessagesCache,
 } from '@/shared/rewind/rewind-chat-realtime.util'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 
@@ -112,7 +112,7 @@ export function NotificationProvider({
         if (claimInAppNotificationDisplay(displayId)) {
           let message = formatInAppNotification(notification)
           if (isBatch) {
-            message = `${signal.notificationCount} new notifications are ready.`
+            message = `you have ${signal.notificationCount} new notifications.`
           }
           toast.notification(message, {
             avatarAlt:

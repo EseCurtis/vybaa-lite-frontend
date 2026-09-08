@@ -26,6 +26,12 @@ let foregroundPushNotificationHandler: ForegroundPushNotificationHandler | null 
 let notificationRouteHandler: ((route: string) => void) | null = null
 let pendingNotificationRoute: string | null = null
 
+function getStoredFcmToken(): string | null {
+  if (typeof window === 'undefined') return null
+  const token = localStorage.getItem('fcmToken')?.trim()
+  return token || null
+}
+
 function invalidateNotificationQueries(): void {
   if (!queryClientRef) return
 
@@ -169,6 +175,31 @@ export function registerPushNotifications(): Promise<void> {
   }
 
   return pushRegistrationPromise
+}
+
+export async function ensurePushTokenRegistered(): Promise<string> {
+  await addPushNotificationListeners()
+
+  const existingToken = getStoredFcmToken()
+  if (existingToken) {
+    await userAPI.syncFCMToken(existingToken)
+    return existingToken
+  }
+
+  await registerPushNotifications()
+
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const token = getStoredFcmToken()
+    if (token) {
+      await userAPI.syncFCMToken(token)
+      return token
+    }
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 250)
+    })
+  }
+
+  throw new Error('This device did not receive a push notification token.')
 }
 
 export function getDeliveredPushNotifications() {

@@ -1,5 +1,6 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
+import { Switch } from '@/components/common/switch.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { CreateGoalSheet } from '@/components/custom/goal/create-goal-sheet.component'
 import { Button } from '@/components/layout/button.component'
@@ -16,14 +17,22 @@ import {
   type QuickGoalSetupDraft,
   type QuickGoalSetupEdit,
 } from '@/shared/api/goal.api'
-import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import {
+  getGoalAlarmsEnabled,
+  hasSeenGoalAlarmOnboarding,
+  markGoalAlarmOnboardingSeen,
+  setGoalAlarmsEnabled,
+} from '@/shared/goal/goal-alarm.service'
+import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import { Capacitor } from '@capacitor/core'
+import {
+  RiAlarmLine,
   RiArrowLeftLine,
   RiLoader4Line,
   RiSparkling2Line,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export type GoalDraftNavigation = {
   initialStep?: 1 | 2 | 3 | 4
@@ -45,6 +54,83 @@ function quickGoalSetupButtonLabel(
   if (isGenerating) return 'Planning your goal…'
   if (hasQuestions) return 'Build goal'
   return 'Plan goal'
+}
+
+function GoalAlarmOnboardingSheet() {
+  const bottomSheet = useBottomSheetController()
+  const toast = useToast()
+  const [enabled, setEnabled] = useState(getGoalAlarmsEnabled)
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  async function handleChange(nextEnabled: boolean): Promise<void> {
+    if (isUpdating) return
+    setEnabled(nextEnabled)
+    if (!nextEnabled) {
+      bottomSheet.dismiss()
+      return
+    }
+
+    setIsUpdating(true)
+    try {
+      const status = await setGoalAlarmsEnabled(true)
+      if (status.permission !== 'granted') {
+        toast.info('Finish enabling alarm permission, then return to Vybaa.')
+      } else {
+        toast.success('Goal alarms are on')
+      }
+      bottomSheet.dismiss()
+    } catch (error: unknown) {
+      setEnabled(false)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Could not enable goal alarms yet',
+      )
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  return (
+    <View className="gap-4 pb-2">
+      <View className="flex items-center gap-3 rounded-2xl bg-cardx p-4">
+        <View className="p-3 shrink-0 items-center justify-center rounded-full bg-warning-yellow">
+          <RiAlarmLine className="text-black" size={40} />
+        </View>
+        <View className="flex-1 gap-1">
+          <Text className="font-bold">Make reminders harder to miss</Text>
+          <Text className="text-sm !text-center leading-5 text-card-lighter-2">
+            Vybaa can ring a device alarm for your goals, even when the app is
+            closed. You can stop or snooze it for 10 minutes.
+          </Text>
+        </View>
+      </View>
+      <View className="flex-row items-center justify-between rounded-2xl bg-cardx p-4">
+        <View className="flex-1 pr-3">
+          <Text className="font-semibold">Goal alarms</Text>
+          <Text className="mt-1 text-xs leading-5 text-card-lighter-2">
+            You can change this later in Settings.
+          </Text>
+        </View>
+        <Switch
+          accessibilityLabel="Enable goal alarms"
+          checked={enabled}
+          disabled={isUpdating}
+          onChange={(nextEnabled) => void handleChange(nextEnabled)}
+        />
+      </View>
+      <Pressable
+        accessibilityLabel="Not now"
+        className="min-h-11 items-center justify-center rounded-xl bg-red-500/20 px-4 py-3"
+        disabled={isUpdating}
+        onPress={() => bottomSheet.dismiss()}
+      >
+        <Text className="text-center text-sm font-semibold text-red-500/50">
+          Not now
+        </Text>
+      </Pressable>
+    </View>
+  )
 }
 
 function QuickGoalSetupSheet({
@@ -281,6 +367,19 @@ export default function CreateGoalScreen() {
     ? getRewindPersona(user.rewindPersona)
     : null
 
+  useEffect(() => {
+    if (
+      !Capacitor.isNativePlatform() ||
+      getGoalAlarmsEnabled() ||
+      hasSeenGoalAlarmOnboarding()
+    ) {
+      return
+    }
+
+    markGoalAlarmOnboardingSeen()
+    bottomSheet.present(<GoalAlarmOnboardingSheet />, { })
+  }, [bottomSheet])
+
   function handleBack(): void {
     navigate({ to: '/app/goal' })
   }
@@ -434,7 +533,7 @@ export function readGoalDraft(): GoalDraftNavigation | undefined {
       }
     }
     return { values: value as Partial<CreateGoalRequest> }
-  } catch(error) {
+  } catch (error) {
     alert(error)
     return undefined
   }

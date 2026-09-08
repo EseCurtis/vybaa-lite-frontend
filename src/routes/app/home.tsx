@@ -1,6 +1,15 @@
 import { Home2Screen } from '@/app/(app)/home-2.screen'
 import { ProtectedRoute } from '@/components/common/protected-route.component'
-import { createFileRoute } from '@tanstack/react-router'
+import { shouldShowPermissionOnboarding } from '@/shared/permissions/permission-onboarding.util'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
+
+function HomeRouteScreen() {
+  if (shouldShowPermissionOnboarding()) {
+    return <Navigate replace to="/app/permissions" />
+  }
+
+  return <Home2Screen />
+}
 
 /**
  * Example \"home\" route for the starter app.
@@ -10,9 +19,8 @@ import { createFileRoute } from '@tanstack/react-router'
 export const Route = createFileRoute('/app/home')({
   component: () => (
     <ProtectedRoute requireAuth redirectTo="/">
-
       {/* <HomeAppScreen/> */}
-      <Home2Screen />
+      <HomeRouteScreen />
     </ProtectedRoute>
   ),
 })
