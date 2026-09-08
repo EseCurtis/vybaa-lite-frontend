@@ -1,4 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import {
   BottomNotchWithTab,
   TopNotch,
@@ -13,7 +14,7 @@ import { useAuth } from '@/providers/auth.provider'
 export function Home2Screen() {
   const { user } = useAuth()
 
-  if (!user) return null
+  if (!user) return <AppLoadingState message="Getting your home ready..." />
 
   const userName =
     [user.firstName, user.lastName].filter(Boolean).join(' ') ||
@@ -28,15 +29,12 @@ export function Home2Screen() {
           <HomeHeader user={user} />
           <HomeGoals />
         </View>
-        <HomeGreetings
-          rewindPersona={user.rewindPersona}
-          userName={userName}
-        />
+        <HomeGreetings rewindPersona={user.rewindPersona} userName={userName} />
 
-       <View className="bg-cardd flex flex-col rounded-t-[40px]">
-         <HomeActions />
-        <BottomNotchWithTab />
-       </View>
+        <View className="bg-cardd flex flex-col rounded-t-[40px]">
+          <HomeActions />
+          <BottomNotchWithTab />
+        </View>
       </NoiseComponent>
     </View>
   )

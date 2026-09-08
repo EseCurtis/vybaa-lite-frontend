@@ -108,7 +108,7 @@ export function useRewindHomeGreeting(personaId?: RewindPersonaId | null) {
       return response.data
     },
     queryKey: [...rewindQueryKeys.homeGreeting(), personaId ?? 'unselected'],
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 60 * 10,
   })
 }
 

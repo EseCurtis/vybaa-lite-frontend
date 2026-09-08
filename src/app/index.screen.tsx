@@ -1,5 +1,6 @@
 import { TopNotch } from '@/components/common/notch.component'
 import { OnboardingBackground } from '@/components/common/onboarding-background.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -31,6 +32,7 @@ export default function AppScreen() {
     error,
     stale,
     loginWithGoogle,
+    user,
   } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
   const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
@@ -41,10 +43,10 @@ export default function AppScreen() {
 
   // Navigate to home when authentication succeeds
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
-      void navigateAfterAuth(router)
+    if (isAuthenticated && !isLoading && user) {
+      void navigateAfterAuth(router, user)
     }
-  }, [isAuthenticated, isLoading, router])
+  }, [isAuthenticated, isLoading, router, user])
 
   const handleGetStarted = () => {
     setLoginError(null)
@@ -55,8 +57,7 @@ export default function AppScreen() {
     try {
       setLoginError(null)
       await loginWithGoogle()
-      await navigateAfterAuth(router)
-    } catch (err: any) {
+    } catch (err: unknown) {
       const msg =
         err instanceof Error ? err.message : 'Failed to sign in with Google'
       setLoginError(msg)
@@ -65,8 +66,13 @@ export default function AppScreen() {
 
   // The root route is an auth boundary. Never mount onboarding while a
   // session is being resolved or after authentication has been confirmed.
-  if (stale || isLoading || isAuthenticated) {
-    return null
+  if (stale || (isLoading && !isGoogleLoading) || isAuthenticated) {
+    return (
+      <AppLoadingState
+        detail="Your account and latest activity are being restored."
+        message={loadingText ?? 'Opening Vybaa...'}
+      />
+    )
   }
 
   return (
@@ -171,9 +177,9 @@ export default function AppScreen() {
           })}
           <View className="flex relative overflow-hidden z-10 flex-col gap-3 text-center bg-[#05090f] rounded-[27px] pt-7 pb-10 shadow-[0px_0px_30px_#000] shadow-black border-2 border-cardx/20">
             <View className="size-full absolute top-0 left-0  p-2">
-              <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30"/>
+              <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30" />
             </View>
-            
+
             {(loginError || error) && (
               <Text className="text-pink-700 bg-pink-500/10 mx-auto px-3 py-1 rounded-full text-sm font-bbh text-center mt-2">
                 {loginError || error}

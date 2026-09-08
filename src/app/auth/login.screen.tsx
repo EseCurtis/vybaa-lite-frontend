@@ -1,4 +1,5 @@
 import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { Input } from '@/components/common/input.component'
 import { Button } from '@/components/layout/button.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
@@ -7,11 +8,11 @@ import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
-import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
 import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
+import { getApiErrorMessage } from '@/shared/utils/api-error.util'
 import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
-import { useNavigate, useRouter } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 
 type LoginAction = 'email' | 'google' | null
@@ -19,7 +20,6 @@ type LoginAction = 'email' | 'google' | null
 export default function LoginScreen() {
   const { googleAuthStatus, loginWithEmail, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
-  const router = useRouter()
   const toast = useToast()
 
   const [email, setEmail] = useState('')
@@ -47,9 +47,8 @@ export default function LoginScreen() {
     try {
       await loginWithEmail({ email, password })
       toast.success('Welcome back')
-      await navigateAfterAuth(router)
-    } catch (err: any) {
-      const msg = err?.msg || err?.message || 'Login failed'
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, 'Login failed')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -61,10 +60,8 @@ export default function LoginScreen() {
     setActiveAction('google')
     try {
       await loginWithGoogle()
-      await navigateAfterAuth(router)
-    } catch (err: any) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to sign in with Google'
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, 'Failed to sign in with Google')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -107,7 +104,7 @@ export default function LoginScreen() {
         {error && (
           <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
         )}
-        {loadingText && (
+        {loadingText && !isGoogleLoading && (
           <Text className="text-card-lighter-2 text-xs font-bbh">
             {loadingText}
           </Text>
@@ -165,6 +162,13 @@ export default function LoginScreen() {
           onClick={() => navigate({ to: '/auth/signup' })}
         />
       </View>
+      {isGoogleLoading && loadingText ? (
+        <AppLoadingState
+          detail="Finish choosing your account in the Google window."
+          message={loadingText}
+          mode="dock"
+        />
+      ) : null}
     </AuthScreenLayout>
   )
 }

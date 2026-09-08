@@ -1,8 +1,20 @@
+import { Capacitor } from '@capacitor/core'
 import type { AnyRouter } from '@tanstack/react-router'
 
+import {
+  countGrantedOnboardingPermissions,
+  readOnboardingPermissionStates,
+} from '@/shared/permissions/device-permission-state.util'
+import {
+  hasSeenPermissionOnboarding,
+  markPermissionOnboardingSeen,
+  markRewindPartnerOnboardingSeen,
+  shouldShowPermissionOnboarding,
+  shouldShowRewindPartnerOnboarding,
+} from '@/shared/permissions/permission-onboarding.util'
+import type { AuthUser } from '@/shared/types/auth.types'
 import type { DeepLinkTarget } from '@/shared/utils/deep-link.util'
 import { consumePendingDeepLink } from '@/shared/utils/deep-link.util'
-import { shouldShowPermissionOnboarding } from '@/shared/permissions/permission-onboarding.util'
 
 export async function navigateToDeepLinkTarget(
   router: AnyRouter,
@@ -21,6 +33,7 @@ export async function navigateToDeepLinkTarget(
     await router.navigate({
       params: { sessionId: target.sessionId },
       replace: true,
+      search: { from: 'insights' },
       to: '/app/r/$sessionId',
     })
     return
@@ -63,9 +76,43 @@ export async function navigateToDeepLinkTarget(
   })
 }
 
-export async function navigateAfterAuth(router: AnyRouter): Promise<void> {
-  if (shouldShowPermissionOnboarding()) {
-    await router.navigate({ replace: true, to: '/app/permissions' })
+export type RequiredOnboardingRoute =
+  | '/app/onboarding/rewind-partner'
+  | '/app/permissions'
+
+export async function getRequiredOnboardingRoute(
+  user: Pick<AuthUser, 'id' | 'rewindPersona'>,
+): Promise<RequiredOnboardingRoute | null> {
+  if (Capacitor.isNativePlatform() && !hasSeenPermissionOnboarding(user.id)) {
+    const permissionStates = await readOnboardingPermissionStates()
+    const grantedPermissionCount =
+      countGrantedOnboardingPermissions(permissionStates)
+
+    if (shouldShowPermissionOnboarding(user.id, grantedPermissionCount)) {
+      return '/app/permissions'
+    }
+  }
+
+  markPermissionOnboardingSeen(user.id)
+
+  if (shouldShowRewindPartnerOnboarding(user.id, user.rewindPersona)) {
+    return '/app/onboarding/rewind-partner'
+  }
+
+  if (user.rewindPersona) {
+    markRewindPartnerOnboardingSeen(user.id)
+  }
+
+  return null
+}
+
+export async function navigateAfterAuth(
+  router: AnyRouter,
+  user: Pick<AuthUser, 'id' | 'rewindPersona'>,
+): Promise<void> {
+  const onboardingRoute = await getRequiredOnboardingRoute(user)
+  if (onboardingRoute) {
+    await router.navigate({ replace: true, to: onboardingRoute })
     return
   }
 

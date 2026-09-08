@@ -5,8 +5,8 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
-import { ToastProvider } from './providers/toast.provider.tsx'
 import { SubscriptionProvider } from './providers/subscription.provider.tsx'
+import { ToastProvider } from './providers/toast.provider.tsx'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'

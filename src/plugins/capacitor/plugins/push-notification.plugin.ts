@@ -96,7 +96,10 @@ async function registerPushNotificationListeners(): Promise<void> {
 
 async function requestPushRegistration(): Promise<void> {
   let permission = await PushNotifications.checkPermissions()
-  if (permission.receive === 'prompt') {
+  if (
+    permission.receive === 'prompt' ||
+    permission.receive === 'prompt-with-rationale'
+  ) {
     permission = await PushNotifications.requestPermissions()
   }
 
@@ -177,11 +180,21 @@ export function registerPushNotifications(): Promise<void> {
   return pushRegistrationPromise
 }
 
+export async function hasPushNotificationPermission(): Promise<boolean> {
+  const permission = await PushNotifications.checkPermissions()
+  return permission.receive === 'granted'
+}
+
 export async function ensurePushTokenRegistered(): Promise<string> {
   await addPushNotificationListeners()
 
+  const permission = await PushNotifications.checkPermissions()
+  if (permission.receive === 'denied') {
+    throw new Error('Notifications are off in your device settings.')
+  }
+
   const existingToken = getStoredFcmToken()
-  if (existingToken) {
+  if (existingToken && permission.receive === 'granted') {
     await userAPI.syncFCMToken(existingToken)
     return existingToken
   }

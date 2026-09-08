@@ -101,24 +101,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ])
 
   const handleAuthSuccess = useCallback(async () => {
-    // After tokens are stored, fetch the session immediately
-    // This ensures the auth state is updated right away
-    try {
-      await queryClient.fetchQuery({
-        queryKey: SESSION_QUERY_KEY,
-        queryFn: async () => authAPI.getSession(),
-      })
-    } catch (error) {
-      // If session fetch fails, invalidate to trigger error state
-      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
-    }
+    await queryClient.fetchQuery({
+      queryKey: SESSION_QUERY_KEY,
+      queryFn: async () => authAPI.getSession(),
+    })
   }, [queryClient])
 
-  const google = useGoogleAuth({
-    onSuccess: () => {
-      void handleAuthSuccess()
-    },
-  })
+  const google = useGoogleAuth()
 
   const persistTokens = useCallback((data: AuthResponse['data']) => {
     if (typeof window === 'undefined') return
@@ -198,7 +187,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loginWithGoogle = useCallback(async () => {
     await google.signInWithGoogle()
-  }, [google])
+    await handleAuthSuccess()
+  }, [google, handleAuthSuccess])
 
   const logout = useCallback(async () => {
     await logoutMutation.mutateAsync()

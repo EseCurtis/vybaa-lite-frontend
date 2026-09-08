@@ -68,7 +68,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     icon: 'chat',
     name: 'Tobi',
     perspective:
-      'Brings playful banter and still catches what is really going on',
+      'is playful but catches what is really going on',
     welcome:
       'Say it how it happened. Tobi will keep it real without killing the vibe.',
   },
@@ -79,7 +79,7 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
     icon: 'pulse',
     name: 'Neeja',
     perspective:
-      'Reads the room, notices the subtext, and asks the useful question',
+      'Reads the room and asks the useful question',
     welcome:
       'Bring the full story. Neeja notices the part everyone else skipped.',
   },

@@ -642,11 +642,11 @@ export function FlexxCard({
               </View>
             </View>
 
-            <View className="mt-10 rounded-2xl bg-black/20 p-5">
+            <View className="mt-10 hidden rounded-2xl bg-black/20 p-5">
               <Text className="text-white/50 text-xs font-bbh uppercase tracking-wide mb-2">
                 What is showing up
               </Text>
-              <Text className="text-white text-base font-bbh leading-6 line-clamp-3">
+              <Text className="text-white text-base !text-xs font-bbh leading-6 line-clamp-3">
                 {reflection}
               </Text>
             </View>

@@ -1,3 +1,4 @@
+import { NoiseComponent } from '@/components/common/noise.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { VirtualList } from '@/components/common/virtual-list.component'
@@ -61,8 +62,8 @@ function NotificationItem({
 
   return (
     <div
-      className={`mb-3 cursor-pointer rounded-2xl p-4 !active:opacity-50 ${
-        !notification.isRead ? 'bg-card-light-50' : 'bg-card-light'
+      className={`mb-3 cursor-pointer rounded-lg p-4 !active:opacity-50 ${
+        !notification.isRead ? 'bg-card-light-50' : ''
       }`}
       onClick={() => onOpen(notification)}
       onKeyDown={(event) => {
@@ -93,19 +94,19 @@ function NotificationItem({
           >
             {notification.title}
           </Text>
-          <Text className="mb-2 text-xs text-card-lighter-3" lines={2}>
+          <Text className="mb-2 text-xs  text-card-lighter-3" lines={2}>
             {notification.message}
           </Text>
         </View>
 
         <View className="justify-between h-full ">
-          <View className="flex flex-row justify-end gap-2">
+          <View className="flex flex-row justify-end items-end ml-auto  gap-2">
             <button
               onClick={(event) => {
                 event.stopPropagation()
                 onDelete(notification.id)
               }}
-              className="h-11 w-11 items-center justify-center rounded-full transition-colors hover:bg-card-light-50"
+              className=" items-end justify-end rounded-full transition-colors hover:bg-card-light-50"
               title="Delete"
               aria-label={`Delete notification from ${sender?.name ?? 'Vybaa'}`}
             >
@@ -113,7 +114,7 @@ function NotificationItem({
             </button>
           </View>
 
-          <Text className="text-xs ml-auto text-card-lighter-3 pt-3">
+          <Text className="text-xs ml-auto !text-right text-card-lighter-3 pt-3">
             {formatNotificationDate(notification.createdAt)}
           </Text>
         </View>
@@ -199,7 +200,8 @@ export default function NotificationsScreen(): ReactElement {
     <View className="flex-1 bg-cardd">
       <TabHeader title="Notifications" className="z-[99]" />
 
-      <View className="flex-1 w-full px-4 pt-3 max-w-4xl mx-auto">
+      <NoiseComponent>
+        <View className="flex-1 w-full px-4 pt-3 max-w-4xl mx-auto">
         {isInitialLoading ? (
           <View className="flex-1 items-center justify-center py-20">
             <Text className="text-white/60 text-lg font-bbh">
@@ -233,8 +235,9 @@ export default function NotificationsScreen(): ReactElement {
               hasUnread ? (
                 <View className="mb-6 w-full flex justify-end">
                   <Button
+                  className='!bg-cardx'
                     label="Mark all read"
-                    variant="secondary"
+                   
                     size="sm"
                     onClick={handleMarkAllAsRead}
                     loading={isMarkingAll}
@@ -277,6 +280,8 @@ export default function NotificationsScreen(): ReactElement {
           />
         )}
       </View>
+      </NoiseComponent>
+      
     </View>
   )
 }

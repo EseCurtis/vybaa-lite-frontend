@@ -43,6 +43,7 @@ import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-prof
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppRewindChatChatIdRouteImport } from './routes/app/rewind-chat.$chatId'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
+import { Route as AppOnboardingRewindPartnerRouteImport } from './routes/app/onboarding/rewind-partner'
 import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
 import { Route as AppJournalPreviewIdRouteImport } from './routes/app/journal-preview.$id'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
@@ -229,6 +230,12 @@ const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
   path: '/app/r/$sessionId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppOnboardingRewindPartnerRoute =
+  AppOnboardingRewindPartnerRouteImport.update({
+    id: '/app/onboarding/rewind-partner',
+    path: '/app/onboarding/rewind-partner',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppJournalDateRoute = AppJournalDateRouteImport.update({
   id: '/$date',
   path: '/$date',
@@ -342,6 +349,7 @@ export interface FileRoutesByFullPath {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -390,6 +398,7 @@ export interface FileRoutesByTo {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -441,6 +450,7 @@ export interface FileRoutesById {
   '/app/invite/$code': typeof AppInviteCodeRoute
   '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
   '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
@@ -493,6 +503,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
@@ -541,6 +552,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
@@ -591,6 +603,7 @@ export interface FileRouteTypes {
     | '/app/invite/$code'
     | '/app/journal-preview/$id'
     | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
@@ -638,6 +651,7 @@ export interface RootRouteChildren {
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppInviteCodeRoute: typeof AppInviteCodeRoute
   AppJournalPreviewIdRoute: typeof AppJournalPreviewIdRoute
+  AppOnboardingRewindPartnerRoute: typeof AppOnboardingRewindPartnerRoute
   AppRSessionIdRoute: typeof AppRSessionIdRoute
   AppRewindChatChatIdRoute: typeof AppRewindChatChatIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
@@ -890,6 +904,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRSessionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/onboarding/rewind-partner': {
+      id: '/app/onboarding/rewind-partner'
+      path: '/app/onboarding/rewind-partner'
+      fullPath: '/app/onboarding/rewind-partner'
+      preLoaderRoute: typeof AppOnboardingRewindPartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/journal/$date': {
       id: '/app/journal/$date'
       path: '/$date'
@@ -1065,6 +1086,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppInviteCodeRoute: AppInviteCodeRoute,
   AppJournalPreviewIdRoute: AppJournalPreviewIdRoute,
+  AppOnboardingRewindPartnerRoute: AppOnboardingRewindPartnerRoute,
   AppRSessionIdRoute: AppRSessionIdRoute,
   AppRewindChatChatIdRoute: AppRewindChatChatIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,

@@ -32,6 +32,7 @@ import {
 } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -39,7 +40,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { UserCheckmark } from '@/components/user/checkmark.component'
 import ENV from '@/env'
-import { useRewindRoutine } from '@/hooks/use-rewind.hook'
+import { useRewindChats, useRewindRoutine } from '@/hooks/use-rewind.hook'
 import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
@@ -254,7 +255,7 @@ async function getRealtimeMicrophoneStream(
   })
 }
 
-function PersonaThumbnail({
+export function PersonaThumbnail({
   persona,
   onSelect,
   selected,
@@ -301,16 +302,34 @@ function PersonaThumbnail({
   )
 }
 
-function PersonaArtwork({
+function RewindChatUnreadBadge({
+  count,
+}: {
+  count: number
+}): ReactElement | null {
+  if (count <= 0) return null
+
+  return (
+    <View className="absolute -right-1 -top-1 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 py-0.5">
+      <Text className="font-bbh text-[10px] font-bold leading-3 text-white">
+        {count > 99 ? '99+' : count}
+      </Text>
+    </View>
+  )
+}
+
+export function PersonaArtwork({
   actionLabel,
   persona,
   onChoose,
   disabled,
+  showAction = true,
 }: {
   actionLabel?: string
   persona: RewindPersona
   onChoose: () => void
   disabled?: boolean
+  showAction?: boolean
 }): ReactElement {
   const color = adjustColor(persona.color, {
     lightness: -10,
@@ -358,16 +377,20 @@ function PersonaArtwork({
         <Text className="mt-2 !text-center relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
           {persona.name} {persona.perspective.toLowerCase()}
         </Text>
-        <Pressable
-          onPress={onChoose}
-          disabled={disabled}
-          accessibilityLabel={`Choose ${persona.name} as your Rewind partner`}
-          className="mt-6 min-h-11 min-w-[190px] items-center justify-center rounded-full bg-white px-6"
-        >
-          <Text className="font-bbh font-bold text-cardd">
-            {disabled ? 'Saving...' : (actionLabel ?? `Choose ${persona.name}`)}
-          </Text>
-        </Pressable>
+        {showAction ? (
+          <Pressable
+            onPress={onChoose}
+            disabled={disabled}
+            accessibilityLabel={`Choose ${persona.name} as your Rewind partner`}
+            className="mt-6 min-h-11 min-w-[190px] items-center justify-center rounded-full bg-white px-6"
+          >
+            <Text className="font-bbh font-bold text-cardd">
+              {disabled
+                ? 'Saving...'
+                : (actionLabel ?? `Choose ${persona.name}`)}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   )
@@ -381,9 +404,18 @@ export default function RewindScreen(): ReactElement {
     isLoading: isAuthLoading,
   } = useAuth()
   const routineQuery = useRewindRoutine()
+  const chatsQuery = useRewindChats()
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [isPartnerPickerOpen, setIsPartnerPickerOpen] = useState(false)
+  const unreadChatCount = useMemo(
+    () =>
+      (chatsQuery.data ?? []).reduce(
+        (total, chat) => total + (chat.unreadCount ?? 0),
+        0,
+      ),
+    [chatsQuery.data],
+  )
   const [previewPersonaId, setPreviewPersonaId] =
     useState<RewindPersonaId>('ella')
   const [resolvedPersonaUserId, setResolvedPersonaUserId] = useState<
@@ -1338,7 +1370,13 @@ export default function RewindScreen(): ReactElement {
       return 'Your latest Rewind is complete'
     }
     if (routineQuery.data.latestSession?.status === 'MISSED') {
-      return 'Your last Rewind window closed'
+      const nextSession = routineQuery.data.nextSession
+      if (nextSession?.scheduledFor) {
+        return `Last Rewind window closed. Up next is by ${formatOccurrenceTime(
+          nextSession.scheduledFor,
+        )}`
+      }
+      return 'Last Rewind window closed'
     }
     if (routineQuery.data.nextSession) {
       return `Next Rewind ${formatOccurrenceTime(
@@ -1355,37 +1393,15 @@ export default function RewindScreen(): ReactElement {
     isConnectingRef.current
 
   if (isAuthLoading) {
-    return (
-      <View className="flex-1 bg-cardd">
-        <NoiseComponent>
-          <View className="flex-1 items-center justify-center px-mg">
-            <Mirage size="96" speed="4.2" color="#ffffff" />
-            <Text className="mt-4 muted font-bbh text-sm">
-              Loading your Rewind...
-            </Text>
-          </View>
-        </NoiseComponent>
-      </View>
-    )
+    return <AppLoadingState message="Loading your Rewind..." />
   }
 
   if (!isAuthenticated || !user) {
-    return <></>
+    return <AppLoadingState message="Opening sign in..." />
   }
 
   if (resolvedPersonaUserId !== user.id) {
-    return (
-      <View className="flex-1 bg-cardd">
-        <NoiseComponent>
-          <View className="flex-1 items-center justify-center px-mg">
-            <Mirage size="96" speed="4.2" color="#ffffff" />
-            <Text className="mt-4 muted font-bbh text-sm">
-              Loading your Rewind partner...
-            </Text>
-          </View>
-        </NoiseComponent>
-      </View>
-    )
+    return <AppLoadingState message="Loading your Rewind partner..." />
   }
 
   if (!persona || isPartnerPickerOpen) {
@@ -1401,7 +1417,7 @@ export default function RewindScreen(): ReactElement {
                   accessibilityLabel={
                     persona ? 'Close partner picker' : 'Open Rewind text chats'
                   }
-                  className="size-11 items-center justify-center rounded-full bg-cardx"
+                  className="relative size-11 items-center justify-center rounded-full bg-cardx"
                   onPress={() => {
                     if (persona) {
                       setIsPartnerPickerOpen(false)
@@ -1415,6 +1431,9 @@ export default function RewindScreen(): ReactElement {
                   ) : (
                     <RiChat3Line size={19} className="text-card-lighter-2" />
                   )}
+                  {!persona ? (
+                    <RewindChatUnreadBadge count={unreadChatCount} />
+                  ) : null}
                 </Pressable>
               }
             />
@@ -1514,17 +1533,12 @@ export default function RewindScreen(): ReactElement {
                   <Pressable
                     onPress={openRewindChats}
                     accessibilityLabel="Open Rewind text chats"
-                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
+                    className="relative rounded-full items-center justify-center "
                   >
-                    <RiChat3Fill size={18} className="text-white" />
+                    <RiChat3Fill size={27} className="text-white" />
+                    <RewindChatUnreadBadge count={unreadChatCount} />
                   </Pressable>
-                  <Pressable
-                    onPress={openRoutineSettings}
-                    accessibilityLabel="Open Rewind insights"
-                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
-                  >
-                    <RiSettings3Fill size={18} className="text-white" />
-                  </Pressable>
+
                   <Pressable
                     onPress={() => {
                       if (!canSwitchPartnerToday()) {
@@ -1548,6 +1562,13 @@ export default function RewindScreen(): ReactElement {
                       className="size-8 rounded-full object-cover"
                       src={persona.avatar}
                     />
+                  </Pressable>
+                  <Pressable
+                    onPress={openRoutineSettings}
+                    accessibilityLabel="Open Rewind insights"
+                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
+                  >
+                    <RiSettings3Fill size={18} className="text-white" />
                   </Pressable>
                 </>
               )}
@@ -1580,9 +1601,9 @@ export default function RewindScreen(): ReactElement {
               </Text>
             </View>
 
-            <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
-              <View className="px-3 py-2 rounded-xl bg-card-light/30">
-                <Text className="text-white/80 px-2 font-bold font-bbh text-xs">
+            <View className="mt-1 flex-row gap-2 flex-wrap justify-center">
+              <View className="px-3 rounded-xl ">
+                <Text className="text-card-lighter-3 px-2 font-bold font-bbh  !text-center text-xs">
                   {rewindSessionDateKey
                     ? `Rewind ${rewindSessionDateKey.slice(5)}`
                     : routineStatus}{' '}
@@ -1661,7 +1682,7 @@ export default function RewindScreen(): ReactElement {
 
             {!hasActiveSession ? (
               <Pressable className="flex mt-5 flex-row items-center gap-3">
-                <Text className="text-white font-bold">
+                <Text className="text-white font-bold  !text-center">
                   {statusText === 'Failed' || statusText === 'Disconnected'
                     ? 'Reconnect and continue'
                     : statusText === 'Paused'
@@ -1739,7 +1760,7 @@ export default function RewindScreen(): ReactElement {
                       <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em] text-card-lighter-3">
                         Rewind routine
                       </Text>
-                      <Text className="font-bbh text-xs text-white line-clamp-2">
+                      <Text className="font-bbh text-xs !text-center text-white line-clamp-2">
                         {routineStatus}
                       </Text>
                     </View>
