@@ -54,6 +54,7 @@ import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.m
 import { Route as AppAdminFeatureFlagsRouteImport } from './routes/app/admin.feature-flags'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
+import { Route as AppRewindChatChatIdSettingsRouteImport } from './routes/app/rewind-chat.$chatId_.settings'
 import { Route as AppCommunityTemplatesTemplateIdRouteImport } from './routes/app/community/templates/$templateId'
 import { Route as AppCommunityMembersCommunityIdRouteImport } from './routes/app/community/members/$communityId'
 import { Route as AppCommunityGoalsCommunityIdRouteImport } from './routes/app/community/goals/$communityId'
@@ -287,6 +288,12 @@ const ChillTimerSessionIdDurationRoute =
     path: '/chill/timer/$sessionId/$duration',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AppRewindChatChatIdSettingsRoute =
+  AppRewindChatChatIdSettingsRouteImport.update({
+    id: '/app/rewind-chat/$chatId_/settings',
+    path: '/app/rewind-chat/$chatId/settings',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AppCommunityTemplatesTemplateIdRoute =
   AppCommunityTemplatesTemplateIdRouteImport.update({
     id: '/app/community/templates/$templateId',
@@ -361,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesByTo {
@@ -410,6 +418,7 @@ export interface FileRoutesByTo {
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesById {
@@ -462,6 +471,7 @@ export interface FileRoutesById {
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId_/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRouteTypes {
@@ -515,6 +525,7 @@ export interface FileRouteTypes {
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId/settings'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -564,6 +575,7 @@ export interface FileRouteTypes {
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId/settings'
     | '/chill/timer/$sessionId/$duration'
   id:
     | '__root__'
@@ -615,6 +627,7 @@ export interface FileRouteTypes {
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId_/settings'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesById: FileRoutesById
 }
@@ -661,6 +674,7 @@ export interface RootRouteChildren {
   AppCommunityGoalsCommunityIdRoute: typeof AppCommunityGoalsCommunityIdRoute
   AppCommunityMembersCommunityIdRoute: typeof AppCommunityMembersCommunityIdRoute
   AppCommunityTemplatesTemplateIdRoute: typeof AppCommunityTemplatesTemplateIdRoute
+  AppRewindChatChatIdSettingsRoute: typeof AppRewindChatChatIdSettingsRoute
   ChillTimerSessionIdDurationRoute: typeof ChillTimerSessionIdDurationRoute
 }
 
@@ -981,6 +995,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChillTimerSessionIdDurationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewind-chat/$chatId_/settings': {
+      id: '/app/rewind-chat/$chatId_/settings'
+      path: '/app/rewind-chat/$chatId/settings'
+      fullPath: '/app/rewind-chat/$chatId/settings'
+      preLoaderRoute: typeof AppRewindChatChatIdSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/community/templates/$templateId': {
       id: '/app/community/templates/$templateId'
       path: '/app/community/templates/$templateId'
@@ -1096,6 +1117,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppCommunityGoalsCommunityIdRoute: AppCommunityGoalsCommunityIdRoute,
   AppCommunityMembersCommunityIdRoute: AppCommunityMembersCommunityIdRoute,
   AppCommunityTemplatesTemplateIdRoute: AppCommunityTemplatesTemplateIdRoute,
+  AppRewindChatChatIdSettingsRoute: AppRewindChatChatIdSettingsRoute,
   ChillTimerSessionIdDurationRoute: ChillTimerSessionIdDurationRoute,
 }
 export const routeTree = rootRouteImport

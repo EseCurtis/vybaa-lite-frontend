@@ -192,11 +192,20 @@ export function useRewindChatMessages(chatId: string, limit: number = 30) {
   })
 }
 
-export function useEnqueueRewindChatMessage(chatId: string) {
+export function useEnqueueRewindChatMessage(
+  chatId: string,
+  onAccepted?: (message: RewindChatMessage, idempotencyKey: string) => void,
+) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: EnqueueRewindChatMessageInput) =>
-      rewindAPI.enqueueV2ChatMessage(chatId, input),
+    mutationFn: async (input: EnqueueRewindChatMessageInput) => {
+      const response = await rewindAPI.enqueueV2ChatMessage(chatId, input)
+      onAccepted?.(
+        { ...response.data.userMessage, runId: response.data.runId },
+        input.idempotencyKey,
+      )
+      return response
+    },
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({

@@ -8,7 +8,7 @@ function RewindChatRoute(): ReactElement {
   const { chatId } = Route.useParams()
   return (
     <ProtectedRoute redirectTo="/" requireAuth>
-      <RewindChatScreen chatId={chatId} />
+      <RewindChatScreen chatId={chatId} key={chatId} />
     </ProtectedRoute>
   )
 }

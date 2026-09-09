@@ -1,11 +1,10 @@
 import {
   RiAtLine,
+  RiArrowDownLine,
   RiCheckDoubleLine,
   RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
-  RiEditLine,
-  RiEmotionHappyLine,
   RiMore2Line,
   RiNotificationLine,
   RiNotificationOffLine,
@@ -13,6 +12,7 @@ import {
   RiSendPlane2Fill,
 } from '@remixicon/react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { useNavigate } from '@tanstack/react-router'
 import {
   Fragment,
   useEffect,
@@ -24,7 +24,7 @@ import {
   type RefObject,
 } from 'react'
 
-import { Input } from '@/components/common/input.component'
+import { useMessageGesture } from '@/hooks/use-message-gesture.hook'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
@@ -33,13 +33,11 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import {
-  useClearRewindChat,
   useDeleteRewindChatMessage,
   useEnqueueRewindChatMessage,
   useMarkRewindChatRead,
   useMuteRewindChat,
   useReactToRewindChatMessage,
-  useRenameRewindChat,
   useRewindChatMessages,
   useRewindChats,
 } from '@/hooks/use-rewind.hook'
@@ -61,6 +59,7 @@ import {
 } from '@/shared/rewind/rewind-personas'
 
 import { cn } from '@/shared/utils/helpers.util'
+import { shouldAnimate } from '@/shared/utils/animation.util'
 import { RewindChatAvatar } from './rewind-chat-avatar.component'
 
 function createMessageKey(): string {
@@ -133,7 +132,7 @@ function messagesBelongTogether(
 const MENTION_PATTERN = /(@(?:ella|lyra|jake|ariel|tobi|neeja)\b)/gi
 const COMPOSER_MAX_HEIGHT = 128
 const READ_RECEIPT_COLOR = '#53bdeb'
-const REACTION_PICKER_HEIGHT = 52
+const REACTION_PICKER_HEIGHT = 156
 const REACTION_PICKER_OFFSET = 8
 const REACTION_PICKER_VIEWPORT_MARGIN = 16
 const REACTION_PICKER_WIDTH = 208
@@ -198,6 +197,8 @@ function createReactionPickerState(
 
 type PendingMessageState = {
   content: string
+  createdAt: string
+  localDateKey: string
   id: string
   replyTo: RewindChatMessage | null
 }
@@ -273,7 +274,6 @@ function ChatMessageBubble({
   isGroup,
   message,
   onReply,
-  onDelete,
   onShowReactions,
   onToggleReactionPicker,
   replyTo,
@@ -286,7 +286,6 @@ function ChatMessageBubble({
   isGroup?: boolean
   message: RewindChatMessage
   onReply: (message: RewindChatMessage) => void
-  onDelete: (message: RewindChatMessage) => void
   onShowReactions: (message: RewindChatMessage) => void
   onToggleReactionPicker: (
     message: RewindChatMessage,
@@ -297,11 +296,17 @@ function ChatMessageBubble({
   showTime: boolean
 }): ReactElement {
   const bubbleRef = useRef<HTMLButtonElement | null>(null)
+  const reduceMotion = useReducedMotion()
+  const gesture = useMessageGesture(
+    () => onReply(message),
+    () => onToggleReactionPicker(message, bubbleRef.current),
+  )
   const isUser = message.role === 'USER'
   const persona = message.personaId ? getRewindPersona(message.personaId) : null
-  const deliveryLabel = deliveryStatus
+  let deliveryLabel = deliveryStatus
     ? deliveryStatus.charAt(0) + deliveryStatus.slice(1).toLowerCase()
     : ''
+  if (deliveryStatus === 'READ' && isGroup) deliveryLabel = 'Read by everyone'
   const hasDoubleTick =
     deliveryStatus === 'DELIVERED' || deliveryStatus === 'READ'
   const reactions = message.reactions ?? []
@@ -317,11 +322,10 @@ function ChatMessageBubble({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className={`flex w-full ${isReactionOverlayOpen ? 'relative z-50' : ''} ${isUser ? 'justify-end' : 'justify-start'}  [&_*]:!break-words [&_*]:!text-wrap overflow-x-hidden`}
       data-message-id={message.id}
-      initial={{ opacity: 0, scale: 0.98, y: 8 }}
-      layout
+      initial={false}
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
-      <View className="max-w-[85%]  overflow-hidden flex-row items-end gap-2">
+      <View className="max-w-[88%] min-w-0 flex-row items-end gap-2">
         {isGroup &&
           (!isUser && persona && showIdentity ? (
             <img
@@ -332,8 +336,10 @@ function ChatMessageBubble({
           ) : !isUser ? (
             <View className="w-7 shrink-0" />
           ) : null)}
-        <View className={`gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
-          {!isUser && persona && showIdentity ? (
+        <View
+          className={`min-w-0 gap-1 ${isUser ? 'items-end' : 'items-start'}`}
+        >
+          {isGroup && !isUser && persona && showIdentity ? (
             <Text
               className="px-1 font-bbh text-[11px] font-black"
               style={{ color: persona.color }}
@@ -341,18 +347,33 @@ function ChatMessageBubble({
               {persona.name}
             </Text>
           ) : null}
-          <View
-            className={`flex-row relative  min-w-[100px] items-center gap-1  ${isUser ? 'flex-row-reverse item-end' : ''}`}
-          >
+          <View className="relative min-w-0 max-w-full flex-row items-center">
+            {gesture.offset > 12 ? (
+              <RiReplyLine
+                aria-hidden
+                className="absolute left-2 text-card-lighter-2"
+                size={20}
+              />
+            ) : null}
             <motion.button
-              aria-label={`Reply to ${getReplyAuthor(message)}`}
+              aria-label={`${getReplyAuthor(message)}: ${message.content}. Hold for actions or swipe right to reply.`}
+              aria-haspopup="dialog"
+              aria-expanded={isReactionPickerOpen}
               className={cn(
-                'flex   appearance-none w-full  flex-col gap-1 rounded-[11px] px-1 py-1 text-left',
+                'relative flex min-h-11 min-w-0 max-w-full select-none appearance-none flex-col gap-1 rounded-2xl px-1 py-1 text-left touch-pan-y',
                 isUser
                   ? ' rounded-br-md bg-accent-700'
                   : 'rounded-bl-md bg-card-light',
               )}
-              onClick={() => onReply(message)}
+              {...gesture.handlers}
+              style={{
+                transform: `translateX(${gesture.offset}px)`,
+                transition:
+                  gesture.offset || reduceMotion || !shouldAnimate
+                    ? 'none'
+                    : 'transform 160ms ease-out',
+                WebkitTouchCallout: 'none',
+              }}
               ref={bubbleRef}
               type="button"
             >
@@ -370,7 +391,7 @@ function ChatMessageBubble({
                 </View>
               ) : null}
               <MentionText
-                className="whitespace-pre-wrap max-w-[70vw] font-bbh text-[15px] px-2 py-1 leading-6"
+                className="whitespace-pre-wrap [overflow-wrap:anywhere] font-bbh text-[15px] px-2 py-1 leading-6"
                 content={message.content}
                 style={{ color: colors.white }}
               />
@@ -385,7 +406,7 @@ function ChatMessageBubble({
                   {showTime ? (
                     <Text
                       className={cn(
-                        isUser ? 'text-white/70' : 'text-card-lighter-3',
+                        'text-card-lighter-2',
                         'font-bbh text-[10px] ',
                       )}
                     >
@@ -416,28 +437,6 @@ function ChatMessageBubble({
           </View>
 
           <View className="flex-row items-center gap-1">
-            <Pressable
-              accessibilityLabel={`React to ${getReplyAuthor(message)}'s message`}
-              aria-expanded={isReactionPickerOpen}
-              className={`size-11  shrink-0 items-center justify-center rounded-full ${isReactionPickerOpen ? 'bg-white' : 'bg-cardx'} ${isUser ? 'left-0' : 'right-0'}`}
-              onPress={() => onToggleReactionPicker(message, bubbleRef.current)}
-            >
-              <RiEmotionHappyLine
-                className={
-                  isReactionPickerOpen ? 'text-cardd' : 'text-card-lighter-3'
-                }
-                size={16}
-              />
-            </Pressable>
-
-            <Pressable
-              accessibilityLabel={`Delete ${getReplyAuthor(message)}'s message`}
-              className="size-11 shrink-0 items-center justify-center rounded-full bg-cardx"
-              onPress={() => onDelete(message)}
-            >
-              <RiDeleteBinLine className="text-card-lighter-3" size={16} />
-            </Pressable>
-
             {reactions.length ? (
               <Pressable
                 accessibilityLabel={`View reactions. ${reactionLabel}`}
@@ -571,37 +570,48 @@ type StreamingPartner = {
 
 function StreamingPartnerBubble({
   stream,
+  isGroup,
 }: {
   stream: StreamingPartner
+  isGroup: boolean
 }): ReactElement | null {
+  const reduceMotion = useReducedMotion() || !shouldAnimate
   if (!stream.personaId) return null
   const persona = getRewindPersona(stream.personaId)
   return (
     <motion.div
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className="flex w-full justify-start"
-      initial={{ opacity: 0, scale: 0.98, y: 8 }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.98, y: 8 }}
       layout
       transition={{ duration: 0.18, ease: 'easeOut' }}
     >
       <View className="max-w-[86%] flex-row items-end gap-2">
-        <img
-          alt={`${persona.name} avatar`}
-          className="size-7 shrink-0 rounded-full object-cover"
-          src={persona.avatar}
-        />
+        {isGroup ? (
+          <img
+            alt={`${persona.name} avatar`}
+            className="size-7 shrink-0 rounded-full object-cover"
+            src={persona.avatar}
+          />
+        ) : null}
         <View className="items-start gap-1">
-          <Text
-            className="px-1 font-bbh text-[11px] font-black"
-            style={{ color: persona.color }}
-          >
-            {persona.name}
-          </Text>
+          {isGroup ? (
+            <Text
+              className="px-1 font-bbh text-[11px] font-black"
+              style={{ color: persona.color }}
+            >
+              {persona.name}
+            </Text>
+          ) : null}
           <View className="min-h-11 justify-center rounded-[18px] rounded-bl-md bg-card-light px-4 py-2.5">
             <View className="flex-row gap-1.5 py-1">
               {[0, 1, 2].map((index) => (
                 <motion.div
-                  animate={{ opacity: [0.35, 1, 0.35], y: [0, -3, 0] }}
+                  animate={
+                    reduceMotion
+                      ? { opacity: 1 }
+                      : { opacity: [0.35, 1, 0.35], y: [0, -3, 0] }
+                  }
                   className="size-1.5 rounded-full bg-card-lighter-3"
                   key={index}
                   transition={{
@@ -663,47 +673,6 @@ function MentionComposer({
   )
 }
 
-function PendingMessage({
-  content,
-  replyTo,
-}: Pick<PendingMessageState, 'content' | 'replyTo'>): ReactElement {
-  return (
-    <motion.div
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      className="flex w-full justify-end"
-      initial={{ opacity: 0, scale: 0.98, y: 8 }}
-      layout
-      transition={{ duration: 0.16, ease: 'easeOut' }}
-    >
-      <View className="max-w-[82%] items-end gap-1">
-        <View className="gap-1 rounded-[18px] rounded-br-md bg-accent-800 px-4 py-2.5">
-          {replyTo ? (
-            <View className="rounded-xl bg-cardx px-3 py-2">
-              <Text className="font-bbh text-[10px] font-black text-card-lighter-3">
-                {getReplyAuthor(replyTo)}
-              </Text>
-              <Text
-                className="font-bbh text-xs leading-4 text-card-lighter-2"
-                lines={1}
-              >
-                {replyTo.content}
-              </Text>
-            </View>
-          ) : null}
-          <Text className="whitespace-pre-wrap font-bbh text-[15px] leading-6 text-white">
-            {content}
-          </Text>
-        </View>
-        <View className="flex-row items-center px-1 text-card-lighter-3">
-          <span aria-label="Sent" className="inline-flex" role="img">
-            <RiCheckLine size={14} />
-          </span>
-        </View>
-      </View>
-    </motion.div>
-  )
-}
-
 function ReplyComposerPreview({
   message,
   onCancel,
@@ -742,6 +711,7 @@ export default function RewindChatScreen({
   chatId: string
 }): ReactElement {
   const { isKeyboardVisible } = useKeyboard()
+  const navigate = useNavigate()
   const [composerValue, setComposerValue] = useState('')
   const [mentionsOpen, setMentionsOpen] = useState(false)
   const [pendingMessages, setPendingMessages] = useState<PendingMessageState[]>(
@@ -767,12 +737,13 @@ export default function RewindChatScreen({
   const [hiddenMessageIds, setHiddenMessageIds] = useState<ReadonlySet<string>>(
     () => new Set<string>(),
   )
-  const [chatMenuOpen, setChatMenuOpen] = useState(false)
-  const [chatTitleDraft, setChatTitleDraft] = useState('')
+  const [isAtBottom, setIsAtBottom] = useState(true)
+  const [unreadArrivalCount, setUnreadArrivalCount] = useState(0)
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null)
   const firstReactionOptionRef = useRef<HTMLButtonElement | null>(null)
   const reactionDetailsCloseRef = useRef<HTMLButtonElement | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const scrollContentRef = useRef<HTMLDivElement | null>(null)
   const shouldStickToBottomRef = useRef(true)
   const olderScrollHeightRef = useRef<number | null>(null)
   const lastMarkedReadRef = useRef<string | null>(null)
@@ -783,32 +754,74 @@ export default function RewindChatScreen({
   const toast = useToast()
   const messagesQuery = useRewindChatMessages(chatId)
   const chatsQuery = useRewindChats()
-  const sendMutation = useEnqueueRewindChatMessage(chatId)
+  const messageRenderKeys = useRef(new Map<string, string>())
+  const sendMutation = useEnqueueRewindChatMessage(chatId, (message, key) => {
+    messageRenderKeys.current.set(message.id, key)
+    setPendingMessages((current) => current.filter((item) => item.id !== key))
+    setStreamMessages((current) =>
+      current.some((item) => item.id === message.id)
+        ? current
+        : [...current, message],
+    )
+  })
   const markReadMutation = useMarkRewindChatRead(chatId)
   const muteMutation = useMuteRewindChat(chatId)
   const reactionMutation = useReactToRewindChatMessage(chatId)
   const deleteMessageMutation = useDeleteRewindChatMessage(chatId)
-  const clearChatMutation = useClearRewindChat(chatId)
-  const renameChatMutation = useRenameRewindChat(chatId)
-  const shouldReduceMotion = useReducedMotion()
+  const reducedMotionPreference = useReducedMotion()
+  const shouldReduceMotion = reducedMotionPreference || !shouldAnimate
   const { isConnected, subscribeRewindChat } = useNotificationContext()
   const chat = chatsQuery.data?.find((item) => item.id === chatId)
   const firstPage = messagesQuery.data?.pages[0]
-  const messages: RewindChatMessage[] = []
+  const fetchedMessages: RewindChatMessage[] = []
   const pages = messagesQuery.data?.pages ?? []
   for (let index = pages.length - 1; index >= 0; index -= 1) {
     const page = pages[index]
     if (page) {
-      messages.push(
+      fetchedMessages.push(
         ...page.items.filter((message) => !hiddenMessageIds.has(message.id)),
       )
     }
   }
-  const knownMessageIds = new Set(messages.map((message) => message.id))
+  const knownMessageIds = new Set(fetchedMessages.map((message) => message.id))
   const visibleStreamMessages = streamMessages.filter(
     (message) =>
       !knownMessageIds.has(message.id) && !hiddenMessageIds.has(message.id),
   )
+  const pendingIds = new Set(pendingMessages.map((message) => message.id))
+  const optimisticMessages: RewindChatMessage[] = pendingMessages.map(
+    (pending) => ({
+      content: pending.content,
+      createdAt: pending.createdAt,
+      localDateKey: pending.localDateKey,
+      id: pending.id,
+      mentions: [],
+      personaId: null,
+      role: 'USER',
+      replyToMessageId: pending.replyTo?.id,
+    }),
+  )
+  const messages = [
+    ...fetchedMessages,
+    ...visibleStreamMessages,
+    ...optimisticMessages,
+  ].sort(
+    (left, right) =>
+      new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime(),
+  )
+  let chatPresenceLabel = 'Here with you'
+  if (!isConnected) {
+    chatPresenceLabel = 'Reconnecting…'
+  } else if (streamingPartners.length) {
+    const names = streamingPartners
+      .slice(0, 2)
+      .map((stream) =>
+        stream.personaId ? getRewindPersona(stream.personaId).name : 'Partner',
+      )
+    const extra = streamingPartners.length > 2 ? ' and others' : ''
+    const verb = streamingPartners.length === 1 ? 'is' : 'are'
+    chatPresenceLabel = `${names.join(', ')}${extra} ${verb} typing…`
+  }
 
   useEffect(() => {
     if (!reactionPickerState && !reactionDetailsMessageId) return
@@ -826,6 +839,25 @@ export default function RewindChatScreen({
     }
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === 'Escape') closeReactionOverlays()
+      if (event.key === 'Tab') {
+        const dialog = (
+          reactionPickerState
+            ? firstReactionOptionRef.current
+            : reactionDetailsCloseRef.current
+        )?.closest('[role="dialog"]')
+        const buttons = dialog?.querySelectorAll<HTMLButtonElement>(
+          'button:not(:disabled)',
+        )
+        const first = buttons?.[0]
+        const last = buttons?.[buttons.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last?.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
+      }
     }
     window.addEventListener('resize', closeReactionOverlays)
     window.addEventListener('orientationchange', closeReactionOverlays)
@@ -859,7 +891,6 @@ export default function RewindChatScreen({
         return
       }
       if (event.type === 'user_message_seen') {
-        if (inactiveRunIdsRef.current.has(event.runId)) return
         setSeenMessageIds((current) => {
           if (current.has(event.messageId)) return current
           return new Set([...current, event.messageId])
@@ -933,6 +964,9 @@ export default function RewindChatScreen({
         return
       }
       if (event.type === 'message_committed') {
+        const isNewArrival = !playedSoundMessageIdsRef.current.has(
+          event.messageId,
+        )
         brokenDeltaTurnsRef.current.delete(event.turnId)
         lastDeltaSequenceRef.current.delete(event.turnId)
         setStreamMessages((current) => {
@@ -944,11 +978,13 @@ export default function RewindChatScreen({
         setStreamingPartners((current) =>
           current.filter((stream) => stream.turnId !== event.turnId),
         )
-        if (!playedSoundMessageIdsRef.current.has(event.messageId)) {
+        if (isNewArrival) {
           playedSoundMessageIdsRef.current.add(event.messageId)
           playRewindMessageSound()
         }
-        markReadMutation.mutate(event.messageId)
+        if (isNewArrival && !shouldStickToBottomRef.current) {
+          setUnreadArrivalCount((count) => count + 1)
+        }
         void messagesQuery.refetch()
         void chatsQuery.refetch()
         return
@@ -974,16 +1010,35 @@ export default function RewindChatScreen({
     void chatsQuery.refetch()
   }, [isConnected])
 
-  const latestMessage = messages[messages.length - 1]
+  const latestMessage = [...messages]
+    .filter((message) => message.role === 'PARTNER')
+    .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+    .at(-1)
   const latestMessageId =
     latestMessage?.role === 'PARTNER' ? latestMessage.id : null
 
   useEffect(() => {
-    if (!latestMessageId || latestMessageId === lastMarkedReadRef.current)
-      return
-    lastMarkedReadRef.current = latestMessageId
-    markReadMutation.mutate(latestMessageId)
-  }, [latestMessageId, markReadMutation])
+    if (!isAtBottom || !latestMessageId) return
+    const markVisibleRead = (): void => {
+      if (
+        document.visibilityState !== 'visible' ||
+        lastMarkedReadRef.current === latestMessageId
+      )
+        return
+      lastMarkedReadRef.current = latestMessageId
+      markReadMutation.mutate(latestMessageId, {
+        onError: () => {
+          lastMarkedReadRef.current = null
+        },
+      })
+    }
+    const timer = window.setTimeout(markVisibleRead, 700)
+    document.addEventListener('visibilitychange', markVisibleRead)
+    return () => {
+      window.clearTimeout(timer)
+      document.removeEventListener('visibilitychange', markVisibleRead)
+    }
+  }, [isAtBottom, latestMessageId])
 
   const activeTurns = firstPage?.activeTurns ?? []
   const activeGeneratingTurns = activeTurns.filter(
@@ -1010,7 +1065,7 @@ export default function RewindChatScreen({
   }, [activeTurnKey])
 
   const messageLookup = new Map<string, RewindChatMessage>()
-  for (const message of [...messages, ...visibleStreamMessages]) {
+  for (const message of messages) {
     messageLookup.set(message.id, message)
   }
   const reactionPickerBaseMessage = reactionPickerState
@@ -1036,10 +1091,13 @@ export default function RewindChatScreen({
       }
     : undefined
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = scrollContainerRef.current
     if (!container) return
-    if (olderScrollHeightRef.current !== null) {
+    if (
+      olderScrollHeightRef.current !== null &&
+      !messagesQuery.isFetchingNextPage
+    ) {
       container.scrollTop +=
         container.scrollHeight - olderScrollHeightRef.current
       olderScrollHeightRef.current = null
@@ -1048,7 +1106,30 @@ export default function RewindChatScreen({
     if (shouldStickToBottomRef.current) {
       container.scrollTop = container.scrollHeight
     }
-  }, [messages.length, pendingMessages, streamMessages, streamingPartners])
+  }, [
+    messages.length,
+    pendingMessages,
+    streamMessages,
+    streamingPartners,
+    messagesQuery.isFetchingNextPage,
+  ])
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const content = scrollContentRef.current
+    if (!container || !content) return
+    const observer = new ResizeObserver(() => {
+      if (
+        shouldStickToBottomRef.current &&
+        olderScrollHeightRef.current === null
+      ) {
+        container.scrollTop = container.scrollHeight
+      }
+    })
+    observer.observe(container)
+    observer.observe(content)
+    return () => observer.disconnect()
+  }, [])
 
   const loadOlderMessages = async (): Promise<void> => {
     const container = scrollContainerRef.current
@@ -1072,33 +1153,27 @@ export default function RewindChatScreen({
     const idempotencyKey = createMessageKey()
     const replyTo = replyingToMessage
     shouldStickToBottomRef.current = true
+    setIsAtBottom(true)
+    setUnreadArrivalCount(0)
     setComposerValue('')
     setMentionsOpen(false)
     setReplyingToMessage(null)
     composerInputRef.current?.focus({ preventScroll: true })
     setPendingMessages((current) => [
       ...current,
-      { content, id: idempotencyKey, replyTo },
+      {
+        content,
+        id: idempotencyKey,
+        replyTo,
+        createdAt: new Date().toISOString(),
+        localDateKey: new Date().toLocaleDateString('en-CA'),
+      },
     ])
     void sendMutation
       .mutateAsync({
         content,
         idempotencyKey,
         replyToMessageId: replyTo?.id ?? null,
-      })
-      .then((response) => {
-        setPendingMessages((current) =>
-          current.filter((pending) => pending.id !== idempotencyKey),
-        )
-        const userMessage = {
-          ...response.data.userMessage,
-          runId: response.data.runId,
-        }
-        setStreamMessages((current) =>
-          current.some((message) => message.id === userMessage.id)
-            ? current
-            : [...current, userMessage],
-        )
       })
       .catch((error: unknown) => {
         setPendingMessages((current) =>
@@ -1140,50 +1215,6 @@ export default function RewindChatScreen({
           error instanceof Error
             ? error.message
             : 'Message could not be deleted',
-        )
-      })
-  }
-
-  const renameGroupChat = (): void => {
-    const title = chatTitleDraft.trim()
-    if (!title || title === chat?.title) return
-    void renameChatMutation
-      .mutateAsync(title)
-      .then(() => {
-        setChatMenuOpen(false)
-        toast.success('Group name updated')
-      })
-      .catch((error: unknown) => {
-        toast.error(
-          error instanceof Error
-            ? error.message
-            : 'Group name could not update',
-        )
-      })
-  }
-
-  const clearChat = (): void => {
-    if (
-      !window.confirm(
-        'Clear every message in this chat? This cannot be undone.',
-      )
-    )
-      return
-    void clearChatMutation
-      .mutateAsync()
-      .then(() => {
-        setChatMenuOpen(false)
-        setPendingMessages([])
-        setStreamMessages([])
-        setStreamingPartners([])
-        setReplyingToMessage(null)
-        setReactionUpdates(new Map())
-        setHiddenMessageIds(new Set())
-        toast.success('Chat cleared')
-      })
-      .catch((error: unknown) => {
-        toast.error(
-          error instanceof Error ? error.message : 'Chat could not be cleared',
         )
       })
   }
@@ -1311,12 +1342,13 @@ export default function RewindChatScreen({
                 </Pressable>
                 <Pressable
                   accessibilityLabel="Chat settings"
-                  aria-expanded={chatMenuOpen}
                   className="size-11 items-center justify-center rounded-full bg-card-light"
                   disabled={!chat}
                   onPress={() => {
-                    setChatTitleDraft(chat?.title ?? '')
-                    setChatMenuOpen(true)
+                    void navigate({
+                      to: '/app/rewind-chat/$chatId/settings',
+                      params: { chatId },
+                    })
                   }}
                 >
                   <RiMore2Line className="text-card-lighter-1" size={20} />
@@ -1332,7 +1364,7 @@ export default function RewindChatScreen({
                       {chat.title}
                     </Text>
                     <Text className="font-bbh text-[10px] font-bold text-card-lighter-3">
-                      {isConnected ? 'Here with you' : 'Reconnecting…'}
+                      {chatPresenceLabel}
                     </Text>
                   </View>
                 </View>
@@ -1343,7 +1375,7 @@ export default function RewindChatScreen({
           />
 
           <div
-            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-mg"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain px-mg [overflow-anchor:none]"
             onScroll={(event) => {
               if (reactionDetailsMessageId) setReactionDetailsMessageId(null)
               if (reactionPickerState) setReactionPickerState(null)
@@ -1353,10 +1385,15 @@ export default function RewindChatScreen({
                 container.scrollTop -
                 container.clientHeight
               shouldStickToBottomRef.current = distanceFromBottom < 80
+              setIsAtBottom(shouldStickToBottomRef.current)
+              if (shouldStickToBottomRef.current) setUnreadArrivalCount(0)
             }}
             ref={scrollContainerRef}
           >
-            <View className="mx-auto min-h-full w-full max-w-3xl justify-end gap-1 py-4">
+            <div
+              ref={scrollContentRef}
+              className="mx-auto flex min-h-full w-full max-w-3xl flex-col justify-end gap-1 py-4"
+            >
               {messagesQuery.hasNextPage ? (
                 <Pressable
                   accessibilityLabel="Load older chat messages"
@@ -1415,7 +1452,11 @@ export default function RewindChatScreen({
                       }
                     : message
                   return (
-                    <Fragment key={message.id}>
+                    <Fragment
+                      key={
+                        messageRenderKeys.current.get(message.id) ?? message.id
+                      }
+                    >
                       {showDay ? (
                         <Text className="self-center px-3 py-4 font-bbh text-[11px] font-bold text-card-lighter-3">
                           {formatMessageDay(message.localDateKey)}
@@ -1423,10 +1464,14 @@ export default function RewindChatScreen({
                       ) : null}
                       <View className={showIdentity && index ? 'mt-3' : ''}>
                         <ChatMessageBubble
-                          deliveryStatus={getMessageDeliveryStatus(
-                            displayedMessage,
-                            seenMessageIds,
-                          )}
+                          deliveryStatus={
+                            pendingIds.has(message.id)
+                              ? 'SENT'
+                              : getMessageDeliveryStatus(
+                                  displayedMessage,
+                                  seenMessageIds,
+                                )
+                          }
                           isReactionOverlayOpen={
                             reactionPickerState?.messageId === message.id ||
                             reactionDetailsMessageId === message.id
@@ -1435,10 +1480,17 @@ export default function RewindChatScreen({
                             reactionPickerState?.messageId === message.id
                           }
                           message={displayedMessage}
-                          onDelete={deleteMessage}
-                          onReply={beginReply}
+                          onReply={
+                            pendingIds.has(message.id)
+                              ? () => undefined
+                              : beginReply
+                          }
                           onShowReactions={showReactionDetails}
-                          onToggleReactionPicker={toggleReactionPicker}
+                          onToggleReactionPicker={
+                            pendingIds.has(message.id)
+                              ? () => undefined
+                              : toggleReactionPicker
+                          }
                           replyTo={
                             message.replyToMessageId
                               ? messageLookup.get(message.replyToMessageId)
@@ -1464,57 +1516,49 @@ export default function RewindChatScreen({
                     There is no timer and no required ending. Come back whenever
                     you want.
                   </Text>
+                  <Text className="text-center text-xs text-card-lighter-3">
+                    Swipe a message to reply. Hold for reactions.
+                  </Text>
                 </View>
               )}
               <AnimatePresence initial={false}>
-                {pendingMessages.map((pending) => (
-                  <PendingMessage
-                    content={pending.content}
-                    key={pending.id}
-                    replyTo={pending.replyTo}
-                  />
-                ))}
-                {visibleStreamMessages.map((message) => (
-                  <ChatMessageBubble
-                    deliveryStatus={getMessageDeliveryStatus(
-                      message,
-                      seenMessageIds,
-                    )}
-                    isReactionOverlayOpen={
-                      reactionPickerState?.messageId === message.id ||
-                      reactionDetailsMessageId === message.id
-                    }
-                    isReactionPickerOpen={
-                      reactionPickerState?.messageId === message.id
-                    }
-                    key={message.id}
-                    message={
-                      reactionUpdates.has(message.id)
-                        ? {
-                            ...message,
-                            reactions: reactionUpdates.get(message.id) ?? [],
-                          }
-                        : message
-                    }
-                    onDelete={deleteMessage}
-                    onReply={beginReply}
-                    onShowReactions={showReactionDetails}
-                    onToggleReactionPicker={toggleReactionPicker}
-                    replyTo={
-                      message.replyToMessageId
-                        ? messageLookup.get(message.replyToMessageId)
-                        : undefined
-                    }
-                    showIdentity
-                    showTime
-                  />
-                ))}
                 {streamingPartners.map((stream) => (
-                  <StreamingPartnerBubble key={stream.turnId} stream={stream} />
+                  <StreamingPartnerBubble
+                    key={stream.turnId}
+                    stream={stream}
+                    isGroup={chat?.type === 'GROUP'}
+                  />
                 ))}
               </AnimatePresence>
-            </View>
+            </div>
           </div>
+
+          {!isAtBottom ? (
+            <div className="relative h-0 z-20">
+              <Pressable
+                accessibilityLabel={
+                  unreadArrivalCount
+                    ? `${unreadArrivalCount} new messages. Jump to latest`
+                    : 'Jump to latest messages'
+                }
+                className="absolute bottom-3 right-4 min-h-11 min-w-11 flex-row items-center justify-center gap-2 rounded-full bg-card-light px-3 shadow-lg"
+                onPress={() => {
+                  shouldStickToBottomRef.current = true
+                  setIsAtBottom(true)
+                  setUnreadArrivalCount(0)
+                  const container = scrollContainerRef.current
+                  if (container) container.scrollTop = container.scrollHeight
+                }}
+              >
+                <RiArrowDownLine size={20} className="text-white" />
+                {unreadArrivalCount ? (
+                  <Text className="text-xs font-bold text-white">
+                    {unreadArrivalCount}
+                  </Text>
+                ) : null}
+              </Pressable>
+            </div>
+          ) : null}
 
           <View
             className={cn(
@@ -1638,7 +1682,7 @@ export default function RewindChatScreen({
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 aria-label={`React to ${getReplyAuthor(reactionPickerMessage)}'s message`}
                 aria-modal="true"
-                className="fixed z-50 flex gap-2 rounded-full bg-card-light p-1 shadow-2xl"
+                className="fixed z-50 flex flex-col gap-1 rounded-2xl bg-card-light p-1 shadow-2xl"
                 exit={{
                   opacity: 0,
                   scale: shouldReduceMotion ? 1 : 0.94,
@@ -1658,28 +1702,48 @@ export default function RewindChatScreen({
                 }}
                 transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
               >
-                {REACTION_OPTIONS.map((option, index) => {
-                  const selected = reactionPickerMessage.reactions?.some(
-                    (reaction) =>
-                      reaction.actor === 'USER' &&
-                      reaction.kind === option.kind,
-                  )
-                  return (
-                    <Pressable
-                      accessibilityLabel={`${selected ? 'Remove' : 'Add'} ${option.label} reaction`}
-                      aria-pressed={selected}
-                      className={`size-11 items-center justify-center rounded-full text-xl ${selected ? 'bg-white' : 'bg-cardx'}`}
-                      disabled={reactionPickerMessage.id.startsWith('pending:')}
-                      key={option.kind}
-                      onPress={() =>
-                        reactToMessage(reactionPickerMessage, option.kind)
-                      }
-                      ref={index === 0 ? firstReactionOptionRef : undefined}
-                    >
-                      <span aria-hidden>{option.emoji}</span>
-                    </Pressable>
-                  )
-                })}
+                <div className="flex gap-2">
+                  {REACTION_OPTIONS.map((option, index) => {
+                    const selected = reactionPickerMessage.reactions?.some(
+                      (reaction) =>
+                        reaction.actor === 'USER' &&
+                        reaction.kind === option.kind,
+                    )
+                    return (
+                      <Pressable
+                        accessibilityLabel={`${selected ? 'Remove' : 'Add'} ${option.label} reaction`}
+                        aria-pressed={selected}
+                        className={`size-11 items-center justify-center rounded-full text-xl ${selected ? 'bg-white' : 'bg-cardx'}`}
+                        disabled={reactionPickerMessage.id.startsWith(
+                          'pending:',
+                        )}
+                        key={option.kind}
+                        onPress={() =>
+                          reactToMessage(reactionPickerMessage, option.kind)
+                        }
+                        ref={index === 0 ? firstReactionOptionRef : undefined}
+                      >
+                        <span aria-hidden>{option.emoji}</span>
+                      </Pressable>
+                    )
+                  })}
+                </div>
+                <Pressable
+                  accessibilityLabel="Reply to message"
+                  className="min-h-11 flex-row items-center gap-3 rounded-xl px-3 text-white"
+                  onPress={() => beginReply(reactionPickerMessage)}
+                >
+                  <RiReplyLine size={18} />
+                  <Text className="text-sm text-white">Reply</Text>
+                </Pressable>
+                <Pressable
+                  accessibilityLabel="Delete message"
+                  className="min-h-11 flex-row items-center gap-3 rounded-xl px-3 text-danger-400"
+                  onPress={() => deleteMessage(reactionPickerMessage)}
+                >
+                  <RiDeleteBinLine size={18} />
+                  <Text className="text-sm text-danger-400">Delete</Text>
+                </Pressable>
               </motion.div>
             ) : null}
             {reactionDetailsMessage ? (
@@ -1689,110 +1753,6 @@ export default function RewindChatScreen({
                 onClose={() => setReactionDetailsMessageId(null)}
                 reduceMotion={Boolean(shouldReduceMotion)}
               />
-            ) : null}
-          </AnimatePresence>
-          <AnimatePresence initial={false}>
-            {chatMenuOpen ? (
-              <>
-                <motion.button
-                  animate={{ opacity: 1 }}
-                  aria-label="Close chat settings"
-                  className="fixed inset-0 z-40 cursor-default appearance-none bg-transparent"
-                  exit={{ opacity: 0 }}
-                  initial={{ opacity: 0 }}
-                  onClick={() => setChatMenuOpen(false)}
-                  style={{
-                    backdropFilter: 'brightness(0.32)',
-                    WebkitBackdropFilter: 'brightness(0.32)',
-                  }}
-                  transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
-                  type="button"
-                />
-                <motion.div
-                  animate={{ opacity: 1, y: 0 }}
-                  aria-label="Chat settings"
-                  aria-modal="true"
-                  className="fixed bottom-0 left-0 right-0 z-50 rounded-t-[28px] bg-cardd px-mg pb-[calc(var(--safe-area-inset-bottom,0px)+20px)] pt-4 shadow-2xl"
-                  exit={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
-                  initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 24 }}
-                  role="dialog"
-                  transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
-                >
-                  <View className="mx-auto w-full max-w-lg gap-4">
-                    <View className="flex-row items-center justify-between">
-                      <View className="items-start">
-                        <Text className="font-bbh text-lg font-black text-white">
-                          Chat settings
-                        </Text>
-                        <Text className="font-bbh text-xs text-card-lighter-3">
-                          Manage this conversation
-                        </Text>
-                      </View>
-                      <Pressable
-                        accessibilityLabel="Close chat settings"
-                        className="size-11 items-center justify-center rounded-full bg-cardx"
-                        onPress={() => setChatMenuOpen(false)}
-                      >
-                        <RiCloseLine
-                          className="text-card-lighter-2"
-                          size={19}
-                        />
-                      </Pressable>
-                    </View>
-
-                    {chat?.type === 'GROUP' ? (
-                      <View className="gap-2 rounded-2xl bg-cardx p-3">
-                        <Input
-                          aria-label="Group name"
-                          className="bg-card-light"
-                          inputClassName="text-base"
-                          maxLength={60}
-                          onChange={(event) =>
-                            setChatTitleDraft(event.target.value)
-                          }
-                          value={chatTitleDraft}
-                        />
-                        <Pressable
-                          accessibilityLabel="Save group name"
-                          className="min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-white px-4"
-                          disabled={
-                            renameChatMutation.isPending ||
-                            !chatTitleDraft.trim() ||
-                            chatTitleDraft.trim() === chat.title
-                          }
-                          onPress={renameGroupChat}
-                        >
-                          <RiEditLine className="text-cardd" size={17} />
-                          <Text className="font-bbh text-sm font-black text-cardd">
-                            Save group name
-                          </Text>
-                        </Pressable>
-                      </View>
-                    ) : null}
-
-                    <View className="gap-2 rounded-2xl bg-cardx p-3">
-                      <Text className="font-bbh text-sm font-black text-danger-400">
-                        Clear conversation
-                      </Text>
-                      <Text className="font-bbh text-xs leading-5 text-card-lighter-2">
-                        Deletes every message here and stops replies already in
-                        progress. This cannot be undone.
-                      </Text>
-                      <Pressable
-                        accessibilityLabel="Clear every chat message"
-                        className="min-h-11 flex-row items-center justify-center gap-2 rounded-full bg-danger-500 px-4"
-                        disabled={clearChatMutation.isPending}
-                        onPress={clearChat}
-                      >
-                        <RiDeleteBinLine className="text-white" size={17} />
-                        <Text className="font-bbh text-sm font-black text-white">
-                          Clear chat
-                        </Text>
-                      </Pressable>
-                    </View>
-                  </View>
-                </motion.div>
-              </>
             ) : null}
           </AnimatePresence>
         </View>
