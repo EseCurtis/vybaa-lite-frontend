@@ -6,6 +6,7 @@ import {
   RiDeleteBinLine,
   RiFileTextLine,
   RiLogoutBoxRLine,
+  RiMailLine,
   RiShieldCheckLine,
   RiTimeLine,
   RiVipCrownLine,
@@ -449,6 +450,38 @@ export default function SettingsScreen() {
                       </View>
                     </View>
                     <RiArrowRightSLine size={20} className="text-white/40" />
+                  </Pressable>
+                </motion.div>
+                <motion.div
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-full"
+                  initial={{ opacity: 0, y: 10 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Pressable
+                    accessibilityLabel="Email Vybaa safety support"
+                    className="bg-cardx w-full text-left rounded-2xl px-5 py-4 flex-row items-center justify-between"
+                    onPress={() => {
+                      window.location.href = `mailto:${publicUrls.supportEmail}?subject=Vybaa%20Safety%20Support`
+                    }}
+                  >
+                    <View className="flex-row items-center gap-4">
+                      <View className="w-10 h-10 rounded-xl bg-card-light-100 flex items-center justify-center">
+                        <RiMailLine size={20} className="text-warning-yellow" />
+                      </View>
+                      <View>
+                        <Text className="text-white text-sm font-bbh font-semibold">
+                          Safety support
+                        </Text>
+                        <Text className="text-card-lighter-3 text-xs font-bbh">
+                          {publicUrls.supportEmail}
+                        </Text>
+                      </View>
+                    </View>
+                    <RiArrowRightSLine
+                      size={20}
+                      className="text-card-lighter-3"
+                    />
                   </Pressable>
                 </motion.div>
               </View>

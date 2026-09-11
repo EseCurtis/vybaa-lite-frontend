@@ -248,6 +248,11 @@ export interface CreateModerationReportRequest {
   details?: string
 }
 
+export interface BlockUserRequest {
+  evidence?: CreateModerationReportRequest
+  userId: string
+}
+
 export interface CommunitiesListResponse {
   msg: string
   data: Community[]
@@ -639,12 +644,15 @@ class CommunityAPI {
   }
 
   async blockUser(
-    userId: string,
+    request: BlockUserRequest,
   ): Promise<{ msg: string; data: { blocked: boolean; userId: string } }> {
     const { data: res } = await http.post<{
       msg: string
       data: { blocked: boolean; userId: string }
-    }>(`${API_V1}/moderation/blocks/${encodeURIComponent(userId)}`)
+    }>(
+      `${API_V1}/moderation/blocks/${encodeURIComponent(request.userId)}`,
+      request.evidence,
+    )
     return res
   }
 

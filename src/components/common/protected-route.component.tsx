@@ -24,7 +24,7 @@ export const ProtectedRoute = ({
   requireAuth = true,
   redirectTo,
 }: ProtectedRouteProps) => {
-  const { googleAuthStatus, isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const navigate = useNavigate()
   const router = useRouter()
 
@@ -52,7 +52,7 @@ export const ProtectedRoute = ({
     user,
   ])
 
-  if (isLoading && googleAuthStatus === 'idle') {
+  if (isLoading) {
     return (
       <AppLoadingState
         detail="Your account and latest activity are being restored."

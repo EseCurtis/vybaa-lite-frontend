@@ -1,9 +1,11 @@
+import { ContentSafetySheet } from '@/components/custom/community/content-safety-sheet.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { CommunityActivity } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
-import { useBlockUser, useReportContent } from '@/hooks/use-communities.hook'
+import { useAuth } from '@/providers/auth.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { formatCompactNumber } from '@/shared/utils/number-format.util'
 import {
   RiChat3Line,
@@ -107,27 +109,23 @@ export function ActivityItem({
   }
 
   const seedColor = seededColor(activity.type)
-  const reportContent = useReportContent()
-  const blockUser = useBlockUser(communityId)
+  const { user } = useAuth()
+  const bottomSheet = useBottomSheetController()
+  const isOwnActivity = user?.id === activity.userId
 
   const openModerationActions = () => {
-    const shouldBlock = window.confirm(
-      'Block this user? Their content will be removed from your feed.',
+    bottomSheet.present(
+      <ContentSafetySheet
+        communityId={communityId}
+        onBlocked={bottomSheet.dismiss}
+        onReported={bottomSheet.dismiss}
+        targetId={activity.id}
+        targetType="activity"
+        targetUserId={activity.userId}
+        username={activity.user.username || activity.user.firstName || 'user'}
+      />,
+      { title: 'Safety actions' },
     )
-    if (shouldBlock) {
-      void blockUser.mutateAsync(activity.userId)
-      return
-    }
-    const shouldReport = window.confirm(
-      'Report this activity to Vybaa for review?',
-    )
-    if (shouldReport) {
-      void reportContent.mutateAsync({
-        targetType: 'activity',
-        targetId: activity.id,
-        reason: 'other',
-      })
-    }
   }
 
   return (
@@ -173,14 +171,15 @@ export function ActivityItem({
               <Text className="flex-1 text-card-lighter-3/90 text-xs font-bbh">
                 {label}
               </Text>
-              <button
-                type="button"
-                aria-label="More activity actions"
-                onClick={openModerationActions}
-                className="p-1 text-card-lighter-3/60"
-              >
-                <RiMore2Line size={18} />
-              </button>
+              {!isOwnActivity ? (
+                <Pressable
+                  accessibilityLabel={`Safety actions for ${activity.user.username || activity.user.firstName || 'user'}`}
+                  className="size-11 items-center justify-center text-card-lighter-3"
+                  onPress={openModerationActions}
+                >
+                  <RiMore2Line size={18} />
+                </Pressable>
+              ) : null}
             </View>
           </View>
           <View className="">

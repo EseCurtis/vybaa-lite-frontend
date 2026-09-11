@@ -60,12 +60,6 @@ const config: CapacitorConfig = {
     Keyboard: {
       resizeOnFullScreen: true,
     },
-    SocialLogin: {
-      providers: {
-        google: true,
-      },
-      logLevel: 1,
-    },
   },
 }
 

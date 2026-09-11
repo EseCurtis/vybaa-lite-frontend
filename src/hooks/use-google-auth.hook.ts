@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import ENV from '@/env'
 import { authAPI } from '@/shared/api/auth.api'
+import { CURRENT_TERMS_VERSION } from '@/shared/config/public-urls.config'
 import type {
   AuthResponse,
   GoogleAuthRequest,
@@ -33,20 +34,20 @@ async function ensureGoogleInitialized(): Promise<void> {
     return
   }
 
-
   await SocialLogin.initialize({
     google: {
       iOSClientId: ENV.GOOGLE_IOS_CLIENT_ID,
       iOSServerClientId: ENV.GOOGLE_IOS_CLIENT_ID,
       webClientId: ENV.GOOGLE_CLIENT_ID,
-      
     },
   })
 
   isInitialized = true
 }
 
-function getGoogleToken(result: GoogleLoginResponse | undefined): string | null {
+function getGoogleToken(
+  result: GoogleLoginResponse | undefined,
+): string | null {
   if (!result) {
     return null
   }
@@ -97,7 +98,7 @@ export function useGoogleAuth(
         provider: 'google',
         options: {
           scopes: ['profile', 'email'],
-         // forcePrompt: true,
+          // forcePrompt: true,
         },
       })
       setStatus('verifying-google')
@@ -109,7 +110,11 @@ export function useGoogleAuth(
       }
 
       setStatus('creating-session')
-      await mutation.mutateAsync({ token })
+      await mutation.mutateAsync({
+        acceptedTerms: true,
+        termsVersion: CURRENT_TERMS_VERSION,
+        token,
+      })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Failed to sign in with Google'
@@ -120,9 +125,11 @@ export function useGoogleAuth(
   }
 
   const errorMessage =
-    mutation.error instanceof Error ? mutation.error.message : mutation.error
-      ? String(mutation.error)
-      : null
+    mutation.error instanceof Error
+      ? mutation.error.message
+      : mutation.error
+        ? String(mutation.error)
+        : null
 
   return {
     error: errorMessage,

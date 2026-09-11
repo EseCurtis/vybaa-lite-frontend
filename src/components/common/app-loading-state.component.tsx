@@ -22,7 +22,7 @@ function LoadingPanel({
     <View
       aria-busy="true"
       aria-live="polite"
-      className="w-full max-w-md items-center gap-4 rounded-[26px] bg-cardd px-6 py-7"
+      className="w-full max-w-md items-center gap-4 rounded-[26px] px-6 py-7"
       role="status"
     >
       <View className="size-14 overflow-hidden rounded-2xl bg-cardx p-1">
@@ -39,7 +39,7 @@ function LoadingPanel({
         speed="1.6"
         stroke="10"
       />
-      <View className="items-center gap-1">
+      <View className="items-center gap-1 hidden">
         <Text className="text-center font-bbh text-sm font-bold text-white">
           {message}
         </Text>

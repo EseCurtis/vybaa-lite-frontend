@@ -1,16 +1,20 @@
 // Auth API Request/Response Types
 export interface LoginRequest {
+  acceptedTerms: true
   email: string
   password: string
+  termsVersion: string
 }
 
 export interface RegisterRequest {
+  acceptedTerms: true
   email: string
   password: string
   firstName: string
   lastName: string
   role?: string
   username?: string
+  termsVersion: string
 }
 
 export interface ForgotPasswordRequest {
@@ -33,7 +37,17 @@ export interface RefreshTokenRequest {
 }
 
 export interface GoogleAuthRequest {
+  acceptedTerms: true
   token: string
+  termsVersion: string
+}
+
+export interface AppleAuthRequest {
+  acceptedTerms: true
+  familyName?: string
+  firstName?: string
+  token: string
+  termsVersion: string
 }
 
 export interface User {
@@ -55,6 +69,7 @@ export interface User {
   rewindProactiveChatExplainedAt?: string
   timezone?: string
   // OAuth fields
+  appleId?: string
   googleId?: string
   // Timestamps
   createdAt: string
@@ -200,6 +215,13 @@ export type GoogleAuthStatus =
   | 'preparing'
   | 'verifying-google'
 
+export type AppleAuthStatus =
+  | 'creating-session'
+  | 'idle'
+  | 'opening-apple'
+  | 'preparing'
+  | 'verifying-apple'
+
 export interface AuthState {
   user: AuthUser | null
   isAuthenticated: boolean
@@ -209,14 +231,6 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  googleAuthStatus: GoogleAuthStatus
-
-  /**
-   * Perform a Google login via the native social-login plugin.
-   * The provider is responsible for updating global auth state and tokens.
-   */
-  loginWithGoogle: () => Promise<void>
-
   /**
    * Email/password login for web and native.
    */

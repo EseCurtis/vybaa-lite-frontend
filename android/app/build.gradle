@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Supplied by scripts/release.mjs; credentials never enter command arguments.
+def releaseStore = System.getenv('VYBAA_ANDROID_KEYSTORE')
+def releaseStorePassword = System.getenv('VYBAA_ANDROID_STORE_PASSWORD')
+def releaseAlias = System.getenv('VYBAA_ANDROID_KEY_ALIAS')
+def releaseKeyPassword = System.getenv('VYBAA_ANDROID_KEY_PASSWORD')
+def hasReleaseSigning = releaseStore && releaseStorePassword && releaseAlias && releaseKeyPassword
+
 android {
     namespace "com.vybaa.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -17,8 +24,19 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStore)
+                storePassword releaseStorePassword
+                keyAlias releaseAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasReleaseSigning) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

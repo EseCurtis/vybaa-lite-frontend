@@ -1,4 +1,27 @@
-import type { GoogleAuthStatus } from '@/shared/types/auth.types'
+import type {
+  AppleAuthStatus,
+  GoogleAuthStatus,
+} from '@/shared/types/auth.types'
+
+export function getAppleAuthStatusText(status: AppleAuthStatus): string | null {
+  if (status === 'idle') {
+    return null
+  }
+
+  if (status === 'preparing') {
+    return 'Preparing Apple sign-in...'
+  }
+
+  if (status === 'opening-apple') {
+    return 'Opening Apple sign-in...'
+  }
+
+  if (status === 'verifying-apple') {
+    return 'Verifying your Apple account...'
+  }
+
+  return 'Creating your secure session...'
+}
 
 export function getGoogleAuthStatusText(
   status: GoogleAuthStatus,

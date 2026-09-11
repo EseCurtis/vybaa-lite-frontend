@@ -49,9 +49,9 @@ function createStatus(
 }
 
 describe('Vybaa Pro customer state', () => {
-  it('enables RevenueCat only for Android builds', () => {
+  it('enables RevenueCat for native Android and iOS builds', () => {
     expect(isRevenueCatPlatformEnabled('android')).toBe(true)
-    expect(isRevenueCatPlatformEnabled('ios')).toBe(false)
+    expect(isRevenueCatPlatformEnabled('ios')).toBe(true)
     expect(isRevenueCatPlatformEnabled('web')).toBe(false)
   })
 

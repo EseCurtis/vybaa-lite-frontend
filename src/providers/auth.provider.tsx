@@ -1,7 +1,3 @@
-import {
-  logoutGoogleNativeSession,
-  useGoogleAuth,
-} from '@/hooks/use-google-auth.hook'
 import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
 import { userAPI } from '@/shared/api/user.api'
@@ -107,8 +103,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     })
   }, [queryClient])
 
-  const google = useGoogleAuth()
-
   const persistTokens = useCallback((data: AuthResponse['data']) => {
     if (typeof window === 'undefined') return
     localStorage.setItem('authToken', data.token)
@@ -166,11 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           ? (localStorage.getItem('fcmToken') ?? '')
           : ''
 
-      try {
-        await authAPI.logout({ fcmToken })
-      } finally {
-        await logoutGoogleNativeSession()
-      }
+      await authAPI.logout({ fcmToken })
     },
     onSettled: clearAuthState,
   })
@@ -180,15 +170,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await userAPI.deleteAccount()
     },
     onSettled: async () => {
-      await logoutGoogleNativeSession()
       clearAuthState()
     },
   })
-
-  const loginWithGoogle = useCallback(async () => {
-    await google.signInWithGoogle()
-    await handleAuthSuccess()
-  }, [google, handleAuthSuccess])
 
   const logout = useCallback(async () => {
     await logoutMutation.mutateAsync()
@@ -207,31 +191,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       ...state,
       error:
         state.error ??
-        google.error ??
         logoutMutation.error?.message ??
         deleteAccountMutation.error?.message ??
         null,
       isLoading:
         state.isLoading ||
-        google.isLoading ||
         logoutMutation.isPending ||
         deleteAccountMutation.isPending,
-      googleAuthStatus: google.status,
       deleteAccount,
-      loginWithGoogle,
       loginWithEmail,
       registerWithEmail,
       logout,
       refreshSession,
     }),
     [
-      google.error,
-      google.isLoading,
-      google.status,
       deleteAccount,
       deleteAccountMutation.error?.message,
       deleteAccountMutation.isPending,
-      loginWithGoogle,
       logout,
       logoutMutation.error?.message,
       logoutMutation.isPending,

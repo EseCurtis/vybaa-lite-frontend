@@ -222,7 +222,7 @@ export default function RewindChatsScreen(): ReactElement {
                 </Pressable>
               </View>
             ) : chatsQuery.data?.length ? (
-              <View className="gap-2 px-mg">
+              <View className="gap-2 px-05-mg">
                 {chatsQuery.data.map((chat) => (
                   <ChatRow chat={chat} key={chat.id} />
                 ))}

@@ -128,7 +128,7 @@ export function getRevenueCatConfigurationErrorForCurrentBuild():
 export function isRevenueCatPlatformEnabled(
   platform: RevenueCatPlatform,
 ): boolean {
-  return platform === 'android'
+  return platform === 'android' || platform === 'ios'
 }
 
 export function isRevenueCatSupported(): boolean {

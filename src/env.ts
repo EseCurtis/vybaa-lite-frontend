@@ -5,6 +5,7 @@ type AppPlatform = 'android' | 'ios' | 'web'
 
 interface AppEnvironmentConfig {
   API_BASE_URL: string
+  APPLE_CLIENT_ID: string
   ENVIRONMENT: AppEnvironment
   GOOGLE_ANDROID_CLIENT_ID: string
   GOOGLE_CLIENT_ID: string
@@ -32,6 +33,7 @@ function getPlatform(value: string): AppPlatform {
 
 const ENV: AppEnvironmentConfig = {
   API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
+  APPLE_CLIENT_ID: import.meta.env.VITE_APPLE_CLIENT_ID || 'com.vybaa.app',
   ENVIRONMENT: getEnvironment(import.meta.env.VITE_ENVIRONMENT),
   PLATFORM: getPlatform(Capacitor.getPlatform()),
   PLATFORMS: {

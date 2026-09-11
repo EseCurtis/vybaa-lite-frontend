@@ -14,6 +14,7 @@ interface BasePressableProps {
   onLongPress?: () => void
   style?: React.CSSProperties
   testID?: string
+  type?: 'button' | 'reset' | 'submit'
   accessibilityLabel?: string
   accessibilityRole?: string
   accessibilityHint?: string
@@ -59,6 +60,7 @@ export const TouchableOpacity = React.forwardRef<
       onLongPress,
       style,
       testID,
+      type,
       accessibilityLabel,
       accessibilityRole = 'button',
       accessibilityHint,
@@ -123,6 +125,7 @@ export const TouchableOpacity = React.forwardRef<
         onPointerLeave={handlePointerUp}
         disabled={disabled}
         data-testid={testID}
+        type={type}
         aria-label={accessibilityLabel}
         role={accessibilityRole}
         aria-describedby={accessibilityHint}
@@ -153,6 +156,7 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
       onLongPress,
       style,
       testID,
+      type,
       accessibilityLabel,
       accessibilityRole = 'button',
       accessibilityHint,
@@ -263,6 +267,7 @@ export const Pressable = React.forwardRef<HTMLButtonElement, PressableProps>(
         onMouseLeave={handleMouseLeave}
         disabled={disabled}
         data-testid={testID}
+        type={type}
         aria-label={accessibilityLabel}
         role={accessibilityRole}
         aria-describedby={accessibilityHint}

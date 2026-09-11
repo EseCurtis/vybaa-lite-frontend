@@ -2,6 +2,7 @@ import { http } from '@/shared/api/http'
 import type {
   GoalSuggestion,
   AuthResponse,
+  AppleAuthRequest,
   EmailCheckResponse,
   ForgotPasswordRequest,
   GoogleAuthRequest,
@@ -43,6 +44,14 @@ class AuthAPI {
   async googleAuth(data: GoogleAuthRequest): Promise<AuthResponse> {
     const { data: res } = await http.post<AuthResponse>(
       `${API_V1}/auth/google`,
+      data,
+    )
+    return res
+  }
+
+  async appleAuth(data: AppleAuthRequest): Promise<AuthResponse> {
+    const { data: res } = await http.post<AuthResponse>(
+      `${API_V1}/auth/apple`,
       data,
     )
     return res

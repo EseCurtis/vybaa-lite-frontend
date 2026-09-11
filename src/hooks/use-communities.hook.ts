@@ -3,6 +3,7 @@ import { isSubscriptionApiError } from '@/shared/api/http'
 import {
   communityAPI,
   type ActivityFeedResponse,
+  type BlockUserRequest,
   type CreateCommentRequest,
   type CreateCommunityRequest,
   type CreateInviteRequest,
@@ -603,8 +604,8 @@ export function useBlockUser(communityId?: string) {
   const queryClient = useQueryClient()
   const toast = useToast()
   return useMutation({
-    mutationFn: (userId: string) => communityAPI.blockUser(userId),
-    onSuccess: (_response, userId) => {
+    mutationFn: (request: BlockUserRequest) => communityAPI.blockUser(request),
+    onSuccess: (_response, request) => {
       if (communityId) {
         queryClient.setQueriesData(
           { queryKey: communityQueryKeys.activityRoot(communityId) },
@@ -615,13 +616,14 @@ export function useBlockUser(communityId?: string) {
                   pages: oldData.pages.map((page) => ({
                     ...page,
                     data: page.data.filter(
-                      (activity) => activity.userId !== userId,
+                      (activity) => activity.userId !== request.userId,
                     ),
                   })),
                 }
               : oldData,
         )
       }
+      void queryClient.invalidateQueries({ queryKey: communityQueryKeys.all })
       toast.success('User blocked. Their content is hidden.')
     },
     onError: (error: any) =>

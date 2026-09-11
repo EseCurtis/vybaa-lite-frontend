@@ -1,17 +1,16 @@
+import { Browser } from '@capacitor/browser'
+
 import { TopNotch } from '@/components/common/notch.component'
 import { OnboardingBackground } from '@/components/common/onboarding-background.component'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
-import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
-import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
-import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
+import { publicUrls } from '@/shared/config/public-urls.config'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 import { homeActions } from '@/components/custom/home/home-actions.component'
 import { Moti } from '@/shared/constants.shared'
@@ -19,27 +18,18 @@ import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
 import { LineWobble } from 'ldrs/react'
 import 'ldrs/react/LineWobble.css'
 
+function openLegalDocument(url: string): void {
+  void Browser.open({ presentationStyle: 'fullscreen', url })
+}
+
 /**
  * Public entry point for Vybaa's goal-first experience.
  */
 export default function AppScreen() {
   const navigate = useNavigate()
   const router = useRouter()
-  const {
-    googleAuthStatus,
-    isAuthenticated,
-    isLoading,
-    error,
-    stale,
-    loginWithGoogle,
-    user,
-  } = useAuth()
-  const [loginError, setLoginError] = useState<string | null>(null)
-  const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
-  const isGoogleLoading = googleAuthStatus !== 'idle'
-  const loadingText =
-    getGoogleAuthStatusText(googleAuthStatus) ??
-    (isLoading ? 'Checking your session...' : null)
+  const { isAuthenticated, isLoading, error, stale, user } = useAuth()
+  const loadingText = isLoading ? 'Checking your session...' : null
 
   // Navigate to home when authentication succeeds
   useEffect(() => {
@@ -49,24 +39,12 @@ export default function AppScreen() {
   }, [isAuthenticated, isLoading, router, user])
 
   const handleGetStarted = () => {
-    setLoginError(null)
     navigate({ to: '/auth/login' })
-  }
-
-  const handleGoogle = async () => {
-    try {
-      setLoginError(null)
-      await loginWithGoogle()
-    } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : 'Failed to sign in with Google'
-      setLoginError(msg)
-    }
   }
 
   // The root route is an auth boundary. Never mount onboarding while a
   // session is being resolved or after authentication has been confirmed.
-  if (stale || (isLoading && !isGoogleLoading) || isAuthenticated) {
+  if (stale || isLoading || isAuthenticated) {
     return (
       <AppLoadingState
         detail="Your account and latest activity are being restored."
@@ -180,9 +158,9 @@ export default function AppScreen() {
               <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30" />
             </View>
 
-            {(loginError || error) && (
+            {error && (
               <Text className="text-pink-700 bg-pink-500/10 mx-auto px-3 py-1 rounded-full text-sm font-bbh text-center mt-2">
-                {loginError || error}
+                {error}
               </Text>
             )}
             <View className="z-10 gap-3">
@@ -212,26 +190,30 @@ export default function AppScreen() {
                     Get started
                   </Text>
                 </TouchableOpacity>
-                {canUseGoogleLogin && (
-                  <TouchableOpacity
-                    className="rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
-                    disabled={isLoading || isGoogleLoading}
-                    onPress={handleGoogle}
-                  >
-                    {isGoogleLoading ? (
-                      <RiLoader4Line className="text-white animate-spin" />
-                    ) : (
-                      <RiGoogleFill className="text-white" />
-                    )}
-                  </TouchableOpacity>
-                )}
               </View>
 
-              <Text className="text-card-lighter-3/50 text-xs mt-2">
-                By Proceeding you agree to comply to our <br />
-                <Text className="underline">Terms of Service</Text> and{' '}
-                <Text className="underline">Privacy Policy</Text>
-              </Text>
+              <View className="mt-2 flex-row items-center justify-center gap-4">
+                <TouchableOpacity
+                  accessibilityLabel="Read Terms of Service"
+                  className="min-h-11 justify-center"
+                  onPress={() => openLegalDocument(publicUrls.termsOfService)}
+                  type="button"
+                >
+                  <Text className="text-xs text-card-lighter-3 underline">
+                    Terms of Service
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityLabel="Read Privacy Policy"
+                  className="min-h-11 justify-center"
+                  onPress={() => openLegalDocument(publicUrls.privacyPolicy)}
+                  type="button"
+                >
+                  <Text className="text-xs text-card-lighter-3 underline">
+                    Privacy Policy
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>

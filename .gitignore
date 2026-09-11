@@ -9,3 +9,7 @@ count.txt
 .nitro
 .tanstack
 .wrangler
+releases/
+release-signing.local.json
+*.xcarchive
+*.aab

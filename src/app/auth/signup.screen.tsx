@@ -1,5 +1,6 @@
 import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
 import { Input } from '@/components/common/input.component'
+import { TermsConsent } from '@/components/common/terms-consent.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -8,6 +9,7 @@ import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { userAPI } from '@/shared/api/user.api'
 import { cn } from '@/shared/utils/helpers.util'
+import { CURRENT_TERMS_VERSION } from '@/shared/config/public-urls.config'
 import { RiCheckLine, RiCloseLine, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useMemo, useState } from 'react'
@@ -49,6 +51,7 @@ export default function SignupScreen() {
     boolean | null
   >(null)
   const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
 
   const validateUsername = (value: string): string | null => {
     if (!value) return 'Username is required'
@@ -177,14 +180,22 @@ export default function SignupScreen() {
       return
     }
 
+    if (!acceptedTerms) {
+      setError('Accept the Terms of Use to create your account.')
+      toast.error('Accept the Terms of Use to sign up')
+      return
+    }
+
     try {
       setActiveAction('creating-account')
       const res = await registerWithEmail({
+        acceptedTerms: true,
         email,
         password,
         firstName,
         lastName,
         username: username.trim().toLowerCase(),
+        termsVersion: CURRENT_TERMS_VERSION,
       })
 
       if ('data' in res && (res as any).data?.confirmationRequired) {
@@ -234,7 +245,20 @@ export default function SignupScreen() {
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
               disabled={isSubmitting}
               placeholder="vybee"
-              leftIcon={<Text className={cn("text-white text-lg font-bbh font-bold", isCheckingUsername ? "text-white/70  animate-pulse":(isUsernameAvailable ? " text-green-400": "text-rose-500"))}>@</Text>}
+              leftIcon={
+                <Text
+                  className={cn(
+                    'text-white text-lg font-bbh font-bold',
+                    isCheckingUsername
+                      ? 'text-white/70  animate-pulse'
+                      : isUsernameAvailable
+                        ? ' text-green-400'
+                        : 'text-rose-500',
+                  )}
+                >
+                  @
+                </Text>
+              }
               error={usernameError || undefined}
               helperText={
                 !usernameError && isUsernameAvailable
@@ -289,6 +313,11 @@ export default function SignupScreen() {
               disabled={isSubmitting}
               placeholder="••••••••"
             />
+            <TermsConsent
+              accepted={acceptedTerms}
+              disabled={isSubmitting}
+              onChange={setAcceptedTerms}
+            />
             <Input
               label="Confirm password"
               type="password"
@@ -325,7 +354,11 @@ export default function SignupScreen() {
           }
           fullWidth
           loading={isSubmitting}
-          disabled={isSubmitting || (step === 1 && !canContinue)}
+          disabled={
+            isSubmitting ||
+            (step === 1 && !canContinue) ||
+            (step === 2 && !acceptedTerms)
+          }
           className={cn('mt-4', step === 1 && !canContinue && 'opacity-70')}
         />
       </form>

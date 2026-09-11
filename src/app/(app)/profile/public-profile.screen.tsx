@@ -2,16 +2,19 @@ import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { ContentSafetySheet } from '@/components/custom/community/content-safety-sheet.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { usePublicProfile } from '@/hooks/use-public-profile.hook'
 import { useAuth } from '@/providers/auth.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import {
   RiBookOpenLine,
   RiCoinsLine,
   RiGroupLine,
   RiMedalLine,
+  RiShieldCheckLine,
 } from '@remixicon/react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import moment from 'moment'
@@ -47,6 +50,7 @@ function getPublicProfileInitials(profile: {
 export default function PublicProfileScreen() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const bottomSheet = useBottomSheetController()
   const { username } = useParams({ from: '/app/u/$username' })
   const { data: profile, isLoading, isError } = usePublicProfile(username)
 
@@ -150,7 +154,32 @@ export default function PublicProfileScreen() {
                   }}
                 />
               </View>
-            ) : null}
+            ) : (
+              <View className="mt-4">
+                <Button
+                  fullWidth
+                  label="Report or block"
+                  leftIcon={<RiShieldCheckLine size={18} />}
+                  onClick={() => {
+                    bottomSheet.present(
+                      <ContentSafetySheet
+                        onBlocked={() => {
+                          bottomSheet.dismiss()
+                          navigate({ replace: true, to: '/app/profile' })
+                        }}
+                        onReported={bottomSheet.dismiss}
+                        targetId={profile.id}
+                        targetType="user"
+                        targetUserId={profile.id}
+                        username={profile.username || 'user'}
+                      />,
+                      { title: 'Safety actions' },
+                    )
+                  }}
+                  variant="secondary"
+                />
+              </View>
+            )}
           </View>
 
           <View className="grid grid-cols-2 gap-3">
