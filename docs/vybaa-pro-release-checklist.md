@@ -4,8 +4,8 @@
 
 - Sign the Paid Applications Agreement and finish banking and tax setup.
 - Create the `Vybaa Pro` auto-renewable subscription group.
-- Create `com.vybaa.app.pro.monthly` at USD 4.99 per month.
-- Create `com.vybaa.app.pro.annual` at USD 39.99 per year.
+- Create `com.vybaa.pro.monthly` at USD 4.99 per month.
+- Create `com.vybaa.pro.annual` at USD 39.99 per year.
 - Add a seven-day introductory free trial to both products. Apple limits introductory eligibility across the subscription group.
 - Add localized names, descriptions, review screenshots, Terms, and Privacy links.
 

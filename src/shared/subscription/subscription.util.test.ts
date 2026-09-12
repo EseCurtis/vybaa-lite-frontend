@@ -137,7 +137,7 @@ describe('Vybaa Pro customer state', () => {
       getSubscriptionDisplayState(
         createStatus({
           expiresAt: '2026-08-01T00:00:00.000Z',
-          productIdentifier: 'com.vybaa.app.pro.monthly',
+          productIdentifier: 'com.vybaa.pro.monthly',
         }),
       ),
     ).toBe('expired')
