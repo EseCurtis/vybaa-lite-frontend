@@ -20,9 +20,8 @@ export const day = new Date(
   .slice(0, 10)
 const previousDay = new Date(Date.UTC(2026, 8, 12)).toISOString().slice(0, 10)
 const stamp = `${day}T19:00:00+01:00`
-const start = index > 0 ? Math.max(0, post.slides[index - 1].reveal - 1) : 0
 const messages: RewindChatMessage[] = post.messages
-  .slice(start, slide.reveal)
+  .slice(0, slide.reveal)
   .map((message) => ({
     content: message.text,
     id: message.id,
