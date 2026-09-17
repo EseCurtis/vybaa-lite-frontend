@@ -16,6 +16,12 @@ import type { User } from '@/shared/types/auth.types'
 
 import { VYBAA_PRO_ENTITLEMENT_ID } from '@/shared/api/subscription.api'
 
+const VYBAA_PRO_OFFERING_ID = 'default'
+
+interface RevenueCatOfferingSummary {
+  availablePackages: readonly unknown[]
+}
+
 export type PaywallOutcome =
   | 'cancelled'
   | 'error'
@@ -145,6 +151,20 @@ export function isVybaaProCustomer(customerInfo: CustomerInfo | null): boolean {
   )
 }
 
+export function getRevenueCatOfferingConfigurationError(
+  offering: RevenueCatOfferingSummary | null,
+): string | null {
+  if (!offering) {
+    return 'Vybaa Pro is not available right now. Please try again later.'
+  }
+
+  if (offering.availablePackages.length === 0) {
+    return 'Vybaa Pro plans are not available right now. Please try again later.'
+  }
+
+  return null
+}
+
 export async function configureRevenueCat(user: User): Promise<CustomerInfo> {
   const configurationError = getRevenueCatConfigurationErrorForCurrentBuild()
   if (configurationError) throw new Error(configurationError)
@@ -195,8 +215,20 @@ export async function removeRevenueCatCustomerInfoListener(
 
 export async function presentVybaaProPaywall(): Promise<PaywallOutcome> {
   try {
+    const offerings = await Purchases.getOfferings()
+    const offering =
+      offerings.current ?? offerings.all[VYBAA_PRO_OFFERING_ID] ?? null
+    const offeringError = getRevenueCatOfferingConfigurationError(offering)
+    if (offeringError || !offering) {
+      throw new Error(
+        offeringError ??
+          'Vybaa Pro is not available right now. Please try again later.',
+      )
+    }
+
     const { result } = await RevenueCatUI.presentPaywallIfNeeded({
       displayCloseButton: true,
+      offering,
       requiredEntitlementIdentifier: VYBAA_PRO_ENTITLEMENT_ID,
     })
 

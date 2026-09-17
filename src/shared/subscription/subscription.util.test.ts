@@ -11,6 +11,7 @@ import {
   getPaywallExceptionOutcome,
   getRevenueCatApiKeyForPlatform,
   getRevenueCatConfigurationError,
+  getRevenueCatOfferingConfigurationError,
   isRevenueCatPlatformEnabled,
   isVybaaProCustomer,
   mapPaywallResult,
@@ -49,6 +50,22 @@ function createStatus(
 }
 
 describe('Vybaa Pro customer state', () => {
+  it('requires a populated RevenueCat offering before opening the paywall', () => {
+    expect(getRevenueCatOfferingConfigurationError(null)).toContain(
+      'not available',
+    )
+    expect(
+      getRevenueCatOfferingConfigurationError({
+        availablePackages: [],
+      }),
+    ).toContain('plans are not available')
+    expect(
+      getRevenueCatOfferingConfigurationError({
+        availablePackages: [{ identifier: 'monthly' }],
+      }),
+    ).toBeNull()
+  })
+
   it('enables RevenueCat for native Android and iOS builds', () => {
     expect(isRevenueCatPlatformEnabled('android')).toBe(true)
     expect(isRevenueCatPlatformEnabled('ios')).toBe(true)

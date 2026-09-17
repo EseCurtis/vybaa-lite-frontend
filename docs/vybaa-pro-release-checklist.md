@@ -15,6 +15,8 @@
 - Create entitlement `vybaa_pro`.
 - Attach both App Store products to `vybaa_pro`.
 - Create offering `default` with `$rc_monthly` and `$rc_annual` packages.
+- Confirm the active `default` offering returns both packages on a real iOS
+  device before submitting for review.
 - Publish a native paywall for `default` with the annual option emphasized.
 - State the seven-day trial, renewal price and period, automatic renewal, Apple cancellation path, Terms, Privacy, and Restore Purchases action.
 - Enable Customer Center with subscription management, restore, refund guidance, and support contact.
