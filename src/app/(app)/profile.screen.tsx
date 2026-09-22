@@ -1,6 +1,7 @@
 import { ProfileActionButtons } from '@/app/(app)/components/profile/profile-action-buttons.component'
 import { ProfileHeader } from '@/app/(app)/components/profile/profile-header.component'
 import { ProfileInfoSection } from '@/app/(app)/components/profile/profile-info-section.component'
+import { PublicProfileLink } from '@/app/(app)/components/profile/public-profile-link.component'
 import { ProfileQuickActions } from '@/app/(app)/components/profile/profile-quick-actions.component'
 import type {
   ProfileFormData,
@@ -278,7 +279,15 @@ export default function ProfileScreen() {
             onSave={handleSave}
           />
 
-          {!isEditing && <ProfileQuickActions actions={profileQuickActions} />}
+          {!isEditing && (
+            <>
+              <PublicProfileLink
+                onChooseUsername={() => setIsEditing(true)}
+                username={user?.username}
+              />
+              <ProfileQuickActions actions={profileQuickActions} />
+            </>
+          )}
         </View>
       </NoiseComponent>
     </View>
