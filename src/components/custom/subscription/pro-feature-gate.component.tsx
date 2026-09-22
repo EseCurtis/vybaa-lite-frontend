@@ -25,6 +25,16 @@ type ProFeatureCopy = {
   title: string
 }
 
+type ProFeatureTheme = {
+  checkIconClassName: string
+  checkSurfaceClassName: string
+  ctaSurfaceClassName: string
+  ctaTextClassName: string
+  eyebrowClassName: string
+  iconClassName: string
+  iconSurfaceClassName: string
+}
+
 const PRO_FEATURE_COPY: Record<ProFeature, ProFeatureCopy> = {
   'quick-goal-setup': {
     description:
@@ -67,6 +77,36 @@ const FEATURE_ICONS: Record<ProFeature, typeof RiLock2Line> = {
   'rewind-partners': RiTeamLine,
 }
 
+const FEATURE_THEMES: Record<ProFeature, ProFeatureTheme> = {
+  'quick-goal-setup': {
+    checkIconClassName: 'text-accent-100',
+    checkSurfaceClassName: 'bg-accent-800',
+    ctaSurfaceClassName: 'bg-accent-700',
+    ctaTextClassName: 'text-white',
+    eyebrowClassName: 'text-accent-200',
+    iconClassName: 'text-accent-100',
+    iconSurfaceClassName: 'bg-accent-900',
+  },
+  'rewind-chats': {
+    checkIconClassName: 'text-success-200',
+    checkSurfaceClassName: 'bg-success-800',
+    ctaSurfaceClassName: 'bg-success-400',
+    ctaTextClassName: 'text-black',
+    eyebrowClassName: 'text-success-300',
+    iconClassName: 'text-success-200',
+    iconSurfaceClassName: 'bg-success-900',
+  },
+  'rewind-partners': {
+    checkIconClassName: 'text-warning-200',
+    checkSurfaceClassName: 'bg-warning-800',
+    ctaSurfaceClassName: 'bg-warning-400',
+    ctaTextClassName: 'text-black',
+    eyebrowClassName: 'text-warning-300',
+    iconClassName: 'text-warning-200',
+    iconSurfaceClassName: 'bg-warning-900',
+  },
+}
+
 function getProCtaLabel(isLoading: boolean, isSupported: boolean): string {
   if (isLoading) return 'Opening Pro…'
   if (!isSupported) return 'Available in the mobile app'
@@ -76,35 +116,41 @@ function getProCtaLabel(isLoading: boolean, isSupported: boolean): string {
 function ProFeatureCard({ feature }: { feature: ProFeature }): ReactElement {
   const copy = PRO_FEATURE_COPY[feature]
   const FeatureIcon = FEATURE_ICONS[feature]
+  const theme = FEATURE_THEMES[feature]
 
   return (
-    <View className="gap-5">
-      <View className="">
+    <View className="mt-2 gap-5">
+      <View>
         <View className="flex-row gap-3">
-        <View className="size-14 shrink-0 items-center justify-center rounded-2xl bg-card-light">
-          <FeatureIcon className="text-white" size={26} />
+          <View
+            className={`h-full min-h-16 aspect-square shrink-0 items-center justify-center rounded-lg ${theme.iconSurfaceClassName}`}
+          >
+            <FeatureIcon className={theme.iconClassName} size={26} />
+          </View>
+          <View className="min-w-0 flex-1 justify-center gap-1">
+            <Text
+              className={`font-bbh text-[10px] font-bold hidden tracking-[0.16em] ${theme.eyebrowClassName}`}
+            >
+             {copy.eyebrow}
+            </Text>
+            <Text className="font-display text-xl font-extrabold leading-snug text-white">
+              {copy.title}
+            </Text>
+          </View>
         </View>
-        <View className="gap-0">
-          <Text className="font-bbh text-[9px] font-bold uppercase tracking-[0.16em] text-card-lighter-3">
-            {copy.eyebrow} · Vybaa Pro
-          </Text>
-          <Text className="font-display text-xl leading-snug font-extrabold  text-white">
-            {copy.title}
-          </Text>
-         
-        </View>
-      </View>
-      <View className="">
-         <Text className="font-bbh text-sm leading-6 text-card-lighter-2">
+        <View className="mt-4">
+          <Text className="font-bbh text-sm leading-6 text-card-lighter-2">
             {copy.description}
           </Text>
+        </View>
       </View>
-      </View>
-      <View className="gap-3 rounded-2xl bg-cardx p-4">
+      <View className="gap-3 rounded-2xl bg-card-light-100 p-4">
         {copy.highlights.map((highlight) => (
           <View className="min-h-8 flex-row items-center gap-3" key={highlight}>
-            <View className="size-7 shrink-0 items-center justify-center rounded-full bg-white">
-              <RiCheckLine className="text-cardd" size={16} />
+            <View
+              className={`size-7 shrink-0 items-center justify-center rounded-full ${theme.checkSurfaceClassName}`}
+            >
+              <RiCheckLine className={theme.checkIconClassName} size={16} />
             </View>
             <Text className="min-w-0 flex-1 font-bbh text-sm leading-5 text-white">
               {highlight}
@@ -127,6 +173,7 @@ export function ProFeatureGateSheet({
   const { requestProAccess } = useProAccess()
   const { isSupported } = useSubscription()
   const [isOpening, setIsOpening] = useState(false)
+  const theme = FEATURE_THEMES[feature]
 
   async function handleUpgrade(): Promise<void> {
     if (isOpening) return
@@ -144,17 +191,19 @@ export function ProFeatureGateSheet({
       <View className="gap-2">
         <Pressable
           accessibilityLabel="See Vybaa Pro plans"
-          className="min-h-12 items-center justify-center rounded-full bg-white px-5"
+          className={`min-h-12 items-center justify-center rounded-full px-5 ${theme.ctaSurfaceClassName}`}
           disabled={isOpening}
           onPress={() => void handleUpgrade()}
         >
-          <Text className="font-bbh text-sm font-bold text-cardd">
+          <Text
+            className={`font-bbh text-sm font-bold ${theme.ctaTextClassName}`}
+          >
             {getProCtaLabel(isOpening, isSupported)}
           </Text>
         </Pressable>
         <Pressable
           accessibilityLabel="Not now"
-          className="min-h-11 items-center justify-center rounded-full bg-cardx px-5"
+          className="min-h-11 items-center justify-center rounded-full bg-card-light-100 px-5"
           disabled={isOpening}
           onPress={bottomSheet.dismiss}
         >
@@ -174,6 +223,7 @@ export function RewindChatProGate({
 }): ReactElement {
   const { isLoading, isPro, isSupported } = useSubscription()
   const { requestProAccess } = useProAccess()
+  const theme = FEATURE_THEMES['rewind-chats']
 
   if (isPro) return <>{children}</>
 
@@ -186,11 +236,13 @@ export function RewindChatProGate({
             <ProFeatureCard feature="rewind-chats" />
             <Pressable
               accessibilityLabel="See Vybaa Pro plans"
-              className="min-h-12 items-center justify-center rounded-full bg-white px-5"
+              className={`min-h-12 items-center justify-center rounded-full px-5 ${theme.ctaSurfaceClassName}`}
               disabled={isLoading}
               onPress={() => void requestProAccess()}
             >
-              <Text className="font-bbh text-sm font-bold text-cardd">
+              <Text
+                className={`font-bbh text-sm font-bold ${theme.ctaTextClassName}`}
+              >
                 {isLoading
                   ? 'Checking access…'
                   : getProCtaLabel(false, isSupported)}
