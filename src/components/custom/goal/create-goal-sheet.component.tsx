@@ -871,7 +871,10 @@ export function CreateGoalSheet({
 
   return (
     <View className="space-y-6 pb-24 z-10 relative">
-      <View className="flex-row items-center justify-between">
+      <View
+        className="flex-row items-center justify-between"
+        data-walkthrough="goal-creation-progress"
+      >
         <Text className="text-lg font-bold">
           {step === 1
             ? 'What do you want to do?'
@@ -887,8 +890,12 @@ export function CreateGoalSheet({
       </View>
 
       {step === 1 ? (
-        <View className="space-y-3">
+        <View
+          className="space-y-3"
+          data-walkthrough="goal-definition-fields"
+        >
           <Input
+            aria-label="Goal title"
             autoFocus={hasSeenGoalAlarmOnboarding()}
             className={GOAL_FIELD_SURFACE}
             maxLength={500}

@@ -69,6 +69,29 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
     ],
   },
+  '/app/goal/create': {
+    id: 'goal-creation',
+    steps: [
+      {
+        description:
+          'You will define the goal, choose how progress works, set its routine, and review everything before creating it.',
+        selector: '[data-walkthrough="goal-creation-progress"]',
+        title: 'Four small steps',
+      },
+      {
+        description:
+          'Start with a clear action. Add a reason only when it helps the commitment feel more meaningful.',
+        selector: '[data-walkthrough="goal-definition-fields"]',
+        title: 'Name what you want to do',
+      },
+      {
+        description:
+          'Prefer help shaping the details? Pro quick setup lets your Rewind partner prepare a draft you can still review and edit.',
+        selector: '[data-testid="quick-goal-setup-button"]',
+        title: 'Or build it with your partner',
+      },
+    ],
+  },
   '/app/home': {
     id: 'home-main',
     steps: [

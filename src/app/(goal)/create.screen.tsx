@@ -491,6 +491,7 @@ export default function CreateGoalScreen() {
               }
               className="relative size-11 items-center justify-center rounded-full bg-card-light-50"
               onPress={openPartnerAssistant}
+              testID="quick-goal-setup-button"
             >
               {selectedPersona ? (
                 <img
