@@ -24,6 +24,7 @@ import { cn, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiCalendarLine,
   RiCheckLine,
+  RiErrorWarningLine,
   RiFireFill,
   RiPauseLine,
   RiPlayLine,
@@ -87,16 +88,25 @@ function occurrenceDot(status: GoalOccurrence['status']): string {
 export function GoalActionsSheet({
   goal,
   onAbandon,
+  onArchive,
+  onDelete,
   onDone,
+  onRestart,
 }: {
   goal: Goal
   onAbandon: () => void
+  onArchive: () => void
+  onDelete: () => void
   onDone: () => void
+  onRestart: (goalId: string) => void
 }) {
   const rescheduleOccurrence = useRescheduleGoalOccurrence()
   const pauseGoal = usePauseGoal()
   const resumeGoal = useResumeGoal()
   const abandonGoal = useAbandonGoal()
+  const archiveGoal = useArchiveGoal()
+  const permanentlyDeleteGoal = usePermanentlyDeleteGoal()
+  const reopenGoal = useReopenGoal()
   const [rescheduleDate, setRescheduleDate] = useState('')
   const upcomingOccurrence = goal.nextOccurrence
   const today = new Date().toLocaleDateString('en-CA')
@@ -110,6 +120,31 @@ export function GoalActionsSheet({
     await abandonGoal.mutateAsync(goal.id)
     onDone()
     onAbandon()
+  }
+
+  async function handleRestart(): Promise<void> {
+    const response = await reopenGoal.mutateAsync(goal.id)
+    onDone()
+    onRestart(response.data.id)
+  }
+
+  async function handleArchive(): Promise<void> {
+    await archiveGoal.mutateAsync(goal.id)
+    onDone()
+    onArchive()
+  }
+
+  async function handleDelete(): Promise<void> {
+    if (
+      !confirm(
+        'Permanently delete this goal content? Reward ledger records will be retained.',
+      )
+    ) {
+      return
+    }
+    await permanentlyDeleteGoal.mutateAsync(goal.id)
+    onDone()
+    onDelete()
   }
 
   return (
@@ -235,6 +270,69 @@ export function GoalActionsSheet({
           />
         </View>
       ) : null}
+
+      {['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(goal.status) ? (
+        <View className="space-y-4">
+          <View className="space-y-2">
+            <View className="flex-row items-center gap-2">
+              <RiPlayLine className="text-success-300" size={18} />
+              <Text className="font-bold">Start again</Text>
+            </View>
+            <Text className="text-xs leading-4 text-card-lighter-2">
+              Create a separate new run with the same goal setup. This history
+              stays unchanged.
+            </Text>
+            <Button
+              disabled={reopenGoal.isPending}
+              label={reopenGoal.isPending ? 'Starting…' : 'Start as a new goal'}
+              onClick={() => void handleRestart()}
+              size="sm"
+              fullWidth
+            />
+          </View>
+
+          {!goal.archivedAt ? (
+            <View className="space-y-2 pt-4">
+              <Text className="font-bold">Archive goal</Text>
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                Move this goal out of your main history. You can still find it
+                under Archived.
+              </Text>
+              <Button
+                disabled={archiveGoal.isPending}
+                label={archiveGoal.isPending ? 'Archiving…' : 'Archive goal'}
+                onClick={() => void handleArchive()}
+                size="sm"
+                variant="secondary"
+                fullWidth
+              />
+            </View>
+          ) : (
+            <View className="space-y-2 pt-4">
+              <Text className="font-bold text-danger-400">
+                Permanently delete
+              </Text>
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                Delete this goal’s content. Historical reward transactions are
+                retained.
+              </Text>
+              <Button
+                disabled={permanentlyDeleteGoal.isPending}
+                label={
+                  permanentlyDeleteGoal.isPending
+                    ? 'Deleting…'
+                    : 'Permanently delete'
+                }
+                onClick={() => void handleDelete()}
+                size="sm"
+                variant="destructive"
+                fullWidth
+                textClassName="!text-white"
+              />
+            </View>
+          )}
+        </View>
+      ) : null}
     </View>
   )
 }
@@ -245,9 +343,6 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
   const recordProgress = useRecordGoalProgress()
   const correctProgress = useCorrectGoalProgress()
   const undoProgress = useUndoGoalProgress()
-  const archiveGoal = useArchiveGoal()
-  const permanentlyDeleteGoal = usePermanentlyDeleteGoal()
-  const reopenGoal = useReopenGoal()
   const saveReview = useSaveGoalReview()
   const [showProgress, setShowProgress] = useState(false)
   const [amount, setAmount] = useState('')
@@ -348,6 +443,28 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
           <Text className="mt-1 !text-center text-sm text-green-400">
             Your conclusion and earned rewards are now saved.
           </Text>
+        </View>
+      ) : null}
+      {goal.status === 'ABANDONED' || goal.status === 'AUTO_ABANDONED' ? (
+        <View
+          aria-live="polite"
+          className="flex-row items-start gap-3 rounded-2xl bg-warning-900 p-4"
+          role="status"
+        >
+          <View className="size-9 shrink-0 items-center justify-center rounded-full bg-warning-700">
+            <RiErrorWarningLine className="text-warning-100" size={18} />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="font-bold text-warning-100">
+              {goal.status === 'AUTO_ABANDONED'
+                ? 'This goal ended automatically'
+                : 'This goal was abandoned'}
+            </Text>
+            <Text className="text-xs leading-5 text-warning-200">
+              Its history is saved. Open goal settings to start a separate new
+              run or archive this one.
+            </Text>
+          </View>
         </View>
       ) : null}
       <View className="rounded-xl p-6" style={{ backgroundColor: color }}>
@@ -768,42 +885,6 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
             loading={saveReview.isPending}
             onClick={saveConclusionReview}
           />
-          <View className="flex-row gap-2">
-            <Pressable
-              className="flex-1 rounded-full  !text-center flex justify-center bg-success-green/20 p-3"
-              onPress={() => reopenGoal.mutate(goal.id)}
-            >
-              <Text className="text-center">Start again</Text>
-            </Pressable>
-            {!goal.archivedAt ? (
-              <Pressable
-                className="flex-1 rounded-full  !text-center flex justify-center bg-warning-yellow/20 p-3"
-                onPress={() => archiveGoal.mutate(goal.id)}
-              >
-                <Text className="text-center text-warning-yellow">Archive</Text>
-              </Pressable>
-            ) : null}
-          </View>
-          {goal.archivedAt ? (
-            <Pressable
-              className="rounded-full bg-danger-500/10 p-3"
-              onPress={() => {
-                if (
-                  confirm(
-                    'Permanently delete this goal content? Reward ledger records will be retained.',
-                  )
-                ) {
-                  permanentlyDeleteGoal.mutate(goal.id, {
-                    onSuccess: onDismiss,
-                  })
-                }
-              }}
-            >
-              <Text className="text-center text-danger-400">
-                Permanently delete
-              </Text>
-            </Pressable>
-          ) : null}
         </View>
       ) : activeTab === 'review' ? (
         <View className="rounded-2xl bg-card-light-50 p-5">

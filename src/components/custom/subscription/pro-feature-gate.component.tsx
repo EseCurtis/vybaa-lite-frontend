@@ -5,6 +5,7 @@ import {
   RiSparkling2Line,
   RiTeamLine,
 } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
 import { useState, type ReactElement, type ReactNode } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
@@ -131,7 +132,7 @@ function ProFeatureCard({ feature }: { feature: ProFeature }): ReactElement {
             <Text
               className={`font-bbh text-[10px] font-bold hidden tracking-[0.16em] ${theme.eyebrowClassName}`}
             >
-             {copy.eyebrow}
+              {copy.eyebrow}
             </Text>
             <Text className="font-display text-xl font-extrabold leading-snug text-white">
               {copy.title}
@@ -223,6 +224,7 @@ export function RewindChatProGate({
 }): ReactElement {
   const { isLoading, isPro, isSupported } = useSubscription()
   const { requestProAccess } = useProAccess()
+  const navigate = useNavigate()
   const theme = FEATURE_THEMES['rewind-chats']
 
   if (isPro) return <>{children}</>
@@ -230,7 +232,10 @@ export function RewindChatProGate({
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader title="Discussions" />
+        <TabHeader
+          onBack={() => void navigate({ replace: true, to: '/app/rewind' })}
+          title="Discussions"
+        />
         <View className="flex-1 overflow-y-auto px-mg pb-[calc(var(--safe-area-inset-bottom,0px)+24px)] pt-6">
           <View className="mx-auto w-full max-w-xl gap-6 rounded-3xl bg-card-light-50 p-5">
             <ProFeatureCard feature="rewind-chats" />

@@ -11,23 +11,46 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoal } from '@/hooks/use-goals.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import type { GoalListFilter } from '@/shared/api/goal.api'
 import { colors } from '@/shared/colors.shared'
 import { RiRefreshLine, RiSettings3Line } from '@remixicon/react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 
-export default function GoalDetailScreen() {
+export default function GoalDetailScreen({
+  originFilter = 'ACTIVE',
+}: {
+  originFilter?: GoalListFilter
+}) {
   const navigate = useNavigate()
   const { goalId } = useParams({ from: '/app/goal/$goalId' })
   const goal = useGoal(goalId)
   const bottomSheet = useBottomSheetController()
+
+  function returnToLibrary(filter = originFilter): void {
+    void navigate({
+      replace: true,
+      search: { filter },
+      to: '/app/goal',
+    })
+  }
 
   function openGoalActions(): void {
     if (!goal.data) return
     bottomSheet.present(
       <GoalActionsSheet
         goal={goal.data}
-        onAbandon={() => navigate({ replace: true, to: '/app/goal' })}
+        onAbandon={() => returnToLibrary('ENDED')}
+        onArchive={() => returnToLibrary('ARCHIVED')}
+        onDelete={() => returnToLibrary('ARCHIVED')}
         onDone={() => bottomSheet.dismiss()}
+        onRestart={(newGoalId) => {
+          void navigate({
+            params: { goalId: newGoalId },
+            replace: true,
+            search: { from: 'ACTIVE' },
+            to: '/app/goal/$goalId',
+          })
+        }}
       />,
       { size: 'default', title: ' ' },
     )
@@ -38,10 +61,10 @@ export default function GoalDetailScreen() {
       <NoiseComponent>
         <TabHeader
           canGoBack
-          onBack={() => navigate({ replace: true, to: '/app/goal' })}
+          onBack={() => returnToLibrary()}
           title="Goal details"
         >
-          {goal.data && ['ACTIVE', 'PAUSED'].includes(goal.data.status) ? (
+          {goal.data ? (
             <Pressable
               accessibilityLabel="Open goal settings"
               className="size-10 items-center justify-center rounded-full bg-card-light-50"
@@ -79,7 +102,7 @@ export default function GoalDetailScreen() {
             ) : goal.data ? (
               <GoalDetailsSheet
                 goal={goal.data}
-                onDismiss={() => navigate({ replace: true, to: '/app/goal' })}
+                onDismiss={() => returnToLibrary()}
               />
             ) : null}
           </View>

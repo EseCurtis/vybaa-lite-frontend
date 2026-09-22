@@ -191,7 +191,7 @@ export function useResumeGoal() {
 export function useAbandonGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.abandon(goalId),
-    'Goal moved to history',
+    'Goal abandoned — history preserved',
   )
 }
 

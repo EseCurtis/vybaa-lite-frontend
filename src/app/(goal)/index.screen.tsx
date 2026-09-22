@@ -15,6 +15,12 @@ import {
 import type { Goal, GoalListFilter, LegacyGoal } from '@/shared/api/goal.api'
 import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import {
+  getGoalLibraryTab,
+  isActiveGoalFilter,
+  isEndedGoalFilter,
+  type GoalLibraryTab,
+} from '@/shared/goal/goal-library-filter.util'
+import {
   cn,
   contrastingTextColor,
   seededColor,
@@ -31,8 +37,6 @@ import {
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useMemo, useState, type ReactNode } from 'react'
-
-type GoalTab = 'Active' | 'Ended' | 'Paused'
 
 const PAUSED_INFO_DISMISSED_KEY = 'goals:paused-info-dismissed'
 
@@ -345,31 +349,43 @@ function GoalFeed({
   )
 }
 
-export default function GoalsAppScreen() {
+export default function GoalsAppScreen({
+  filter = 'ACTIVE',
+}: {
+  filter?: GoalListFilter
+}) {
   const navigate = useNavigate()
   const [savedDraft] = useState(() => readGoalCreationDraft())
-  const [tab, setTab] = useState<GoalTab>('Active')
   const [activeFilter, setActiveFilter] = useState<
     'ACTIVE' | 'DUE' | 'OVERDUE'
-  >('ACTIVE')
-  const [endedFilter, setEndedFilter] = useState<'ARCHIVED' | 'ENDED'>('ENDED')
+  >(isActiveGoalFilter(filter) ? filter : 'ACTIVE')
+  const [endedFilter, setEndedFilter] = useState<'ARCHIVED' | 'ENDED'>(
+    isEndedGoalFilter(filter) ? filter : 'ENDED',
+  )
   const [showPausedInfo, setShowPausedInfo] = useState(
     () => !hasDismissedPausedInfo(),
   )
+  const tab = getGoalLibraryTab(filter)
   const legacy = useLegacyGoals(tab === 'Ended')
 
   function openGoal(goal: Goal): void {
-    navigate({ to: '/app/goal/$goalId', params: { goalId: goal.id } })
+    navigate({
+      params: { goalId: goal.id },
+      search: { from: filter },
+      to: '/app/goal/$goalId',
+    })
   }
 
   function openCreate(): void {
     navigate({ to: '/app/goal/create' })
   }
 
-  const filter: GoalListFilter =
-    tab === 'Paused' ? 'PAUSED' : tab === 'Ended' ? endedFilter : activeFilter
-
-
+  function selectTab(nextTab: GoalLibraryTab): void {
+    let nextFilter: GoalListFilter = activeFilter
+    if (nextTab === 'Paused') nextFilter = 'PAUSED'
+    if (nextTab === 'Ended') nextFilter = endedFilter
+    void navigate({ replace: true, search: { filter: nextFilter }, to: '.' })
+  }
 
   return (
     <View className="flex-1 min-h-0 overflow-hidden bg-cardd">
@@ -401,26 +417,28 @@ export default function GoalsAppScreen() {
 
           <View className="z-30 -mx-mg shrink-0 flex-row items-center justify-center  py-2">
             <View className="justify-center rounded-full bg-cardx flex-row gap-2 p-1">
-              {(['Active', 'Paused', 'Ended'] as GoalTab[]).map((item) => (
-                <Pressable
-                  className={cn(
-                    'rounded-full px-3 py-2',
-                    tab === item ? 'bg-white' : 'bg-transparent',
-                  )}
-                  key={item}
-                  onPress={() => setTab(item)}
-                >
-                  <Text
-                    className={
-                      tab === item
-                        ? 'font-bold text-sm text-black'
-                        : 'text-card-lighter-2'
-                    }
+              {(['Active', 'Paused', 'Ended'] as GoalLibraryTab[]).map(
+                (item) => (
+                  <Pressable
+                    className={cn(
+                      'rounded-full px-3 py-2',
+                      tab === item ? 'bg-white' : 'bg-transparent',
+                    )}
+                    key={item}
+                    onPress={() => selectTab(item)}
                   >
-                    {item}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      className={
+                        tab === item
+                          ? 'font-bold text-sm text-black'
+                          : 'text-card-lighter-2'
+                      }
+                    >
+                      {item}
+                    </Text>
+                  </Pressable>
+                ),
+              )}
             </View>
           </View>
 
@@ -451,7 +469,14 @@ export default function GoalsAppScreen() {
                         : 'border-card-light-50',
                     )}
                     key={item.value}
-                    onPress={() => setActiveFilter(item.value)}
+                    onPress={() => {
+                      setActiveFilter(item.value)
+                      void navigate({
+                        replace: true,
+                        search: { filter: item.value },
+                        to: '.',
+                      })
+                    }}
                   >
                     <item.icon
                       size={13}
@@ -479,7 +504,14 @@ export default function GoalsAppScreen() {
                         : 'border-card-light-50',
                     )}
                     key={item}
-                    onPress={() => setEndedFilter(item)}
+                    onPress={() => {
+                      setEndedFilter(item)
+                      void navigate({
+                        replace: true,
+                        search: { filter: item },
+                        to: '.',
+                      })
+                    }}
                   >
                     {item === 'ENDED' ? (
                       <RiCalendarCheckLine
