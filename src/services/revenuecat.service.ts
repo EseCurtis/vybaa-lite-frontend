@@ -73,7 +73,9 @@ export function getRevenueCatApiKeyForPlatform(
   apiKeys: RevenueCatApiKeys,
   environment: RevenueCatEnvironment = 'production',
 ): string {
+
   const testApiKey = apiKeys.test?.trim() ?? ''
+
   if (environment !== 'production' && testApiKey) return testApiKey
   if (platform === 'ios') return apiKeys.ios.trim()
   if (platform === 'android') return apiKeys.android.trim()
@@ -222,7 +224,7 @@ export async function presentVybaaProPaywall(): Promise<PaywallOutcome> {
     if (offeringError || !offering) {
       throw new Error(
         offeringError ??
-          'Vybaa Pro is not available right now. Please try again later.',
+        'Vybaa Pro is not available right now. Please try again later.',
       )
     }
 

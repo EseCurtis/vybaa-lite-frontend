@@ -79,19 +79,26 @@ function ProFeatureCard({ feature }: { feature: ProFeature }): ReactElement {
 
   return (
     <View className="gap-5">
-      <View className="size-14 items-center justify-center rounded-2xl bg-card-light">
-        <FeatureIcon className="text-white" size={26} />
+      <View className="">
+        <View className="flex-row gap-3">
+        <View className="size-14 shrink-0 items-center justify-center rounded-2xl bg-card-light">
+          <FeatureIcon className="text-white" size={26} />
+        </View>
+        <View className="gap-0">
+          <Text className="font-bbh text-[9px] font-bold uppercase tracking-[0.16em] text-card-lighter-3">
+            {copy.eyebrow} · Vybaa Pro
+          </Text>
+          <Text className="font-display text-xl leading-snug font-extrabold  text-white">
+            {copy.title}
+          </Text>
+         
+        </View>
       </View>
-      <View className="gap-2">
-        <Text className="font-bbh text-xs font-bold uppercase tracking-[0.16em] text-card-lighter-3">
-          {copy.eyebrow} · Vybaa Pro
-        </Text>
-        <Text className="font-display text-2xl font-extrabold leading-8 text-white">
-          {copy.title}
-        </Text>
-        <Text className="font-bbh text-sm leading-6 text-card-lighter-2">
-          {copy.description}
-        </Text>
+      <View className="">
+         <Text className="font-bbh text-sm leading-6 text-card-lighter-2">
+            {copy.description}
+          </Text>
+      </View>
       </View>
       <View className="gap-3 rounded-2xl bg-cardx p-4">
         {copy.highlights.map((highlight) => (
