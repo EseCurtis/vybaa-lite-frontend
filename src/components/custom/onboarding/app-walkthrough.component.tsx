@@ -92,6 +92,23 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
     ],
   },
+  '/app/profile': {
+    id: 'profile-main',
+    steps: [
+      {
+        description:
+          'This is how you appear across Vybaa. Use Edit whenever you want to update your photo, name, or username.',
+        selector: '[data-walkthrough="profile-identity"]',
+        title: 'Your Vybaa identity',
+      },
+      {
+        description:
+          'Open your Play Points, achievements, wellbeing patterns, and app settings from one place.',
+        selector: '[data-walkthrough="profile-quick-actions"]',
+        title: 'Your personal shortcuts',
+      },
+    ],
+  },
   '/app/rewind': {
     id: 'rewind-main',
     steps: [
@@ -115,6 +132,57 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
     ],
   },
+  '/app/rewind-chats': {
+    id: 'rewind-discussions',
+    steps: [
+      {
+        description:
+          'Continue one-to-one conversations or open the group room. Only partners available to you can reply.',
+        selector: '[data-walkthrough="discussion-intro"]',
+        title: 'Your Rewind discussions',
+      },
+      {
+        description:
+          'Use this to return to live Rewind whenever you are done browsing conversations.',
+        selector: '[data-testid="tab-header-back"]',
+        title: 'Back to Rewind',
+      },
+    ],
+  },
+}
+
+const REWIND_CONVERSATION_WALKTHROUGH: WalkthroughDefinition = {
+  id: 'rewind-conversation',
+  steps: [
+    {
+      description:
+        'Tap here, or swipe right from the very left edge of the screen, to return to Discussions.',
+      selector: '[data-testid="tab-header-back"]',
+      title: 'A quicker way back',
+    },
+    {
+      description:
+        'Write naturally here. In group discussions, use @ to invite a specific available partner into the reply.',
+      selector: '[aria-label="Message your Rewind partners"]',
+      title: 'Keep the conversation going',
+    },
+    {
+      description:
+        'Mute proactive check-ins or open conversation settings whenever you want more control.',
+      selector: '[aria-label="Chat settings"]',
+      title: 'Conversation controls',
+    },
+  ],
+}
+
+function getWalkthroughDefinition(
+  pathname: string,
+): WalkthroughDefinition | null {
+  if (/^\/app\/rewind-chat\/[^/]+$/.test(pathname)) {
+    return REWIND_CONVERSATION_WALKTHROUGH
+  }
+
+  return WALKTHROUGHS[pathname] ?? null
 }
 
 function getVisibleTarget(selector: string): HTMLElement | null {
@@ -359,7 +427,10 @@ function SpotlightWalkthrough({
           </Pressable>
         </View>
 
-        <Text id="walkthrough-title" className="text-xl font-bold text-white">
+        <Text
+          id="walkthrough-title"
+          className="text-xl font-bold text-white"
+        >
           {activeStep.title}
         </Text>
         <Text
@@ -422,7 +493,7 @@ export function AppWalkthrough(): ReactElement | null {
   const location = useLocation()
   const { user } = useAuth()
   const definition = useMemo(
-    () => WALKTHROUGHS[location.pathname] ?? null,
+    () => getWalkthroughDefinition(location.pathname),
     [location.pathname],
   )
 

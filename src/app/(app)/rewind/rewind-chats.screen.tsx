@@ -153,7 +153,10 @@ export default function RewindChatsScreen(): ReactElement {
         <TabHeader title="Discussions" />
         <View className="flex-1 overflow-y-auto pb-[calc(var(--safe-area-inset-bottom,0px)+24px)]">
           <View className="mx-auto w-full max-w-3xl gap-6 ">
-            <View className="gap-2 px-mg pt-2">
+            <View
+              className="gap-2 px-mg pt-2"
+              data-walkthrough="discussion-intro"
+            >
               <Text className="font-bbh hidden text-2xl font-bold text-white">
                 Your partners are here
               </Text>

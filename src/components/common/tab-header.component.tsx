@@ -33,6 +33,7 @@ export function TabHeader({
         {canGoBack && (
           <View className="">
             <Pressable
+              accessibilityLabel="Go back"
               onPress={() => {
                 if (onBack) {
                   onBack()
@@ -46,6 +47,7 @@ export function TabHeader({
                 void hapticFeedback.light()
               }}
               className="w-10 h-10 rounded-full bg-white flex items-center justify-center"
+              testID="tab-header-back"
             >
               <RiArrowLeftSLine size={24} className="text-cardx" />
             </Pressable>{' '}

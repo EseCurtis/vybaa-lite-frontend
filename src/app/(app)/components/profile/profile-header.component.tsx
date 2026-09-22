@@ -27,7 +27,7 @@ export function ProfileHeader({
   onEdit,
 }: ProfileHeaderProps) {
   return (
-    <motion.div>
+    <motion.div data-walkthrough="profile-identity">
       <View className="items-center gap-4 flex-row space-y-4">
         <View className={cn(isEditing && 'mx-auto pb-4', 'relative')}>
           {isEditing ? (

@@ -19,7 +19,10 @@ export function ProfileQuickActions({ actions }: ProfileQuickActionsProps) {
         Quick Access
       </Text>
 
-      <View className="grid grid-cols-2 gap-3">
+      <View
+        className="grid grid-cols-2 gap-3"
+        data-walkthrough="profile-quick-actions"
+      >
         {actions.map((action) => (
           <Pressable
             key={action.to}
