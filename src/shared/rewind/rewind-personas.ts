@@ -85,6 +85,15 @@ export const REWIND_PERSONAS: Array<RewindPersona> = [
   },
 ]
 
+export const FREE_REWIND_PERSONA_IDS: ReadonlySet<RewindPersonaId> = new Set([
+  'ella',
+  'lyra',
+])
+
+export function isFreeRewindPersona(personaId: RewindPersonaId): boolean {
+  return FREE_REWIND_PERSONA_IDS.has(personaId)
+}
+
 export function getRewindPersona(personaId: RewindPersonaId): RewindPersona {
   const persona = REWIND_PERSONAS.find((p) => p.id === personaId)
   if (!persona) throw new Error(`Unknown Rewind persona: ${personaId}`)

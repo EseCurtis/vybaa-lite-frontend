@@ -1,12 +1,18 @@
+import { useRouter } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+
 import { PersonaArtwork, PersonaThumbnail } from '@/app/(app)/rewind.screen'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { BottomNotch, TopNotch } from '@/components/common/notch.component'
+import { ProFeatureGateSheet } from '@/components/custom/subscription/pro-feature-gate.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { hapticFeedback } from '@/shared/haptic.util'
@@ -16,17 +22,18 @@ import {
 } from '@/shared/permissions/permission-onboarding.util'
 import {
   getRewindPersona,
+  isFreeRewindPersona,
   REWIND_PERSONAS,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
 import { getApiErrorMessage } from '@/shared/utils/api-error.util'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
-import { useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 
 export default function RewindPartnerOnboardingScreen() {
   const router = useRouter()
   const toast = useToast()
+  const bottomSheet = useBottomSheetController()
+  const { isPro } = useSubscription()
   const { refreshSession, user } = useAuth()
   const [selectedPersonaId, setSelectedPersonaId] =
     useState<RewindPersonaId>('ella')
@@ -121,6 +128,12 @@ export default function RewindPartnerOnboardingScreen() {
               Pick the voice you want in your corner. You can change them later
               in Rewind.
             </Text>
+            {!isPro ? (
+              <Text className="max-w-md text-xs leading-5 text-card-lighter-3">
+                Ella and Lyra are included free. The full partner team comes
+                with Vybaa Pro.
+              </Text>
+            ) : null}
           </View>
 
           <View className="mt-6 gap-5">
@@ -136,6 +149,16 @@ export default function RewindPartnerOnboardingScreen() {
                   persona={persona}
                   selected={selectedPersonaId === persona.id}
                   onSelect={(id) => {
+                    if (!isPro && !isFreeRewindPersona(id)) {
+                      bottomSheet.present(
+                        <ProFeatureGateSheet
+                          feature="rewind-partners"
+                          onUnlocked={() => setSelectedPersonaId(id)}
+                        />,
+                        { size: 'semi-full', title: 'More Rewind partners' },
+                      )
+                      return
+                    }
                     setSaveError(null)
                     setSelectedPersonaId(id)
                     if (selectedPersonaId !== id) {
@@ -143,6 +166,7 @@ export default function RewindPartnerOnboardingScreen() {
                     }
                   }}
                   disabled={isSaving}
+                  locked={!isPro && !isFreeRewindPersona(persona.id)}
                 />
               ))}
             </View>

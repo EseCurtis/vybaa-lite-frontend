@@ -155,8 +155,9 @@ export function useDismissRewindObservation() {
   })
 }
 
-export function useRewindChats() {
+export function useRewindChats(enabled: boolean = true) {
   return useQuery({
+    enabled,
     queryFn: async () => {
       const response = await rewindAPI.getV2Chats()
       return response.data.chats

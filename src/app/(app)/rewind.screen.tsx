@@ -6,6 +6,7 @@ import {
   RiCloseLine,
   RiEmotionHappyLine,
   RiFlashlightLine,
+  RiLock2Fill,
   RiMoonClearLine,
   RiPauseFill,
   RiPlayFill,
@@ -31,10 +32,11 @@ import {
   type ReactElement,
 } from 'react'
 
-import { NoiseComponent } from '@/components/common/noise.component'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { BottomNotch } from '@/components/common/notch.component'
+import { NoiseComponent } from '@/components/common/noise.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { ProFeatureGateSheet } from '@/components/custom/subscription/pro-feature-gate.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -43,6 +45,8 @@ import ENV from '@/env'
 import { useRewindChats, useRewindRoutine } from '@/hooks/use-rewind.hook'
 import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { useAuth } from '@/providers/auth.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
@@ -63,6 +67,7 @@ import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-rec
 import { canChangeRewindPartner } from '@/shared/rewind/rewind-partner-switch.util'
 import {
   getRewindPersona,
+  isFreeRewindPersona,
   REWIND_PERSONAS,
   type RewindPersona,
   type RewindPersonaIcon,
@@ -260,11 +265,13 @@ export function PersonaThumbnail({
   onSelect,
   selected,
   disabled,
+  locked = false,
 }: {
   persona: RewindPersona
   onSelect: (id: RewindPersonaId) => void
   selected: boolean
   disabled?: boolean
+  locked?: boolean
 }): ReactElement {
   const $color = persona.color
   const color = adjustColor($color, { lightness: -10, saturation: 0 })
@@ -279,7 +286,7 @@ export function PersonaThumbnail({
       }
       disabled={disabled}
       onPress={() => onSelect(persona.id)}
-      accessibilityLabel={`Choose ${persona.name}. ${persona.perspective}`}
+      accessibilityLabel={`${locked ? 'Unlock' : 'Choose'} ${persona.name}. ${persona.perspective}`}
       className={cn(
         'relative  shrink-0 items-center justify-center mt-2 aspect-square overflow-hidden rounded-xl bg-cardx',
         selected &&
@@ -298,6 +305,11 @@ export function PersonaThumbnail({
       <Text className="absolute bottom-1.5 z-10 font-bbh text-[10px] font-bold text-white">
         {persona.name}
       </Text>
+      {locked ? (
+        <View className="absolute right-1.5 top-1.5 z-20 size-6 items-center justify-center rounded-full bg-cardd">
+          <RiLock2Fill className="text-white" size={12} />
+        </View>
+      ) : null}
     </Pressable>
   )
 }
@@ -404,7 +416,9 @@ export default function RewindScreen(): ReactElement {
     isLoading: isAuthLoading,
   } = useAuth()
   const routineQuery = useRewindRoutine()
-  const chatsQuery = useRewindChats()
+  const { isPro } = useSubscription()
+  const bottomSheet = useBottomSheetController()
+  const chatsQuery = useRewindChats(isPro)
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
   const [isPartnerPickerOpen, setIsPartnerPickerOpen] = useState(false)
@@ -1346,8 +1360,19 @@ export default function RewindScreen(): ReactElement {
   }, [navigate])
 
   const openRewindChats = useCallback(() => {
-    void navigate({ to: '/app/rewind-chats' })
-  }, [navigate])
+    if (isPro) {
+      void navigate({ to: '/app/rewind-chats' })
+      return
+    }
+
+    bottomSheet.present(
+      <ProFeatureGateSheet
+        feature="rewind-chats"
+        onUnlocked={() => void navigate({ to: '/app/rewind-chats' })}
+      />,
+      { size: 'semi-full', title: 'Anytime chats' },
+    )
+  }, [bottomSheet, isPro, navigate])
 
   const routineStatus = useMemo(() => {
     const formatOccurrenceTime = (value: string | null): string => {
@@ -1466,8 +1491,23 @@ export default function RewindScreen(): ReactElement {
                       key={p.id}
                       persona={p}
                       selected={previewPersonaId === p.id}
-                      onSelect={setPreviewPersonaId}
+                      onSelect={(nextPersonaId) => {
+                        if (isPro || isFreeRewindPersona(nextPersonaId)) {
+                          setPreviewPersonaId(nextPersonaId)
+                          return
+                        }
+                        bottomSheet.present(
+                          <ProFeatureGateSheet
+                            feature="rewind-partners"
+                            onUnlocked={() =>
+                              setPreviewPersonaId(nextPersonaId)
+                            }
+                          />,
+                          { size: 'semi-full', title: 'More Rewind partners' },
+                        )
+                      }}
                       disabled={persistPersonaMutation.isPending}
+                      locked={!isPro && !isFreeRewindPersona(p.id)}
                     />
                   ))}
                 </View>

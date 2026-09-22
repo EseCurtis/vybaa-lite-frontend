@@ -41,7 +41,14 @@ export function useToast() {
   return { success: noop, error: blocked, warning: noop, info: noop }
 }
 export function useProAccess() {
-  return { handleSubscriptionError: blocked }
+  return { handleSubscriptionError: blocked, requestProAccess: blocked }
+}
+export function useSubscription() {
+  return {
+    isLoading: false,
+    isPro: true,
+    isSupported: true,
+  }
 }
 export function useKeyboard() {
   return { isKeyboardVisible: false }

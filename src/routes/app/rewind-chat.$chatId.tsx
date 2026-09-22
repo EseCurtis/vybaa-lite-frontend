@@ -3,12 +3,15 @@ import type { ReactElement } from 'react'
 
 import RewindChatScreen from '@/app/(app)/rewind/rewind-chat.screen'
 import { ProtectedRoute } from '@/components/common/protected-route.component'
+import { RewindChatProGate } from '@/components/custom/subscription/pro-feature-gate.component'
 
 function RewindChatRoute(): ReactElement {
   const { chatId } = Route.useParams()
   return (
     <ProtectedRoute redirectTo="/" requireAuth>
-      <RewindChatScreen chatId={chatId} key={chatId} />
+      <RewindChatProGate>
+        <RewindChatScreen chatId={chatId} key={chatId} />
+      </RewindChatProGate>
     </ProtectedRoute>
   )
 }

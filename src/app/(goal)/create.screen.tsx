@@ -1,14 +1,26 @@
+import { Capacitor } from '@capacitor/core'
+import {
+  RiAlarmLine,
+  RiArrowLeftLine,
+  RiLoader4Line,
+  RiSparkling2Line,
+} from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { Switch } from '@/components/common/switch.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { CreateGoalSheet } from '@/components/custom/goal/create-goal-sheet.component'
+import { ProFeatureGateSheet } from '@/components/custom/subscription/pro-feature-gate.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { useSubscription } from '@/providers/subscription.provider'
 import { useToast } from '@/providers/toast.provider'
 import {
   goalAPI,
@@ -24,15 +36,6 @@ import {
   setGoalAlarmsEnabled,
 } from '@/shared/goal/goal-alarm.service'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
-import { Capacitor } from '@capacitor/core'
-import {
-  RiAlarmLine,
-  RiArrowLeftLine,
-  RiLoader4Line,
-  RiSparkling2Line,
-} from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 
 export type GoalDraftNavigation = {
   initialStep?: 1 | 2 | 3 | 4
@@ -359,6 +362,7 @@ export default function CreateGoalScreen() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const bottomSheet = useBottomSheetController()
+  const { isPro } = useSubscription()
   const [draft, setDraft] = useState<GoalDraftNavigation | undefined>(
     readGoalDraft,
   )
@@ -377,7 +381,7 @@ export default function CreateGoalScreen() {
     }
 
     markGoalAlarmOnboardingSeen()
-    bottomSheet.present(<GoalAlarmOnboardingSheet />, { })
+    bottomSheet.present(<GoalAlarmOnboardingSheet />, {})
   }, [bottomSheet])
 
   function handleBack(): void {
@@ -407,7 +411,7 @@ export default function CreateGoalScreen() {
     )
   }
 
-  function openPartnerAssistant(): void {
+  function openPartnerAssistantContent(): void {
     if (!draft?.quickSetupPrompt || !isQuickGoalSetupDraft(draft.values)) {
       openQuickSetup()
       return
@@ -434,6 +438,21 @@ export default function CreateGoalScreen() {
           ? `Adjusting with ${selectedPersona.name}`
           : 'Adjust goal with AI',
       },
+    )
+  }
+
+  function openPartnerAssistant(): void {
+    if (isPro) {
+      openPartnerAssistantContent()
+      return
+    }
+
+    bottomSheet.present(
+      <ProFeatureGateSheet
+        feature="quick-goal-setup"
+        onUnlocked={openPartnerAssistantContent}
+      />,
+      { size: 'semi-full', title: 'Quick Goal Setup' },
     )
   }
 
@@ -485,6 +504,14 @@ export default function CreateGoalScreen() {
               {selectedPersona ? (
                 <View className="absolute -bottom-0.5 -right-0.5 size-4 items-center justify-center rounded-full bg-warning-yellow">
                   <RiSparkling2Line className="text-black" size={10} />
+                </View>
+              ) : null}
+
+              {!isPro ? (
+                <View className="absolute -right-2 -top-2 min-h-5 items-center justify-center rounded-full bg-white px-1.5">
+                  <Text className="font-bbh text-[9px] font-black text-cardd">
+                    PRO
+                  </Text>
                 </View>
               ) : null}
 

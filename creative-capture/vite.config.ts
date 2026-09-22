@@ -10,6 +10,7 @@ const runtimeModules = [
   '@tanstack/react-router',
   '@/providers/auth.provider',
   '@/providers/notification.provider',
+  '@/providers/subscription.provider',
   '@/providers/bottom-sheet.provider',
   '@/providers/toast.provider',
   '@/hooks/use-pro-access.hook',
