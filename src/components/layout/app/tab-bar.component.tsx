@@ -155,6 +155,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           className,
           'bottom-0 left-0 fixed  !py-0 w-full z-50 p-0',
         )}
+        data-walkthrough="main-navigation"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}

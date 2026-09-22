@@ -397,8 +397,12 @@ export default function GoalsAppScreen({
               <Text className="text-2xl font-bold">Goals</Text>
             </View>
             <Pressable
+              accessibilityLabel={
+                savedDraft?.title ? 'Continue goal draft' : 'Create a new goal'
+              }
               className="size-11 relative items-center justify-center rounded-full bg-white"
               onPress={openCreate}
+              testID="goal-create-button"
             >
               {savedDraft?.title ? (
                 <RiQuillPenFill className="text-black" size={22} />
@@ -416,7 +420,10 @@ export default function GoalsAppScreen({
           </View>
 
           <View className="z-30 -mx-mg shrink-0 flex-row items-center justify-center  py-2">
-            <View className="justify-center rounded-full bg-cardx flex-row gap-2 p-1">
+            <View
+              className="justify-center rounded-full bg-cardx flex-row gap-2 p-1"
+              data-walkthrough="goal-library-tabs"
+            >
               {(['Active', 'Paused', 'Ended'] as GoalLibraryTab[]).map(
                 (item) => (
                   <Pressable

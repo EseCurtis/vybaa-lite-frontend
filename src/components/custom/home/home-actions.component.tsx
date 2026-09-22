@@ -90,12 +90,14 @@ function HomeActionCard({
   icon,
   onAction = () => {},
   filled = false,
+  testID,
 }: {
   name: string
   description: string
   icon: RemixiconComponentType
   onAction?: () => void
   filled?: boolean
+  testID: string
 }) {
   const { user } = useAuth()
   const Icon = icon
@@ -119,6 +121,7 @@ function HomeActionCard({
       )}
     >
       <Pressable
+        testID={testID}
         onPress={onAction}
         className={cn(
           !filled && 'aspect-square ',
@@ -169,6 +172,7 @@ export function HomeActions() {
             onAction={item?.onAction}
             icon={item.icon}
             filled={actions.length % 2 !== 0 && index === actions.length - 1}
+            testID={`home-action-${item.name.toLowerCase().replaceAll(' ', '-')}`}
           />
         )
       })}

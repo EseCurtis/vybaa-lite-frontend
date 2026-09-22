@@ -1,4 +1,5 @@
 import { TabBar } from '@/components/layout/app/tab-bar.component'
+import { AppWalkthrough } from '@/components/custom/onboarding/app-walkthrough.component'
 import { useAuth } from '@/providers/auth.provider'
 import { IS_WEB } from '@/shared/constants.shared'
 import { Outlet, useLocation } from '@tanstack/react-router'
@@ -34,6 +35,7 @@ export function AppLayout() {
           {shouldShowTabBar && onATab && <TabBar />}
         </>
       )}
+      <AppWalkthrough />
     </>
   )
 }
