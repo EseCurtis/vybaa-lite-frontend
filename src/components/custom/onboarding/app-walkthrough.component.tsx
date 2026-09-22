@@ -19,8 +19,8 @@ import {
   useRef,
   useState,
   type CSSProperties,
-  type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
+  type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -452,7 +452,7 @@ function SpotlightWalkthrough({
 
         <Text
           id="walkthrough-title"
-          className="text-xl font-bold text-white"
+          className="text-xl pr-1 font-bold text-white"
         >
           {activeStep.title}
         </Text>
