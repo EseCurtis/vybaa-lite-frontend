@@ -12,6 +12,28 @@ interface PublicProfileLinkProps {
   username: string | null | undefined
 }
 
+async function copyText(value: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value)
+    return
+  }
+
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.left = '-9999px'
+  document.body.appendChild(textarea)
+  textarea.select()
+
+  const copied = document.execCommand('copy')
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error('Copy is not supported in this browser')
+  }
+}
+
 export function PublicProfileLink({
   onChooseUsername,
   username,
@@ -26,7 +48,7 @@ export function PublicProfileLink({
     }
 
     try {
-      await navigator.clipboard.writeText(publicProfileUrl)
+      await copyText(publicProfileUrl)
       toast.success('Public profile link copied')
     } catch {
       toast.error('Could not copy your public profile link')
@@ -54,7 +76,7 @@ export function PublicProfileLink({
   }
 
   return (
-    <View className="rounded-2xl bg-card-light p-3">
+    <View className="rounded-2xl bg-cardd border border-cardx p-3">
       {publicProfileUrl ? (
         <View className="flex-row items-center gap-3">
           <View className="size-10 rounded-xl bg-card-light-50 items-center justify-center shrink-0">
@@ -62,7 +84,7 @@ export function PublicProfileLink({
           </View>
           <View className="flex-1 min-w-0">
             <Text className="text-white text-sm font-bbh font-bold">
-              Public profile
+              Share your progress
             </Text>
             <Text
               className="text-card-lighter-2 text-xs font-bbh mt-0.5"
