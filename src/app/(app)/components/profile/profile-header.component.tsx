@@ -1,6 +1,9 @@
 import { ImagePicker } from '@/components/common/image-picker.component'
+import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
+import { cn } from '@/shared/utils/helpers.util'
 import { motion } from 'framer-motion'
 import type { ProfileUser } from './profile.types'
 
@@ -11,6 +14,7 @@ interface ProfileHeaderProps {
   isEditing: boolean
   onImageSelect: (imageDataUrl: string) => void
   user: ProfileUser
+  onEdit: () => void
 }
 
 export function ProfileHeader({
@@ -20,24 +24,21 @@ export function ProfileHeader({
   isEditing,
   onImageSelect,
   user,
+  onEdit,
 }: ProfileHeaderProps) {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4 }}
-    >
-      <View className="items-center space-y-4">
-        <View className="relative">
+    <motion.div data-walkthrough="profile-identity">
+      <View className="items-center gap-4 flex-row space-y-4">
+        <View className={cn(isEditing && 'mx-auto pb-4', 'relative')}>
           {isEditing ? (
             <ImagePicker
               currentImageUrl={imagePreview ?? undefined}
               onImageSelect={onImageSelect}
-              size="lg"
               initials={initials}
+              size="xl"
             />
           ) : (
-            <View className="rounded-full w-32 h-32 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
+            <View className="rounded-full w-24 h-24 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
               {imagePreview || user?.avatarUrl ? (
                 <img
                   src={imagePreview || user?.avatarUrl}
@@ -45,7 +46,7 @@ export function ProfileHeader({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Text className="text-white text-4xl font-bbh font-bold">
+                <Text className="text-white text-4xl font-display font-bold">
                   {initials}
                 </Text>
               )}
@@ -53,14 +54,33 @@ export function ProfileHeader({
           )}
         </View>
 
-        <View className="items-center space-y-1">
-          <Text className="text-white text-2xl font-bbh font-bold">
-            {displayName}
-          </Text>
-          <Text className="text-white/50 text-sm font-bbh">
-            @{user?.username}
-          </Text>
-        </View>
+        {!isEditing && (
+          <View className="items-start space-y-1">
+            <Text className="text-white leading-[10px] text-xl font-display font-bold">
+              {displayName}
+            </Text>
+            <View className="flex-row items-center gap-1">
+              <Text className="text-card-lighter-3/70 font-bold text-sm font-mona-sans-x">
+                @{user?.username}
+              </Text>
+              <UserCheckmark />
+            </View>
+          </View>
+        )}
+
+        {!isEditing && (
+          <View className="ml-auto">
+            <Button
+              label="Edit "
+              variant="default"
+              fullWidth
+              onClick={onEdit}
+              textClassName="text-sm"
+              style={{ width: '100%' }}
+              size="sm"
+            />
+          </View>
+        )}
       </View>
     </motion.div>
   )

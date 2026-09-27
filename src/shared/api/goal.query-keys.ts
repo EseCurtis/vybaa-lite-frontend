@@ -1,19 +1,11 @@
-/**
- * Query keys for goal-related queries
- * Centralized to ensure consistency across the app
- */
+import type { GoalListFilter } from './goal.api'
+
 export const goalQueryKeys = {
-  all: ['goals'] as const,
-  lists: () => [...goalQueryKeys.all, 'list'] as const,
-  list: (page?: number, limit?: number) => 
-    page && limit 
-      ? [...goalQueryKeys.lists(), { page, limit }] as const
-      : [...goalQueryKeys.lists()] as const,
-  infinite: (limit?: number) =>
-    limit
-      ? [...goalQueryKeys.lists(), 'infinite_', { limit }] as const
-      : [...goalQueryKeys.lists(), 'infinite'] as const,
-  details: () => [...goalQueryKeys.all, 'detail'] as const,
+  all: ['goals-v2'] as const,
   detail: (id: string) => [...goalQueryKeys.details(), id] as const,
-  current: () => [...goalQueryKeys.all, 'current'] as const,
+  details: () => [...goalQueryKeys.all, 'detail'] as const,
+  legacy: () => [...goalQueryKeys.all, 'legacy'] as const,
+  occurrences: (id: string) => [...goalQueryKeys.detail(id), 'occurrences'] as const,
+  list: (filter: GoalListFilter) => [...goalQueryKeys.lists(), filter] as const,
+  lists: () => [...goalQueryKeys.all, 'list'] as const,
 }

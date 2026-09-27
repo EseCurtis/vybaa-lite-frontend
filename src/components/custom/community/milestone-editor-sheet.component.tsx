@@ -13,6 +13,9 @@ export interface MilestoneDraft {
   triggerType: MilestoneTriggerType
   triggerValue: string
   points: string
+  sequenceBonusPoints?: string
+  sequenceStartDay?: string
+  sequenceEndDay?: string
 }
 
 interface MilestoneEditorSheetProps {
@@ -22,38 +25,113 @@ interface MilestoneEditorSheetProps {
   maxDays?: number
 }
 
+function getTriggerLabel(triggerType: MilestoneTriggerType): string {
+  if (triggerType === 'DAY') {
+    return 'Day'
+  }
+
+  if (triggerType === 'PERCENTAGE') {
+    return '%'
+  }
+
+  return 'Every'
+}
+
+function getTriggerPlaceholder(triggerType: MilestoneTriggerType): string {
+  if (triggerType === 'PERCENTAGE') {
+    return '50'
+  }
+
+  if (triggerType === 'SEQUENCE') {
+    return '5'
+  }
+
+  return '7'
+}
+
+function getSequencePreview(draft: MilestoneDraft): string | null {
+  if (draft.triggerType !== 'SEQUENCE') {
+    return null
+  }
+
+  const interval = Number(draft.triggerValue)
+  const start = Number(draft.points)
+  const step = Number(draft.sequenceBonusPoints || '10')
+  const startDay = Number(draft.sequenceStartDay)
+  const endDay = Number(draft.sequenceEndDay)
+
+  if (
+    !interval ||
+    interval < 1 ||
+    start < 0 ||
+    step < 0 ||
+    !startDay ||
+    endDay < startDay
+  ) {
+    return null
+  }
+
+  return `Participants will be able to earn ${start} points every ${interval} days from day ${startDay} to day ${endDay}. Each reward increases by ${step} points.`
+}
+
+function getInitialMilestoneDraft(
+  initial: MilestoneDraft | undefined,
+  maxDays: number | undefined,
+): MilestoneDraft {
+  if (initial) {
+    return {
+      ...initial,
+      sequenceStartDay:
+        initial.sequenceStartDay ||
+        (initial.triggerType === 'SEQUENCE' ? initial.triggerValue : undefined),
+      sequenceEndDay:
+        initial.sequenceEndDay ||
+        (initial.triggerType === 'SEQUENCE' && maxDays
+          ? String(maxDays)
+          : undefined),
+    }
+  }
+
+  return {
+    name: '',
+    description: '',
+    triggerType: 'DAY',
+    triggerValue: '',
+    points: '',
+    sequenceBonusPoints: '10',
+    sequenceStartDay: '1',
+    sequenceEndDay: maxDays ? String(maxDays) : '',
+  }
+}
+
 export function MilestoneEditorSheet({
   initial,
   onSave,
   onCancel,
+  maxDays,
 }: MilestoneEditorSheetProps) {
-  const [draft, setDraft] = useState<MilestoneDraft>(
-    initial ?? {
-      name: '',
-      description: '',
-      triggerType: 'DAY',
-      triggerValue: '',
-      points: '',
-    },
+  const [draft, setDraft] = useState<MilestoneDraft>(() =>
+    getInitialMilestoneDraft(initial, maxDays),
   )
 
   const [error, setError] = useState<string | null>(null)
+  const isSequence = draft.triggerType === 'SEQUENCE'
+  const sequencePreview = getSequencePreview(draft)
 
   const handleSave = () => {
     if (!draft.name.trim()) {
       setError('Milestone name is required')
       return
     }
-    const value = parseInt(draft.triggerValue, 10)
+    const value = Number(draft.triggerValue)
     if (!value || value < 1) {
       setError('Trigger value must be at least 1')
       return
     }
 
     if (draft.triggerType === 'DAY') {
-      // Duration should already be set before opening, but guard just in case.
       if (typeof maxDays === 'number' && value > maxDays) {
-        setError(`Day cannot be greater than ${maxDays}`)
+        setError(`Value cannot be greater than ${maxDays}`)
         return
       }
     }
@@ -64,10 +142,33 @@ export function MilestoneEditorSheet({
         return
       }
     }
-    const pts = parseInt(draft.points || '0', 10)
+    const pts = Number(draft.points || '0')
     if (pts < 0) {
       setError('Points cannot be negative')
       return
+    }
+
+    const bonusPoints = Number(draft.sequenceBonusPoints || '10')
+    if (draft.triggerType === 'SEQUENCE' && bonusPoints < 0) {
+      setError('Sequence bonus cannot be negative')
+      return
+    }
+
+    const sequenceStartDay = Number(draft.sequenceStartDay)
+    const sequenceEndDay = Number(draft.sequenceEndDay)
+    if (draft.triggerType === 'SEQUENCE') {
+      if (!sequenceStartDay || sequenceStartDay < 1) {
+        setError('Sequence start day must be at least 1')
+        return
+      }
+      if (!sequenceEndDay || sequenceEndDay < sequenceStartDay) {
+        setError('Sequence end day must be on or after the start day')
+        return
+      }
+      if (typeof maxDays === 'number' && sequenceEndDay > maxDays) {
+        setError(`Sequence end day cannot be greater than ${maxDays}`)
+        return
+      }
     }
 
     setError(null)
@@ -77,6 +178,12 @@ export function MilestoneEditorSheet({
       description: draft.description?.trim() || '',
       triggerValue: String(value),
       points: String(pts),
+      sequenceBonusPoints:
+        draft.triggerType === 'SEQUENCE' ? String(bonusPoints) : undefined,
+      sequenceStartDay:
+        draft.triggerType === 'SEQUENCE' ? String(sequenceStartDay) : undefined,
+      sequenceEndDay:
+        draft.triggerType === 'SEQUENCE' ? String(sequenceEndDay) : undefined,
     })
 
     // If creating (no initial), reset form so user can add another without closing
@@ -87,22 +194,31 @@ export function MilestoneEditorSheet({
         triggerType: 'DAY',
         triggerValue: '',
         points: '',
+        sequenceBonusPoints: '10',
+        sequenceStartDay: '1',
+        sequenceEndDay: maxDays ? String(maxDays) : '',
       })
     }
   }
 
   return (
     <View className="space-y-3">
-      <View className="flex-row-reverse gap-3 items-center justify-between">
-        <View className="flex-1">
+      <View className="space-y-2">
+        <View>
           <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            Trigger type
+            Reward timing
           </Text>
           <View className="flex-row">
             <View className="flex-row p-1 gap-2 bg-card-lighter-2/5 rounded-full">
               <button
                 type="button"
-                onClick={() => setDraft({ ...draft, triggerType: 'DAY' })}
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    sequenceBonusPoints: undefined,
+                    triggerType: 'DAY',
+                  })
+                }
                 className={`px-3 py-1.5 rounded-full text-md font-bbh ${
                   draft.triggerType === 'DAY'
                     ? 'bg-accent-500/80 border-accent-500 text-white'
@@ -114,7 +230,11 @@ export function MilestoneEditorSheet({
               <button
                 type="button"
                 onClick={() =>
-                  setDraft({ ...draft, triggerType: 'PERCENTAGE' })
+                  setDraft({
+                    ...draft,
+                    sequenceBonusPoints: undefined,
+                    triggerType: 'PERCENTAGE',
+                  })
                 }
                 className={`px-3 py-1.5 rounded-full text-md font-bbh ${
                   draft.triggerType === 'PERCENTAGE'
@@ -124,39 +244,177 @@ export function MilestoneEditorSheet({
               >
                 %
               </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setDraft({
+                    ...draft,
+                    sequenceBonusPoints: draft.sequenceBonusPoints || '10',
+                    sequenceStartDay: draft.sequenceStartDay || '1',
+                    sequenceEndDay:
+                      draft.sequenceEndDay || (maxDays ? String(maxDays) : ''),
+                    triggerType: 'SEQUENCE',
+                  })
+                }
+                className={`px-3 py-1.5 rounded-full text-md font-bbh ${
+                  draft.triggerType === 'SEQUENCE'
+                    ? 'bg-accent-500/80 border-accent-500 text-white '
+                    : 'bg-card-light/20 border-card-lighter-3/40 text-card-lighter-3/80'
+                }`}
+              >
+                Every
+              </button>
             </View>
           </View>
         </View>
 
-        <View className="w-24">
-          <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            {draft.triggerType}
-          </Text>
-          <Input
-            type="number"
-            value={draft.triggerValue}
-            onChange={(e) =>
-              setDraft({ ...draft, triggerValue: e.target.value })
-            }
-            className="bg-card-light/30 border-0 text-white text-xs"
-            min={1}
-            placeholder="10"
-          />
-        </View>
+        {isSequence ? (
+          <View className="gap-3 rounded-xl bg-card-light/10 px-4 py-4">
+            <View className="flex-row items-center gap-3">
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                Every
+              </Text>
+              <Input
+                aria-label="Sequence interval in days"
+                type="number"
+                value={draft.triggerValue}
+                onChange={(e) =>
+                  setDraft({ ...draft, triggerValue: e.target.value })
+                }
+                containerClassName="w-24"
+                className="bg-card-light/30 border-0 text-white text-xs"
+                inputClassName="px-3 text-center"
+                min={1}
+                placeholder="5"
+              />
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                days,
+              </Text>
+            </View>
 
-        <View className="w-24">
-          <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
-            Points
-          </Text>
-          <Input
-            type="number"
-            value={draft.points}
-            onChange={(e) => setDraft({ ...draft, points: e.target.value })}
-            className="bg-card-light/30 border-0 text-white text-xs"
-            min={0}
-            placeholder="5.5"
-          />
-        </View>
+            <View className="flex-row items-center gap-3">
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                add
+              </Text>
+              <Input
+                aria-label="Points added at each repeat"
+                type="number"
+                value={draft.sequenceBonusPoints || ''}
+                onChange={(e) =>
+                  setDraft({ ...draft, sequenceBonusPoints: e.target.value })
+                }
+                containerClassName="w-24"
+                className="bg-card-light/30 border-0 text-white text-xs"
+                inputClassName="px-3 text-center"
+                min={0}
+                placeholder="10"
+              />
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                points,
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-3">
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                starting at
+              </Text>
+              <Input
+                aria-label="Starting points"
+                type="number"
+                value={draft.points}
+                onChange={(e) => setDraft({ ...draft, points: e.target.value })}
+                containerClassName="w-24"
+                className="bg-card-light/30 border-0 text-white text-xs"
+                inputClassName="px-3 text-center"
+                min={0}
+                placeholder="20"
+              />
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                points,
+              </Text>
+            </View>
+
+            <View className="flex-row items-center gap-2">
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                from day
+              </Text>
+              <Input
+                aria-label="Sequence start day"
+                type="number"
+                value={draft.sequenceStartDay || ''}
+                onChange={(e) =>
+                  setDraft({ ...draft, sequenceStartDay: e.target.value })
+                }
+                containerClassName="w-24"
+                className="bg-card-light/30 border-0 text-white text-xs"
+                inputClassName="px-3 text-center"
+                min={1}
+                max={maxDays}
+                placeholder="1"
+              />
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                to
+              </Text>
+              <Input
+                aria-label="Sequence end day"
+                type="number"
+                value={draft.sequenceEndDay || ''}
+                onChange={(e) =>
+                  setDraft({ ...draft, sequenceEndDay: e.target.value })
+                }
+                containerClassName="w-24"
+                className="bg-card-light/30 border-0 text-white text-xs"
+                inputClassName="px-3 text-center"
+                min={1}
+                max={maxDays}
+                placeholder={maxDays ? String(maxDays) : '30'}
+              />
+              <Text className="text-card-lighter-2 text-sm leading-6 font-bbh">
+                .
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View className="grid grid-cols-2 gap-2">
+            <View>
+              <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
+                {getTriggerLabel(draft.triggerType)}
+              </Text>
+              <Input
+                type="number"
+                value={draft.triggerValue}
+                onChange={(e) =>
+                  setDraft({ ...draft, triggerValue: e.target.value })
+                }
+                className="bg-card-light/30 border-0 text-white text-xs"
+                min={1}
+                placeholder={getTriggerPlaceholder(draft.triggerType)}
+              />
+            </View>
+
+            <View>
+              <Text className="text-card-lighter-3/70 text-[11px] font-bbh mb-1">
+                {isSequence ? 'Start' : 'Points'}
+              </Text>
+              <Input
+                type="number"
+                value={draft.points}
+                onChange={(e) => setDraft({ ...draft, points: e.target.value })}
+                className="bg-card-light/30 border-0 text-white text-xs"
+                min={0}
+                placeholder="20"
+              />
+            </View>
+          </View>
+        )}
+
+        {sequencePreview && (
+          <View className="rounded-xl bg-accent-500/10 px-3 py-2">
+            <Text className="text-accent-300 text-[11px] font-bbh">
+              {sequencePreview}
+            </Text>
+          </View>
+        )}
       </View>
       <Input
         placeholder="Milestone name (e.g. First week)"

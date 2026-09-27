@@ -1,5 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { JoinByCodeSheet } from '@/components/custom/community/join-by-code-sheet.component'
 import { Text } from '@/components/layout/text.component'
@@ -39,9 +39,14 @@ export default function InviteCodeScreen() {
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader canGoBack title="Join Community" onBack={() => router.navigate({ to: '/app/communities' })} />
-        <View className="flex-1 items-center justify-center">
-          <Spinner />
+        <TabHeader
+          canGoBack
+          title="Join Community"
+          onBack={() => router.navigate({ to: '/app/communities' })}
+        />
+        <View className="gap-4 px-mg py-5">
+          <Skeleton className="h-44 w-full" rounded="xl" />
+          <Skeleton className="h-12 w-full" rounded="lg" />
         </View>
       </NoiseComponent>
     </View>

@@ -1,13 +1,21 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { ContentSafetySheet } from '@/components/custom/community/content-safety-sheet.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { usePublicProfile } from '@/hooks/use-public-profile.hook'
 import { useAuth } from '@/providers/auth.provider'
-import { RiBookOpenLine, RiCoinsLine, RiGroupLine, RiMedalLine } from '@remixicon/react'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import {
+  RiBookOpenLine,
+  RiCoinsLine,
+  RiGroupLine,
+  RiMedalLine,
+  RiShieldCheckLine,
+} from '@remixicon/react'
 import { useNavigate, useParams } from '@tanstack/react-router'
 import moment from 'moment'
 
@@ -39,12 +47,19 @@ function getPublicProfileInitials(profile: {
   return initials || 'U'
 }
 
-export default function PublicProfileScreen() {
+interface PublicProfileViewProps {
+  isStandalone?: boolean
+  username: string
+}
+
+export function PublicProfileView({
+  isStandalone = false,
+  username,
+}: PublicProfileViewProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { username } = useParams({ from: '/app/u/$username' })
+  const bottomSheet = useBottomSheetController()
   const { data: profile, isLoading, isError } = usePublicProfile(username)
-
 
   const isOwnPublicProfile = user?.username === username
 
@@ -52,9 +67,14 @@ export default function PublicProfileScreen() {
     return (
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
-          <TabHeader title="Profile" />
-          <View className="flex-1 items-center justify-center">
-            <Spinner />
+          <TabHeader canGoBack={!isStandalone} title="Profile" />
+          <View className="gap-4 px-mg py-5">
+            <View className="items-center gap-3">
+              <Skeleton className="size-24" rounded="full" />
+              <Skeleton className="h-5 w-40" rounded="sm" />
+              <Skeleton className="h-3 w-24" rounded="sm" />
+            </View>
+            <Skeleton className="h-40 w-full" rounded="xl" />
           </View>
         </NoiseComponent>
       </View>
@@ -65,7 +85,7 @@ export default function PublicProfileScreen() {
     return (
       <View className="flex-1 bg-cardd">
         <NoiseComponent>
-          <TabHeader title="Profile" />
+          <TabHeader canGoBack={!isStandalone} title="Profile" />
           <EmptyList
             icon={<RiGroupLine size={48} className="text-white/40" />}
             title="Profile not found"
@@ -73,7 +93,11 @@ export default function PublicProfileScreen() {
             action={{
               label: 'Go back',
               onPress: () => {
-                history.back()
+                if (isStandalone) {
+                  navigate({ replace: true, to: '/' })
+                  return
+                }
+                navigate({ replace: true, to: '/app/profile' })
               },
             }}
           />
@@ -141,7 +165,32 @@ export default function PublicProfileScreen() {
                   }}
                 />
               </View>
-            ) : null}
+            ) : (
+              <View className="mt-4">
+                <Button
+                  fullWidth
+                  label="Report or block"
+                  leftIcon={<RiShieldCheckLine size={18} />}
+                  onClick={() => {
+                    bottomSheet.present(
+                      <ContentSafetySheet
+                        onBlocked={() => {
+                          bottomSheet.dismiss()
+                          navigate({ replace: true, to: '/app/profile' })
+                        }}
+                        onReported={bottomSheet.dismiss}
+                        targetId={profile.id}
+                        targetType="user"
+                        targetUserId={profile.id}
+                        username={profile.username || 'user'}
+                      />,
+                      { title: 'Safety actions' },
+                    )
+                  }}
+                  variant="secondary"
+                />
+              </View>
+            )}
           </View>
 
           <View className="grid grid-cols-2 gap-3">
@@ -184,6 +233,12 @@ export default function PublicProfileScreen() {
       </NoiseComponent>
     </View>
   )
+}
+
+export default function PublicProfileScreen() {
+  const { username } = useParams({ from: '/app/u/$username' })
+
+  return <PublicProfileView username={username} />
 }
 
 function PublicProfileStatCard({

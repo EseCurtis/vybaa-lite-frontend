@@ -5,6 +5,7 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { AuthProvider } from './providers/auth.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
+import { SubscriptionProvider } from './providers/subscription.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
 
 // Import the generated route tree
@@ -54,20 +55,24 @@ if (rootElement && !rootElement.innerHTML) {
       <StrictMode>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
-            <ToastProvider>
-              <NotificationProvider>
-                <CapacitorPlugin />
-                <RouterProvider router={router} />
-              </NotificationProvider>
-            </ToastProvider>
+            <SubscriptionProvider>
+              <ToastProvider>
+                <NotificationProvider>
+                  <CapacitorPlugin router={router} />
+                  <RouterProvider router={router} />
+                </NotificationProvider>
+              </ToastProvider>
+            </SubscriptionProvider>
           </AuthProvider>
         </QueryClientProvider>
       </StrictMode>,
     )
   }
 
-  document.body.classList.add('loaded')
   loadBody()
+  // Let React commit the first screen before fading the static loader away.
+  // This prevents a black gap between the HTML shell and the app's first paint.
+  requestAnimationFrame(() => document.body.classList.add('loaded'))
 }
 
 // If you want to start measuring performance in your app, pass a function

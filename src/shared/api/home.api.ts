@@ -1,7 +1,7 @@
 import { http } from '@/shared/api/http'
 
 export interface HomeStats {
-  tasks: {
+  goals: {
     pending: number
     completed: number
     skipped: number
@@ -29,5 +29,4 @@ class HomeAPI {
 }
 
 export const homeAPI = new HomeAPI()
-
 

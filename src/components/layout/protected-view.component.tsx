@@ -1,5 +1,4 @@
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { useAuth } from '@/providers/auth.provider'
 
 type ProtectedViewComponentProps = {
@@ -10,15 +9,13 @@ type ProtectedViewComponentProps = {
  * Lightweight wrapper for protecting sections inside a screen.
  * Use `ProtectedRoute` for route-level protection.
  */
-export const ProtectedViewComponent = ({ children }: ProtectedViewComponentProps) => {
+export const ProtectedViewComponent = ({
+  children,
+}: ProtectedViewComponentProps) => {
   const { isAuthenticated, isLoading } = useAuth()
 
   if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center bg-black">
-        <Text className="text-white text-lg font-bbh">Loading...</Text>
-      </View>
-    )
+    return <AppLoadingState message="Loading your space..." />
   }
 
   if (!isAuthenticated) {
@@ -27,4 +24,3 @@ export const ProtectedViewComponent = ({ children }: ProtectedViewComponentProps
 
   return <>{children}</>
 }
-

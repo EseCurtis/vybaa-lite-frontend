@@ -1,4 +1,4 @@
-import { EmptyList } from '@/components/common/empty-list.component'
+import { RewardActivityTrail } from '@/app/(app)/components/rewards/reward-activity-trail.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { RewardsData } from '@/shared/api/rewards.api'
@@ -10,24 +10,25 @@ interface PlayWalletPanelProps {
 
 export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
   return (
-    <>
-      <View className="rounded-2xl bg-card-light/10 p-6 space-y-2">
+    <View className="rounded-[28px] px-05-mg ">
+      <View className="space-y-1">
         <View className="flex-row items-center gap-2">
           <RiCoinsLine size={24} className="text-accent-400" />
-          <Text className="text-white/60 text-sm font-bbh">
-            Play Wallet Balance
+          <Text className="text-card-lighter-3/60 text-sm font-bbh">
+            Balance
           </Text>
         </View>
-        <Text className="text-white text-4xl font-bold font-bbh">
+        <Text className="text-white text-4xl font-bold font-display">
           {rewards.balance.toLocaleString()}
+          <Text className="text-xs">pts</Text>
         </Text>
-        <Text className="text-white/40 text-xs font-bbh">
+        <Text className="text-card-lighter-3 text-xs font-bbh">
           Play Points earned from completed goals
         </Text>
       </View>
 
       {rewards.pendingPoints > 0 ? (
-        <View className="rounded-2xl bg-card-light/10 p-6 space-y-3">
+        <View className="mt-5 gap-3 border-t border-white/10 pt-5">
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <RiTrophyLine size={20} className="text-accent-400" />
@@ -35,7 +36,7 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
                 Pending Play Points
               </Text>
             </View>
-            <Text className="text-accent-400 text-2xl font-bold font-bbh">
+            <Text className="text-accent-400 text-2xl font-bold font-display">
               {rewards.pendingPoints.toLocaleString()}
             </Text>
           </View>
@@ -71,15 +72,11 @@ export function PlayWalletPanel({ rewards }: PlayWalletPanelProps) {
             </View>
           ) : null}
         </View>
-      ) : (
-        <View className="rounded-2xl bg-card-light/10 p-6">
-          <EmptyList
-            icon={<RiTrophyLine size={48} className="text-white/40" />}
-            title="No pending Play Points"
-            description="Complete goals with milestones to earn pending Play Points"
-          />
-        </View>
-      )}
-    </>
+      ) : null}
+
+      <View className="mt-5 border-t border-white/10 pt-5">
+        <RewardActivityTrail />
+      </View>
+    </View>
   )
 }

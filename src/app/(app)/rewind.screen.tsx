@@ -1,36 +1,98 @@
-import { NoiseComponent } from '@/components/common/noise.component'
-import { BottomNotch } from '@/components/common/notch.component'
-import { TabHeader } from '@/components/common/tab-header.component'
-import { Pressable } from '@/components/layout/pressables.component'
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
-import ENV from '@/env'
-import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
-import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
-import { useAuth } from '@/providers/auth.provider'
-import { useToast } from '@/providers/toast.provider'
-import { authAPI } from '@/shared/api/auth.api'
-import { rewindAPI } from '@/shared/api/rewind.api'
 import {
-  REWIND_PERSONAS,
-  type RewindPersona,
-  type RewindPersonaId,
-  getRewindPersona,
-} from '@/shared/rewind/rewind-personas'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
-import { Icon } from '@iconify/react'
-import {
-  RiAddLine,
-  RiPauseLine,
-  RiPlayLine,
-  RiRefreshLine,
+  RiArrowRightSLine,
+  RiCalendarScheduleLine,
+  RiChat3Fill,
+  RiChat3Line,
+  RiCloseLine,
+  RiEmotionHappyLine,
+  RiFlashlightLine,
+  RiLock2Fill,
+  RiMoonClearLine,
+  RiPauseFill,
+  RiPlayFill,
+  RiPulseLine,
+  RiSettings3Fill,
+  RiSettings3Line,
+  RiStopCircleLine,
+  RiWaterFlashLine,
 } from '@remixicon/react'
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+import { isAxiosError } from 'axios'
 import { motion } from 'framer-motion'
 import { Mirage } from 'ldrs/react'
 import 'ldrs/react/Mirage.css'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactElement,
+} from 'react'
+
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
+import { BottomNotch } from '@/components/common/notch.component'
+import { NoiseComponent } from '@/components/common/noise.component'
+import { TabHeader } from '@/components/common/tab-header.component'
+import { ProFeatureGateSheet } from '@/components/custom/subscription/pro-feature-gate.component'
+import { Pressable } from '@/components/layout/pressables.component'
+import { Text } from '@/components/layout/text.component'
+import { View } from '@/components/layout/view.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
+import ENV from '@/env'
+import { useRewindChats, useRewindRoutine } from '@/hooks/use-rewind.hook'
+import { ensureVoiceRecordingPermission } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
+import { useAuth } from '@/providers/auth.provider'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { useSubscription } from '@/providers/subscription.provider'
+import { useToast } from '@/providers/toast.provider'
+import { authAPI } from '@/shared/api/auth.api'
+import { rewindAPI } from '@/shared/api/rewind.api'
+import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
+import {
+  createAdaptiveGainController,
+  floatTo16BitPcmBase64,
+  resampleFloat32Audio,
+} from '@/shared/rewind/audio-processing'
+import { decodePcmAudioChunk } from '@/shared/rewind/pcm-audio'
+import {
+  createRewindCaptureWorkletSource,
+  getRewindCaptureFrameSize,
+  REWIND_CAPTURE_WORKLET_NAME,
+} from '@/shared/rewind/rewind-audio-worklet'
+import { shouldAcknowledgeRewindClosing } from '@/shared/rewind/rewind-closing.util'
+import { shouldAutoReconnectRewindSocket } from '@/shared/rewind/rewind-live-reconnect'
+import { canChangeRewindPartner } from '@/shared/rewind/rewind-partner-switch.util'
+import {
+  getRewindPersona,
+  isFreeRewindPersona,
+  REWIND_PERSONAS,
+  type RewindPersona,
+  type RewindPersonaIcon,
+  type RewindPersonaId,
+} from '@/shared/rewind/rewind-personas'
+import { adjustColor, cn } from '@/shared/utils/helpers.util'
+
+const REWIND_PERSONA_ICONS: Record<
+  RewindPersonaIcon,
+  typeof RiEmotionHappyLine
+> = {
+  emotion: RiEmotionHappyLine,
+  flashlight: RiFlashlightLine,
+  chat: RiChat3Line,
+  moon: RiMoonClearLine,
+  pulse: RiPulseLine,
+  water: RiWaterFlashLine,
+}
+
+type RewindConversationStage =
+  | 'ARRIVING'
+  | 'UNPACKING'
+  | 'MAKING_MEANING'
+  | 'CONNECTING_PATTERNS'
+  | 'CLOSING'
 
 type RewindSocketMessage =
   | {
@@ -38,51 +100,74 @@ type RewindSocketMessage =
       sessionId?: string
       sessionDateKey?: string
       restored?: boolean
-      historyCount?: number
-      guidedFlow?: RewindGuidedFlowState
       previousSession?: RewindSessionSnapshot | null
+      provider?: 'ELEVENLABS' | 'GEMINI'
     }
   | { type: 'text'; content: string }
   | { type: 'audio'; data: string; mimeType: string }
   | { type: 'input_transcription'; content: string }
   | { type: 'output_transcription'; content: string }
-  | { type: 'guided_flow_state'; guidedFlow: RewindGuidedFlowState }
+  | {
+      type: 'conversation_state'
+      content: string
+      stage: RewindConversationStage
+    }
+  | {
+      type: 'finalization_progress'
+      stage: 'saving_conversation' | 'noticing_patterns' | 'saving_reflection'
+    }
+  | { type: 'reconnected' }
+  | { type: 'reconnecting' }
+  | { type: 'closing_started' }
+  | { type: 'closing_turn_complete' }
+  | { type: 'closing_cancelled' }
+  | { type: 'closing_save_failed'; message: string }
   | { type: 'turn_complete' }
+  | { type: 'interrupted' }
+  | { type: 'session_paused'; sessionId?: string }
+  | { type: 'session_missed'; sessionId?: string }
+  | { type: 'session_unavailable'; sessionId?: string; message: string }
+  | {
+      type: 'session_ended'
+      emotionalInsight?: string | null
+      sessionId?: string
+      summary: string
+    }
+  | { type: 'open_history' }
   | { type: 'error'; message: string }
   | { type: 'debug'; content: unknown }
-
-type RewindGuidedQuestionId =
-  | 'meaningful'
-  | 'draining'
-  | 'progress'
-  | 'different'
-  | 'tomorrow_need'
-
-type RewindGuidedResponse = {
-  questionId: RewindGuidedQuestionId
-  shortSummary: string
-  score: number | null
-  updatedAt: number
-}
-
-type RewindGuidedFlowState = {
-  openingAnswered: boolean
-  currentQuestionIndex: number
-  completed: boolean
-  responses: Partial<Record<RewindGuidedQuestionId, RewindGuidedResponse>>
-}
 
 type RewindSessionSnapshot = {
   sessionId: string
   sessionDateKey: string
-  guidedFlow: RewindGuidedFlowState
+  completed: boolean
+  summary: string
   updatedAt: number
 }
 
-type RewindTimelineMessage = {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
+function getPausedRewindSessionStorageKey(personaId: RewindPersonaId): string {
+  return `rewind:paused-session:${personaId}`
+}
+
+function getPausedRewindSessionId(personaId: RewindPersonaId): string | null {
+  if (typeof window === 'undefined') return null
+
+  return localStorage.getItem(getPausedRewindSessionStorageKey(personaId))
+}
+
+function savePausedRewindSessionId(
+  personaId: RewindPersonaId,
+  sessionId: string,
+): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.setItem(getPausedRewindSessionStorageKey(personaId), sessionId)
+}
+
+function clearPausedRewindSessionId(personaId: RewindPersonaId): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.removeItem(getPausedRewindSessionStorageKey(personaId))
 }
 
 type LegacyNavigator = Navigator & {
@@ -98,37 +183,49 @@ type LegacyNavigator = Navigator & {
   ) => void
 }
 
-function createConnectionId() {
-  return `rewind_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+type AudioContextWindow = Window & {
+  webkitAudioContext?: typeof AudioContext
 }
 
-function createTimelineMessage(
-  role: RewindTimelineMessage['role'],
-  content: string,
-): RewindTimelineMessage {
-  return {
-    id: `${role}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    role,
-    content,
-  }
+type RewindFinalizationStage =
+  | 'saving_conversation'
+  | 'noticing_patterns'
+  | 'saving_reflection'
+
+const REWIND_FINALIZATION_LABELS: Record<RewindFinalizationStage, string> = {
+  noticing_patterns: 'Noticing patterns',
+  saving_conversation: 'Saving conversation',
+  saving_reflection: 'Building your reflection',
 }
 
-function floatTo16BitPcmBase64(input: Float32Array): string {
-  let offset = 0
-  const buffer = new ArrayBuffer(input.length * 2)
-  const view = new DataView(buffer)
+const REWIND_CONVERSATION_STAGE_LABELS: Record<
+  RewindConversationStage,
+  string
+> = {
+  ARRIVING: 'Settling in',
+  CLOSING: 'Closing reflection',
+  CONNECTING_PATTERNS: 'Connecting patterns',
+  MAKING_MEANING: 'Making meaning',
+  UNPACKING: 'Unpacking',
+}
 
-  for (let i = 0; i < input.length; i++, offset += 2) {
-    const sample = Math.max(-1, Math.min(1, input[i]))
-    view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
+function getAudioContextConstructor(): typeof AudioContext | null {
+  if (typeof window === 'undefined') return null
+  return (
+    window.AudioContext ??
+    (window as AudioContextWindow).webkitAudioContext ??
+    null
+  )
+}
+
+function getMutationErrorMessage(error: unknown): string {
+  if (isAxiosError<{ msg?: string }>(error)) {
+    return error.response?.data?.msg ?? error.message
   }
 
-  let binary = ''
-  const bytes = new Uint8Array(buffer)
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i])
-  }
-  return btoa(binary)
+  return error instanceof Error
+    ? error.message
+    : 'Failed to save Rewind partner'
 }
 
 async function getRealtimeMicrophoneStream(
@@ -163,160 +260,233 @@ async function getRealtimeMicrophoneStream(
   })
 }
 
-function PersonaCard({
+export function PersonaThumbnail({
   persona,
   onSelect,
+  selected,
   disabled,
+  locked = false,
 }: {
   persona: RewindPersona
   onSelect: (id: RewindPersonaId) => void
+  selected: boolean
   disabled?: boolean
-}) {
-  const $color = seededColor(persona.id)
-  const color = adjustColor($color, { lightness: -10, saturation: -20 })
-  const darkColor = adjustColor(color, { lightness: -30, saturation: -20 })
+  locked?: boolean
+}): ReactElement {
+  const $color = persona.color
+  const color = adjustColor($color, { lightness: -10, saturation: 0 })
+  const PersonaIcon = REWIND_PERSONA_ICONS[persona.icon]
 
   return (
     <Pressable
-      style={{
-        //@ts-ignore
-        '--tw-themecolor': color,
-        '--tw-themecolor-dark': darkColor,
-      }}
+      style={
+        {
+          '--tw-themecolor': color,
+        } as CSSProperties
+      }
       disabled={disabled}
       onPress={() => onSelect(persona.id)}
+      accessibilityLabel={`${locked ? 'Unlock' : 'Choose'} ${persona.name}. ${persona.perspective}`}
       className={cn(
-        'w-full flex flex-col rounded-[50px] relative overflow-hidden aspect-square items-end justify-end',
-        'bg-[var(--tw-themecolor)]',
+        'relative  shrink-0 items-center justify-center mt-2 aspect-square overflow-hidden rounded-xl bg-cardx',
+        selected &&
+          'ring-2 ring-[var(--tw-themecolor)] ring-offset-2 ring-offset-cardd',
       )}
     >
-      <View className="w-20 rounded-full absolute scale-150 top-0 left-0 brightness-0 items-center justify-center">
-        <Icon
-          icon={getEmojiIcon(persona.emoji)}
-          className="text-white opacity-20"
-          style={{ fontSize: '94px' }}
-        />
+      <img
+        src={persona.avatar}
+        alt=""
+        className="absolute inset-0 size-full object-cover"
+      />
+      <View className="absolute inset-0 opacity-70 bg-[var(--tw-themecolor)]" />
+      <View className="z-10 items-center justify-center mb-3 opacity-40">
+        <PersonaIcon size={34} color="white" />
       </View>
-      <Text className="mt-3 z-10 text-white text-[var(--tw-themecolor-dark)] font-extrabold text-2xl p-5">
+      <Text className="absolute bottom-1.5 z-10 font-bbh text-[10px] font-bold text-white">
         {persona.name}
       </Text>
+      {locked ? (
+        <View className="absolute right-1.5 top-1.5 z-20 size-6 items-center justify-center rounded-full bg-cardd">
+          <RiLock2Fill className="text-white" size={12} />
+        </View>
+      ) : null}
     </Pressable>
   )
 }
 
-function SessionHistorySheet({
-  previousPreview,
-  currentPreview,
-  previousItems,
-  currentItems,
+function RewindChatUnreadBadge({
+  count,
 }: {
-  previousPreview: string | null
-  currentPreview: string | null
-  previousItems: string[]
-  currentItems: Array<{ role: RewindTimelineMessage['role']; content: string }>
-}) {
+  count: number
+}): ReactElement | null {
+  if (count <= 0) return null
+
   return (
-    <View className="flex flex-col gap-5">
-      <View className="rounded-[28px] bg-card-light/[0.1] p-4">
-        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
-          Current
-        </Text>
+    <View className="absolute -right-1 -top-1 min-w-4 items-center justify-center rounded-full bg-accent-600 px-1 py-0.5">
+      <Text className="font-bbh text-[10px] font-bold leading-3 text-white">
+        {count > 99 ? '99+' : count}
+      </Text>
+    </View>
+  )
+}
 
-        <View className="mt-3 flex flex-col gap-2">
-          {currentItems.length > 0 ? (
-            currentItems.map((item, index) => (
-              <View
-                key={`current_${index}`}
-                className={cn(
-                  'rounded-2xl px-3 py-3',
-                  item.role === 'assistant'
-                    ? 'bg-white/[0.14]'
-                    : item.role === 'user'
-                      ? 'bg-white/[0.09]'
-                      : 'bg-white/[0.07]',
-                )}
-              >
-                <Text className="text-[10px] uppercase tracking-[0.22em] text-white/50 font-bbh">
-                  {item.role}
-                </Text>
-                <Text className="mt-1 text-white/85 font-bbh text-sm">
-                  {item.content}
-                </Text>
-              </View>
-            ))
-          ) : (
-            <View className="rounded-2xl bg-card-light/[0.08] px-3 py-3">
-              <Text className="text-white/45 font-bbh text-sm">
-                No live session messages yet.
-              </Text>
-            </View>
-          )}
+export function PersonaArtwork({
+  actionLabel,
+  persona,
+  onChoose,
+  disabled,
+  showAction = true,
+}: {
+  actionLabel?: string
+  persona: RewindPersona
+  onChoose: () => void
+  disabled?: boolean
+  showAction?: boolean
+}): ReactElement {
+  const color = adjustColor(persona.color, {
+    lightness: -10,
+    saturation: -20,
+  })
+  const darkColor = adjustColor(color, { lightness: -25, saturation: -20 })
+
+  return (
+    <View
+      style={
+        {
+          '--persona-color': color,
+          '--persona-dark-color': darkColor,
+        } as CSSProperties
+      }
+      className="relative w-full overflow-hidden rounded-3xl bg-cardx"
+    >
+      <View
+        className="absolute opacity-30 top-10 inset-0"
+        style={{
+          background:
+            'radial-gradient(circle at 50% 15%, var(--persona-color), transparent 68%)',
+          maskImage:
+            'linear-gradient(to bottom, black 0%, black 55%, transparent 100%)',
+        }}
+      />
+      <View
+        className="absolute inset-2 rounded-3xl border-2 border-[var(--persona-color)] opacity-70"
+        style={{
+          maskImage:
+            'linear-gradient(to bottom, transparent 0%, black 45%, transparent 100%)',
+        }}
+      />
+      <View className="relative min-h-[290px] items-center justify-center px-6 py-8">
+        <View className="mb-5 size-44 overflow-hidden rounded-full border-4 border-[var(--persona-color)] shadow-lg">
+          <img
+            src={persona.avatar}
+            alt={`${persona.name} avatar`}
+            className="size-full object-cover"
+          />
         </View>
-      </View>
-
-      <View className="rounded-[28px] bg-card-light/[0.075] p-4">
-        <Text className="text-white font-bbh text-sm font-bold uppercase tracking-[0.08em]">
-          Last
+        <Text className="font-display relative z-10 text-2xl font-extrabold text-white">
+          {persona.name}
         </Text>
-
-        <View className="mt-3 flex flex-col gap-2">
-          {previousItems.length > 0 ? (
-            previousItems.map((item, index) => (
-              <View
-                key={`previous_${index}`}
-                className="rounded-2xl bg-card-light/[0.07] px-3 py-3"
-              >
-                <Text className="text-white/85 font-bbh text-sm">{item}</Text>
-              </View>
-            ))
-          ) : (
-            <View className="rounded-2xl bg-card-light/[0.07] px-3 py-3">
-              <Text className="text-white/45 font-bbh text-sm">
-                Nothing stored from an earlier rewind yet.
-              </Text>
-            </View>
-          )}
-        </View>
+        <Text className="mt-2 !text-center relative z-10 max-w-[70%] text-center font-bbh text-sm leading-5 text-card-lighter-3">
+          {persona.name} {persona.perspective.toLowerCase()}
+        </Text>
+        {showAction ? (
+          <Pressable
+            onPress={onChoose}
+            disabled={disabled}
+            accessibilityLabel={`Choose ${persona.name} as your Rewind partner`}
+            className="mt-6 min-h-11 min-w-[190px] items-center justify-center rounded-full bg-white px-6"
+          >
+            <Text className="font-bbh font-bold text-cardd">
+              {disabled
+                ? 'Saving...'
+                : (actionLabel ?? `Choose ${persona.name}`)}
+            </Text>
+          </Pressable>
+        ) : null}
       </View>
     </View>
   )
 }
 
-export default function RewindScreen() {
-  const { user, refreshSession } = useAuth()
-  const bottomSheet = useBottomSheet()
+export default function RewindScreen(): ReactElement {
+  const {
+    user,
+    refreshSession,
+    isAuthenticated,
+    isLoading: isAuthLoading,
+  } = useAuth()
+  const routineQuery = useRewindRoutine()
+  const { isPro } = useSubscription()
+  const bottomSheet = useBottomSheetController()
+  const chatsQuery = useRewindChats(isPro)
   const toast = useToast()
   const [personaId, setPersonaId] = useState<RewindPersonaId | null>(null)
+  const [isPartnerPickerOpen, setIsPartnerPickerOpen] = useState(false)
+  const unreadChatCount = useMemo(
+    () =>
+      (chatsQuery.data ?? []).reduce(
+        (total, chat) => total + (chat.unreadCount ?? 0),
+        0,
+      ),
+    [chatsQuery.data],
+  )
+  const [previewPersonaId, setPreviewPersonaId] =
+    useState<RewindPersonaId>('ella')
+  const [resolvedPersonaUserId, setResolvedPersonaUserId] = useState<
+    string | null
+  >(null)
   const [statusText, setStatusText] = useState('Idle')
   const [isConversationPaused, setIsConversationPaused] = useState(false)
-  const [rewindSessionId, setRewindSessionId] = useState<string | null>(null)
   const [rewindSessionDateKey, setRewindSessionDateKey] = useState<
     string | null
   >(null)
-  const [requestedSessionId, setRequestedSessionId] = useState<string | null>(
-    null,
-  )
   const [isSessionRestored, setIsSessionRestored] = useState(false)
-  const [timeline, setTimeline] = useState<RewindTimelineMessage[]>([])
-  const [guidedFlow, setGuidedFlow] = useState<RewindGuidedFlowState | null>(
-    null,
-  )
+  const [isFinishingSession, setIsFinishingSession] = useState(false)
+  const [finalizationStage, setFinalizationStage] =
+    useState<RewindFinalizationStage | null>(null)
+  const [conversationStateNote, setConversationStateNote] = useState<
+    string | null
+  >(null)
+  const [conversationStage, setConversationStage] =
+    useState<RewindConversationStage | null>(null)
   const [previousSession, setPreviousSession] =
     useState<RewindSessionSnapshot | null>(null)
 
   const liveSessionRef = useRef<WebSocket | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const inputAudioContextRef = useRef<AudioContext | null>(null)
-  const processorRef = useRef<ScriptProcessorNode | null>(null)
+  const processorRef = useRef<AudioNode | null>(null)
+  const inputPipelineNodesRef = useRef<AudioNode[]>([])
+  const gainControllerRef = useRef(createAdaptiveGainController())
   const playbackContextRef = useRef<AudioContext | null>(null)
   const audioQueueRef = useRef<Array<{ data: string; mimeType: string }>>([])
   const activeAudioSourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set())
   const isPlayingAudioQueueRef = useRef(false)
   const nextStartTimeRef = useRef(0)
+  const playbackGenerationRef = useRef(0)
   const isConnectingRef = useRef(false)
   const isConversationPausedRef = useRef(false)
-  const lastInputTranscriptRef = useRef('')
-  const lastOutputTranscriptRef = useRef('')
+  const isSessionPausedByToolRef = useRef(false)
+  const isSessionCompleteRef = useRef(false)
+  const isFinishingSessionRef = useRef(false)
+  const isClosingRef = useRef(false)
+  const closingTurnCompleteRef = useRef(false)
+  const closingPlaybackAckSentRef = useRef(false)
+  const closingSaveRetryRef = useRef(false)
+  const shouldReconnectRef = useRef(false)
+  const disconnectNoticeShownRef = useRef(false)
+  const reconnectAttemptsRef = useRef(0)
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const startSessionRef = useRef<(() => Promise<void>) | null>(null)
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const openRoutineSettings = useCallback(() => {
+    void navigate({
+      search: { from: 'rewind' },
+      to: '/app/rewind-routine',
+    })
+  }, [navigate])
 
   useEffect(() => {
     isConversationPausedRef.current = isConversationPaused
@@ -331,90 +501,121 @@ export default function RewindScreen() {
     onSuccess: async () => {
       await refreshSession()
     },
-    onError: (error: any) => {
-      const msg =
-        error?.response?.data?.msg ||
-        error?.message ||
-        'Failed to save rewind persona'
-      toast.error(msg)
+    onError: (error: unknown) => {
+      toast.error(getMutationErrorMessage(error))
     },
   })
 
   useEffect(() => {
-    const backendPersona = user?.rewindPersona as RewindPersonaId | undefined
-    if (!backendPersona) return
-    setPersonaId(backendPersona)
-  }, [user?.rewindPersona])
+    if (!user) return
+
+    const selectedPersona =
+      (user.rewindPersona as RewindPersonaId | undefined) ?? null
+    setPersonaId(selectedPersona)
+    if (selectedPersona) setPreviewPersonaId(selectedPersona)
+    setResolvedPersonaUserId(user.id)
+  }, [user?.id, user?.rewindPersona])
 
   useEffect(() => {
     if (!personaId) return
-    setRewindSessionId(null)
     setRewindSessionDateKey(null)
-    setRequestedSessionId(null)
-    setTimeline([])
-    setGuidedFlow(null)
+    setConversationStateNote(null)
+    setConversationStage(null)
     setPreviousSession(null)
     setIsSessionRestored(false)
+    setIsFinishingSession(false)
+    setFinalizationStage(null)
+    isFinishingSessionRef.current = false
+    isSessionCompleteRef.current = false
+    setStatusText('Ready')
   }, [personaId])
 
   const persona = useMemo(() => {
     if (!personaId) return null
     return getRewindPersona(personaId)
   }, [personaId])
+  const canSwitchPartnerToday = (): boolean => {
+    if (user?.rewindPersonaCanChange !== false) return true
+    if (!user.rewindPersonaNextChangeAt) return false
+    return canChangeRewindPartner(user.rewindPersonaNextChangeAt)
+  }
 
   const personaTheme = useMemo(() => {
     if (!persona) return null
-    const $color = seededColor(persona.id)
+    const $color = persona.color
     const color = adjustColor($color, { lightness: -10, saturation: -20 })
     const darkColor = adjustColor(color, { lightness: -30, saturation: -20 })
     return { color, darkColor }
   }, [persona])
 
-  const selectPersona = async (nextPersona: RewindPersonaId) => {
+  const selectPersona = async (nextPersona: RewindPersonaId): Promise<void> => {
+    if (nextPersona === personaId) {
+      setIsPartnerPickerOpen(false)
+      return
+    }
+    if (personaId && !canSwitchPartnerToday()) {
+      toast.info('You can switch your Rewind partner again tomorrow')
+      return
+    }
+
     await primePlaybackContext()
-    setPersonaId(nextPersona)
-    await persistPersonaMutation.mutateAsync(nextPersona)
+    try {
+      await persistPersonaMutation.mutateAsync(nextPersona)
+      setPersonaId(nextPersona)
+      setPreviewPersonaId(nextPersona)
+      setIsPartnerPickerOpen(false)
+      if (personaId) {
+        toast.success(
+          `${getRewindPersona(nextPersona).name} is now your Rewind partner`,
+        )
+      }
+    } catch {
+      // The mutation reports the API error and leaves the current partner intact.
+    }
   }
 
-  const clearPersona = async () => {
-    setPersonaId(null)
-    setRewindSessionId(null)
-    setRewindSessionDateKey(null)
-    setRequestedSessionId(null)
-    setTimeline([])
-    setGuidedFlow(null)
-    setPreviousSession(null)
-    setIsSessionRestored(false)
-    await persistPersonaMutation.mutateAsync(null)
-  }
+  const previewPersona = useMemo(
+    () => getRewindPersona(previewPersonaId),
+    [previewPersonaId],
+  )
 
   const primePlaybackContext = useCallback(async () => {
     if (typeof window === 'undefined') return
 
-    const AudioContextClass =
-      window.AudioContext || (window as any).webkitAudioContext
+    const AudioContextClass = getAudioContextConstructor()
     if (!AudioContextClass) return
 
     if (!playbackContextRef.current) {
-      playbackContextRef.current = new AudioContextClass({ sampleRate: 24000 })
+      playbackContextRef.current = new AudioContextClass({
+        latencyHint: 'interactive',
+      })
     }
 
     if (playbackContextRef.current.state === 'suspended') {
       try {
         await playbackContextRef.current.resume()
-      } catch (error) {
-        console.warn('[Rewind] Failed to resume playback context', error)
+      } catch {
+        setStatusText('Playback unavailable')
       }
     }
   }, [])
 
   const cleanupAudioPipeline = useCallback(() => {
+    for (const node of inputPipelineNodesRef.current) {
+      try {
+        node.disconnect()
+      } catch {}
+    }
+    inputPipelineNodesRef.current = []
+
     if (processorRef.current) {
       try {
         processorRef.current.disconnect()
       } catch {}
       processorRef.current = null
     }
+
+    gainControllerRef.current.reset()
 
     if (
       inputAudioContextRef.current &&
@@ -430,99 +631,123 @@ export default function RewindScreen() {
     }
   }, [])
 
-  const playNextAudioChunk = useCallback(async () => {
-    if (audioQueueRef.current.length === 0) {
-      isPlayingAudioQueueRef.current = false
-      return
-    }
+  const clearPlayback = useCallback((): void => {
+    playbackGenerationRef.current += 1
+    audioQueueRef.current = []
+    isPlayingAudioQueueRef.current = false
+    nextStartTimeRef.current = 0
 
-    isPlayingAudioQueueRef.current = true
-    const chunk = audioQueueRef.current.shift()
-    if (!chunk) {
-      isPlayingAudioQueueRef.current = false
+    for (const source of activeAudioSourcesRef.current) {
+      try {
+        source.stop()
+        source.disconnect()
+      } catch {}
+    }
+    activeAudioSourcesRef.current.clear()
+  }, [])
+
+  const sendClosingPlaybackComplete = useCallback((): void => {
+    if (
+      !shouldAcknowledgeRewindClosing({
+        acknowledgementSent: closingPlaybackAckSentRef.current,
+        activeSourceCount: activeAudioSourcesRef.current.size,
+        closing: isClosingRef.current,
+        playingQueue: isPlayingAudioQueueRef.current,
+        queuedChunkCount: audioQueueRef.current.length,
+        turnComplete: closingTurnCompleteRef.current,
+      })
+    ) {
       return
     }
+    const socket = liveSessionRef.current
+    if (!socket || socket.readyState !== WebSocket.OPEN) return
+    closingPlaybackAckSentRef.current = true
+    socket.send(JSON.stringify({ type: 'closing_playback_complete' }))
+    setStatusText('Saving reflection')
+  }, [])
+
+  const playNextAudioChunk = useCallback(async () => {
+    if (isPlayingAudioQueueRef.current) return
+    if (isConversationPausedRef.current) return
+    if (audioQueueRef.current.length === 0) return
+
+    const generation = playbackGenerationRef.current
+    isPlayingAudioQueueRef.current = true
 
     try {
-      if (!chunk.mimeType.includes('audio/pcm')) {
-        isPlayingAudioQueueRef.current = false
-        return
-      }
-
       if (!playbackContextRef.current) {
-        const AudioContextClass =
-          window.AudioContext || (window as any).webkitAudioContext
+        const AudioContextClass = getAudioContextConstructor()
+        if (!AudioContextClass) {
+          throw new Error('Audio playback is unavailable')
+        }
         playbackContextRef.current = new AudioContextClass({
-          sampleRate: 24000,
+          latencyHint: 'interactive',
         })
       }
 
       const ctx = playbackContextRef.current
       if (ctx.state === 'suspended') await ctx.resume()
 
-      const binary = atob(chunk.data)
-      const bytes = new Int16Array(binary.length / 2)
-      for (let i = 0; i < binary.length; i += 2) {
-        bytes[i / 2] =
-          (binary.charCodeAt(i) & 0xff) |
-          ((binary.charCodeAt(i + 1) & 0xff) << 8)
-      }
+      while (
+        generation === playbackGenerationRef.current &&
+        !isConversationPausedRef.current &&
+        audioQueueRef.current.length > 0
+      ) {
+        const chunk = audioQueueRef.current.shift()
+        if (!chunk) break
 
-      const floatData = new Float32Array(bytes.length)
-      for (let i = 0; i < bytes.length; i++) {
-        floatData[i] = bytes[i] / 32768
-      }
+        const decoded = decodePcmAudioChunk(chunk.data, chunk.mimeType)
+        if (decoded.samples.length === 0) continue
 
-      const buffer = ctx.createBuffer(1, floatData.length, 24000)
-      buffer.getChannelData(0).set(floatData)
+        const buffer = ctx.createBuffer(
+          1,
+          decoded.samples.length,
+          decoded.sampleRate,
+        )
+        buffer.getChannelData(0).set(decoded.samples)
 
-      const source = ctx.createBufferSource()
-      source.buffer = buffer
-      source.connect(ctx.destination)
-      activeAudioSourcesRef.current.add(source)
+        const source = ctx.createBufferSource()
+        source.buffer = buffer
+        source.connect(ctx.destination)
+        activeAudioSourcesRef.current.add(source)
 
-      const now = ctx.currentTime
-      if (nextStartTimeRef.current < now) {
-        nextStartTimeRef.current = now + 0.05
-      }
-
-      source.start(nextStartTimeRef.current)
-      nextStartTimeRef.current += buffer.duration
-      setStatusText('Speaking')
-
-      setTimeout(
-        () => {
-          void playNextAudioChunk()
-        },
-        Math.max(0, (nextStartTimeRef.current - now - 0.1) * 1000),
-      )
-
-      source.onended = () => {
-        activeAudioSourcesRef.current.delete(source)
-        if (
-          !isConversationPausedRef.current &&
-          audioQueueRef.current.length === 0 &&
-          ctx.currentTime >= nextStartTimeRef.current - 0.05
-        ) {
-          setStatusText('Listening')
-          isPlayingAudioQueueRef.current = false
+        const startAt = Math.max(
+          nextStartTimeRef.current,
+          ctx.currentTime + 0.035,
+        )
+        nextStartTimeRef.current = startAt + buffer.duration
+        source.onended = () => {
+          activeAudioSourcesRef.current.delete(source)
+          source.disconnect()
+          if (
+            generation === playbackGenerationRef.current &&
+            !isConversationPausedRef.current &&
+            activeAudioSourcesRef.current.size === 0 &&
+            audioQueueRef.current.length === 0
+          ) {
+            setStatusText('Listening')
+            sendClosingPlaybackComplete()
+          }
         }
+        source.start(startAt)
+        setStatusText('Speaking')
       }
-    } catch (error) {
-      console.error('[Rewind] Failed to play audio chunk', error)
+    } catch {
+      setStatusText('Playback interrupted')
+    } finally {
       isPlayingAudioQueueRef.current = false
-      if (audioQueueRef.current.length > 0) {
-        void playNextAudioChunk()
+      if (
+        generation === playbackGenerationRef.current &&
+        !isConversationPausedRef.current &&
+        audioQueueRef.current.length > 0
+      ) {
+        queueMicrotask(() => void playNextAudioChunk())
       }
     }
-  }, [])
+  }, [sendClosingPlaybackComplete])
 
   const connectMicrophone = useCallback(
-    async (
-      ws: WebSocket,
-      connectionId: string,
-      currentPersona: RewindPersona,
-    ) => {
+    async (ws: WebSocket) => {
       try {
         await primePlaybackContext()
         setStatusText('Requesting mic')
@@ -532,28 +757,38 @@ export default function RewindScreen() {
           audio: {
             sampleRate: 16000,
             channelCount: 1,
-            echoCancellation: true,
-            noiseSuppression: true,
+            echoCancellation: { ideal: true },
+            noiseSuppression: { ideal: true },
+            autoGainControl: { ideal: true },
           },
         })
         mediaStreamRef.current = stream
 
-        const AudioContextClass =
-          window.AudioContext || (window as any).webkitAudioContext
-        const context = new AudioContextClass({ sampleRate: 16000 })
+        const AudioContextClass = getAudioContextConstructor()
+        if (!AudioContextClass) {
+          throw new Error('Live audio is unavailable on this device.')
+        }
+        const context = new AudioContextClass({ latencyHint: 'interactive' })
         inputAudioContextRef.current = context
+        if (context.state === 'suspended') await context.resume()
 
         const source = context.createMediaStreamSource(stream)
-        const processor = context.createScriptProcessor(4096, 1, 1)
-        processorRef.current = processor
-
-        processor.onaudioprocess = (event) => {
+        const inputGain = context.createGain()
+        inputGain.gain.value = 1.35
+        const compressor = context.createDynamicsCompressor()
+        compressor.threshold.value = -38
+        compressor.knee.value = 18
+        compressor.ratio.value = 2.5
+        compressor.attack.value = 0.003
+        compressor.release.value = 0.25
+        const silentSink = context.createGain()
+        silentSink.gain.value = 0
+        const sendAudio = (inputData: Float32Array): void => {
           if (isConversationPausedRef.current) return
           if (ws.readyState !== WebSocket.OPEN) return
-
-          const inputData = event.inputBuffer.getChannelData(0)
-          const data = floatTo16BitPcmBase64(inputData)
-
+          const resampled = resampleFloat32Audio(inputData, context.sampleRate)
+          const processed = gainControllerRef.current.process(resampled)
+          const data = floatTo16BitPcmBase64(processed)
           ws.send(
             JSON.stringify({
               type: 'realtime_audio',
@@ -563,38 +798,81 @@ export default function RewindScreen() {
           )
         }
 
-        source.connect(processor)
-        processor.connect(context.destination)
+        let processor: AudioNode | null = null
+        if (context.audioWorklet) {
+          const workletUrl = URL.createObjectURL(
+            new Blob(
+              [
+                createRewindCaptureWorkletSource(
+                  getRewindCaptureFrameSize(context.sampleRate),
+                ),
+              ],
+              {
+                type: 'text/javascript',
+              },
+            ),
+          )
+          try {
+            await context.audioWorklet.addModule(workletUrl)
+            const worklet = new AudioWorkletNode(
+              context,
+              REWIND_CAPTURE_WORKLET_NAME,
+            )
+            worklet.port.onmessage = (event: MessageEvent<Float32Array>) => {
+              sendAudio(event.data)
+            }
+            processor = worklet
+          } catch {
+            // Some older WebViews expose AudioWorklet but cannot load dynamic modules.
+          } finally {
+            URL.revokeObjectURL(workletUrl)
+          }
+        }
 
-        console.info('[Rewind] Microphone connected', {
-          connectionId,
-          personaId: currentPersona.id,
-        })
+        if (!processor) {
+          const fallbackProcessor = context.createScriptProcessor(4096, 1, 1)
+          fallbackProcessor.onaudioprocess = (event) => {
+            sendAudio(event.inputBuffer.getChannelData(0))
+          }
+          processor = fallbackProcessor
+        }
+        processorRef.current = processor
+        inputPipelineNodesRef.current = [
+          source,
+          inputGain,
+          compressor,
+          processor,
+          silentSink,
+        ]
+
+        source.connect(inputGain)
+        inputGain.connect(compressor)
+        compressor.connect(processor)
+        // Keep the capture graph alive without ever routing microphone audio to speakers.
+        processor.connect(silentSink)
+        silentSink.connect(context.destination)
+
         if (!isConversationPausedRef.current) {
           setStatusText('Listening')
         }
       } catch (error) {
-        console.error('[Rewind] Mic access failed', error)
+        cleanupAudioPipeline()
         toast.error(
           error instanceof Error ? error.message : 'Microphone access denied',
         )
         setStatusText('Mic blocked')
       }
     },
-    [primePlaybackContext, toast],
+    [cleanupAudioPipeline, primePlaybackContext, toast],
   )
 
   const pauseConversation = useCallback(async () => {
+    isConversationPausedRef.current = true
     setIsConversationPaused(true)
-    audioQueueRef.current = []
-    isPlayingAudioQueueRef.current = false
-
-    for (const source of activeAudioSourcesRef.current) {
-      try {
-        source.stop()
-      } catch {}
+    if (liveSessionRef.current?.readyState === WebSocket.OPEN) {
+      liveSessionRef.current.send(JSON.stringify({ type: 'audio_stream_end' }))
     }
-    activeAudioSourcesRef.current.clear()
+    clearPlayback()
 
     if (
       playbackContextRef.current &&
@@ -602,15 +880,16 @@ export default function RewindScreen() {
     ) {
       try {
         await playbackContextRef.current.suspend()
-      } catch (error) {
-        console.warn('[Rewind] Failed to suspend playback context', error)
+      } catch {
+        setStatusText('Pause unavailable')
       }
     }
 
     setStatusText('Paused')
-  }, [])
+  }, [clearPlayback])
 
   const resumeConversation = useCallback(async () => {
+    isConversationPausedRef.current = false
     setIsConversationPaused(false)
 
     if (
@@ -619,8 +898,8 @@ export default function RewindScreen() {
     ) {
       try {
         await playbackContextRef.current.resume()
-      } catch (error) {
-        console.warn('[Rewind] Failed to resume playback context', error)
+      } catch {
+        setStatusText('Playback unavailable')
       }
     }
 
@@ -632,6 +911,13 @@ export default function RewindScreen() {
   }, [])
 
   const togglePauseConversation = useCallback(async () => {
+    if (
+      !liveSessionRef.current ||
+      liveSessionRef.current.readyState !== WebSocket.OPEN
+    ) {
+      return
+    }
+
     if (isConversationPausedRef.current) {
       await resumeConversation()
       return
@@ -640,296 +926,413 @@ export default function RewindScreen() {
     await pauseConversation()
   }, [pauseConversation, resumeConversation])
 
-  const pushTimelineMessage = useCallback(
-    (role: RewindTimelineMessage['role'], content: string) => {
-      const nextContent = content.trim()
-      if (!nextContent) return
+  const finishSession = useCallback(() => {
+    const liveSession = liveSessionRef.current
+    if (
+      !liveSession ||
+      liveSession.readyState !== WebSocket.OPEN ||
+      isFinishingSession
+    ) {
+      return
+    }
 
-      setTimeline((current) => {
-        const lastMessage = current[current.length - 1]
-        if (
-          lastMessage &&
-          lastMessage.role === role &&
-          lastMessage.content === nextContent
-        ) {
-          return current
-        }
-
-        const nextTimeline = [
-          ...current,
-          createTimelineMessage(role, nextContent),
-        ]
-        return nextTimeline.slice(-10)
-      })
-    },
-    [],
-  )
-
-  const upsertTimelineMessage = useCallback(
-    (role: RewindTimelineMessage['role'], content: string) => {
-      const nextContent = content.trim()
-      if (!nextContent) return
-
-      setTimeline((current) => {
-        const lastMessage = current[current.length - 1]
-
-        if (lastMessage?.role === role) {
-          if (lastMessage.content === nextContent) {
-            return current
-          }
-
-          const nextTimeline = [...current]
-          nextTimeline[nextTimeline.length - 1] = {
-            ...lastMessage,
-            content: nextContent,
-          }
-          return nextTimeline
-        }
-
-        const nextTimeline = [
-          ...current,
-          createTimelineMessage(role, nextContent),
-        ]
-        return nextTimeline.slice(-10)
-      })
-    },
-    [],
-  )
-
-  const resetRewindSession = useCallback(() => {
-    setRewindSessionId(null)
-    setRequestedSessionId(createConnectionId())
-    setTimeline([
-      createTimelineMessage(
-        'system',
-        `Reopening today's ${persona?.name ?? 'Rewind'} session.`,
-      ),
-    ])
-    setGuidedFlow(null)
-    setIsSessionRestored(false)
-    liveSessionRef.current?.close()
-  }, [persona?.id, persona?.name])
+    isClosingRef.current = true
+    closingTurnCompleteRef.current = false
+    closingPlaybackAckSentRef.current = false
+    isFinishingSessionRef.current = true
+    setIsFinishingSession(true)
+    setStatusText('Wrapping up')
+    cleanupAudioPipeline()
+    liveSession.send(
+      JSON.stringify({
+        type: closingSaveRetryRef.current
+          ? 'retry_finalization'
+          : 'finish_session',
+      }),
+    )
+    closingSaveRetryRef.current = false
+  }, [cleanupAudioPipeline, isFinishingSession])
 
   useEffect(() => {
     if (!persona) {
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
-      audioQueueRef.current = []
-      activeAudioSourcesRef.current.clear()
-      isPlayingAudioQueueRef.current = false
-      nextStartTimeRef.current = 0
-      lastInputTranscriptRef.current = ''
-      lastOutputTranscriptRef.current = ''
+      clearPlayback()
       setIsConversationPaused(false)
+      setIsFinishingSession(false)
+      setFinalizationStage(null)
+      isFinishingSessionRef.current = false
+      isSessionCompleteRef.current = false
       setStatusText('Idle')
       return
     }
 
-    liveSessionRef.current?.close()
-    liveSessionRef.current = null
-    cleanupAudioPipeline()
-    audioQueueRef.current = []
-    activeAudioSourcesRef.current.clear()
-    isPlayingAudioQueueRef.current = false
-    nextStartTimeRef.current = 0
-    lastInputTranscriptRef.current = ''
-    lastOutputTranscriptRef.current = ''
-    setIsConversationPaused(false)
-
-    let isCancelled = false
-
-    const start = async () => {
-      if (isConnectingRef.current) return
-      isConnectingRef.current = true
-
-      const connectionId = createConnectionId()
-
-      try {
-        setStatusText('Connecting')
-
-        const liveToken = await rewindAPI.createLiveToken(
-          persona.id,
-          requestedSessionId,
-        )
-        const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
-        const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
-        setRewindSessionId(liveToken.data.sessionId)
-
-        console.info('[Rewind] Opening live websocket', {
-          connectionId,
-          personaId: persona.id,
-          sessionId: liveToken.data.sessionId,
-          wsUrl,
-        })
-
-        const ws = new WebSocket(wsUrl)
-        liveSessionRef.current = ws
-
-        ws.onopen = async () => {
-          if (isCancelled) return
-          console.info('[Rewind] WebSocket opened', {
-            connectionId,
-            personaId: persona.id,
-          })
-          isConnectingRef.current = false
-          setStatusText('Connected')
-          await connectMicrophone(ws, connectionId, persona)
-        }
-
-        ws.onmessage = (event) => {
-          if (isCancelled) return
-
-          try {
-            const payload = JSON.parse(event.data) as RewindSocketMessage
-
-            if (payload.type === 'ready') {
-              if (payload.sessionId) {
-                setRewindSessionId(payload.sessionId)
-              }
-              setRewindSessionDateKey(payload.sessionDateKey ?? null)
-              setIsSessionRestored(Boolean(payload.restored))
-              setGuidedFlow(payload.guidedFlow ?? null)
-              setPreviousSession(payload.previousSession ?? null)
-              pushTimelineMessage(
-                'system',
-                payload.restored
-                  ? `Restored your last ${persona.name} rewind session.`
-                  : `Connected to ${persona.name}. Start talking when you’re ready.`,
-              )
-              if (isConversationPausedRef.current) return
-              return
-            }
-
-            if (payload.type === 'text') {
-              //   pushTimelineMessage('assistant', payload.content)
-              return
-            }
-
-            if (payload.type === 'audio') {
-              if (isConversationPausedRef.current) return
-              audioQueueRef.current.push({
-                data: payload.data,
-                mimeType: payload.mimeType,
-              })
-              if (!isPlayingAudioQueueRef.current) {
-                void playNextAudioChunk()
-              }
-              return
-            }
-
-            if (payload.type === 'input_transcription') {
-              if (isConversationPausedRef.current) return
-              if (payload.content !== lastInputTranscriptRef.current) {
-                lastInputTranscriptRef.current = payload.content
-                pushTimelineMessage('user', payload.content)
-              }
-              setStatusText('Listening')
-              return
-            }
-
-            if (payload.type === 'output_transcription') {
-              if (isConversationPausedRef.current) return
-              if (payload.content !== lastOutputTranscriptRef.current) {
-                lastOutputTranscriptRef.current = payload.content
-                upsertTimelineMessage('assistant', payload.content)
-              }
-              setStatusText('Speaking')
-              return
-            }
-
-            if (payload.type === 'guided_flow_state') {
-              setGuidedFlow(payload.guidedFlow)
-              return
-            }
-
-            if (payload.type === 'turn_complete') {
-              lastInputTranscriptRef.current = ''
-              lastOutputTranscriptRef.current = ''
-              if (isConversationPausedRef.current) return
-              setStatusText('Listening')
-              return
-            }
-
-            if (payload.type === 'error') {
-              console.error('[Rewind] Server error', payload.message)
-              setStatusText('Error')
-              return
-            }
-          } catch (error) {
-            console.error('[Rewind] Failed to parse websocket message', {
-              connectionId,
-              personaId: persona.id,
-              error,
-              raw: event.data,
-            })
-          }
-        }
-
-        ws.onerror = (event) => {
-          console.error('[Rewind] WebSocket error', {
-            connectionId,
-            personaId: persona.id,
-            event,
-          })
-          isConnectingRef.current = false
-          if (isCancelled) return
-          setStatusText('Error')
-        }
-
-        ws.onclose = (event) => {
-          console.info('[Rewind] WebSocket closed', {
-            connectionId,
-            personaId: persona.id,
-            code: event.code,
-            reason: event.reason,
-            wasClean: event.wasClean,
-            isCancelled,
-          })
-
-          isConnectingRef.current = false
-          cleanupAudioPipeline()
-          if (liveSessionRef.current === ws) {
-            liveSessionRef.current = null
-          }
-          if (isCancelled) return
-          setStatusText('Disconnected')
-        }
-      } catch (error) {
-        isConnectingRef.current = false
-        console.error('[Rewind] Failed to start live session', {
-          connectionId,
-          personaId: persona.id,
-          error,
-        })
-        if (isCancelled) return
-        setStatusText('Failed')
-      }
-    }
-
-    void start()
-
     return () => {
-      console.info('[Rewind] Cleaning up live session', {
-        personaId: persona.id,
-      })
-      isCancelled = true
+      shouldReconnectRef.current = false
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
       liveSessionRef.current?.close()
       liveSessionRef.current = null
       cleanupAudioPipeline()
-      audioQueueRef.current = []
-      activeAudioSourcesRef.current.clear()
-      isPlayingAudioQueueRef.current = false
-      nextStartTimeRef.current = 0
+      clearPlayback()
+    }
+  }, [cleanupAudioPipeline, clearPlayback, persona])
+
+  const startSession = useCallback(async () => {
+    if (!persona) return
+    if (isConnectingRef.current) return
+    if (liveSessionRef.current?.readyState === WebSocket.OPEN) return
+    if (!routineQuery.data?.routine) {
+      openRoutineSettings()
+      return
+    }
+    if (!routineQuery.data?.currentSession) {
+      setStatusText('Not scheduled for now')
+      return
+    }
+
+    isConnectingRef.current = true
+    shouldReconnectRef.current = true
+    isSessionPausedByToolRef.current = false
+    disconnectNoticeShownRef.current = false
+    try {
+      setIsConversationPaused(false)
+      setIsFinishingSession(false)
+      setFinalizationStage(null)
+      isFinishingSessionRef.current = false
+      isSessionCompleteRef.current = false
+      setStatusText('Connecting')
+
+      const liveToken = await rewindAPI.createLiveToken(
+        persona.id,
+        getPausedRewindSessionId(persona.id),
+      )
+      const apiUrl = ENV.API_BASE_URL.replace(/\/+$/, '')
+      const wsUrl = `${apiUrl.replace(/^http/, 'ws')}${liveToken.data.wsUrl}`
+      setRewindSessionDateKey(liveToken.data.sessionDateKey ?? null)
+
+      const ws = new WebSocket(wsUrl)
+      liveSessionRef.current = ws
+
+      ws.onopen = async () => {
+        isConnectingRef.current = false
+        setStatusText('Connected')
+        await connectMicrophone(ws)
+      }
+
+      ws.onmessage = (event) => {
+        try {
+          const payload = JSON.parse(event.data) as RewindSocketMessage
+
+          if (payload.type === 'ready') {
+            reconnectAttemptsRef.current = 0
+            isSessionPausedByToolRef.current = false
+            setRewindSessionDateKey(payload.sessionDateKey ?? null)
+            setIsSessionRestored(Boolean(payload.restored))
+            setPreviousSession(payload.previousSession ?? null)
+            if (isConversationPausedRef.current) return
+            return
+          }
+
+          if (payload.type === 'text') {
+            return
+          }
+
+          if (payload.type === 'audio') {
+            if (isConversationPausedRef.current) return
+            audioQueueRef.current.push({
+              data: payload.data,
+              mimeType: payload.mimeType,
+            })
+            if (!isPlayingAudioQueueRef.current) {
+              void playNextAudioChunk()
+            }
+            return
+          }
+
+          if (payload.type === 'input_transcription') {
+            if (isConversationPausedRef.current) return
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'output_transcription') {
+            if (isConversationPausedRef.current) return
+            setStatusText('Speaking')
+            return
+          }
+
+          if (payload.type === 'conversation_state') {
+            if (isConversationPausedRef.current) return
+            const nextConversationState = payload.content.trim()
+            if (nextConversationState) {
+              setConversationStateNote(nextConversationState)
+              setConversationStage(payload.stage)
+            }
+            return
+          }
+
+          if (payload.type === 'finalization_progress') {
+            isFinishingSessionRef.current = true
+            setIsFinishingSession(true)
+            setFinalizationStage(payload.stage)
+            setStatusText(REWIND_FINALIZATION_LABELS[payload.stage])
+            return
+          }
+
+          if (payload.type === 'closing_started') {
+            isClosingRef.current = true
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            closingSaveRetryRef.current = false
+            isFinishingSessionRef.current = true
+            setIsFinishingSession(true)
+            setConversationStage('CLOSING')
+            setStatusText('Wrapping up')
+            cleanupAudioPipeline()
+            return
+          }
+
+          if (payload.type === 'closing_turn_complete') {
+            closingTurnCompleteRef.current = true
+            setStatusText('Finishing closing message')
+            sendClosingPlaybackComplete()
+            return
+          }
+
+          if (payload.type === 'closing_cancelled') {
+            isClosingRef.current = false
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            isFinishingSessionRef.current = false
+            setIsFinishingSession(false)
+            setConversationStage('UNPACKING')
+            setStatusText('Listening')
+            void connectMicrophone(ws)
+            return
+          }
+
+          if (payload.type === 'closing_save_failed') {
+            isClosingRef.current = false
+            closingTurnCompleteRef.current = false
+            closingPlaybackAckSentRef.current = false
+            closingSaveRetryRef.current = true
+            isFinishingSessionRef.current = false
+            setIsFinishingSession(false)
+            setFinalizationStage(null)
+            setStatusText('Tap Finish to retry saving')
+            toast.error(payload.message)
+            return
+          }
+
+          if (payload.type === 'reconnecting') {
+            setStatusText('Reconnecting')
+            return
+          }
+
+          if (payload.type === 'reconnected') {
+            if (!isConversationPausedRef.current) {
+              setStatusText('Listening')
+            }
+            return
+          }
+
+          if (payload.type === 'turn_complete') {
+            if (isConversationPausedRef.current) return
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'interrupted') {
+            clearPlayback()
+            setStatusText('Listening')
+            return
+          }
+
+          if (payload.type === 'session_ended') {
+            isSessionCompleteRef.current = true
+            isClosingRef.current = false
+            shouldReconnectRef.current = false
+            clearPausedRewindSessionId(persona.id)
+            setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
+            setStatusText('Completed')
+            clearPlayback()
+            cleanupAudioPipeline()
+            toast.success('Your Rewind summary is ready')
+            liveSessionRef.current?.close(1000, 'Session completed')
+            void queryClient
+              .invalidateQueries({
+                queryKey: rewindQueryKeys.all,
+                refetchType: 'all',
+              })
+              .finally(() => {
+                void routineQuery.refetch()
+                if (payload.sessionId) {
+                  navigate({
+                    params: { sessionId: payload.sessionId },
+                    search: { from: 'rewind' },
+                    to: '/app/r/$sessionId',
+                  })
+                  return
+                }
+                navigate({ to: '/app/rewind-history' })
+              })
+            return
+          }
+
+          if (payload.type === 'session_paused') {
+            isSessionPausedByToolRef.current = true
+            isConversationPausedRef.current = true
+            shouldReconnectRef.current = false
+            setIsConversationPaused(true)
+            setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
+            setStatusText('Paused')
+            if (payload.sessionId) {
+              savePausedRewindSessionId(persona.id, payload.sessionId)
+            }
+            cleanupAudioPipeline()
+            toast.success('Rewind paused. It will continue when you return.')
+            return
+          }
+
+          if (
+            payload.type === 'session_missed' ||
+            payload.type === 'session_unavailable'
+          ) {
+            const completedSpokenClose =
+              payload.type === 'session_missed' && isClosingRef.current
+            isSessionCompleteRef.current = true
+            isClosingRef.current = false
+            shouldReconnectRef.current = false
+            clearPausedRewindSessionId(persona.id)
+            setIsFinishingSession(false)
+            setFinalizationStage(null)
+            isFinishingSessionRef.current = false
+            setStatusText(
+              payload.type === 'session_missed'
+                ? 'Window closed'
+                : 'Unavailable',
+            )
+            cleanupAudioPipeline()
+            void routineQuery.refetch()
+            liveSessionRef.current?.close(1000, 'Rewind window closed')
+            if (completedSpokenClose && payload.sessionId) {
+              void navigate({
+                params: { sessionId: payload.sessionId },
+                search: { from: 'rewind' },
+                to: '/app/r/$sessionId',
+              })
+            }
+            return
+          }
+
+          if (payload.type === 'open_history') {
+            navigate({ to: '/app/rewind-history-sessions' })
+            return
+          }
+
+          if (payload.type === 'error') {
+            disconnectNoticeShownRef.current = true
+            if (
+              isFinishingSessionRef.current &&
+              ws.readyState === WebSocket.OPEN
+            ) {
+              isFinishingSessionRef.current = false
+              isConversationPausedRef.current = false
+              setIsFinishingSession(false)
+              setFinalizationStage(null)
+              setIsConversationPaused(false)
+              setStatusText('Listening')
+              void connectMicrophone(ws)
+            } else {
+              setStatusText('Error')
+            }
+            toast.error(payload.message)
+          }
+        } catch {
+          setStatusText('Invalid response')
+        }
+      }
+
+      ws.onerror = () => {
+        isConnectingRef.current = false
+        setStatusText('Error')
+      }
+
+      ws.onclose = (event) => {
+        isConnectingRef.current = false
+        clearPlayback()
+        cleanupAudioPipeline()
+        if (liveSessionRef.current === ws) {
+          liveSessionRef.current = null
+        }
+        if (isSessionPausedByToolRef.current) {
+          shouldReconnectRef.current = false
+          setStatusText('Paused')
+          return
+        }
+        if (!isSessionCompleteRef.current) {
+          if (
+            shouldAutoReconnectRewindSocket({
+              closeCode: event.code,
+              isSessionComplete: isSessionCompleteRef.current,
+              reconnectAttempts: reconnectAttemptsRef.current,
+              shouldReconnect: shouldReconnectRef.current,
+            })
+          ) {
+            reconnectAttemptsRef.current += 1
+            setStatusText('Reconnecting')
+            const delay = 500 * 2 ** (reconnectAttemptsRef.current - 1)
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null
+              void startSessionRef.current?.()
+            }, delay)
+            return
+          }
+
+          shouldReconnectRef.current = false
+          setStatusText('Disconnected')
+          if (!disconnectNoticeShownRef.current) {
+            toast.error('Rewind disconnected. Tap to reconnect and continue.')
+          }
+        }
+      }
+    } catch (error) {
+      isConnectingRef.current = false
+      if (
+        isAxiosError<{ msg?: string }>(error) &&
+        error.response?.status === 409
+      ) {
+        setStatusText('Not scheduled now')
+        void routineQuery.refetch()
+        return
+      }
+      setStatusText('Failed')
+      toast.error(getMutationErrorMessage(error))
     }
   }, [
     cleanupAudioPipeline,
+    clearPlayback,
     connectMicrophone,
     persona,
     playNextAudioChunk,
-    pushTimelineMessage,
-    requestedSessionId,
+    queryClient,
+    navigate,
+    openRoutineSettings,
+    routineQuery,
+    toast,
   ])
+
+  useEffect(() => {
+    startSessionRef.current = startSession
+  }, [startSession])
 
   const conversationSummary = useMemo(() => {
     if (isConversationPaused) return 'Conversation paused'
@@ -937,92 +1340,177 @@ export default function RewindScreen() {
       return `${persona?.name ?? 'Rewind'} is talking`
     if (statusText === 'Listening') return 'Listening'
     if (statusText === 'Connecting') return 'Connecting...'
+    if (statusText === 'Reconnecting') return 'Reconnecting...'
     if (statusText === 'Connected') return 'Connected'
     if (statusText === 'Disconnected') return 'Ended'
     if (statusText === 'Error') return 'Interrupted'
     return statusText
   }, [isConversationPaused, persona?.name, statusText])
 
-  const previousSessionItems = useMemo(() => {
-    if (!previousSession?.guidedFlow) return []
-
-    const labels: Record<RewindGuidedQuestionId, string> = {
-      meaningful: 'Meaningful',
-      draining: 'Draining',
-      progress: 'Progress',
-      different: 'Different',
-      tomorrow_need: 'Tomorrow',
-    }
-
-    return Object.values(previousSession.guidedFlow.responses)
-      .filter((entry): entry is RewindGuidedResponse =>
-        Boolean(entry?.shortSummary),
-      )
-      .sort((a, b) => a.updatedAt - b.updatedAt)
-      .map((entry) => `${labels[entry.questionId]}: ${entry.shortSummary}`)
+  const previousSessionPreview = useMemo(() => {
+    return previousSession?.summary ?? null
   }, [previousSession])
 
-  const previousSessionPreview = useMemo(() => {
-    return previousSessionItems[previousSessionItems.length - 1] ?? null
-  }, [previousSessionItems])
+  const currentSessionPreview = conversationStateNote
 
-  const currentSessionItems = useMemo(() => {
-    return timeline.filter((item) => item.role !== 'system').slice(-6)
-  }, [timeline])
+  const openRewindInsights = useCallback(() => {
+    navigate({
+      to: '/app/rewind-history',
+    })
+  }, [navigate])
 
-  const currentSessionPreview = useMemo(() => {
-    return currentSessionItems[currentSessionItems.length - 1]?.content ?? null
-  }, [currentSessionItems])
+  const openRewindChats = useCallback(() => {
+    if (isPro) {
+      void navigate({ to: '/app/rewind-chats' })
+      return
+    }
 
-  const openSessionHistory = useCallback(() => {
     bottomSheet.present(
-      <SessionHistorySheet
-        previousPreview={previousSessionPreview}
-        currentPreview={currentSessionPreview}
-        previousItems={previousSessionItems}
-        currentItems={currentSessionItems}
+      <ProFeatureGateSheet
+        feature="rewind-chats"
+        onUnlocked={() => void navigate({ to: '/app/rewind-chats' })}
       />,
-      { title: 'Session History' },
+      { size: 'semi-full', title: 'Anytime chats' },
     )
-  }, [
-    bottomSheet,
-    currentSessionItems,
-    currentSessionPreview,
-    previousSessionItems,
-    previousSessionPreview,
-  ])
+  }, [bottomSheet, isPro, navigate])
 
-  if (!persona) {
+  const routineStatus = useMemo(() => {
+    const formatOccurrenceTime = (value: string | null): string => {
+      if (!value) return ''
+      return new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+      }).format(new Date(value))
+    }
+
+    if (!routineQuery.data?.routine) {
+      return 'Set your Rewind routine'
+    }
+    if (routineQuery.data.currentSession) {
+      return `Open until ${formatOccurrenceTime(
+        routineQuery.data.currentSession.windowEndsAt,
+      )}`
+    }
+    if (routineQuery.data.latestSession?.status === 'COMPLETED') {
+      return 'Your latest Rewind is complete'
+    }
+    if (routineQuery.data.latestSession?.status === 'MISSED') {
+      const nextSession = routineQuery.data.nextSession
+      if (nextSession?.scheduledFor) {
+        return `Last Rewind window closed. Up next is by ${formatOccurrenceTime(
+          nextSession.scheduledFor,
+        )}`
+      }
+      return 'Last Rewind window closed'
+    }
+    if (routineQuery.data.nextSession) {
+      return `Next Rewind ${formatOccurrenceTime(
+        routineQuery.data.nextSession.scheduledFor,
+      )}`
+    }
+    return 'Your next Rewind is being scheduled'
+  }, [routineQuery.data])
+
+  const hasAvailableOccurrence = Boolean(routineQuery.data?.currentSession)
+
+  const hasActiveSession =
+    liveSessionRef.current?.readyState === WebSocket.OPEN ||
+    isConnectingRef.current
+
+  if (isAuthLoading) {
+    return <AppLoadingState message="Loading your Rewind..." />
+  }
+
+  if (!isAuthenticated || !user) {
+    return <AppLoadingState message="Opening sign in..." />
+  }
+
+  if (resolvedPersonaUserId !== user.id) {
+    return <AppLoadingState message="Loading your Rewind partner..." />
+  }
+
+  if (!persona || isPartnerPickerOpen) {
     return (
       <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
         <NoiseComponent>
           <View className="flex-1">
-            <TabHeader title="Rewind" />
+            <TabHeader
+              canGoBack={!persona}
+              title={persona ? 'Switch partner' : 'Rewind'}
+              children={
+                <Pressable
+                  accessibilityLabel={
+                    persona ? 'Close partner picker' : 'Open Rewind text chats'
+                  }
+                  className="relative size-11 items-center justify-center rounded-full bg-cardx"
+                  onPress={() => {
+                    if (persona) {
+                      setIsPartnerPickerOpen(false)
+                      return
+                    }
+                    openRewindChats()
+                  }}
+                >
+                  {persona ? (
+                    <RiCloseLine size={20} className="text-card-lighter-2" />
+                  ) : (
+                    <RiChat3Line size={19} className="text-card-lighter-2" />
+                  )}
+                  {!persona ? (
+                    <RewindChatUnreadBadge count={unreadChatCount} />
+                  ) : null}
+                </Pressable>
+              }
+            />
             <View className="flex-1 px-mg pb-xl">
               <View className="mt-lg mb-xl items-center">
-                <Text className="text-white font-bbh text-2xl font-bold text-center">
-                  Choose your Rewind partner
+                <Text className="muted  mt-2 font-bbh text-base text-white text-center">
+                  {persona
+                    ? 'Choose carefully. You can switch your Rewind partner once each day.'
+                    : 'Pick a custom-tuned persona to start your live Rewind conversations.'}
                 </Text>
-                <Text className="mt-2 text-white/60 font-bbh text-base text-center">
-                  Pick a custom-tuned persona to start your live rewind
-                  conversations.
-                </Text>
-                {persistPersonaMutation.isPending && (
-                  <Text className="mt-2 text-white/40 font-bbh text-sm text-center">
-                    Saving...
-                  </Text>
-                )}
               </View>
 
-              <View className="grid grid-cols-2 h-[calc(100%-40vh)] items-center [&>div]:shrink-0 overflow-y-auto gap-3 mt-mg">
-                {REWIND_PERSONAS.map((p) => (
-                  <PersonaCard
-                    key={p.id}
-                    persona={p}
-                    onSelect={selectPersona}
-                    disabled={persistPersonaMutation.isPending}
-                  />
-                ))}
+              <View className="mt-mg gap-5">
+                <PersonaArtwork
+                  actionLabel={
+                    persona?.id === previewPersona.id
+                      ? `Keep ${previewPersona.name}`
+                      : undefined
+                  }
+                  persona={previewPersona}
+                  onChoose={() => {
+                    void selectPersona(previewPersona.id)
+                  }}
+                  disabled={persistPersonaMutation.isPending}
+                />
+
+                <View className="grid grid-cols-4 gap-2 overflow-x-auto px-1 pb-2 no-scrollbar">
+                  {REWIND_PERSONAS.map((p) => (
+                    <PersonaThumbnail
+                      key={p.id}
+                      persona={p}
+                      selected={previewPersonaId === p.id}
+                      onSelect={(nextPersonaId) => {
+                        if (isPro || isFreeRewindPersona(nextPersonaId)) {
+                          setPreviewPersonaId(nextPersonaId)
+                          return
+                        }
+                        bottomSheet.present(
+                          <ProFeatureGateSheet
+                            feature="rewind-partners"
+                            onUnlocked={() =>
+                              setPreviewPersonaId(nextPersonaId)
+                            }
+                          />,
+                          { size: 'semi-full', title: 'More Rewind partners' },
+                        )
+                      }}
+                      disabled={persistPersonaMutation.isPending}
+                      locked={!isPro && !isFreeRewindPersona(p.id)}
+                    />
+                  ))}
+                </View>
               </View>
             </View>
           </View>
@@ -1038,122 +1526,180 @@ export default function RewindScreen() {
   return (
     <View
       className="flex-1 bg-cardd overflow-hidden"
-      style={{
-        ...(personaTheme
-          ? {
-              '--theme': personaTheme.color,
-              '--theme-opaque': opaqueColor,
-              background: `radial-gradient(circle at top, ${opaqueColor} 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
-            }
-          : undefined),
-      }}
+      style={
+        {
+          ...(personaTheme
+            ? {
+                '--theme': personaTheme.color,
+                '--theme-opaque': opaqueColor,
+                background: `radial-gradient(circle at top, ${opaqueColor} 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
+              }
+            : undefined),
+        } as CSSProperties
+      }
     >
+      <img
+        src={persona.avatar}
+        alt=""
+        className="absolute opacity-5 inset-0 size-full object-cover"
+      />
       <NoiseComponent>
         <TabHeader
           title=""
           children={
             <View className="flex-row items-center gap-2">
-              <Pressable
-                onPress={togglePauseConversation}
-                className={cn(
-                  'w-11 h-11 rounded-full items-center justify-center',
-                  isConversationPaused
-                    ? 'bg-white'
-                    : 'bg-white/8 backdrop-blur-md',
-                )}
-              >
-                {isConversationPaused ? (
-                  <RiPlayLine size={18} className="text-cardd" />
-                ) : (
-                  <RiPauseLine size={18} className="text-white/90" />
-                )}
-              </Pressable>
-              <Pressable
-                onPress={resetRewindSession}
-                className="w-11 h-11 rounded-full items-center justify-center bg-white/8"
-              >
-                <RiAddLine size={18} className="text-white/90" />
-              </Pressable>
-              <Pressable
-                onPress={clearPersona}
-                className="w-11 h-11 rounded-full items-center justify-center bg-white/8"
-              >
-                <RiRefreshLine
-                  size={18}
+              {hasActiveSession ? (
+                <Pressable
+                  onPress={togglePauseConversation}
+                  disabled={isFinishingSession}
+                  accessibilityLabel={
+                    isConversationPaused
+                      ? 'Resume Rewind conversation'
+                      : 'Pause Rewind conversation'
+                  }
                   className={cn(
-                    persistPersonaMutation.isPending
-                      ? 'text-white/50'
-                      : 'text-white/80',
+                    'w-7 h-7 rounded-full items-center justify-center',
+                    isConversationPaused ? 'bg-white' : 'bg-cardx',
                   )}
-                />
-              </Pressable>
+                >
+                  {isConversationPaused ? (
+                    <RiPlayFill size={18} className="text-cardd" />
+                  ) : (
+                    <RiPauseFill size={18} className="text-white/90" />
+                  )}
+                </Pressable>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={openRewindChats}
+                    accessibilityLabel="Open Rewind text chats"
+                    className="relative rounded-full items-center justify-center "
+                  >
+                    <RiChat3Fill size={27} className="text-white" />
+                    <RewindChatUnreadBadge count={unreadChatCount} />
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      if (!canSwitchPartnerToday()) {
+                        toast.info(
+                          'You can switch your Rewind partner again tomorrow',
+                        )
+                        return
+                      }
+                      setPreviewPersonaId(persona.id)
+                      setIsPartnerPickerOpen(true)
+                    }}
+                    disabled={persistPersonaMutation.isPending}
+                    accessibilityLabel={`Change Rewind partner. Current partner ${persona.name}`}
+                    className="min-h-11 flex-row items-center gap-2 rounded-full bg-cardx py-1.5 pr-1.5 pl-3"
+                  >
+                    <Text className="font-bbh text-sm font-bold text-white">
+                      {persona.name}
+                    </Text>
+                    <img
+                      alt=""
+                      className="size-8 rounded-full object-cover"
+                      src={persona.avatar}
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={openRoutineSettings}
+                    accessibilityLabel="Open Rewind insights"
+                    className="w-11 h-11 rounded-full items-center justify-center bg-cardx"
+                  >
+                    <RiSettings3Fill size={18} className="text-white" />
+                  </Pressable>
+                </>
+              )}
             </View>
           }
         />
 
         <View className="flex-1 min-h-0 h-full px-mg pb-xl">
-          <View className="items-center h-full  pt-6">
-            <View className="px-3 py-2 rounded-full ">
-              <Text className="text-white/65 font-bbh text-xs uppercase tracking-[0.28em]">
+          <View className="items-center h-full pt-6">
+            <View className="px-3 py-2 rounded-full">
+              <Text className="muted font-bbh text-xs uppercase tracking-[0.28em]">
                 {isSessionRestored ? 'Restored Session' : ''}
               </Text>
             </View>
-            <Text className="mt-2 text-white font-bbh text-xl font-extrabold">
-              <Text className="">
-                <Text className="text-[var(--theme)]">@</Text>
-                {persona.name}
+            <View className="items-center justify-center ">
+              <Text className="mt-2 text-white font-display text-xl font-extrabold">
+                <View className="flex-row items-center">
+                  <Text className=" text-accent-400">@</Text>
+                  {user?.username}
+                  <UserCheckmark />
+                </View>
               </Text>
-            </Text>
 
-            <Text className="mt-5 text-white font-bbh text-2xl font-extrabold">
-              <Text className="text-card-lighter-3">Rewinding W/</Text>{' '}
-              <Text className="text-accent-400">@</Text>
-              <Text className="opacity-40">{user?.username}</Text>
-            </Text>
+              <Text className="mt-0 text-white font-display text-xl font-extrabold">
+                <Text className="text-card-lighter-3">You're Rewinding W/</Text>{' '}
+                <Text className="">
+                  <Text className="text-[var(--theme)]">@</Text>
+                  {persona.name}
+                </Text>
+              </Text>
+            </View>
 
-            <View className="mt-4 flex-row gap-2 flex-wrap justify-center">
-              <View className="px-3 py-2 rounded-full bg-white/6">
-                <Text className="text-white/80 font-bold font-bbh text-xs">
+            <View className="mt-1 flex-row gap-2 flex-wrap justify-center">
+              <View className="px-3 rounded-xl ">
+                <Text className="text-card-lighter-3 px-2 font-bold font-bbh  !text-center text-xs">
                   {rewindSessionDateKey
-                    ? `Daily Rewind ${rewindSessionDateKey.slice(5)}`
-                    : conversationSummary.toLowerCase() == 'failed'
-                      ? 'Unavailable'
-                      : 'Starting'}{' '}
-                  -{' '}
-                  <Text
-                    className={cn(
-                      ['connected', 'listening'].includes(
-                        conversationSummary.toLowerCase(),
-                      )
-                        ? 'bg-success-green/70 text-white p-0.5 rounded-full px-2'
-                        : ['ended'].includes(conversationSummary.toLowerCase())
-                          ? 'bg-red-500/70 text-white p-0.5 rounded-full px-2'
-                          : 'bg-orange-500/70 text-white p-0.5 rounded-full px-2',
-                    )}
-                  >
-                    {conversationSummary}
-                  </Text>
+                    ? `Rewind ${rewindSessionDateKey.slice(5)}`
+                    : routineStatus}{' '}
+                  <View className="flex flex-row justify-center mt-1">
+                    <Text
+                      className={cn(
+                        ['connected', 'listening'].includes(
+                          conversationSummary.toLowerCase(),
+                        )
+                          ? 'bg-success-green text-cardd p-0.5 rounded-full px-2'
+                          : ['ended'].includes(
+                                conversationSummary.toLowerCase(),
+                              )
+                            ? 'bg-red-500 text-white p-0.5 rounded-full px-2'
+                            : 'bg-yellow-400 text-cardd p-0.5 rounded-full px-2',
+                        ' whitespace-nowrap  !text-center',
+                      )}
+                    >
+                      {conversationSummary}
+                    </Text>
+                  </View>
                 </Text>
               </View>
             </View>
 
-            <View
+            <Pressable
+              onPress={() => {
+                if (hasActiveSession) {
+                  void togglePauseConversation()
+                  return
+                }
+                void startSession()
+              }}
+              disabled={isFinishingSession}
+              accessibilityLabel={
+                hasActiveSession
+                  ? isConversationPaused
+                    ? 'Resume your Rewind'
+                    : 'Pause your Rewind'
+                  : 'Start your Rewind'
+              }
+              accessibilityRole="button"
               className={cn(
-                isConversationPaused && 'saturate-0 opacity-50',
-                'bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full  mt-auto',
+                isConversationPaused && 'saturate-0 ',
+                'relative bg-[var(--theme-opaque)] aspect-square flex items-center justify-center rounded-full mt-16',
               )}
             >
               <motion.div
                 initial={{ scale: 0.94 }}
-                animate={{
-                  scale: isConversationPaused ? 0.98 : 1.04,
-                }}
+                animate={{ scale: isConversationPaused ? 0.98 : 1.04 }}
                 transition={{
                   duration: 1.8,
                   repeat: Infinity,
                   repeatType: 'mirror',
                 }}
-                className=" flex items-center justify-center relative"
+                className="flex items-center justify-center relative"
               >
                 <View className="items-center scale-[2.2] justify-center">
                   <Mirage
@@ -1163,37 +1709,134 @@ export default function RewindScreen() {
                   />
                 </View>
               </motion.div>
-            </View>
-
-            <Pressable
-              onPress={openSessionHistory}
-              className="mt-auto relative mb-mg  flex flex-col w-full max-w-[340px] rounded-[30px]  p-3"
-            >
-              <View
-                style={{
-                  maskImage:
-                    'linear-gradient(to top, transparent 70%, white 90%)',
-                }}
-                className="-top-[2vh] -translate-x-1/2 left-1/2 w-[100vw] aspect-[1.7/1] border absolute rounded-[300px] border-[var(--theme)]"
-              ></View>
-
-              <View className="mt-3 flex-col gap-2">
-                <View className="flex-1 min-w-0 rounded-[22px] bg-card-light/[0.14] px-3 py-3">
-                  <Text className="mt-1 text-white font-bold font-bbh text-xs line-clamp-2">
-                    " {currentSessionPreview || 'Live session just started'}"
-                  </Text>
-                </View>
-
-                <View className="flex-1 min-w-0 rounded-[22px] bg-card-light-50 px-3 py-3">
-                  <Text className="text-white/45 font-bbh text-[10px] uppercase tracking-[0.18em]">
-                    Last Session
-                  </Text>
-                  <Text className="mt-1 text-white/80 font-bbh text-xs line-clamp-2">
-                    {previousSessionPreview || 'No saved rewind yet'}
-                  </Text>
+              <View className="pointer-events-none absolute inset-0 items-center justify-center">
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                  {!hasActiveSession || isConversationPaused ? (
+                    <RiPlayFill size={30} className="ml-1 text-cardd" />
+                  ) : (
+                    <RiPauseFill size={28} className="text-cardd" />
+                  )}
                 </View>
               </View>
             </Pressable>
+
+            {!hasActiveSession ? (
+              <Pressable className="flex mt-5 flex-row items-center gap-3">
+                <Text className="text-white font-bold  !text-center">
+                  {statusText === 'Failed' || statusText === 'Disconnected'
+                    ? 'Reconnect and continue'
+                    : statusText === 'Paused'
+                      ? 'Resume your Rewind'
+                      : !routineQuery.data?.routine
+                        ? 'Set your routine to begin'
+                        : !hasAvailableOccurrence
+                          ? routineStatus
+                          : 'Ready? tap to begin'}
+                </Text>
+              </Pressable>
+            ) : null}
+
+            {currentSessionPreview && hasActiveSession && (
+              <View className="mt-5 max-w-[78%] items-center gap-1 text-center">
+                {conversationStage ? (
+                  <Text className="text-card-lighter-3/60 font-bbh text-[10px] font-bold uppercase tracking-[0.16em]">
+                    {REWIND_CONVERSATION_STAGE_LABELS[conversationStage]}
+                  </Text>
+                ) : null}
+                <Text className="muted mx-auto text-sm font-bold leading-5">
+                  {currentSessionPreview}
+                </Text>
+              </View>
+            )}
+
+            <View className="mt-auto mb-mg w-full max-w-[340px] gap-3">
+              {hasActiveSession ? (
+                <Pressable
+                  onPress={finishSession}
+                  disabled={isFinishingSession}
+                  className="min-h-12 w-full flex-row items-center justify-center gap-2 rounded-full bg-white px-4"
+                >
+                  <RiStopCircleLine size={19} className="text-cardd" />
+                  <Text className="font-display font-bold text-cardd">
+                    {isFinishingSession && finalizationStage
+                      ? REWIND_FINALIZATION_LABELS[finalizationStage]
+                      : 'Conclude'}
+                  </Text>
+                </Pressable>
+              ) : null}
+
+              {!hasActiveSession ? (
+                <>
+                  <Pressable
+                    accessibilityLabel="Open anytime Rewind text chats"
+                    onPress={openRewindChats}
+                    className="w-full hidden flex-row items-center justify-between rounded-lg bg-cardx px-4 py-3 text-left"
+                  >
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text className="font-bbh text-[10px] uppercase tracking-[0.18em] text-card-lighter-3">
+                        Anytime text chat
+                      </Text>
+                      <Text className="font-bbh text-xs text-card-lighter-2 line-clamp-2">
+                        Talk with one partner or bring it to the group
+                      </Text>
+                    </View>
+                    <RiChat3Line
+                      size={18}
+                      className="ml-3 shrink-0 text-card-lighter-2"
+                    />
+                  </Pressable>
+                  <Pressable
+                    onPress={openRoutineSettings}
+                    accessibilityLabel="Open Rewind routine settings"
+                    className="min-h-16 w-full hidden flex-row items-center gap-3 rounded-xl bg-cardx px-3 py-3 text-left"
+                  >
+                    <View className="size-10 shrink-0 items-center justify-center rounded-xl bg-cardd">
+                      <RiCalendarScheduleLine
+                        size={19}
+                        className="text-card-lighter-2"
+                      />
+                    </View>
+                    <View className="min-w-0 flex-1 gap-0.5">
+                      <Text className="font-bbh text-[10px] font-bold uppercase tracking-[0.16em] text-card-lighter-3">
+                        Rewind routine
+                      </Text>
+                      <Text className="font-bbh text-xs !text-center text-white line-clamp-2">
+                        {routineStatus}
+                      </Text>
+                    </View>
+                    <RiSettings3Line
+                      size={17}
+                      className="shrink-0 text-card-lighter-2"
+                    />
+                  </Pressable>
+                </>
+              ) : null}
+
+              <Pressable
+                accessibilityLabel="Open Rewind insights"
+                onPress={openRewindInsights}
+                className="min-h-20 w-full flex-row border border-card-light/50 items-center gap-3 rounded-[40px] bg-cardx px-4 pr-6 py-3 text-left"
+              >
+                <View className="size-11 shrink-0 items-center justify-center rounded-full bg-cardd">
+                  <RiPulseLine size={20} className="text-accent-500" />
+                </View>
+                <View className="min-w-0 flex-1 gap-1">
+                  <Text className="font-bbh text-sm font-bold text-white">
+                    Insights
+                  </Text>
+                  <Text className="font-bbh text-xs text-card-lighter-3 line-clamp-2">
+                    {previousSessionPreview ||
+                      'See the patterns your reflections are beginning to show'}
+                  </Text>
+                </View>
+                <View className="p-0.5 bg-white rounded-full">
+                  <RiArrowRightSLine
+                    size={19}
+                    className="shrink-0 text-black"
+                  />
+                </View>
+              </Pressable>
+            </View>
           </View>
         </View>
       </NoiseComponent>

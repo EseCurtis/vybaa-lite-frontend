@@ -2,26 +2,42 @@ import type { Config } from 'tailwindcss'
 import { colors } from './src/shared/colors.shared'
 
 const config: Config = {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
         // Spread the colors to avoid circular reference
-        ...colors
+        ...colors,
       },
       spacing: {
-        'mg': '17px',
+        mg: '17px',
         '05-mg': '7px',
       },
       fontFamily: {
-        'mona': ['Mona Sans', 'sans-serif'],
-        'sans': ['Mona Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        'bbh': ['Mona Sans x', 'sans-serif'],
-        'outfit': ['Outfit', 'sans-serif'],
-        'mona-sans-x': ['Mona Sans x', 'sans-serif']
+        mona: ['Mona Sans', 'sans-serif'],
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Helvetica Neue',
+          'Segoe UI',
+          'Roboto',
+          'Arial',
+          'sans-serif',
+        ],
+        // Shared app copy uses the compact system stack common to social apps.
+        bbh: [
+          'Mona Sans x', 
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Helvetica Neue',
+          'Segoe UI',
+          'Roboto',
+          'Arial',
+          'sans-serif',
+        ],
+        outfit: ['Outfit', 'sans-serif'],
+        'mona-sans-x': ['Mona Sans x', 'sans-serif'],
+        display: ['Mona Sans x', 'sans-serif'],
       },
     },
   },

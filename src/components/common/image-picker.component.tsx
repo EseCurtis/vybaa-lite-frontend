@@ -1,16 +1,21 @@
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
 import { useToast } from '@/providers/toast.provider'
+import { IS_IOS } from '@/shared/constants.shared'
 import { cn } from '@/shared/utils/helpers.util'
+import {
+  getImagePickerFailureMessage,
+  isImagePickerCancellation,
+} from '@/shared/utils/image-picker-error.util'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRef, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ImageCropper } from './image-cropper.component'
 
 interface ImagePickerProps {
   currentImageUrl?: string
   onImageSelect: (imageDataUrl: string) => void // Returns base64, parent handles upload
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   initials?: string
 }
@@ -31,58 +36,12 @@ export function ImagePicker({
     sm: 'w-16 h-16 text-xl',
     md: 'w-20 h-20 text-2xl',
     lg: 'w-24 h-24 text-3xl',
+    xl: 'w-32 h-32 text-4xl',
   }
 
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const img = new Image()
-        img.onload = () => {
-          // Create canvas for compression
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          if (!ctx) {
-            reject(new Error('Failed to get canvas context'))
-            return
-          }
-
-          // Calculate new dimensions (max 800x800)
-          const maxSize = 800
-          let width = img.width
-          let height = img.height
-
-          if (width > height) {
-            if (width > maxSize) {
-              height = (height * maxSize) / width
-              width = maxSize
-            }
-          } else {
-            if (height > maxSize) {
-              width = (width * maxSize) / height
-              height = maxSize
-            }
-          }
-
-          canvas.width = width
-          canvas.height = height
-
-          // Draw and compress
-          ctx.drawImage(img, 0, 0, width, height)
-          
-          // Convert to base64 with quality compression (0.7 = 70% quality)
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7)
-          resolve(compressedDataUrl)
-        }
-        img.onerror = () => reject(new Error('Failed to load image'))
-        img.src = e.target?.result as string
-      }
-      reader.onerror = () => reject(new Error('Failed to read file'))
-      reader.readAsDataURL(file)
-    })
-  }
-
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -118,7 +77,7 @@ export function ImagePicker({
       const compressedDataUrl = await compressImageDataUrl(croppedImage)
       setPreview(compressedDataUrl)
       setImageToCrop(null)
-      
+
       // Return compressed base64 to parent (parent will handle Cloudinary upload on save)
       onImageSelect(compressedDataUrl)
     } catch (error) {
@@ -161,7 +120,36 @@ export function ImagePicker({
     })
   }
 
-  const handleClick = () => {
+  async function handleClick(): Promise<void> {
+    if (IS_IOS) {
+      try {
+        const photo = await Camera.getPhoto({
+          allowEditing: false,
+          correctOrientation: true,
+          presentationStyle: 'fullscreen',
+          promptLabelCancel: 'Cancel',
+          promptLabelHeader: 'Choose a photo',
+          promptLabelPhoto: 'Choose from Photos',
+          promptLabelPicture: 'Take a Photo',
+          quality: 90,
+          resultType: CameraResultType.DataUrl,
+          saveToGallery: false,
+          source: CameraSource.Prompt,
+        })
+
+        if (!photo.dataUrl?.startsWith('data:image/')) {
+          throw new Error('Image picker returned invalid data')
+        }
+
+        setImageToCrop(photo.dataUrl)
+      } catch (error: unknown) {
+        if (!isImagePickerCancellation(error)) {
+          toast.error(getImagePickerFailureMessage(error))
+        }
+      }
+      return
+    }
+
     fileInputRef.current?.click()
   }
 
@@ -173,12 +161,12 @@ export function ImagePicker({
         <motion.div
           whileTap={{ scale: 0.95 }}
           className="cursor-pointer"
-          onClick={handleClick}
+          onClick={() => void handleClick()}
         >
           <div
             className={cn(
               'rounded-full bg-card-700 flex items-center justify-center overflow-hidden relative group',
-              sizeClasses[size]
+              sizeClasses[size],
             )}
           >
             {displayImage ? (
@@ -201,11 +189,12 @@ export function ImagePicker({
         {/* Edit button */}
         <motion.button
           whileTap={{ scale: 0.9 }}
-          onClick={handleClick}
-          className="absolute -bottom-1 -right-1 bg-accent-500 rounded-full p-2 shadow-lg border-2 border-black z-10"
+          onClick={() => void handleClick()}
+          className="absolute flex flex-row items-center gap-3 text-white -bottom-1 -right-1/4 bg-accent-500 pr-3 rounded-full p-3 py-2 shadow-lg border-2 border-black z-10"
           type="button"
         >
           <Icons.Edit size="xs" color="#ffffff" />
+          <Text className="text-xs font-bold">Upload</Text>
         </motion.button>
 
         <input

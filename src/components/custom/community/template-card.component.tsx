@@ -4,7 +4,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import type { GoalTemplate } from '@/shared/api/community.api'
-import { seededColor } from '@/shared/utils/helpers.util'
+import { contrastingTextColor, seededColor } from '@/shared/utils/helpers.util'
 import { RiCalendarLine, RiUserLine } from '@remixicon/react'
 
 interface TemplateCardProps {
@@ -22,7 +22,12 @@ const formatParticipantsCount = (count: number): string => {
   return `${Math.floor(count / 1000000)}m+`
 }
 
-export function TemplateCard({ template, onPress, onStart, isStarting }: TemplateCardProps) {
+export function TemplateCard({
+  template,
+  onPress,
+  onStart,
+  isStarting,
+}: TemplateCardProps) {
   const { user } = useAuth()
   const handlePress = () => {
     onPress?.(template)
@@ -34,6 +39,7 @@ export function TemplateCard({ template, onPress, onStart, isStarting }: Templat
   }
 
   const bgColor = seededColor(template.goalText)
+  const textColor = contrastingTextColor(bgColor)
   const participants = template._count?.startedGoals || 0
   const isOwnTemplate = user && template.creator?.id === user.id
 
@@ -44,21 +50,30 @@ export function TemplateCard({ template, onPress, onStart, isStarting }: Templat
       style={{ backgroundColor: bgColor }}
     >
       <View className="flex flex-col gap-2 w-full">
-        <Text className="text-black text-left text-base font-bold font-bbh mb-1">
+        <Text
+          className="text-left text-base font-bold font-bbh mb-1"
+          style={{ color: textColor }}
+        >
           {template.goalText}
         </Text>
 
         <View className="flex flex-row items-center justify-between mt-1">
           <View className="flex flex-row items-center gap-3">
             <View className="flex flex-row items-center gap-1.5">
-              <RiCalendarLine size={16} className="text-black/60" />
-              <Text className="text-black/70 text-[11px] font-bbh">
-                {template.targetDays} days 
+              <RiCalendarLine color={textColor} size={16} />
+              <Text
+                className="text-[11px] font-bbh"
+                style={{ color: textColor }}
+              >
+                {template.targetDays} days
               </Text>
             </View>
             <View className="flex flex-row items-center gap-1.5">
-              <RiUserLine size={16} className="text-black/60" />
-              <Text className="text-black/70 text-[11px] font-bbh">
+              <RiUserLine color={textColor} size={16} />
+              <Text
+                className="text-[11px] font-bbh"
+                style={{ color: textColor }}
+              >
                 {formatParticipantsCount(participants)} sharing
               </Text>
             </View>

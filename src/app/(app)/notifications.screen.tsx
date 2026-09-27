@@ -1,4 +1,7 @@
+import { NoiseComponent } from '@/components/common/noise.component'
+import { BottomNotch } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { VirtualList } from '@/components/common/virtual-list.component'
 import { Button } from '@/components/layout/button.component'
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
@@ -10,155 +13,196 @@ import {
   useNotifications,
 } from '@/hooks/use-notifications.hook'
 import type { Notification } from '@/shared/api/notification.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { seededColor } from '@/shared/utils/helpers.util'
-import { Icon } from '@iconify/react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Fragment, useState } from 'react'
+import {
+  getNotificationSender,
+  getPushNotificationRoute,
+} from '@/shared/notifications/in-app-notification.util'
+import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
+import { normalizeDeepLink } from '@/shared/utils/deep-link.util'
+import { Dimensions } from '@/shared/utils/dimensions.util'
+import { RiNotification3Line } from '@remixicon/react'
+import { useRouter } from '@tanstack/react-router'
+import moment from 'moment'
+import { useEffect, useState, type ReactElement } from 'react'
+
+function mergeNotifications(
+  currentNotifications: Notification[],
+  nextNotifications: Notification[],
+): Notification[] {
+  const nextNotificationById = new Map(
+    nextNotifications.map((notification) => [notification.id, notification]),
+  )
+  const mergedNotifications = currentNotifications.map(
+    (notification) => nextNotificationById.get(notification.id) ?? notification,
+  )
+  const currentNotificationIds = new Set(
+    currentNotifications.map((notification) => notification.id),
+  )
+  const appendedNotifications = nextNotifications.filter(
+    (notification) => !currentNotificationIds.has(notification.id),
+  )
+
+  return [...mergedNotifications, ...appendedNotifications]
+}
+
+function formatNotificationDate(dateString: string): string {
+  return moment(dateString).fromNow()
+}
 
 function NotificationItem({
   notification,
-  onMarkAsRead,
   onDelete,
+  onOpen,
 }: {
   notification: Notification
-  onMarkAsRead: (id: string) => void
   onDelete: (id: string) => void
-}) {
-  const color = seededColor(notification.title)
-
-  const getIconEmoji = () => {
-    switch (notification.type) {
-      case 'goal_completed':
-        return '🎉'
-      case 'goal_reminder':
-        return '⏰'
-      case 'streak_milestone':
-        return '🔥'
-      case 'system':
-        // Check if it's a streak reset notification
-        if (notification.title?.includes('Streak Reset')) {
-          return '⚠️'
-        }
-        return '📢'
-      default:
-        return '🔔'
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
-  }
+  onOpen: (notification: Notification) => void
+}): ReactElement {
+  const sender = getNotificationSender(notification.data, notification.type)
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      className={` backdrop-blur-xl   p-4 mb-3 ${
-        !notification.isRead ? 'bg-card-light/20 rounded-2xl' : 'border-b border-card-light'
+    <div
+      className={`mb-3 cursor-pointer rounded-lg p-4 !active:opacity-50 ${
+        !notification.isRead ? 'bg-card-light-50' : ''
       }`}
+      onClick={() => onOpen(notification)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          onOpen(notification)
+        }
+      }}
+      role="button"
+      tabIndex={0}
     >
       <View className="flex flex-row items-start gap-3">
-        <Icon 
-          icon={getEmojiIcon(getIconEmoji())} 
-          className="text-white shrink-0" 
-          style={{ fontSize: '32px' }}
-        />
-        
+        {sender ? (
+          <img
+            alt={`${sender.name} avatar`}
+            className="aspect-square h-11 w-11 shrink-0 rounded-full object-cover"
+            src={sender.avatarUrl}
+          />
+        ) : (
+          <View className="h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card-light-50">
+            <RiNotification3Line aria-hidden size={24} color="#ffffff" />
+          </View>
+        )}
+
         <View className="flex-1">
           <Text
-            className={`font-bbh font-bold mb-1 ${notification.isRead ? 'text-white/70' : 'text-white'}`}
+            lines={1}
+            className={`font-bbh text-sm mb-1 ${notification.isRead ? 'text-white font-semibold ' : 'text-white font-bold '}`}
           >
             {notification.title}
           </Text>
-          <Text
-            className={`text-sm mb-2 ${notification.isRead ? 'text-white/50' : 'text-white/80'}`}
-          >
+          <Text className="mb-2 text-xs  text-card-lighter-3" lines={2}>
             {notification.message}
-          </Text>
-          <Text className="text-xs text-white/40">
-            {formatDate(notification.createdAt)}
           </Text>
         </View>
 
-        <View className="flex flex-row gap-2">
-          {!notification.isRead && (
+        <View className="justify-between h-full ">
+          <View className="flex flex-row justify-end items-end ml-auto  gap-2">
             <button
-              onClick={() => onMarkAsRead(notification.id)}
-              className="p-2 hover:bg-white/10 rounded-full transition-colors"
-              title="Mark as read"
+              onClick={(event) => {
+                event.stopPropagation()
+                onDelete(notification.id)
+              }}
+              className=" items-end justify-end rounded-full transition-colors hover:bg-card-light-50"
+              title="Delete"
+              aria-label={`Delete notification from ${sender?.name ?? 'Vybaa'}`}
             >
-              <Icons.Check size="sm" color="#10b981" />
+              <Icons.Trash size="sm" color="#ef4444" />
             </button>
-          )}
-          <button
-            onClick={() => onDelete(notification.id)}
-            className="p-2 hover:bg-white/10 rounded-full transition-colors"
-            title="Delete"
-          >
-            <Icons.Trash size="sm" color="#ef4444" />
-          </button>
+          </View>
+
+          <Text className="text-xs ml-auto !text-right text-card-lighter-3 pt-3">
+            {formatNotificationDate(notification.createdAt)}
+          </Text>
         </View>
       </View>
-    </motion.div>
+    </div>
   )
 }
 
-export default function NotificationsScreen() {
+export default function NotificationsScreen(): ReactElement {
+  const router = useRouter()
   const [page, setPage] = useState(1)
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const { data, isLoading, isFetching } = useNotifications(page, 20)
   const { mutate: markAsRead } = useMarkAsRead()
   const { mutate: markAllAsRead, isPending: isMarkingAll } = useMarkAllAsRead()
   const { mutate: deleteNotification } = useDeleteNotification()
 
-  const notifications = data?.data || []
   const pagination = data?.pagination
   const hasUnread = notifications.some((n) => !n.isRead)
+  const hasMore = pagination?.hasNextPage ?? false
+  const isInitialLoading = isLoading && notifications.length === 0
 
-  const loading = isLoading || isFetching
+  useEffect(() => {
+    const nextNotifications = data?.data
+
+    if (!nextNotifications) {
+      return
+    }
+
+    setNotifications((currentNotifications) =>
+      page === 1
+        ? nextNotifications
+        : mergeNotifications(currentNotifications, nextNotifications),
+    )
+  }, [data?.data, page])
+
+  const handleMarkAsRead = (id: string): void => {
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) =>
+        notification.id === id
+          ? { ...notification, isRead: true }
+          : notification,
+      ),
+    )
+    markAsRead(id)
+  }
+
+  const handleMarkAllAsRead = (): void => {
+    setNotifications((currentNotifications) =>
+      currentNotifications.map((notification) => ({
+        ...notification,
+        isRead: true,
+      })),
+    )
+    markAllAsRead()
+  }
+
+  const handleDeleteNotification = (id: string): void => {
+    setNotifications((currentNotifications) =>
+      currentNotifications.filter((notification) => notification.id !== id),
+    )
+    deleteNotification(id)
+  }
+
+  const handleOpenNotification = (notification: Notification): void => {
+    handleMarkAsRead(notification.id)
+
+    const route = getPushNotificationRoute({
+      body: notification.message,
+      data: notification.data ?? {},
+      id: notification.id,
+      title: notification.title,
+    })
+    if (!route) return
+
+    const target = normalizeDeepLink(`https://vybaa.app${route}`)
+    if (target) {
+      void navigateToDeepLinkTarget(router, target)
+    }
+  }
 
   return (
     <View className="flex-1 bg-cardd">
-      <TabHeader title="Notifications" />
+      <TabHeader title="Notifications" className="z-[99]" />
 
-      <View className="flex-1 w-full  px-4 pb-[120px] pt-3 max-w-4xl mx-auto overflow-y-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="mb-6 w-full flex justify-end"
-        >
-          {hasUnread && (
-            <Button
-              label="Mark all read"
-              variant="secondary"
-              size="sm"
-              onClick={() => markAllAsRead()}
-              loading={isMarkingAll}
-              disabled={isMarkingAll}
-              fullWidth
-              style={{
-                width: "100%"
-              }}
-            />
-          )}
-        </motion.div>
-
-        {/* Notifications List */}
-        {loading && notifications.length === 0 ? (
+      <NoiseComponent>
+        <View className="flex-1 w-full px-4 pt-3 max-w-4xl mx-auto">
+        {isInitialLoading ? (
           <View className="flex-1 items-center justify-center py-20">
             <Text className="text-white/60 text-lg font-bbh">
               Loading notifications...
@@ -166,59 +210,78 @@ export default function NotificationsScreen() {
           </View>
         ) : notifications.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Icon 
-              icon={getEmojiIcon('🔔')} 
-              className="text-white/60 mb-4" 
-              style={{ fontSize: '64px' }}
+            <RiNotification3Line
+              aria-hidden
+              className="mb-4 text-card-lighter-2"
+              size={64}
             />
-            <Text className="text-white/60 text-lg font-bbh text-center">
+            <Text className="text-card-lighter-2 text-lg font-bbh text-center">
               No notifications yet
             </Text>
-            <Text className="text-white/40 text-sm font-bbh text-center mt-2">
+            <Text className="text-card-lighter-3 text-sm font-bbh text-center mt-2">
               You'll see updates about your goals here
             </Text>
           </View>
         ) : (
-          <>
-            <AnimatePresence mode="popLayout">
-              {notifications.map(
-                (notification) => (
-                  <Fragment key={notification.id}>
-                    <NotificationItem
-                      notification={notification}
-                      onMarkAsRead={markAsRead}
-                      onDelete={deleteNotification}
-                    />
-                  </Fragment>
-                ),
-              )}
-            </AnimatePresence>
-
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <View className="flex flex-row items-center justify-center gap-4 mt-6">
-                <Button
-                  label="Previous"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={!pagination.hasPrevPage || loading}
-                />
-                <Text className="text-white/60 font-bbh">
-                  Page {pagination.page} of {pagination.totalPages}
-                </Text>
-                <Button
-                  label="Next"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={!pagination.hasNextPage || loading}
-                />
-              </View>
+          <VirtualList
+            items={notifications}
+            height={
+              Dimensions.screenHeight -
+              Dimensions.tabBarHeight -
+              Dimensions.bottomSafePadding
+            }
+            estimateSize={104}
+            header={
+              hasUnread ? (
+                <View className="mb-6 w-full flex justify-end">
+                  <Button
+                  className='!bg-cardx'
+                    label="Mark all read"
+                   
+                    size="sm"
+                    onClick={handleMarkAllAsRead}
+                    loading={isMarkingAll}
+                    disabled={isMarkingAll}
+                    fullWidth
+                    style={{
+                      width: '100%',
+                    }}
+                  />
+                </View>
+              ) : null
+            }
+            renderItem={(notification) => (
+              <NotificationItem
+                notification={notification}
+                onDelete={handleDeleteNotification}
+                onOpen={handleOpenNotification}
+              />
             )}
-          </>
+            footer={
+              hasMore ? (
+                <View className="pb-10">
+                  <View className="py-4 pb-10 flex-row items-center justify-center">
+                    <Button
+                      label={isFetching ? 'Loading...' : 'Load More'}
+                      variant="default"
+                      fullWidth
+                      onClick={() => setPage((currentPage) => currentPage + 1)}
+                      disabled={isFetching}
+                      textClassName="text-sm"
+                      size="sm"
+                    />
+                  </View>
+                  <BottomNotch />
+                </View>
+              ) : (
+                <View className="h-[120px]" />
+              )
+            }
+          />
         )}
       </View>
+      </NoiseComponent>
+      
     </View>
   )
 }

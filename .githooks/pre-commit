@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -eu
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+node "$REPO_ROOT/scripts/bump-app-versions.mjs"

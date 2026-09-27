@@ -1,6 +1,6 @@
 import { EmptyList } from '@/components/common/empty-list.component'
 import { Input } from '@/components/common/input.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -40,8 +40,9 @@ export function MainWalletPanel({
 
   if (isLoadingWallet) {
     return (
-      <View className="flex-1 items-center justify-center py-10">
-        <Spinner />
+      <View className="gap-4 py-10">
+        <Skeleton className="h-32 w-full" rounded="xl" />
+        <Skeleton className="h-20 w-full" rounded="xl" />
       </View>
     )
   }

@@ -1,7 +1,7 @@
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { useAuth } from '@/providers/auth.provider'
-import { useNavigate } from '@tanstack/react-router'
+import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
 type ProtectedRouteProps = {
@@ -24,8 +24,9 @@ export const ProtectedRoute = ({
   requireAuth = true,
   redirectTo,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user } = useAuth()
   const navigate = useNavigate()
+  const router = useRouter()
 
   useEffect(() => {
     if (isLoading) return
@@ -38,28 +39,35 @@ export const ProtectedRoute = ({
 
     // If auth is NOT required but user is already authenticated,
     // keep them inside the app experience instead of auth screens.
-    if (!requireAuth && isAuthenticated) {
-      navigate({ to: redirectTo, replace: true })
+    if (!requireAuth && isAuthenticated && user) {
+      void navigateAfterAuth(router, user)
     }
-  }, [isAuthenticated, isLoading, navigate, redirectTo, requireAuth])
+  }, [
+    isAuthenticated,
+    isLoading,
+    navigate,
+    redirectTo,
+    requireAuth,
+    router,
+    user,
+  ])
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-black">
-        <Text className="text-white text-lg font-bbh">Loading...</Text>
-      </View>
+      <AppLoadingState
+        detail="Your account and latest activity are being restored."
+        message="Checking your session..."
+      />
     )
   }
 
-  // While the redirect effect runs we still render null to avoid flashes.
   if (requireAuth && !isAuthenticated) {
-    return null
+    return <AppLoadingState message="Opening sign in..." />
   }
 
   if (!requireAuth && isAuthenticated) {
-    return null
+    return <AppLoadingState message="Opening Vybaa..." />
   }
 
   return <>{children}</>
 }
-

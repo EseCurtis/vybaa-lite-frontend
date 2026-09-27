@@ -1,15 +1,20 @@
 // Auth API Request/Response Types
 export interface LoginRequest {
+  acceptedTerms: true
   email: string
   password: string
+  termsVersion: string
 }
 
 export interface RegisterRequest {
+  acceptedTerms: true
   email: string
   password: string
   firstName: string
   lastName: string
   role?: string
+  username?: string
+  termsVersion: string
 }
 
 export interface ForgotPasswordRequest {
@@ -32,7 +37,17 @@ export interface RefreshTokenRequest {
 }
 
 export interface GoogleAuthRequest {
+  acceptedTerms: true
   token: string
+  termsVersion: string
+}
+
+export interface AppleAuthRequest {
+  acceptedTerms: true
+  familyName?: string
+  firstName?: string
+  token: string
+  termsVersion: string
 }
 
 export interface User {
@@ -46,8 +61,15 @@ export interface User {
   username?: string
   avatarUrl?: string
   currentMood?: string
-  rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel'
+  rewindPersona?: 'ella' | 'lyra' | 'jake' | 'ariel' | 'tobi' | 'neeja'
+  rewindPersonaCanChange?: boolean
+  rewindPersonaNextChangeAt?: string
+  rewindPersonalizationEnabled?: boolean
+  rewindProactiveChatEnabled?: boolean
+  rewindProactiveChatExplainedAt?: string
+  timezone?: string
   // OAuth fields
+  appleId?: string
   googleId?: string
   // Timestamps
   createdAt: string
@@ -122,7 +144,7 @@ export interface OnboardingAnswer {
   answer: string
 }
 
-export interface AISuggestion {
+export interface GoalSuggestion {
   title: string
   description: string
   frequency: 'DAILY' | 'WEEKLY'
@@ -131,61 +153,13 @@ export interface AISuggestion {
 export interface OnboardingRequest {
   answers: Array<OnboardingAnswer>
   username?: string
-  selectedTasks?: Array<AISuggestion>
+  selectedGoals?: Array<GoalSuggestion>
 }
 
 export interface OnboardingResponse {
   msg: string
   data: {
     user: User
-  }
-}
-
-// Task Management Types
-export type TaskStatus = 'ACTIVE' | 'COMPLETED' | 'SKIPPED'
-export type TaskFrequency = 'DAILY' | 'WEEKLY'
-export type TaskSource = 'AI' | 'USER'
-
-export interface Task {
-  id: string
-  userId: string
-  title: string
-  description?: string
-  emoji?: string
-  source: TaskSource
-  frequency: TaskFrequency
-  status: TaskStatus
-  scheduledFor: string
-  completedAt?: string
-  createdAt: string
-}
-
-export interface CreateTaskRequest {
-  title: string
-  description?: string
-  frequency: TaskFrequency
-  emoji?: string
-}
-
-export interface UpdateTaskRequest {
-  title?: string
-  description?: string
-  frequency?: TaskFrequency
-  emoji?: string
-  status?: TaskStatus
-}
-
-export interface TasksResponse {
-  msg: string
-  data: {
-    tasks: Array<Task>
-  }
-}
-
-export interface TaskResponse {
-  msg: string
-  data: {
-    task: Task
   }
 }
 
@@ -234,6 +208,20 @@ export interface JournalResponse {
 // Core auth state & context types used by the frontend
 export type AuthUser = User
 
+export type GoogleAuthStatus =
+  | 'creating-session'
+  | 'idle'
+  | 'opening-google'
+  | 'preparing'
+  | 'verifying-google'
+
+export type AppleAuthStatus =
+  | 'creating-session'
+  | 'idle'
+  | 'opening-apple'
+  | 'preparing'
+  | 'verifying-apple'
+
 export interface AuthState {
   user: AuthUser | null
   isAuthenticated: boolean
@@ -243,12 +231,6 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  /**
-   * Perform a Google login via the native social-login plugin.
-   * The provider is responsible for updating global auth state and tokens.
-   */
-  loginWithGoogle: () => Promise<void>
-
   /**
    * Email/password login for web and native.
    */
@@ -266,6 +248,11 @@ export interface AuthContextValue extends AuthState {
    * Clear all auth state and tokens and notify the backend if needed.
    */
   logout: () => Promise<void>
+
+  /**
+   * Permanently delete the current account and clear local auth state.
+   */
+  deleteAccount: () => Promise<void>
 
   /**
    * Force a re-fetch of the current session from the backend.

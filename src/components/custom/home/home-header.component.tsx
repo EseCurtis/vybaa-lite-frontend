@@ -1,7 +1,9 @@
+import { getProfileDisplayName } from '@/app/(app)/profile.screen'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
+import { UserCheckmark } from '@/components/user/checkmark.component'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import type { User } from '@/shared/types/auth.types'
 import { RiNotificationLine } from '@remixicon/react'
@@ -13,13 +15,26 @@ export function HomeHeader({ user }: { user: User }) {
 
   return (
     <View className="flex-row items-center justify-between w-full pt-mg px-mg">
-      <Pressable
-        onPress={() => {
-          navigate({ to: '/app/profile' })
-        }}
-      >
-        <Avatar user={user!} size={40} />
-      </Pressable>
+      <View className="flex-row gap-3 items-center">
+        <Pressable
+          onPress={() => {
+            navigate({ to: '/app/profile' })
+          }}
+        >
+          <Avatar user={user!} size={50} />
+        </Pressable>
+        <View className="">
+          <Text className="font-bold text-lg leading-[20px] font-mona-sans-x text-white">
+            {getProfileDisplayName(user)}
+          </Text>
+          <View className="flex-row text-xs gap-1 items-center">
+            <Text className="font-bold font-mona-sans-x text-card-lighter">
+              @{user.username}
+            </Text>
+            <UserCheckmark />
+          </View>
+        </View>
+      </View>
 
       <Pressable
         onPress={() => {

@@ -22,22 +22,39 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
+import { Route as AppRewindRoutineRouteImport } from './routes/app/rewind-routine'
+import { Route as AppRewindObservationsRouteImport } from './routes/app/rewind-observations'
+import { Route as AppRewindHistorySessionsRouteImport } from './routes/app/rewind-history-sessions'
+import { Route as AppRewindHistoryRouteImport } from './routes/app/rewind-history'
+import { Route as AppRewindChatsRouteImport } from './routes/app/rewind-chats'
 import { Route as AppRewindRouteImport } from './routes/app/rewind'
 import { Route as AppRewardsRouteImport } from './routes/app/rewards'
 import { Route as AppProfileRouteImport } from './routes/app/profile'
+import { Route as AppPermissionsRouteImport } from './routes/app/permissions'
+import { Route as AppJournalRouteImport } from './routes/app/journal'
 import { Route as AppInsightsRouteImport } from './routes/app/insights'
 import { Route as AppHomeRouteImport } from './routes/app/home'
 import { Route as AppGoalRouteImport } from './routes/app/goal'
 import { Route as AppCommunitiesRouteImport } from './routes/app/communities'
+import { Route as AppJournalIndexRouteImport } from './routes/app/journal.index'
+import { Route as AppGoalIndexRouteImport } from './routes/app/goal/index'
 import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
+import { Route as AppRewindChatChatIdRouteImport } from './routes/app/rewind-chat.$chatId'
+import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
+import { Route as AppOnboardingRewindPartnerRouteImport } from './routes/app/onboarding/rewind-partner'
+import { Route as AppJournalDateRouteImport } from './routes/app/journal.$date'
+import { Route as AppJournalPreviewIdRouteImport } from './routes/app/journal-preview.$id'
 import { Route as AppInviteCodeRouteImport } from './routes/app/invite.$code'
+import { Route as AppGoalCreateRouteImport } from './routes/app/goal/create'
+import { Route as AppGoalGoalIdRouteImport } from './routes/app/goal/$goalId'
 import { Route as AppCommunityCommunityIdRouteImport } from './routes/app/community/$communityId'
 import { Route as AppCommunitiesMyRouteImport } from './routes/app/communities.my'
 import { Route as AppAdminFeatureFlagsRouteImport } from './routes/app/admin.feature-flags'
 import { Route as AppActionsFlexxRouteImport } from './routes/app/actions/flexx'
 import { Route as ChillTimerSessionIdDurationRouteImport } from './routes/chill/timer.$sessionId.$duration'
+import { Route as AppRewindChatChatIdSettingsRouteImport } from './routes/app/rewind-chat.$chatId_.settings'
 import { Route as AppCommunityTemplatesTemplateIdRouteImport } from './routes/app/community/templates/$templateId'
 import { Route as AppCommunityMembersCommunityIdRouteImport } from './routes/app/community/members/$communityId'
 import { Route as AppCommunityGoalsCommunityIdRouteImport } from './routes/app/community/goals/$communityId'
@@ -108,6 +125,32 @@ const AppWellnessRoute = AppWellnessRouteImport.update({
   path: '/app/wellness',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRewindRoutineRoute = AppRewindRoutineRouteImport.update({
+  id: '/app/rewind-routine',
+  path: '/app/rewind-routine',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindObservationsRoute = AppRewindObservationsRouteImport.update({
+  id: '/app/rewind-observations',
+  path: '/app/rewind-observations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindHistorySessionsRoute =
+  AppRewindHistorySessionsRouteImport.update({
+    id: '/app/rewind-history-sessions',
+    path: '/app/rewind-history-sessions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppRewindHistoryRoute = AppRewindHistoryRouteImport.update({
+  id: '/app/rewind-history',
+  path: '/app/rewind-history',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRewindChatsRoute = AppRewindChatsRouteImport.update({
+  id: '/app/rewind-chats',
+  path: '/app/rewind-chats',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRewindRoute = AppRewindRouteImport.update({
   id: '/app/rewind',
   path: '/app/rewind',
@@ -121,6 +164,16 @@ const AppRewardsRoute = AppRewardsRouteImport.update({
 const AppProfileRoute = AppProfileRouteImport.update({
   id: '/app/profile',
   path: '/app/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppPermissionsRoute = AppPermissionsRouteImport.update({
+  id: '/app/permissions',
+  path: '/app/permissions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppJournalRoute = AppJournalRouteImport.update({
+  id: '/app/journal',
+  path: '/app/journal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppInsightsRoute = AppInsightsRouteImport.update({
@@ -143,6 +196,16 @@ const AppCommunitiesRoute = AppCommunitiesRouteImport.update({
   path: '/app/communities',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppJournalIndexRoute = AppJournalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppJournalRoute,
+} as any)
+const AppGoalIndexRoute = AppGoalIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppGoalRoute,
+} as any)
 const AppUUsernameRoute = AppUUsernameRouteImport.update({
   id: '/app/u/$username',
   path: '/app/u/$username',
@@ -158,10 +221,46 @@ const AppSubProfileInsightsRoute = AppSubProfileInsightsRouteImport.update({
   path: '/app/sub-profile/insights',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRewindChatChatIdRoute = AppRewindChatChatIdRouteImport.update({
+  id: '/app/rewind-chat/$chatId',
+  path: '/app/rewind-chat/$chatId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
+  id: '/app/r/$sessionId',
+  path: '/app/r/$sessionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppOnboardingRewindPartnerRoute =
+  AppOnboardingRewindPartnerRouteImport.update({
+    id: '/app/onboarding/rewind-partner',
+    path: '/app/onboarding/rewind-partner',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppJournalDateRoute = AppJournalDateRouteImport.update({
+  id: '/$date',
+  path: '/$date',
+  getParentRoute: () => AppJournalRoute,
+} as any)
+const AppJournalPreviewIdRoute = AppJournalPreviewIdRouteImport.update({
+  id: '/app/journal-preview/$id',
+  path: '/app/journal-preview/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppInviteCodeRoute = AppInviteCodeRouteImport.update({
   id: '/app/invite/$code',
   path: '/app/invite/$code',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AppGoalCreateRoute = AppGoalCreateRouteImport.update({
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AppGoalRoute,
+} as any)
+const AppGoalGoalIdRoute = AppGoalGoalIdRouteImport.update({
+  id: '/$goalId',
+  path: '/$goalId',
+  getParentRoute: () => AppGoalRoute,
 } as any)
 const AppCommunityCommunityIdRoute = AppCommunityCommunityIdRouteImport.update({
   id: '/app/community/$communityId',
@@ -187,6 +286,12 @@ const ChillTimerSessionIdDurationRoute =
   ChillTimerSessionIdDurationRouteImport.update({
     id: '/chill/timer/$sessionId/$duration',
     path: '/chill/timer/$sessionId/$duration',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppRewindChatChatIdSettingsRoute =
+  AppRewindChatChatIdSettingsRouteImport.update({
+    id: '/app/rewind-chat/$chatId_/settings',
+    path: '/app/rewind-chat/$chatId/settings',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AppCommunityTemplatesTemplateIdRoute =
@@ -220,12 +325,19 @@ export interface FileRoutesByFullPath {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
+  '/app/goal': typeof AppGoalRouteWithChildren
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/journal': typeof AppJournalRouteWithChildren
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
+  '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -239,14 +351,24 @@ export interface FileRoutesByFullPath {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal/': typeof AppGoalIndexRoute
+  '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesByTo {
@@ -255,12 +377,17 @@ export interface FileRoutesByTo {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
+  '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -274,14 +401,24 @@ export interface FileRoutesByTo {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal': typeof AppGoalIndexRoute
+  '/app/journal': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRoutesById {
@@ -291,12 +428,19 @@ export interface FileRoutesById {
   '/achievements': typeof AchievementsRoute
   '/notifications': typeof NotificationsRoute
   '/app/communities': typeof AppCommunitiesRouteWithChildren
-  '/app/goal': typeof AppGoalRoute
+  '/app/goal': typeof AppGoalRouteWithChildren
   '/app/home': typeof AppHomeRoute
   '/app/insights': typeof AppInsightsRoute
+  '/app/journal': typeof AppJournalRouteWithChildren
+  '/app/permissions': typeof AppPermissionsRoute
   '/app/profile': typeof AppProfileRoute
   '/app/rewards': typeof AppRewardsRoute
   '/app/rewind': typeof AppRewindRoute
+  '/app/rewind-chats': typeof AppRewindChatsRoute
+  '/app/rewind-history': typeof AppRewindHistoryRoute
+  '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
+  '/app/rewind-observations': typeof AppRewindObservationsRoute
+  '/app/rewind-routine': typeof AppRewindRoutineRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -310,14 +454,24 @@ export interface FileRoutesById {
   '/app/admin/feature-flags': typeof AppAdminFeatureFlagsRoute
   '/app/communities/my': typeof AppCommunitiesMyRoute
   '/app/community/$communityId': typeof AppCommunityCommunityIdRoute
+  '/app/goal/$goalId': typeof AppGoalGoalIdRoute
+  '/app/goal/create': typeof AppGoalCreateRoute
   '/app/invite/$code': typeof AppInviteCodeRoute
+  '/app/journal-preview/$id': typeof AppJournalPreviewIdRoute
+  '/app/journal/$date': typeof AppJournalDateRoute
+  '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
+  '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
   '/app/u/$username': typeof AppUUsernameRoute
+  '/app/goal/': typeof AppGoalIndexRoute
+  '/app/journal/': typeof AppJournalIndexRoute
   '/app/community/activity/$communityId': typeof AppCommunityActivityCommunityIdRoute
   '/app/community/goals/$communityId': typeof AppCommunityGoalsCommunityIdRoute
   '/app/community/members/$communityId': typeof AppCommunityMembersCommunityIdRoute
   '/app/community/templates/$templateId': typeof AppCommunityTemplatesTemplateIdRoute
+  '/app/rewind-chat/$chatId_/settings': typeof AppRewindChatChatIdSettingsRoute
   '/chill/timer/$sessionId/$duration': typeof ChillTimerSessionIdDurationRoute
 }
 export interface FileRouteTypes {
@@ -331,9 +485,16 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/journal'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
+    | '/app/rewind-history'
+    | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
+    | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -347,14 +508,24 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
+    | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
+    | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal/'
+    | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId/settings'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -363,12 +534,17 @@ export interface FileRouteTypes {
     | '/achievements'
     | '/notifications'
     | '/app/communities'
-    | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
+    | '/app/rewind-history'
+    | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
+    | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -382,14 +558,24 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
+    | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
+    | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal'
+    | '/app/journal'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId/settings'
     | '/chill/timer/$sessionId/$duration'
   id:
     | '__root__'
@@ -401,9 +587,16 @@ export interface FileRouteTypes {
     | '/app/goal'
     | '/app/home'
     | '/app/insights'
+    | '/app/journal'
+    | '/app/permissions'
     | '/app/profile'
     | '/app/rewards'
     | '/app/rewind'
+    | '/app/rewind-chats'
+    | '/app/rewind-history'
+    | '/app/rewind-history-sessions'
+    | '/app/rewind-observations'
+    | '/app/rewind-routine'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -417,14 +610,24 @@ export interface FileRouteTypes {
     | '/app/admin/feature-flags'
     | '/app/communities/my'
     | '/app/community/$communityId'
+    | '/app/goal/$goalId'
+    | '/app/goal/create'
     | '/app/invite/$code'
+    | '/app/journal-preview/$id'
+    | '/app/journal/$date'
+    | '/app/onboarding/rewind-partner'
+    | '/app/r/$sessionId'
+    | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
     | '/app/u/$username'
+    | '/app/goal/'
+    | '/app/journal/'
     | '/app/community/activity/$communityId'
     | '/app/community/goals/$communityId'
     | '/app/community/members/$communityId'
     | '/app/community/templates/$templateId'
+    | '/app/rewind-chat/$chatId_/settings'
     | '/chill/timer/$sessionId/$duration'
   fileRoutesById: FileRoutesById
 }
@@ -434,12 +637,19 @@ export interface RootRouteChildren {
   AchievementsRoute: typeof AchievementsRoute
   NotificationsRoute: typeof NotificationsRoute
   AppCommunitiesRoute: typeof AppCommunitiesRouteWithChildren
-  AppGoalRoute: typeof AppGoalRoute
+  AppGoalRoute: typeof AppGoalRouteWithChildren
   AppHomeRoute: typeof AppHomeRoute
   AppInsightsRoute: typeof AppInsightsRoute
+  AppJournalRoute: typeof AppJournalRouteWithChildren
+  AppPermissionsRoute: typeof AppPermissionsRoute
   AppProfileRoute: typeof AppProfileRoute
   AppRewardsRoute: typeof AppRewardsRoute
   AppRewindRoute: typeof AppRewindRoute
+  AppRewindChatsRoute: typeof AppRewindChatsRoute
+  AppRewindHistoryRoute: typeof AppRewindHistoryRoute
+  AppRewindHistorySessionsRoute: typeof AppRewindHistorySessionsRoute
+  AppRewindObservationsRoute: typeof AppRewindObservationsRoute
+  AppRewindRoutineRoute: typeof AppRewindRoutineRoute
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -453,6 +663,10 @@ export interface RootRouteChildren {
   AppAdminFeatureFlagsRoute: typeof AppAdminFeatureFlagsRoute
   AppCommunityCommunityIdRoute: typeof AppCommunityCommunityIdRoute
   AppInviteCodeRoute: typeof AppInviteCodeRoute
+  AppJournalPreviewIdRoute: typeof AppJournalPreviewIdRoute
+  AppOnboardingRewindPartnerRoute: typeof AppOnboardingRewindPartnerRoute
+  AppRSessionIdRoute: typeof AppRSessionIdRoute
+  AppRewindChatChatIdRoute: typeof AppRewindChatChatIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
   AppUUsernameRoute: typeof AppUUsernameRoute
@@ -460,6 +674,7 @@ export interface RootRouteChildren {
   AppCommunityGoalsCommunityIdRoute: typeof AppCommunityGoalsCommunityIdRoute
   AppCommunityMembersCommunityIdRoute: typeof AppCommunityMembersCommunityIdRoute
   AppCommunityTemplatesTemplateIdRoute: typeof AppCommunityTemplatesTemplateIdRoute
+  AppRewindChatChatIdSettingsRoute: typeof AppRewindChatChatIdSettingsRoute
   ChillTimerSessionIdDurationRoute: typeof ChillTimerSessionIdDurationRoute
 }
 
@@ -556,6 +771,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppWellnessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewind-routine': {
+      id: '/app/rewind-routine'
+      path: '/app/rewind-routine'
+      fullPath: '/app/rewind-routine'
+      preLoaderRoute: typeof AppRewindRoutineRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-observations': {
+      id: '/app/rewind-observations'
+      path: '/app/rewind-observations'
+      fullPath: '/app/rewind-observations'
+      preLoaderRoute: typeof AppRewindObservationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-history-sessions': {
+      id: '/app/rewind-history-sessions'
+      path: '/app/rewind-history-sessions'
+      fullPath: '/app/rewind-history-sessions'
+      preLoaderRoute: typeof AppRewindHistorySessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-history': {
+      id: '/app/rewind-history'
+      path: '/app/rewind-history'
+      fullPath: '/app/rewind-history'
+      preLoaderRoute: typeof AppRewindHistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-chats': {
+      id: '/app/rewind-chats'
+      path: '/app/rewind-chats'
+      fullPath: '/app/rewind-chats'
+      preLoaderRoute: typeof AppRewindChatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/rewind': {
       id: '/app/rewind'
       path: '/app/rewind'
@@ -575,6 +825,20 @@ declare module '@tanstack/react-router' {
       path: '/app/profile'
       fullPath: '/app/profile'
       preLoaderRoute: typeof AppProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/permissions': {
+      id: '/app/permissions'
+      path: '/app/permissions'
+      fullPath: '/app/permissions'
+      preLoaderRoute: typeof AppPermissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/journal': {
+      id: '/app/journal'
+      path: '/app/journal'
+      fullPath: '/app/journal'
+      preLoaderRoute: typeof AppJournalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/insights': {
@@ -605,6 +869,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCommunitiesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/journal/': {
+      id: '/app/journal/'
+      path: '/'
+      fullPath: '/app/journal/'
+      preLoaderRoute: typeof AppJournalIndexRouteImport
+      parentRoute: typeof AppJournalRoute
+    }
+    '/app/goal/': {
+      id: '/app/goal/'
+      path: '/'
+      fullPath: '/app/goal/'
+      preLoaderRoute: typeof AppGoalIndexRouteImport
+      parentRoute: typeof AppGoalRoute
+    }
     '/app/u/$username': {
       id: '/app/u/$username'
       path: '/app/u/$username'
@@ -626,12 +904,61 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSubProfileInsightsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/rewind-chat/$chatId': {
+      id: '/app/rewind-chat/$chatId'
+      path: '/app/rewind-chat/$chatId'
+      fullPath: '/app/rewind-chat/$chatId'
+      preLoaderRoute: typeof AppRewindChatChatIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/r/$sessionId': {
+      id: '/app/r/$sessionId'
+      path: '/app/r/$sessionId'
+      fullPath: '/app/r/$sessionId'
+      preLoaderRoute: typeof AppRSessionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/onboarding/rewind-partner': {
+      id: '/app/onboarding/rewind-partner'
+      path: '/app/onboarding/rewind-partner'
+      fullPath: '/app/onboarding/rewind-partner'
+      preLoaderRoute: typeof AppOnboardingRewindPartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/journal/$date': {
+      id: '/app/journal/$date'
+      path: '/$date'
+      fullPath: '/app/journal/$date'
+      preLoaderRoute: typeof AppJournalDateRouteImport
+      parentRoute: typeof AppJournalRoute
+    }
+    '/app/journal-preview/$id': {
+      id: '/app/journal-preview/$id'
+      path: '/app/journal-preview/$id'
+      fullPath: '/app/journal-preview/$id'
+      preLoaderRoute: typeof AppJournalPreviewIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/invite/$code': {
       id: '/app/invite/$code'
       path: '/app/invite/$code'
       fullPath: '/app/invite/$code'
       preLoaderRoute: typeof AppInviteCodeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/app/goal/create': {
+      id: '/app/goal/create'
+      path: '/create'
+      fullPath: '/app/goal/create'
+      preLoaderRoute: typeof AppGoalCreateRouteImport
+      parentRoute: typeof AppGoalRoute
+    }
+    '/app/goal/$goalId': {
+      id: '/app/goal/$goalId'
+      path: '/$goalId'
+      fullPath: '/app/goal/$goalId'
+      preLoaderRoute: typeof AppGoalGoalIdRouteImport
+      parentRoute: typeof AppGoalRoute
     }
     '/app/community/$communityId': {
       id: '/app/community/$communityId'
@@ -666,6 +993,13 @@ declare module '@tanstack/react-router' {
       path: '/chill/timer/$sessionId/$duration'
       fullPath: '/chill/timer/$sessionId/$duration'
       preLoaderRoute: typeof ChillTimerSessionIdDurationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/rewind-chat/$chatId_/settings': {
+      id: '/app/rewind-chat/$chatId_/settings'
+      path: '/app/rewind-chat/$chatId/settings'
+      fullPath: '/app/rewind-chat/$chatId/settings'
+      preLoaderRoute: typeof AppRewindChatChatIdSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/community/templates/$templateId': {
@@ -711,18 +1045,54 @@ const AppCommunitiesRouteWithChildren = AppCommunitiesRoute._addFileChildren(
   AppCommunitiesRouteChildren,
 )
 
+interface AppGoalRouteChildren {
+  AppGoalGoalIdRoute: typeof AppGoalGoalIdRoute
+  AppGoalCreateRoute: typeof AppGoalCreateRoute
+  AppGoalIndexRoute: typeof AppGoalIndexRoute
+}
+
+const AppGoalRouteChildren: AppGoalRouteChildren = {
+  AppGoalGoalIdRoute: AppGoalGoalIdRoute,
+  AppGoalCreateRoute: AppGoalCreateRoute,
+  AppGoalIndexRoute: AppGoalIndexRoute,
+}
+
+const AppGoalRouteWithChildren =
+  AppGoalRoute._addFileChildren(AppGoalRouteChildren)
+
+interface AppJournalRouteChildren {
+  AppJournalDateRoute: typeof AppJournalDateRoute
+  AppJournalIndexRoute: typeof AppJournalIndexRoute
+}
+
+const AppJournalRouteChildren: AppJournalRouteChildren = {
+  AppJournalDateRoute: AppJournalDateRoute,
+  AppJournalIndexRoute: AppJournalIndexRoute,
+}
+
+const AppJournalRouteWithChildren = AppJournalRoute._addFileChildren(
+  AppJournalRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementSimulatorRoute: AchievementSimulatorRoute,
   AchievementsRoute: AchievementsRoute,
   NotificationsRoute: NotificationsRoute,
   AppCommunitiesRoute: AppCommunitiesRouteWithChildren,
-  AppGoalRoute: AppGoalRoute,
+  AppGoalRoute: AppGoalRouteWithChildren,
   AppHomeRoute: AppHomeRoute,
   AppInsightsRoute: AppInsightsRoute,
+  AppJournalRoute: AppJournalRouteWithChildren,
+  AppPermissionsRoute: AppPermissionsRoute,
   AppProfileRoute: AppProfileRoute,
   AppRewardsRoute: AppRewardsRoute,
   AppRewindRoute: AppRewindRoute,
+  AppRewindChatsRoute: AppRewindChatsRoute,
+  AppRewindHistoryRoute: AppRewindHistoryRoute,
+  AppRewindHistorySessionsRoute: AppRewindHistorySessionsRoute,
+  AppRewindObservationsRoute: AppRewindObservationsRoute,
+  AppRewindRoutineRoute: AppRewindRoutineRoute,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,
@@ -736,6 +1106,10 @@ const rootRouteChildren: RootRouteChildren = {
   AppAdminFeatureFlagsRoute: AppAdminFeatureFlagsRoute,
   AppCommunityCommunityIdRoute: AppCommunityCommunityIdRoute,
   AppInviteCodeRoute: AppInviteCodeRoute,
+  AppJournalPreviewIdRoute: AppJournalPreviewIdRoute,
+  AppOnboardingRewindPartnerRoute: AppOnboardingRewindPartnerRoute,
+  AppRSessionIdRoute: AppRSessionIdRoute,
+  AppRewindChatChatIdRoute: AppRewindChatChatIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,
   AppUUsernameRoute: AppUUsernameRoute,
@@ -743,6 +1117,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppCommunityGoalsCommunityIdRoute: AppCommunityGoalsCommunityIdRoute,
   AppCommunityMembersCommunityIdRoute: AppCommunityMembersCommunityIdRoute,
   AppCommunityTemplatesTemplateIdRoute: AppCommunityTemplatesTemplateIdRoute,
+  AppRewindChatChatIdSettingsRoute: AppRewindChatChatIdSettingsRoute,
   ChillTimerSessionIdDurationRoute: ChillTimerSessionIdDurationRoute,
 }
 export const routeTree = rootRouteImport

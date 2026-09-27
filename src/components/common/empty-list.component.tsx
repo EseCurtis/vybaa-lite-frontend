@@ -14,19 +14,19 @@ export interface EmptyListProps {
 
 export function EmptyList({ icon, title, description, action }: EmptyListProps) {
   return (
-    <View className="flex-1 items-center justify-start  px-8 py-16 ">
+    <View className="flex-1 w-full items-center justify-start  px-3 py-16 ">
       {icon && (
         <View className="mb-6 ">
           {icon}
         </View>
       )}
       
-      <Text className="text-white text-2xl font-bold font-bbh text-center mb-3">
+      <Text className="text-white w-full  text-md font-bold font-bbh text-center mb-3">
         {title}
       </Text>
       
       {description && (
-        <Text className="text-white/60 text-base font-bbh text-center mb-8 max-w-sm">
+        <Text className="text-card-lighter-3 text-base text-sm font-bbh text-center mb-8 max-w-sm">
           {description}
         </Text>
       )}

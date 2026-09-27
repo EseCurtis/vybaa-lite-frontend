@@ -195,7 +195,7 @@ export default function WellnessScreen() {
                     )}
                   </View>
                   <button
-                    onClick={() => navigate({ to: '/journal' })}
+                    onClick={() => navigate({ to: '/app/journal' })}
                     className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
                   >
                     <RiArrowRightLine size={18} className="text-pink-300/70" />

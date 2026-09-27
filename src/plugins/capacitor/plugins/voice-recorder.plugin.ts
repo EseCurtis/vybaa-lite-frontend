@@ -342,6 +342,10 @@ async function requestAudioRecordingPermission() {
   }
 }
 
+export async function hasVoiceRecordingPermission(): Promise<boolean> {
+  return (await hasAudioRecordingPermission()).value
+}
+
 export async function ensureVoiceRecordingPermission() {
   const deviceSupport = await canDeviceVoiceRecord()
   if (!deviceSupport.value) {

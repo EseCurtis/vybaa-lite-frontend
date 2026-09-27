@@ -1,6 +1,7 @@
-import { useGoogleAuth } from '@/hooks/use-google-auth.hook'
 import { authAPI } from '@/shared/api/auth.api'
 import { resetTimezoneTracking } from '@/shared/api/http'
+import { userAPI } from '@/shared/api/user.api'
+import { cancelAllDeviceAlarms } from '@/plugins/capacitor/plugins/device-alarm.plugin'
 import type {
   AuthContextValue,
   AuthResponse,
@@ -96,30 +97,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   ])
 
   const handleAuthSuccess = useCallback(async () => {
-    // After tokens are stored, fetch the session immediately
-    // This ensures the auth state is updated right away
-    try {
-      await queryClient.fetchQuery({
-        queryKey: SESSION_QUERY_KEY,
-        queryFn: async () => authAPI.getSession(),
-      })
-    } catch (error) {
-      // If session fetch fails, invalidate to trigger error state
-      await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
-    }
+    await queryClient.fetchQuery({
+      queryKey: SESSION_QUERY_KEY,
+      queryFn: async () => authAPI.getSession(),
+    })
   }, [queryClient])
-
-  const google = useGoogleAuth({
-    onSuccess: () => {
-      void handleAuthSuccess()
-    },
-  })
 
   const persistTokens = useCallback((data: AuthResponse['data']) => {
     if (typeof window === 'undefined') return
     localStorage.setItem('authToken', data.token)
     localStorage.setItem('refreshToken', data.refreshToken)
   }, [])
+
+  const clearAuthState = useCallback(() => {
+    void cancelAllDeviceAlarms().catch(() => undefined)
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('fcmToken')
+    resetTimezoneTracking()
+    queryClient.clear()
+    setState({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      stale: false,
+    })
+  }, [queryClient])
 
   const loginWithEmail = useCallback(
     async (credentials: LoginRequest) => {
@@ -151,32 +155,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logoutMutation = useMutation<void, Error, void>({
     mutationFn: async () => {
-      // Best-effort logout: if push token management is added later we can
-      // wire it in here. For now we simply notify the backend and clear state.
-      await authAPI.logout({ fcmToken: '' })
+      const fcmToken =
+        typeof window !== 'undefined'
+          ? (localStorage.getItem('fcmToken') ?? '')
+          : ''
+
+      await authAPI.logout({ fcmToken })
     },
-    onSettled: () => {
-      localStorage.removeItem('authToken')
-      localStorage.removeItem('refreshToken')
-      resetTimezoneTracking()
-      queryClient.removeQueries({ queryKey: SESSION_QUERY_KEY })
-      setState({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-        error: null,
-        stale: false,
-      })
-    },
+    onSettled: clearAuthState,
   })
 
-  const loginWithGoogle = useCallback(async () => {
-    await google.signInWithGoogle()
-  }, [google])
+  const deleteAccountMutation = useMutation<void, Error, void>({
+    mutationFn: async () => {
+      await userAPI.deleteAccount()
+    },
+    onSettled: async () => {
+      clearAuthState()
+    },
+  })
 
   const logout = useCallback(async () => {
     await logoutMutation.mutateAsync()
   }, [logoutMutation])
+
+  const deleteAccount = useCallback(async () => {
+    await deleteAccountMutation.mutateAsync()
+  }, [deleteAccountMutation])
 
   const refreshSession = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
@@ -186,19 +190,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       ...state,
       error:
-        state.error ?? google.error ?? logoutMutation.error?.message ?? null,
+        state.error ??
+        logoutMutation.error?.message ??
+        deleteAccountMutation.error?.message ??
+        null,
       isLoading:
-        state.isLoading || google.isLoading || logoutMutation.isPending,
-      loginWithGoogle,
+        state.isLoading ||
+        logoutMutation.isPending ||
+        deleteAccountMutation.isPending,
+      deleteAccount,
       loginWithEmail,
       registerWithEmail,
       logout,
       refreshSession,
     }),
     [
-      google.error,
-      google.isLoading,
-      loginWithGoogle,
+      deleteAccount,
+      deleteAccountMutation.error?.message,
+      deleteAccountMutation.isPending,
       logout,
       logoutMutation.error?.message,
       logoutMutation.isPending,

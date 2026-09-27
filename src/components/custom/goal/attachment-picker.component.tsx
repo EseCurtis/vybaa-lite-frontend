@@ -31,7 +31,9 @@ export function AttachmentPicker({
   const toast = useToast()
   const [uploading, setUploading] = useState(false)
 
-  const handleImageSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -92,7 +94,9 @@ export function AttachmentPicker({
     }
   }
 
-  const handleAudioSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAudioSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -177,7 +181,7 @@ export function AttachmentPicker({
           disabled={uploading || attachments.length >= maxAttachments}
           className="bg-cardd-700/30 hover:bg-cardd-700/40 rounded-lg px-3 py-2 flex-row items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
         >
-          <RiImageLine size={16} className="text-white/60" />
+          <RiImageLine size={16} className="text-card-lighter-2" />
         </Pressable>
 
         <Pressable
@@ -185,7 +189,7 @@ export function AttachmentPicker({
           disabled={uploading || attachments.length >= maxAttachments}
           className="bg-cardd-700/30 hover:bg-cardd-700/40 rounded-lg px-3 py-2 flex-row items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
         >
-          <RiMicLine size={16} className="text-white/60" />
+          <RiMicLine size={16} className="text-card-lighter-2" />
         </Pressable>
       </View>
 
@@ -215,7 +219,7 @@ export function AttachmentPicker({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="bg-cardd-700/30 rounded-lg p-2.5 flex-row items-center gap-2.5 border border-white/5"
+                className="bg-card-light-50 rounded-lg p-2.5 flex-row items-center gap-2.5"
               >
                 {attachment.type === 'image' ? (
                   <img
@@ -240,10 +244,13 @@ export function AttachmentPicker({
                     </audio>
                   ) : (
                     <>
-                      <Text className="text-white/90 text-xs font-bbh font-medium truncate">
-                        {smartTruncate(attachment.name || 'Image Attachment', 10)}
+                      <Text className="text-card-lighter-3 text-xs font-bbh font-medium truncate">
+                        {smartTruncate(
+                          attachment.name || 'Image Attachment',
+                          10,
+                        )}
                       </Text>
-                      <Text className="text-white/40 text-[10px] font-bbh">
+                      <Text className="text-card-lighter-2 text-[10px] font-bbh">
                         Image
                       </Text>
                     </>
@@ -251,9 +258,9 @@ export function AttachmentPicker({
                 </View>
                 <Pressable
                   onPress={() => removeAttachment(index)}
-                  className="p-1 rounded-md hover:bg-white/5 transition-colors"
+                  className="p-1 rounded-md hover:bg-card-light transition-colors"
                 >
-                  <RiCloseLine size={14} className="text-white/50" />
+                  <RiCloseLine size={14} className="text-card-lighter-2" />
                 </Pressable>
               </motion.div>
             ))}
@@ -262,7 +269,7 @@ export function AttachmentPicker({
       </AnimatePresence>
 
       {uploading && (
-        <Text className="text-white/60 text-xs font-bbh text-center">
+        <Text className="text-card-lighter-2 text-xs font-bbh text-center">
           Uploading...
         </Text>
       )}

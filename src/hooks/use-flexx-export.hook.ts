@@ -14,7 +14,7 @@ export function useFlexxExport() {
     async (element: HTMLElement | null) => {
       if (!element) {
         toast.error('Card not found')
-        return
+        return false
       }
 
       try {
@@ -54,7 +54,7 @@ export function useFlexxExport() {
         ctx.fillRect(0, 0, targetWidth, targetHeight)
 
         // Draw the captured canvas centered on the final canvas
-        const scaledHeight = (rect.height * scale)
+        const scaledHeight = rect.height * scale
         const yOffset = (targetHeight - scaledHeight) / 2
 
         ctx.drawImage(
@@ -86,10 +86,12 @@ export function useFlexxExport() {
 
         toast.dismiss()
         toast.success('Flexx card shared!')
+        return true
       } catch (error) {
         console.error('Export failed:', error)
         toast.dismiss()
         toast.error('Failed to export card')
+        return false
       }
     },
     [toast],

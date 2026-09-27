@@ -7,9 +7,19 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useToast } from '@/providers/toast.provider'
-import { adminAPI, type FeatureFlag } from '@/shared/api/admin.api'
+import {
+  adminAPI,
+  type FeatureFlag,
+  type ModerationReport,
+} from '@/shared/api/admin.api'
+import { getApiErrorMessage } from '@/shared/utils/api-error.util'
 import { cn } from '@/shared/utils/helpers.util'
-import { RiCheckLine, RiToggleFill } from '@remixicon/react'
+import {
+  RiAlarmWarningLine,
+  RiCheckLine,
+  RiDeleteBinLine,
+  RiToggleFill,
+} from '@remixicon/react'
 import { useEffect, useState } from 'react'
 
 export default function AdminFeatureFlagsScreen() {
@@ -19,17 +29,24 @@ export default function AdminFeatureFlagsScreen() {
   const [isAuthed, setIsAuthed] = useState(false)
   const [flags, setFlags] = useState<FeatureFlag[] | null>(null)
   const [loadingFlags, setLoadingFlags] = useState(false)
+  const [reports, setReports] = useState<ModerationReport[]>([])
+  const [updatingReportId, setUpdatingReportId] = useState<string | null>(null)
 
   const loadFlags = async (currentSecret: string) => {
     setLoadingFlags(true)
     try {
-      const res = await adminAPI.listFeatureFlags(currentSecret)
-      setFlags(res.data)
+      const [flagResponse, openReports, reviewingReports] = await Promise.all([
+        adminAPI.listFeatureFlags(currentSecret),
+        adminAPI.listModerationReports(currentSecret, 'OPEN'),
+        adminAPI.listModerationReports(currentSecret, 'REVIEWING'),
+      ])
+      setFlags(flagResponse.data)
+      setReports([...openReports.data, ...reviewingReports.data])
       setIsAuthed(true)
-    } catch (err: any) {
+    } catch (error: unknown) {
       setIsAuthed(false)
       setFlags(null)
-      toast.error(err?.response?.data?.msg || 'Invalid admin secret')
+      toast.error(getApiErrorMessage(error, 'Invalid admin secret'))
     } finally {
       setLoadingFlags(false)
     }
@@ -51,13 +68,44 @@ export default function AdminFeatureFlagsScreen() {
         enabled,
       })
       setFlags((prev) =>
-        prev
-          ? prev.map((f) => (f.key === flagKey ? res.data : f))
-          : [res.data],
+        prev ? prev.map((f) => (f.key === flagKey ? res.data : f)) : [res.data],
       )
       toast.success('Feature flag updated')
-    } catch (err: any) {
-      toast.error(err?.response?.data?.msg || 'Failed to update flag')
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Failed to update flag'))
+    }
+  }
+
+  async function updateReport(
+    report: ModerationReport,
+    status: 'DISMISSED' | 'RESOLVED' | 'REVIEWING',
+  ): Promise<void> {
+    if (!secret.trim() || updatingReportId) return
+    if (
+      status === 'RESOLVED' &&
+      !window.confirm(
+        `Remove the reported content and suspend @${report.targetUser.username || report.targetUser.firstName || 'user'}?`,
+      )
+    ) {
+      return
+    }
+    setUpdatingReportId(report.id)
+    try {
+      await adminAPI.updateModerationReport(secret.trim(), report.id, {
+        action:
+          status === 'RESOLVED' ? 'REMOVE_CONTENT_AND_SUSPEND' : undefined,
+        status,
+      })
+      setReports((current) => current.filter((item) => item.id !== report.id))
+      toast.success(
+        status === 'RESOLVED'
+          ? 'Content removed and user suspended'
+          : 'Report updated',
+      )
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Could not update report'))
+    } finally {
+      setUpdatingReportId(null)
     }
   }
 
@@ -65,13 +113,16 @@ export default function AdminFeatureFlagsScreen() {
   useEffect(() => {
     if (!flags || !isAuthed) return
     if (!flags.find((f) => f.key === 'REAL_WALLET')) {
-      setFlags([...flags, {
-        id: 'virtual-REAL_WALLET',
-        key: 'REAL_WALLET',
-        enabled: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }])
+      setFlags([
+        ...flags,
+        {
+          id: 'virtual-REAL_WALLET',
+          key: 'REAL_WALLET',
+          enabled: false,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ])
     }
   }, [flags, isAuthed])
 
@@ -148,10 +199,7 @@ export default function AdminFeatureFlagsScreen() {
                     )}
                   >
                     {realWalletFlag?.enabled && (
-                      <RiCheckLine
-                        size={14}
-                        className="text-emerald-400"
-                      />
+                      <RiCheckLine size={14} className="text-emerald-400" />
                     )}
                     <Text className="text-xs font-bbh text-white">
                       {realWalletFlag?.enabled ? 'Enabled' : 'Disabled'}
@@ -168,9 +216,99 @@ export default function AdminFeatureFlagsScreen() {
               </View>
             </View>
           )}
+
+          {isAuthed ? (
+            <View className="space-y-3">
+              <View className="flex-row items-center justify-between px-1">
+                <Text className="text-sm font-semibold text-white font-bbh">
+                  Safety queue
+                </Text>
+                <Text className="text-xs text-card-lighter-3 font-bbh">
+                  {reports.length} pending
+                </Text>
+              </View>
+              {reports.length ? (
+                [...reports]
+                  .sort(
+                    (first, second) =>
+                      new Date(first.createdAt).getTime() -
+                      new Date(second.createdAt).getTime(),
+                  )
+                  .map((report) => (
+                    <View
+                      key={report.id}
+                      className="rounded-2xl bg-card-light-50 p-4"
+                    >
+                      <View className="flex-row items-start gap-3">
+                        <View
+                          className={`size-10 items-center justify-center rounded-xl ${report.isOverdue ? 'bg-danger-900' : 'bg-warning-900'}`}
+                        >
+                          <RiAlarmWarningLine
+                            className={
+                              report.isOverdue
+                                ? 'text-danger-300'
+                                : 'text-warning-300'
+                            }
+                            size={20}
+                          />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-sm font-bold text-white font-bbh">
+                            {report.reason} · @
+                            {report.targetUser.username || 'user'}
+                          </Text>
+                          <Text className="mt-1 text-xs text-card-lighter-3 font-bbh">
+                            {report.isOverdue ? 'Overdue' : 'Due'}{' '}
+                            {new Date(report.responseDueAt).toLocaleString()}
+                          </Text>
+                          {report.details ? (
+                            <Text className="mt-2 text-xs leading-5 text-card-lighter-3 font-bbh">
+                              {report.details}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
+                      <View className="mt-4 flex-row flex-wrap gap-2">
+                        {report.status === 'OPEN' ? (
+                          <Button
+                            disabled={updatingReportId === report.id}
+                            label="Start review"
+                            onClick={() =>
+                              void updateReport(report, 'REVIEWING')
+                            }
+                            size="sm"
+                            variant="secondary"
+                          />
+                        ) : null}
+                        <Button
+                          disabled={updatingReportId === report.id}
+                          label="Remove + suspend"
+                          leftIcon={<RiDeleteBinLine size={15} />}
+                          onClick={() => void updateReport(report, 'RESOLVED')}
+                          size="sm"
+                          variant="destructive"
+                        />
+                        <Button
+                          disabled={updatingReportId === report.id}
+                          label="Dismiss"
+                          onClick={() => void updateReport(report, 'DISMISSED')}
+                          size="sm"
+                          variant="ghost"
+                        />
+                      </View>
+                    </View>
+                  ))
+              ) : (
+                <View className="rounded-2xl bg-card-light-50 p-5">
+                  <Text className="text-sm text-card-lighter-3 font-bbh">
+                    No open safety reports.
+                  </Text>
+                </View>
+              )}
+            </View>
+          ) : null}
         </View>
       </NoiseComponent>
     </View>
   )
 }
-

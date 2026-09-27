@@ -1,12 +1,14 @@
-import JournalEditorScreen from '@/app/(app)/journal/$date.screen'
 import { featureFlags } from '@/shared/config/feature-flags.config'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/journal/$date')({
-  beforeLoad: () => {
+  beforeLoad: ({ params }) => {
     if (!featureFlags.journal) {
       throw redirect({ to: '/app/home' })
     }
+    throw redirect({
+      to: '/app/journal/$date',
+      params: { date: params.date },
+    })
   },
-  component: JournalEditorScreen,
 })

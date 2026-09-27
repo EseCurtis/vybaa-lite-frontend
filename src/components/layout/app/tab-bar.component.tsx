@@ -1,15 +1,20 @@
 import { BottomNotch } from '@/components/common/notch.component'
+import { Avatar } from '@/components/user/avatar.component'
+import { useInfiniteGoals } from '@/hooks/use-goals.hook'
 import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
-import { featureFlags } from '@/shared/config/feature-flags.config'
 import { Moti } from '@/shared/constants.shared'
+import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import { hapticFeedback } from '@/shared/haptic.util'
+//import { shouldAnimate } from '@/shared/utils/animation.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
+import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { AnimatePresence } from 'framer-motion'
+import { BookOpenCheck, Plus } from 'lucide-react'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
 import { LinearGradient } from '../linear-gradient.component'
@@ -21,8 +26,21 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   const navigate = useNavigate()
   const location = useLocation()
   const { data: unreadCount } = useUnreadCount()
+  const dueGoals = useInfiniteGoals({ filter: 'DUE' })
+  const overdueGoals = useInfiniteGoals({ filter: 'OVERDUE' })
   const { isVisible } = useTabBarController()
   const { user } = useAuth()
+  const goalAttentionCount = useMemo(() => {
+    const attentionGoalIds = new Set<string>()
+    for (const data of [dueGoals.data, overdueGoals.data]) {
+      for (const page of data?.pages ?? []) {
+        for (const goal of page.data) {
+          if (goalNeedsAttention(goal)) attentionGoalIds.add(goal.id)
+        }
+      }
+    }
+    return attentionGoalIds.size
+  }, [dueGoals.data, overdueGoals.data])
 
   const tabs = useMemo(
     () =>
@@ -42,26 +60,38 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           icon: Icons.Target,
           label: 'Goals',
           isSpecial: false,
-          badge: null,
+          badge: goalAttentionCount,
           matchAllRoot: true,
+          enabled: true,
         },
+
         {
-          id: 'communities',
-          route: '/app/communities',
-          icon: Icons.Users,
-          label: 'Communities',
+          id: 'create-goal',
+          route: '/app/goal/create',
+          icon: Plus,
+          label: 'Create goal',
+          isSpecial: true,
+          badge: null,
+          enabled: true,
+        },
+        // {
+        //   id: 'communities',
+        //   route: '/app/communities',
+        //   icon: Icons.Users,
+        //   label: 'Communities',
+        //   isSpecial: false,
+        //   badge: null,
+        //   matchAllRoot: true,
+        // },
+        {
+          id: 'journal',
+          route: '/app/journal',
+          icon: BookOpenCheck,
+          label: 'Journal',
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
-        },
-        {
-          id: 'rewards',
-          route: '/app/rewards',
-          icon: Icons.Coins,
-          label: 'Play Points',
-          isSpecial: false,
-          badge: null,
-          matchAllRoot: true,
+          enabled: true,
         },
         {
           id: 'wellness',
@@ -71,19 +101,19 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           isSpecial: false,
           badge: null,
           matchAllRoot: true,
-          enabled: featureFlags.insights, // Hide wellness tab when insights is disabled
+          enabled: false, // Hide wellness tab when insights is disabled
         },
-        // {
-        //   id: 'profile',
-        //   route: '/app/profile',
-        //   icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
-        //   label: 'Me',
-        //   isSpecial: false,
-        //   badge: null,
-        //   matchAllRoot: true,
-        // },
+        {
+          id: 'profile',
+          route: '/app/profile',
+          icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
+          label: 'Me',
+          isSpecial: false,
+          badge: null,
+          matchAllRoot: true,
+        },
       ].filter((tab) => tab.enabled !== false), // Filter out disabled tabs
-    [unreadCount],
+    [goalAttentionCount, unreadCount, user],
   )
 
   const isActiveTab = useCallback(
@@ -95,7 +125,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
       }
 
       if (matchAllRoot) {
-        return location.pathname.includes(route)
+        return getAppTabRoot(location.pathname) === route
       }
 
       return location.pathname === route
@@ -110,8 +140,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         // Provide haptic feedback
         await hapticFeedback.light()
 
-        // Navigate to the route
-        navigate({ to: route })
+        navigate({ replace: true, to: route })
       }
     },
     [location.pathname, navigate],
@@ -122,7 +151,11 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   return (
     <AnimatePresence>
       <Moti.div
-        className={cn(className, 'bottom-0 left-0 fixed w-full z-50 p-3')}
+        className={cn(
+          className,
+          'bottom-0 left-0 fixed  !py-0 w-full z-50 p-0',
+        )}
+        data-walkthrough="main-navigation"
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
@@ -134,7 +167,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         key="tabbar"
       >
         <LinearGradient
-          className="absolute top-0 size-full left-0 backdrop-blur-xl "
+          className="absolute hidden top-0 size-full left-0 backdrop-blur-xl "
           colors={['transparent', colors.cardd]}
           locations={[0, 0.5]}
           style={{
@@ -142,19 +175,38 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           }}
         />
 
-        <View className="p-mg py-0 z-10 relative  rounded-[500px] border border-card-lighter/10">
-          <Moti.div className=" py-2 rounded-full  mx-auto flex flex-row items-center w-full justify-between px-2  shadow-2xl borsder border-card-300/20">
+        <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
+          <Moti.div className="  px-2 flex flex-row items-center w-full justify-center ">
             {tabs.map((tab) => {
               const isActive = isActiveTab(
                 tab.route,
                 tab?.matchAllRoot,
                 tab?.matchAlso,
               )
+              let iconColor = colors['card-lighter-3']
+              let iconFill = 'transparent'
+
+              if (tab.isSpecial) {
+                iconColor = colors.white
+                iconFill = colors.white
+              } else if (isActive) {
+                iconColor = colors.accent[400]
+                iconFill = colors.accent[700] + '7a'
+              }
+              const accessibilityLabel = tab.isSpecial
+                ? 'Create a new goal'
+                : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} goals need attention` : ''}`
+              const accessibilityHint = tab.isSpecial
+                ? 'Double tap to create a new goal'
+                : `Double tap to switch to ${tab.label || tab.id} screen`
 
               return (
                 <Moti.div
                   key={tab.id}
-                  className="relative rounded-full py-1"
+                  className={cn(
+                    'relative border-t-3 py-4 px-2',
+                    tab.isSpecial && ' z-20',
+                  )}
                   whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
                   transition={
                     shouldAnimate
@@ -162,52 +214,54 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                       : { duration: 0 }
                   }
                 >
+                  {/* Active indicator background */}
+                  {isActive && !tab.isSpecial && (
+                    <Moti.div
+                      className="absolute top-[-3px]  inset-0   flex items-start justify-center mt-full "
+                      layoutId={shouldAnimate ? 'activeTab' : undefined}
+                      initial={false}
+                      animate={
+                        shouldAnimate
+                          ? {
+                              //backgroundColor: colors.white,
+                            }
+                          : false
+                      }
+                      transition={
+                        shouldAnimate
+                          ? {
+                              type: 'spring',
+                              stiffness: 300,
+                              damping: 30,
+                            }
+                          : { duration: 0 }
+                      }
+                    >
+                      <View className=" text-white bg-accent-500  h-0.5 w-full "></View>
+                    </Moti.div>
+                  )}
+
                   <TouchableOpacity
                     className={cn(
-                      isActive ? '  ' : '',
-                      ` px-4 items-center flex trasnition-all  justify-center flex-row  rounded-full py-2 `,
+                      'items-center flex overflow-hidden relative justify-center flex-row transition-all',
+                      tab.isSpecial
+                        ? 'p-1 py-0.5 mx-2 rounded-md bg-accent-400  shadow-black/30'
+                        : 'rounded-full px-4 py-2',
                     )}
                     onPress={() => handleTabPress(tab.route)}
-                    accessibilityLabel={`Navigate to ${tab.label || tab.id} tab`}
+                    accessibilityLabel={accessibilityLabel}
                     accessibilityRole="button"
-                    accessibilityHint={`Double tap to switch to ${tab.label || tab.id} screen`}
+                    accessibilityHint={accessibilityHint}
                     testID={`tab-${tab.id}`}
                   >
                     <>
-                      {/* Active indicator background */}
-                      {isActive && (
-                        <Moti.div
-                          className="absolute  inset-0   flex items-end justify-center mt-full rounded-full "
-                          layoutId={shouldAnimate ? 'activeTab' : undefined}
-                          initial={false}
-                          animate={
-                            shouldAnimate
-                              ? {
-                                  //  backgroundColor: colors.white,
-                                }
-                              : false
-                          }
-                          transition={
-                            shouldAnimate
-                              ? {
-                                  type: 'spring',
-                                  stiffness: 300,
-                                  damping: 30,
-                                }
-                              : { duration: 0 }
-                          }
-                        >
-                          <View className="w-4 text-white bg-accent-500 rounded-full h-1 shadow-lg shadow-accent-500"></View>
-                        </Moti.div>
-                      )}
-
                       {/* Icon with animation */}
                       <Moti.div
                         animate={
                           shouldAnimate
                             ? {
                                 opacity: isActive ? 1 : 0.7,
-                                scale: isActive ? 1.1 : 1,
+                                scale: isActive ? 1 : 1,
                               }
                             : false
                         }
@@ -225,36 +279,32 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           !shouldAnimate
                             ? {
                                 opacity: isActive ? 1 : 0.7,
-                                scale: isActive ? 1.1 : 1,
+                                scale: isActive ? 1 : 1,
                               }
                             : undefined
                         }
                       >
                         <tab.icon
-                          color={
-                            isActive
-                              ? colors.accent[400]
-                              : colors['card-lighter-3']
-                          }
-                          size={27}
-                          fill={
-                            isActive ? colors.accent[700] + '7a' : 'transparent'
-                          }
+                          color={iconColor}
+                          size={tab.isSpecial ? 27 : 27}
+                          fill={iconFill}
                           className="relative z-10"
                         />
                         {/* Notification Badge */}
-                        {tab.badge && tab.badge > 0 && (
-                          <View className="absolute -top-1 -right-1 bg-danger-500 rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
-                            <Text className="text-white text-[10px] font-bbh font-bold">
-                              {tab.badge > 99 ? '99+' : tab.badge}
-                            </Text>
-                          </View>
+                        {typeof tab.badge === 'number' && tab.badge > 0 && (
+                          <span
+                            aria-label={`${tab.badge} goals need attention`}
+                            className="absolute z-10 flex items-center justify-center -right-2 -top-2 min-w-5 h-5 rounded-full bg-danger-500 px-1 text-center text-[10px] leading-5 font-bold text-white"
+                            role="status"
+                          >
+                            {tab.badge > 99 ? '99+' : tab.badge}
+                          </span>
                         )}
                         <Text
                           style={{
                             color: isActive ? 'transparent' : colors.card[100],
                           }}
-                          className="text-white hidden text-[0.6rem] font-bold"
+                          className="text-white hidden whitespace-nowrap text-[5px] font-bold"
                         >
                           {tab.label.toUpperCase()}
                         </Text>
@@ -265,7 +315,6 @@ export const TabBar = memo(({ className }: { className?: string }) => {
               )
             })}
           </Moti.div>
-
           <BottomNotch />
         </View>
       </Moti.div>

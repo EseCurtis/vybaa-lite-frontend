@@ -1,34 +1,30 @@
+import { IS_ANDROID } from '@/shared/constants.shared'
+import { SafeArea } from 'capacitor-plugin-safe-area'
 
-import { configPurchases } from "@/plugins/revenuecat/configure-purchases";
-import { Purchases } from "@revenuecat/purchases-capacitor";
-import { SafeArea } from "capacitor-plugin-safe-area";
-import { addPushNotificationListeners, createPushNotificationChannels, registerPushNotifications } from "../plugins/push-notification.plugin";
+import {
+  addPushNotificationListeners,
+  createPushNotificationChannels,
+} from '../plugins/push-notification.plugin'
 
-const mobileConfig = async () => {
-    //return 
-    await Promise.all([
-        await Purchases.addCustomerInfoUpdateListener(async (customerInfo) => {
-            await configPurchases({ customerInfo });
-        }),
-        await registerPushNotifications().then(async () => {
-        }).catch(() => { }),
-        await Promise.all([
-            await addPushNotificationListeners(),
-            await createPushNotificationChannels()
-        ]).then(() => { }),
-        SafeArea.getSafeAreaInsets().then(({ insets }) => {
-           // alert(JSON.stringify(insets));
-            for (const [key, value] of Object.entries(insets)) {
-                document.documentElement.style.setProperty(
-                    `--safe-area-inset-${key}`,
-                    `${value}px`,
-                );
-            }
-        })
+const mobileConfig = async (): Promise<void> => {
+  await Promise.allSettled([
+    addPushNotificationListeners(),
+    createPushNotificationChannels(),
+    SafeArea.getSafeAreaInsets().then(({ insets }) => {
+      for (const [key, rawValue] of Object.entries(insets)) {
+        let value = rawValue
 
-    ])
+        if (key === 'bottom' && IS_ANDROID) {
+          value += 20
+        }
 
-
+        document.documentElement.style.setProperty(
+          `--safe-area-inset-${key}`,
+          `${value}px`,
+        )
+      }
+    }),
+  ])
 }
 
-export default mobileConfig;
+export default mobileConfig

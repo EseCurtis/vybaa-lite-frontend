@@ -139,7 +139,7 @@ const SAMPLE_ACHIEVEMENTS: Achievement[] = [
     milestone: 1,
     title: 'Dawn Warrior',
     description: 'Checked in before 9 AM',
-    badgeIcon: '🌅',
+    badgeIcon: '☀️',
     earnedAt: new Date().toISOString(),
   },
   {

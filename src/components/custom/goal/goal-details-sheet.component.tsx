@@ -1,337 +1,900 @@
+import { Input } from '@/components/common/input.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { TextArea } from '@/components/common/textarea.component'
+import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { useCheckInWithAchievements } from '@/hooks/use-checkin-with-achievements.hook'
-import { useDeleteGoal } from '@/hooks/use-goals.hook'
-import { useToast } from '@/providers/toast.provider'
-import type { Goal } from '@/shared/api/goal.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { seededColor } from '@/shared/utils/helpers.util'
-import { Icon } from '@iconify/react'
-import { RiArrowRightSLine, RiCheckLine, RiDeleteBinLine, RiEditLine, RiFireFill, RiGroupLine } from '@remixicon/react'
-import { useRouter } from '@tanstack/react-router'
-import { AnimatePresence, motion } from 'framer-motion'
+import {
+  useAbandonGoal,
+  useArchiveGoal,
+  useCorrectGoalProgress,
+  useGoalOccurrences,
+  usePauseGoal,
+  usePermanentlyDeleteGoal,
+  useRecordGoalProgress,
+  useReopenGoal,
+  useRescheduleGoalOccurrence,
+  useResumeGoal,
+  useSaveGoalReview,
+  useUndoGoalProgress,
+} from '@/hooks/use-goals.hook'
+import type { Goal, GoalOccurrence } from '@/shared/api/goal.api'
+import { cn, seededColor } from '@/shared/utils/helpers.util'
+import {
+  RiCalendarLine,
+  RiCheckLine,
+  RiErrorWarningLine,
+  RiFireFill,
+  RiPauseLine,
+  RiPlayLine,
+  RiTrophyLine,
+} from '@remixicon/react'
 import moment from 'moment'
 import { useState } from 'react'
-import { AttachmentPicker, type Attachment } from './attachment-picker.component'
-import { GoalDurationPill } from './duration-pill.component'
-
-// Helper function to format reminder time (HH:MM to 12-hour format)
-function formatReminderTime(time24: string): string {
-  const [hours, minutes] = time24.split(':').map(Number)
-  const period = hours >= 12 ? 'PM' : 'AM'
-  const hours12 = hours % 12 || 12
-  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`
-}
+import {
+  AttachmentPicker,
+  type Attachment,
+} from './attachment-picker.component'
 
 interface GoalDetailsSheetProps {
   goal: Goal
   onDismiss?: () => void
-  onEdit?: (goal: Goal) => void
 }
 
-export function GoalDetailsSheet({
-  goal,
-  onDismiss,
-  onEdit,
-}: GoalDetailsSheetProps) {
-  const router = useRouter()
-  const toast = useToast()
-  const color = seededColor(goal.goalText)
-  const { checkIn, isCheckingIn } = useCheckInWithAchievements()
-  const { mutate: deleteGoal, isPending: isDeleting } = useDeleteGoal()
-  
-  const [showCheckInForm, setShowCheckInForm] = useState(false)
-  const [notes, setNotes] = useState('')
-  const [attachments, setAttachments] = useState<Attachment[]>([])
+type GoalDetailsTab = 'timeline' | 'rewards' | 'review'
 
-  const handleCommunityClick = () => {
-    if (goal.communityId) {
-      router.navigate({ to: `/app/community/${goal.communityId}` })
-      onDismiss?.()
-    }
+function targetLabel(goal: Goal): string {
+  if (goal.target.type === 'QUANTITY') {
+    return `${goal.progress.value.toLocaleString()} / ${goal.target.amount.toLocaleString()} ${goal.target.unit ?? ''}`
   }
+  if (goal.target.type === 'UNTIL_DATE') {
+    return `Perfect adherence until ${goal.target.endDate ?? goal.hardStopDate}`
+  }
+  return `${goal.progress.completedOccurrences} / ${goal.target.count} check-ins`
+}
 
-  const progressPercentage = Math.min(
-    (goal.currentDay / goal.targetDays) * 100,
-    100,
-  )
+function occurrenceTone(status: string): string {
+  if (status === 'COMPLETED') return 'text-green-400 bg-green-400/10'
+  if (status === 'MISSED') return 'text-danger-400 bg-danger-400/10'
+  if (status === 'GRACE') return 'text-warning-yellow bg-yellow-400/10'
+  return 'text-card-lighter-2'
+}
 
-  const handleCheckIn = async () => {
-    if (!goal.canCheckIn) return
-    
-    if (!showCheckInForm) {
-      // Show check-in form
-      setShowCheckInForm(true)
+function formatOccurrenceDate(value: string): string {
+  return new Date(value).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'short',
+    weekday: 'short',
+  })
+}
+
+function occurrenceLabel(status: GoalOccurrence['status']): string {
+  if (status === 'COMPLETED') return 'Completed'
+  if (status === 'MISSED') return 'Missed'
+  if (status === 'GRACE') return 'Grace window'
+  if (status === 'CANCELLED') return 'Cancelled'
+  return 'Upcoming'
+}
+
+function occurrenceDot(status: GoalOccurrence['status']): string {
+  if (status === 'COMPLETED') return 'bg-green-400'
+  if (status === 'MISSED') return 'bg-danger-400'
+  if (status === 'GRACE') return 'bg-warning-yellow'
+  if (status === 'CANCELLED') return 'bg-card-lighter'
+  return 'bg-card-lighter-3'
+}
+
+export function GoalActionsSheet({
+  goal,
+  onAbandon,
+  onArchive,
+  onDelete,
+  onDone,
+  onRestart,
+}: {
+  goal: Goal
+  onAbandon: () => void
+  onArchive: () => void
+  onDelete: () => void
+  onDone: () => void
+  onRestart: (goalId: string) => void
+}) {
+  const rescheduleOccurrence = useRescheduleGoalOccurrence()
+  const pauseGoal = usePauseGoal()
+  const resumeGoal = useResumeGoal()
+  const abandonGoal = useAbandonGoal()
+  const archiveGoal = useArchiveGoal()
+  const permanentlyDeleteGoal = usePermanentlyDeleteGoal()
+  const reopenGoal = useReopenGoal()
+  const [rescheduleDate, setRescheduleDate] = useState('')
+  const upcomingOccurrence = goal.nextOccurrence
+  const today = new Date().toLocaleDateString('en-CA')
+
+  async function handleAbandon(): Promise<void> {
+    if (
+      !confirm('End this goal as abandoned? Your history will be preserved.')
+    ) {
       return
     }
-
-    // Submit check-in with notes and attachments
-    try {
-      const notesToSend = notes.trim() || undefined
-      const attachmentsToSend = attachments.length > 0 ? attachments : undefined
-      await checkIn(goal.id, notesToSend, attachmentsToSend)
-      
-      // Reset form and close
-      setNotes('')
-      setAttachments([])
-      setShowCheckInForm(false)
-      onDismiss?.()
-    } catch (err: any) {
-      // Error toast handled in hook
-    }
+    await abandonGoal.mutateAsync(goal.id)
+    onDone()
+    onAbandon()
   }
 
+  async function handleRestart(): Promise<void> {
+    const response = await reopenGoal.mutateAsync(goal.id)
+    onDone()
+    onRestart(response.data.id)
+  }
 
-  const handleDelete = () => {
+  async function handleArchive(): Promise<void> {
+    await archiveGoal.mutateAsync(goal.id)
+    onDone()
+    onArchive()
+  }
+
+  async function handleDelete(): Promise<void> {
     if (
       !confirm(
-        'Are you sure you want to delete this goal? This action cannot be undone.',
+        'Permanently delete this goal content? Reward ledger records will be retained.',
       )
     ) {
       return
     }
-
-    deleteGoal(goal.id, {
-      onSuccess: () => {
-        onDismiss?.()
-      },
-    })
-  }
-
-  const handleEdit = () => {
-    onEdit?.(goal)
-    onDismiss?.()
+    await permanentlyDeleteGoal.mutateAsync(goal.id)
+    onDone()
+    onDelete()
   }
 
   return (
-    <View className="space-y-5 pb-4">
-          {/* Community Link */}
-      {goal.community && goal.communityId && (
-        <Pressable
-          onPress={handleCommunityClick}
-          className="w-full bg-card-light/40 hover:bg-card-light/60 rounded-full p-4 flex-row items-center justify-between transition-colors  "
-        >
-          <View className="flex-row items-center gap-3">
-            <View className="w-10 h-10 rounded-full bg-card-lighter/20 flex items-center justify-center">
-              <RiGroupLine size={18} className="text-white/60" />
-            </View>
-            <View className='text-left'>
-              <Text className="text-white text-sm font-bold font-bbh">
-                From Community
-              </Text>
-              <Text className="text-white/60 text-xs font-bbh">
-                {goal.community.name}
-              </Text>
-            </View>
+    <View className="space-y-5 pb-3">
+      {goal.status === 'ACTIVE' && upcomingOccurrence ? (
+        <View className="space-y-3">
+          <View className="flex-row items-center gap-2">
+            <RiCalendarLine className="text-card-lighter-2" size={18} />
+            <Text className="font-bold">Reschedule</Text>
           </View>
-          <RiArrowRightSLine size={20} className="text-white/40" />
-        </Pressable>
-      )}
-      {/* Goal Card with Color */}
-      <View className="flex-row gap-3 overflow-x-scroll w-full no-scrollbar snap-x snap-mandatory">
-        <View
-          className="rounded-3xl shrink-0 p-6 w-full snap-center"
-          style={{ backgroundColor: color }}
-        >
-          <Text className="text-black text-sm font-bold font-bbh mb-4 leading-tight">
-            {goal.goalText}
+          <Text className="text-xs leading-4 text-card-lighter-2">
+            Move the next occurrence once. Your recurring schedule stays the
+            same.
           </Text>
+          <Input
+            min={today}
+            type="date"
+            value={rescheduleDate}
+            onChange={(event) => setRescheduleDate(event.target.value)}
+            className="bg-cardd"
+          />
+          <Button
+            disabled={!rescheduleDate || rescheduleOccurrence.isPending}
+            label={
+              rescheduleOccurrence.isPending ? 'Moving…' : 'Move occurrence'
+            }
+            onClick={async () => {
+              await rescheduleOccurrence.mutateAsync({
+                dueDate: rescheduleDate,
+                goalId: goal.id,
+                occurrenceId: upcomingOccurrence.id,
+              })
+              onDone()
+            }}
+            size="sm"
+            fullWidth
+          />
+        </View>
+      ) : null}
 
-          <View className="flex-row items-center justify-between mb-4">
-            <GoalDurationPill
-              currentDay={goal.currentDay}
-              targetDays={goal.targetDays}
+      {goal.status === 'ACTIVE' ? (
+        <View className="space-y-3 pt-5">
+          <View className="flex-row items-center gap-2">
+            <RiPauseLine className="text-card-lighter-2" size={18} />
+            <Text className="font-bold">Pause goal</Text>
+          </View>
+          <Text className="text-xs leading-4 text-card-lighter-2">
+            Pause reminders and occurrences. Nothing is counted as missed while
+            paused.
+          </Text>
+          <Button
+            disabled={pauseGoal.isPending}
+            label={pauseGoal.isPending ? 'Pausing…' : 'Pause goal'}
+            onClick={async () => {
+              await pauseGoal.mutateAsync(goal.id)
+              onDone()
+            }}
+            size="sm"
+            variant="secondary"
+            fullWidth
+          />
+        </View>
+      ) : null}
+
+      {goal.status === 'PAUSED' ? (
+        <View className="space-y-3">
+          <View className="flex-row items-center gap-2">
+            <RiPlayLine className="text-card-lighter-2" size={18} />
+            <Text className="font-bold">Resume goal</Text>
+          </View>
+          <Text className="text-xs leading-4 text-card-lighter-2">
+            Choose whether the original deadline stays fixed or moves by the
+            paused time.
+          </Text>
+          <View className="flex-row gap-2">
+            <Button
+              className="flex-1 py-3"
+              disabled={resumeGoal.isPending}
+              label="Keep deadline"
+              onClick={async () => {
+                await resumeGoal.mutateAsync({
+                  deadlinePolicy: 'KEEP_DEADLINE',
+                  goalId: goal.id,
+                })
+                onDone()
+              }}
+              size="sm"
             />
+            <Button
+              className="flex-1 py-3"
+              disabled={resumeGoal.isPending}
+              label="Shift deadline"
+              onClick={async () => {
+                await resumeGoal.mutateAsync({
+                  deadlinePolicy: 'SHIFT_DEADLINE',
+                  goalId: goal.id,
+                })
+                onDone()
+              }}
+              size="sm"
+              variant="secondary"
+              fullWidth
+            />
+          </View>
+        </View>
+      ) : null}
 
-            <Text className="text-cardd/60 text-sm font-bbh">
-              {Math.round(progressPercentage)}% complete
+      {['ACTIVE', 'PAUSED'].includes(goal.status) ? (
+        <View className="space-y-3 pt-5">
+          <Text className="font-bold text-danger-400">End goal</Text>
+          <Text className="text-xs leading-4 text-card-lighter-2">
+            Abandoning preserves your timeline and records the goal as
+            unfinished.
+          </Text>
+          <Button
+            disabled={abandonGoal.isPending}
+            label={abandonGoal.isPending ? 'Ending…' : 'Abandon goal'}
+            onClick={() => void handleAbandon()}
+            size="sm"
+            variant="destructive"
+            fullWidth
+            textClassName="!text-white"
+          />
+        </View>
+      ) : null}
+
+      {['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(goal.status) ? (
+        <View className="space-y-4">
+          <View className="space-y-2">
+            <View className="flex-row items-center gap-2">
+              <RiPlayLine className="text-success-300" size={18} />
+              <Text className="font-bold">Start again</Text>
+            </View>
+            <Text className="text-xs leading-4 text-card-lighter-2">
+              Create a separate new run with the same goal setup. This history
+              stays unchanged.
             </Text>
-          </View>
-
-          {/* Progress Bar */}
-          <View className="h-2 bg-cardd/10 rounded-full overflow-hidden">
-            <View
-              className="h-full bg-cardd rounded-full transition-all"
-              style={{ width: `${progressPercentage}%` }}
+            <Button
+              disabled={reopenGoal.isPending}
+              label={reopenGoal.isPending ? 'Starting…' : 'Start as a new goal'}
+              onClick={() => void handleRestart()}
+              size="sm"
+              fullWidth
             />
           </View>
-        </View>
-        
-        {/* Delete Action */}
-        <View className="flex-row shrink-0 items-center justify-center snap-center">
-          <View className="w-[70px] h-full flex-row items-center justify-center">
-            <Pressable
-              className="p-1.5 bg-pink-900/30 rounded-xl aspect-square size-full flex flex-row items-center justify-center transition-colors hover:bg-pink-900/40"
-              disabled={isDeleting || isCheckingIn}
-              onPress={handleDelete}
-            >
-              <RiDeleteBinLine className="text-pink-500" size={20} />
-            </Pressable>
-          </View>
-        </View>
-      </View>
 
-  
-
-      {/* Check-in Section */}
-      <AnimatePresence mode="wait">
-        {!showCheckInForm ? (
-          <motion.div
-            key="checkin-button"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {goal.canCheckIn ? (
-              <Pressable
-                onPress={handleCheckIn}
-                disabled={isCheckingIn || isDeleting}
-                className="w-full bg-white rounded-full p-4 flex-row items-center justify-center gap-2 transition-colors "
-              >
-                <RiFireFill className="text-black" size={20} />
-                <Text className="text-black text-sm font-bbh font-bold">
-                  Check In
-                </Text>
-              </Pressable>
-            ) : (
-              <View className="w-full bg-green-500/5 p-4 flex-row items-center justify-center gap-2  rounded-full">
-                <RiCheckLine className="text-green-400" size={20} />
-                <Text className="text-green-400 text-sm font-bbh font-semibold">
-                  Already checked in today
-                </Text>
-              </View>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="checkin-form"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
-          >
-            {/* Notes Section */}
-            <View className="space-y-3">
-              <View className="flex-row items-center gap-2">
-                <Icon icon="mdi:text-box-outline" className="text-white/70" style={{ fontSize: '18px' }} />
-                <Text className="text-white/80 text-sm font-bbh font-semibold">
-                  Notes (Optional)
-                </Text>
-              </View>
-              <View className="bg-cardd-light/40 rounded-xl p-3">
-                <TextArea
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="How did it go? What did you learn?"
-                  className="min-h-[100px] w-full text-white placeholder:text-white/40"
-                  maxLength={500}
-                />
-              </View>
-              <View className="flex-row items-center justify-between">
-                <AttachmentPicker
-                  attachments={attachments}
-                  onAttachmentsChange={setAttachments}
-                  maxAttachments={5}
-                />
-                <Text className="text-white/40 text-xs font-bbh">
-                  {notes.length}/500
-                </Text>
-              </View>
-            </View>
-
-            {/* Check In Button */}
-            <View className="pt-2">
-              <Pressable
-                onPress={handleCheckIn}
-                disabled={isCheckingIn || isDeleting}
-                className="w-full bg-white rounded-full p-4 flex-row items-center justify-center gap-2 transition-colors "
-              >
-                {isCheckingIn ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <RiFireFill className="text-cardd" size={20} />
-                    </motion.div>
-                    <Text className="text-cardd text-sm font-bbh font-bold">
-                      Checking in...
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <RiFireFill className="text-cardd" size={20} />
-                    <Text className="text-cardd text-sm font-bbh font-bold">
-                      Check In
-                    </Text>
-                  </>
-                )}
-              </Pressable>
-            </View>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Info Cards */}
-      <View className="flex-row w-full items-center gap-3 flex-wrap">
-        {/* Last Check-in Info */}
-        {goal.lastCheckInDate && (
-          <View className="rounded-2xl p-3 bg-cardd-700/40 flex-1 min-w-[140px]">
-            <View className="flex-row items-center gap-2 mb-1">
-              <Icon icon="mdi:calendar-check" className="text-white/50" style={{ fontSize: '14px' }} />
-              <Text className="text-white/50 text-xs font-bbh">
-                Last check-in
+          {!goal.archivedAt ? (
+            <View className="space-y-2 pt-4">
+              <Text className="font-bold">Archive goal</Text>
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                Move this goal out of your main history. You can still find it
+                under Archived.
               </Text>
-            </View>
-            <Text className="text-white text-sm font-bbh font-semibold">
-              {moment(new Date(goal.lastCheckInDate)).format('MMM d')}
-            </Text>
-          </View>
-        )}
-
-        {/* Reminder Time Info */}
-        {goal.reminderTime && (
-          <View className="rounded-2xl p-3 bg-cardd-700/40 flex-1 min-w-[140px]">
-            <View className="flex-row items-center gap-2 mb-1">
-              <Icon 
-                icon={getEmojiIcon('⏰')} 
-                className="text-white/50" 
-                style={{ fontSize: '14px' }}
+              <Button
+                disabled={archiveGoal.isPending}
+                label={archiveGoal.isPending ? 'Archiving…' : 'Archive goal'}
+                onClick={() => void handleArchive()}
+                size="sm"
+                variant="secondary"
+                fullWidth
               />
-              <Text className="text-white/50 text-xs font-bbh">
-                Reminder
-              </Text>
             </View>
-            <Text className="text-white text-sm font-bbh font-semibold">
-              {formatReminderTime(goal.reminderTime)}
+          ) : (
+            <View className="space-y-2 pt-4">
+              <Text className="font-bold text-danger-400">
+                Permanently delete
+              </Text>
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                Delete this goal’s content. Historical reward transactions are
+                retained.
+              </Text>
+              <Button
+                disabled={permanentlyDeleteGoal.isPending}
+                label={
+                  permanentlyDeleteGoal.isPending
+                    ? 'Deleting…'
+                    : 'Permanently delete'
+                }
+                onClick={() => void handleDelete()}
+                size="sm"
+                variant="destructive"
+                fullWidth
+                textClassName="!text-white"
+              />
+            </View>
+          )}
+        </View>
+      ) : null}
+    </View>
+  )
+}
+
+export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
+  const [activeTab, setActiveTab] = useState<GoalDetailsTab>('timeline')
+  const occurrences = useGoalOccurrences(goal.id, activeTab === 'timeline')
+  const recordProgress = useRecordGoalProgress()
+  const correctProgress = useCorrectGoalProgress()
+  const undoProgress = useUndoGoalProgress()
+  const saveReview = useSaveGoalReview()
+  const [showProgress, setShowProgress] = useState(false)
+  const [amount, setAmount] = useState('')
+  const [notes, setNotes] = useState('')
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [reviewAttachments, setReviewAttachments] = useState<Attachment[]>(
+    (goal.conclusion?.attachments ?? []) as Attachment[],
+  )
+  const [editingOccurrenceId, setEditingOccurrenceId] = useState<string | null>(
+    null,
+  )
+  const [editAmount, setEditAmount] = useState('')
+  const [editNotes, setEditNotes] = useState('')
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [rating, setRating] = useState(goal.conclusion?.rating ?? 0)
+  const [reflection, setReflection] = useState(
+    goal.conclusion?.reflection ?? '',
+  )
+  const [nextStep, setNextStep] = useState(goal.conclusion?.nextStep ?? '')
+  const [reviewSaved, setReviewSaved] = useState(
+    Boolean(
+      goal.conclusion?.rating ||
+      goal.conclusion?.reflection ||
+      goal.conclusion?.nextStep ||
+      goal.conclusion?.attachments?.length,
+    ),
+  )
+  const occurrenceList =
+    occurrences.data?.pages.flatMap((page) => page.data) ?? []
+  const ended = ['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(
+    goal.status,
+  )
+  const today = new Date().toLocaleDateString('en-CA')
+  const color = seededColor(goal.title)
+
+  async function submitProgress(): Promise<void> {
+    if (!goal.nextOccurrence) return
+    const response = await recordProgress.mutateAsync({
+      amount: goal.target.type === 'QUANTITY' ? Number(amount) : undefined,
+      attachments,
+      goalId: goal.id,
+      notes: notes.trim() || undefined,
+      occurrenceId: goal.nextOccurrence.id,
+    })
+    if (response.data.status === 'COMPLETED') {
+      setShowCelebration(true)
+      setShowProgress(false)
+      return
+    }
+    onDismiss?.()
+  }
+
+  async function saveConclusionReview(): Promise<void> {
+    await saveReview.mutateAsync({
+      goalId: goal.id,
+      attachments: reviewAttachments,
+      nextStep: nextStep.trim() || null,
+      rating: rating || null,
+      reflection: reflection.trim() || null,
+    })
+    setReviewSaved(true)
+  }
+
+  function beginCorrection(occurrence: GoalOccurrence): void {
+    setEditingOccurrenceId(occurrence.id)
+    setEditAmount(String(occurrence.progress?.amount ?? 1))
+    setEditNotes(occurrence.progress?.notes ?? '')
+  }
+
+  async function saveCorrection(occurrenceId: string): Promise<void> {
+    await correctProgress.mutateAsync({
+      amount: goal.target.type === 'QUANTITY' ? Number(editAmount) : undefined,
+      goalId: goal.id,
+      notes: editNotes,
+      occurrenceId,
+    })
+    setEditingOccurrenceId(null)
+  }
+
+  async function undo(occurrenceId: string): Promise<void> {
+    if (
+      !confirm(
+        'Undo this progress entry? This is only allowed before today closes.',
+      )
+    )
+      return
+    await undoProgress.mutateAsync({ goalId: goal.id, occurrenceId })
+  }
+
+  return (
+    <View className="space-y-5 pb-6">
+      {showCelebration ? (
+        <View className="rounded-xl bg-green-950 p-6 text-center">
+          <RiTrophyLine className="mx-auto text-green-300" size={40} />
+          <Text className="mt-3   !text-center text-xl font-bold">
+            You completed this goal!
+          </Text>
+          <Text className="mt-1 !text-center text-sm text-green-400">
+            Your conclusion and earned rewards are now saved.
+          </Text>
+        </View>
+      ) : null}
+      {goal.status === 'ABANDONED' || goal.status === 'AUTO_ABANDONED' ? (
+        <View
+          aria-live="polite"
+          className="flex-row items-start gap-3 rounded-2xl bg-warning-900 p-4"
+          role="status"
+        >
+          <View className="size-9 shrink-0 items-center justify-center rounded-full bg-warning-700">
+            <RiErrorWarningLine className="text-warning-100" size={18} />
+          </View>
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="font-bold text-warning-100">
+              {goal.status === 'AUTO_ABANDONED'
+                ? 'This goal ended automatically'
+                : 'This goal was abandoned'}
+            </Text>
+            <Text className="text-xs leading-5 text-warning-200">
+              Its history is saved. Open goal settings to start a separate new
+              run or archive this one.
             </Text>
           </View>
-        )}
-
-        {/* Edit Action */}
-        {onEdit && (
-          <Pressable
-            onPress={handleEdit}
-            className="rounded-2xl p-3 bg-cardd-700/40 hover:bg-cardd-700/50 flex-1 min-w-[140px] transition-colors border border-white/10"
-          >
-            <View className="flex-row items-center gap-2 mb-1">
-              <RiEditLine className="text-white/50" size={14} />
-              <Text className="text-white/50 text-xs font-bbh">
-                Actions
-              </Text>
-            </View>
-            <Text className="text-white text-sm font-bbh font-semibold">
-              Edit Goal
-            </Text>
-          </Pressable>
-        )}
+        </View>
+      ) : null}
+      <View className="rounded-xl p-6" style={{ backgroundColor: color }}>
+        {goal.status === 'COMPLETED' ? (
+          <View className="mb-3 flex-row items-center gap-2">
+            <RiTrophyLine className="text-black" size={20} />
+            <Text className="font-bold text-black">Goal completed</Text>
+          </View>
+        ) : null}
+        <Text className="text-lg font-bold text-black">{goal.title}</Text>
+        {goal.description ? (
+          <Text className="mt-1 text-sm text-black/60">{goal.description}</Text>
+        ) : null}
+        <View className="mt-4 flex-row items-center justify-between">
+          <Text className="text-sm text-black/70">{targetLabel(goal)}</Text>
+          <Text className="font-bold text-black">
+            {Math.round(goal.progress.percentage)}%
+          </Text>
+        </View>
+        <View className="mt-2 h-2 overflow-hidden rounded-full bg-black/10">
+          <View
+            className="h-full rounded-full bg-black"
+            style={{ width: `${goal.progress.percentage}%` }}
+          />
+        </View>
       </View>
 
+      <View className="grid grid-cols-3 gap-2">
+        <View className="rounded-2xl bg-card-light-50 p-3">
+          <Text className="text-xs text-card-lighter-2">Streak</Text>
+          <Text className="font-bold">{goal.progress.currentStreak}</Text>
+        </View>
+        <View className="rounded-2xl bg-card-light-50 p-3">
+          <Text className="text-xs text-card-lighter-2">Adherence</Text>
+          <Text className="font-bold">
+            {Math.round(goal.progress.adherenceRate)}%
+          </Text>
+        </View>
+        <View className="rounded-2xl bg-card-light-50 p-3">
+          <Text className="text-xs text-card-lighter-2">Points</Text>
+          <Text className="font-bold">
+            {goal.reward.pendingPoints.toFixed(2)}
+          </Text>
+        </View>
+      </View>
+
+      {goal.status === 'ACTIVE' && goal.isDue && goal.nextOccurrence ? (
+        <View className="space-y-3">
+          {!showProgress ? (
+            <Button
+              fullWidth
+              label={
+                goal.target.type === 'QUANTITY' ? 'Add progress' : 'Check in'
+              }
+              leftIcon={<RiFireFill size={18} />}
+              onClick={() => setShowProgress(true)}
+            />
+          ) : (
+            <View className="space-y-3 rounded-2xl bg-card-light-50 p-4">
+              {goal.target.type === 'QUANTITY' ? (
+                <Input
+                  min={0.01}
+                  placeholder={`Amount in ${goal.target.unit ?? 'units'}`}
+                  type="number"
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  className="bg-cardd"
+                />
+              ) : null}
+              <TextArea
+                maxLength={2000}
+                placeholder="How did it go? (optional)"
+                rows={3}
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                className="bg-cardd"
+              />
+              <AttachmentPicker
+                attachments={attachments}
+                maxAttachments={5}
+                onAttachmentsChange={setAttachments}
+              />
+              <Button
+                fullWidth
+                label="Save progress"
+                loading={recordProgress.isPending}
+                disabled={
+                  recordProgress.isPending ||
+                  (goal.target.type === 'QUANTITY' && Number(amount) <= 0)
+                }
+                onClick={submitProgress}
+              />
+            </View>
+          )}
+        </View>
+      ) : goal.status === 'ACTIVE' ? (
+        <View className="rounded-2xl bg-card-light-50 p-4">
+          <Text className="text-center mx-auto text-sm text-card-lighter-2">
+            {goal.nextOccurrence
+              ? `Next occurence, ${moment(goal.nextOccurrence.dueDate).fromNow()}`
+              : 'No remaining occurrence'}
+          </Text>
+        </View>
+      ) : null}
+
+      <View className="sticky top-0 z-20 -mx-1 bg-cardd py-2">
+        <View className="flex-row gap-1 rounded-2xl bg-card-light-50 p-1">
+          {(
+            [
+              ['timeline', 'Timeline'],
+              ['rewards', 'Rewards'],
+              ['review', 'Review'],
+            ] as const
+          ).map(([value, label]) => (
+            <Pressable
+              className={cn(
+                'flex-1 rounded-xl px-2 py-2.5 text-center flex justify-center',
+                activeTab === value ? 'bg-white' : 'bg-transparent',
+              )}
+              key={value}
+              onPress={() => setActiveTab(value)}
+            >
+              <Text
+                className={cn(
+                  'text-center text-xs font-bold',
+                  activeTab === value ? 'text-black' : 'text-card-lighter-2',
+                )}
+              >
+                {label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {activeTab === 'rewards' ? (
+        <View className="space-y-2">
+          <Text className="font-bold">Reward path</Text>
+          {!goal.reward.eligible ? (
+            <Text className="text-sm text-card-lighter-2">
+              This short goal does not award Play Points.
+            </Text>
+          ) : (
+            goal.reward.milestones.map((milestone, index) => {
+              const percentage = milestone.triggerPercentage ?? 20
+              const previousPercentage =
+                index > 0
+                  ? (goal.reward.milestones[index - 1]?.triggerPercentage ?? 0)
+                  : 0
+              const color = seededColor(JSON.stringify(milestone))
+
+              const relativePercentage = Math.round(
+                Math.min(
+                  Math.max(
+                    ((goal.progress.percentage - previousPercentage) /
+                      Math.max(percentage - previousPercentage, 1)) *
+                      100,
+                    0,
+                  ),
+                  100,
+                ),
+              )
+              const milestoneStarted =
+                goal.progress.percentage >= previousPercentage
+
+              return (
+                <View
+                  className="relative flex-row items-center justify-between overflow-hidden rounded-md bg-card-light-50 p-3 pb-4"
+                  key={milestone.id}
+                >
+                  <View
+                    className="absolute bottom-0 left-0 h-1"
+                    style={{
+                      backgroundColor: color,
+                      width: `${milestoneStarted ? relativePercentage : 0}%`,
+                    }}
+                  />
+                  <View className="z-10 flex-row items-center gap-2">
+                    <RiCheckLine
+                      className={
+                        milestone.status === 'LOCKED'
+                          ? 'text-card-lighter'
+                          : 'text-green-400'
+                      }
+                      size={16}
+                    />
+                    <Text className="font-bold text-white">
+                      {milestone.name}
+                      {milestoneStarted ? ` - ${relativePercentage}%` : ''}
+                    </Text>
+                  </View>
+                  <Text className="z-10 text-sm text-card-lighter-2">
+                    +{milestone.points.toFixed(2)}
+                  </Text>
+                </View>
+              )
+            })
+          )}
+        </View>
+      ) : null}
+
+      {activeTab === 'timeline' ? (
+        <View className="space-y-3">
+          <View className="flex-row items-end justify-between">
+            <View>
+              <Text className="font-bold">Your timeline</Text>
+              <Text className="mt-1 text-xs text-card-lighter-2">
+                Every planned day, kept in order.
+              </Text>
+            </View>
+            <Text className="text-xs text-card-lighter-2">
+              {occurrenceList.length} days
+            </Text>
+          </View>
+          <View className="relative">
+            <View className="absolute bottom-5 left-[15px] top-5 w-px bg-card-light" />
+            <View className="space-y-3">
+              {occurrenceList.map((occurrence) => {
+                const moved =
+                  occurrence.originalDueDate.slice(0, 10) !==
+                  occurrence.dueDate.slice(0, 10)
+                const isToday = occurrence.dueDate.slice(0, 10) === today
+
+                const colorSet = {
+                  bg: seededColor(
+                    goal.target.type === 'QUANTITY'
+                      ? `${occurrence.progress?.amount ?? 0} ${goal.target.unit ?? 'units'} logged`
+                      : 'Check-in logged',
+                  ),
+                }
+                return (
+                  <View className="relative pl-10" key={occurrence.id}>
+                    <View
+                      className={cn(
+                        'absolute left-2.5 top-5 size-3 rounded-full ring-4 ring-cardd',
+                        occurrenceDot(occurrence.status),
+                      )}
+                    />
+                    <View className="rounded-2xl bg-card-light-50 p-4">
+                      <View className="flex-row items-start justify-between gap-3">
+                        <View className="flex-1">
+                          <Text className="font-bold">
+                            {formatOccurrenceDate(occurrence.dueDate)}
+                          </Text>
+                          <Text className="mt-0.5 text-xs text-card-lighter-2">
+                            {isToday ? 'Today · ' : ''}Scheduled occurrence
+                          </Text>
+                        </View>
+                        <Text
+                          className={cn(
+                            'rounded-full bg-card-light px-2.5 py-1 text-[10px] font-bold',
+                            occurrenceTone(occurrence.status),
+                          )}
+                        >
+                          {occurrenceLabel(occurrence.status)}
+                        </Text>
+                      </View>
+                      {occurrence.progress ? (
+                        <View
+                          style={
+                            {
+                              '--tw-card-color': colorSet.bg,
+                            } as any
+                          }
+                          className="mt-3 rounded-xl bg-card-lighter/20 p-3"
+                        >
+                          <Text className="text-sm text-white font-bold">
+                            {goal.target.type === 'QUANTITY'
+                              ? `${occurrence.progress.amount.toLocaleString()} ${goal.target.unit ?? 'units'} logged`
+                              : 'Check-in logged'}
+                          </Text>
+                          {occurrence.progress.notes ? (
+                            <Text className="mt-1 text-xs leading-5 text-card-lighter-3/70">
+                              {occurrence.progress.notes}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ) : occurrence.status === 'MISSED' ? (
+                        <Text className="mt-3 text-xs text-card-lighter-2">
+                          This day closed without a check-in.
+                        </Text>
+                      ) : occurrence.status === 'PENDING' ? (
+                        <Text className="mt-3 text-xs text-card-lighter-2">
+                          Ready when you are.
+                        </Text>
+                      ) : null}
+                      {moved ? (
+                        <Text className="mt-3 text-[10px] text-card-lighter-2">
+                          Rescheduled from{' '}
+                          {formatOccurrenceDate(occurrence.originalDueDate)}
+                        </Text>
+                      ) : null}
+                      {goal.status === 'ACTIVE' &&
+                      occurrence.status === 'COMPLETED' &&
+                      isToday ? (
+                        <View className="mt-3 w-full flex-row gap-4">
+                          <Pressable
+                            onPress={() => beginCorrection(occurrence)}
+                          >
+                            <Text className="text-xs font-bold text-purple-300">
+                              Edit entry
+                            </Text>
+                          </Pressable>
+                          <Pressable onPress={() => undo(occurrence.id)}>
+                            <Text className="text-xs font-bold text-danger-400">
+                              Undo
+                            </Text>
+                          </Pressable>
+                        </View>
+                      ) : null}
+                      {editingOccurrenceId === occurrence.id ? (
+                        <View className="mt-3 space-y-2 rounded-xl bg-card-light p-3">
+                          {goal.target.type === 'QUANTITY' ? (
+                            <Input
+                              min={0.01}
+                              type="number"
+                              value={editAmount}
+                              onChange={(event) =>
+                                setEditAmount(event.target.value)
+                              }
+                            />
+                          ) : null}
+                          <Input
+                            placeholder="Notes"
+                            value={editNotes}
+                            onChange={(event) =>
+                              setEditNotes(event.target.value)
+                            }
+                          />
+                          <Button
+                            label="Save correction"
+                            size="sm"
+                            onClick={() => saveCorrection(occurrence.id)}
+                          />
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                )
+              })}
+            </View>
+          </View>
+          {occurrences.hasNextPage ? (
+            <Button
+              disabled={occurrences.isFetchingNextPage}
+              label={occurrences.isFetchingNextPage ? 'Loading…' : 'Load more'}
+              onClick={() => void occurrences.fetchNextPage()}
+              size="sm"
+              variant="secondary"
+            />
+          ) : null}
+        </View>
+      ) : null}
+
+      {activeTab === 'review' && ended && goal.conclusion ? (
+        <View className="space-y-4 rounded-2xl bg-cardd p-4">
+          <View>
+            <View className="flex-row items-center justify-between gap-3">
+              <Text className="font-bold">Conclusion</Text>
+              {reviewSaved ? (
+                <Text className="text-xs font-bold text-success-green">
+                  Review saved
+                </Text>
+              ) : null}
+            </View>
+            <Text className="text-sm text-card-lighter-2">
+              {goal.conclusion.completedOccurrences} completed ·{' '}
+              {goal.conclusion.missedOccurrences} missed ·{' '}
+              {goal.conclusion.durationDays} days
+            </Text>
+          </View>
+          <View className="flex-row gap-2">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <Pressable
+                className={cn(
+                  'size-9 items-center justify-center rounded-full',
+                  rating === value ? 'bg-card-lighter-3' : 'bg-card-light',
+                )}
+                key={value}
+                onPress={() => setRating(value)}
+              >
+                <Text
+                  className={rating === value ? 'text-black' : 'text-white'}
+                >
+                  {value}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          <TextArea
+            placeholder="What happened? What did you learn?"
+            rows={4}
+            value={reflection}
+            onChange={(event) => setReflection(event.target.value)}
+          />
+          <TextArea
+            placeholder="What comes next?"
+            rows={2}
+            value={nextStep}
+            onChange={(event) => setNextStep(event.target.value)}
+          />
+          <AttachmentPicker
+            attachments={reviewAttachments}
+            maxAttachments={5}
+            onAttachmentsChange={setReviewAttachments}
+          />
+          {reviewSaved ? (
+            <View className="rounded-xl bg-card-light px-3 py-2">
+              <Text className="text-xs leading-4 text-card-lighter-2">
+                This reflection is part of the goal’s history and can still be
+                edited.
+              </Text>
+            </View>
+          ) : null}
+          <Button
+            fullWidth
+            label={reviewSaved ? 'Update review' : 'Save review'}
+            loading={saveReview.isPending}
+            onClick={saveConclusionReview}
+          />
+        </View>
+      ) : activeTab === 'review' ? (
+        <View className="rounded-2xl bg-card-light-50 p-5">
+          <Text className="font-bold">Review after you finish</Text>
+          <Text className="mt-2 text-sm leading-6 text-card-lighter-2">
+            Your reflection, rating, and next step will appear here when this
+            goal reaches a conclusion.
+          </Text>
+        </View>
+      ) : null}
       <BottomNotch />
     </View>
   )

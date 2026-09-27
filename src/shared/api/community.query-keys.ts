@@ -11,18 +11,33 @@ export const communityQueryKeys = {
     [...communityQueryKeys.all, 'my', { page, limit }] as const,
   details: () => [...communityQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...communityQueryKeys.details(), id] as const,
-  members: (communityId: string, page?: number, limit?: number) =>
-    [...communityQueryKeys.detail(communityId), 'members', { page, limit }] as const,
-  templates: (communityId: string, page?: number, limit?: number) =>
-    [...communityQueryKeys.detail(communityId), 'templates', { page, limit }] as const,
+  membersRoot: (communityId: string) =>
+    [...communityQueryKeys.detail(communityId), 'members'] as const,
+  members: (communityId: string, limit?: number) =>
+    [...communityQueryKeys.membersRoot(communityId), { limit }] as const,
+  templatesRoot: (communityId: string) =>
+    [...communityQueryKeys.detail(communityId), 'templates'] as const,
+  templates: (communityId: string, limit?: number) =>
+    [...communityQueryKeys.templatesRoot(communityId), { limit }] as const,
   template: (templateId: string) =>
     [...communityQueryKeys.all, 'template', templateId] as const,
-  templateParticipants: (templateId: string, page?: number, limit?: number) =>
-    [...communityQueryKeys.template(templateId), 'participants', { page, limit }] as const,
-  activity: (communityId: string, page?: number, limit?: number) =>
-    [...communityQueryKeys.detail(communityId), 'activity', { page, limit }] as const,
+  templateParticipantsRoot: (templateId: string) =>
+    [...communityQueryKeys.template(templateId), 'participants'] as const,
+  templateParticipants: (templateId: string, limit?: number) =>
+    [...communityQueryKeys.templateParticipantsRoot(templateId), { limit }] as const,
+  activityRoot: (communityId: string) =>
+    [...communityQueryKeys.detail(communityId), 'activity'] as const,
+  activity: (communityId: string, limit?: number) =>
+    [...communityQueryKeys.activityRoot(communityId), { limit }] as const,
+  commentsRoot: (activityId: string) =>
+    [...communityQueryKeys.all, 'activity', activityId, 'comments'] as const,
   comments: (activityId: string, page?: number, limit?: number) =>
-    [...communityQueryKeys.all, 'activity', activityId, 'comments', { page, limit }] as const,
+    [...communityQueryKeys.commentsRoot(activityId), { page, limit }] as const,
+  invitesRoot: () => [...communityQueryKeys.all, 'invites'] as const,
+  invites: (communityId: string) =>
+    [...communityQueryKeys.invitesRoot(), communityId] as const,
+  invite: (code: string) =>
+    [...communityQueryKeys.all, 'invite', code.toUpperCase()] as const,
   stats: (communityId: string) =>
     [...communityQueryKeys.detail(communityId), 'stats'] as const,
 }

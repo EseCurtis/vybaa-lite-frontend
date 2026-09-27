@@ -11,6 +11,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateTemplate } from '@/hooks/use-communities.hook'
+import { randomCreateGoalPlaceholder } from '@/shared/goal/goal.util.shared'
 import { RiAddLine, RiDeleteBinLine } from '@remixicon/react'
 import { useEffect, useState } from 'react'
 
@@ -106,7 +107,7 @@ export function CreateTemplateSheet({
     if (milestonesEnabled && milestones.length > 0) {
       for (let i = 0; i < milestones.length; i++) {
         const m = milestones[i]
-        const value = parseInt(m.triggerValue, 10)
+        const value = Number(m.triggerValue)
         const label = m.name?.trim() || `Milestone ${i + 1}`
 
         if (!value || value < 1) {
@@ -117,7 +118,22 @@ export function CreateTemplateSheet({
         if (m.triggerType === 'DAY') {
           if (value > targetDays) {
             setFormError(
-              `${label}: day cannot be greater than total days (${targetDays})`,
+              `${label}: value cannot be greater than total days (${targetDays})`,
+            )
+            return
+          }
+        }
+
+        if (m.triggerType === 'SEQUENCE') {
+          const startDay = Number(m.sequenceStartDay)
+          const endDay = Number(m.sequenceEndDay)
+          if (!startDay || startDay < 1) {
+            setFormError(`${label}: start day must be at least 1`)
+            return
+          }
+          if (!endDay || endDay < startDay || endDay > targetDays) {
+            setFormError(
+              `${label}: end day must be between the start day and day ${targetDays}`,
             )
             return
           }
@@ -146,8 +162,20 @@ export function CreateTemplateSheet({
                   name: m.name.trim(),
                   description: m.description?.trim() || undefined,
                   triggerType: m.triggerType,
-                  triggerValue: parseInt(m.triggerValue, 10),
-                  points: parseInt(m.points, 10) || 0,
+                  triggerValue: Number(m.triggerValue),
+                  points: Number(m.points) || 0,
+                  sequenceBonusPoints:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceBonusPoints || '10')
+                      : undefined,
+                  sequenceStartDay:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceStartDay)
+                      : undefined,
+                  sequenceEndDay:
+                    m.triggerType === 'SEQUENCE'
+                      ? Number(m.sequenceEndDay)
+                      : undefined,
                   order: index,
                 }))
               : undefined,
@@ -201,7 +229,7 @@ export function CreateTemplateSheet({
     setMilestones((prev) => prev.filter((_, i) => i !== index))
   }
 
-  const targetDaysNum = parseInt(formData.targetDays, 10) || undefined
+  const targetDaysNum = Number(formData.targetDays) || undefined
 
   if (isMilestoneWizardOpen) {
     const initial =
@@ -232,23 +260,26 @@ export function CreateTemplateSheet({
   }
 
   return (
-    <View className="space-y-4">
+    <View className="space-y-4 mt-3">
       <View>
         <TextArea
-          placeholder="What's the commitment?"
+          placeholder={randomCreateGoalPlaceholder()}
           value={formData.goalText}
           onChange={(e) => {
             setFormData({ ...formData, goalText: e.target.value })
             setFormError(null)
           }}
-          className="min-h-[100px] rounded-xl bg-card-light/30 p-2 px-3 text-white"
+          className="min-h-[100px] rounded-none !px-0 border-b border-b-card-lighter/50 p-2 px-3 text-white"
           maxLength={500}
         />
       </View>
-      <View>
+      <View className="flex-row items-center gap-2">
+        <Text className="text-card-lighter-3 whitespace-nowrap">
+          Do this for?
+        </Text>
         <Input
           type="number"
-          placeholder="Days (1-365)"
+          placeholder="20 Days"
           value={formData.targetDays}
           onChange={(e) => {
             setFormData({ ...formData, targetDays: e.target.value })
@@ -263,15 +294,14 @@ export function CreateTemplateSheet({
       <View className="rounded-2xl p-3 space-y-2 bg-card-light/10">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
-            <Text className="text-white/80 text-sm font-bbh">Milestones</Text>
+            <Text className="text-card-lighter-3/80 text-sm font-bbh">
+              Milestones
+            </Text>
             <Text className="text-card-lighter-3/70 text-[11px] font-bbh">
               (optional)
             </Text>
           </View>
           <View className="flex-row items-center gap-2">
-            <Text className="text-card-lighter-3/80 text-[11px] font-bbh">
-              Enable
-            </Text>
             <Switch
               checked={milestonesEnabled}
               onChange={(checked) => {
@@ -311,20 +341,29 @@ export function CreateTemplateSheet({
                     <Text className="text-card-lighter-3/80 text-[11px] font-bbh mt-0.5">
                       {m.triggerType === 'DAY'
                         ? `Day ${m.triggerValue || '?'}`
-                        : `${m.triggerValue || '?'}% of goal`}{' '}
-                      • +{m.points || '0'} pts
+                        : m.triggerType === 'PERCENTAGE'
+                          ? `${m.triggerValue || '?'}% of goal`
+                          : `${m.points || '0'} pts every ${m.triggerValue || '?'} days`}{' '}
+                      {m.triggerType !== 'SEQUENCE'
+                        ? `• +${m.points || '0'} pts`
+                        : ''}
+                      {m.triggerType === 'SEQUENCE'
+                        ? `• +${m.sequenceBonusPoints || '10'} each time • days ${m.sequenceStartDay || '?'}–${m.sequenceEndDay || '?'}`
+                        : ''}
                     </Text>
                   </View>
                 </View>
                 <Pressable
-                  onPress={(e) => {
-                    e.stopPropagation()
-                    if (confirm('Remove this milestone?')) {
-                      setMilestones((prev) =>
-                        prev.filter((_, i) => i !== index),
-                      )
-                    }
-                  }}
+                  onPress={
+                    ((e: any) => {
+                      e.stopPropagation()
+                      if (confirm('Remove this milestone?')) {
+                        setMilestones((prev) =>
+                          prev.filter((_, i) => i !== index),
+                        )
+                      }
+                    }) as any
+                  }
                   className="absolute right-1 bottom-1 p-1 rounded-full bg-card-light/40 hover:bg-card-light/60 transition-colors"
                 >
                   <RiDeleteBinLine size={14} className="text-danger-400" />
@@ -387,15 +426,18 @@ export function CreateTemplateSheet({
         <Text className="text-danger-500 text-sm font-bbh">{formError}</Text>
       )}
 
-      <Button
-        label="Create Template"
-        variant="default"
-        fullWidth
-        onClick={handleSubmit}
-        disabled={isCreating}
-        loading={isCreating}
-        textClassName="text-sm"
-      />
+      <View className="h-[80px]"></View>
+      <View className="absolute bottom-0 left-0 p-mg w-full !pb-mg">
+        <Button
+          label="Create Template"
+          variant="default"
+          fullWidth
+          onClick={handleSubmit}
+          disabled={isCreating}
+          loading={isCreating}
+          textClassName="text-sm"
+        />
+      </View>
     </View>
   )
 }
