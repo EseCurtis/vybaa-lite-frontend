@@ -1,17 +1,22 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useRouter } from '@tanstack/react-router'
 import { useCallback, type ReactElement } from 'react'
 
 import RewindChatScreen from '@/app/(app)/rewind/rewind-chat.screen'
 import { EdgeSwipeBack } from '@/components/common/edge-swipe-back.component'
 import { ProtectedRoute } from '@/components/common/protected-route.component'
 import { RewindChatProGate } from '@/components/custom/subscription/pro-feature-gate.component'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 function RewindChatRoute(): ReactElement {
   const { chatId } = Route.useParams()
-  const navigate = useNavigate()
+  const router = useRouter()
   const handleSwipeBack = useCallback((): void => {
-    void navigate({ replace: true, to: '/app/rewind-chats' })
-  }, [navigate])
+    void navigateBackWithinApp(
+      router,
+      `/app/rewind-chat/${chatId}`,
+      '/app/rewind-chats',
+    )
+  }, [chatId, router])
 
   return (
     <ProtectedRoute redirectTo="/" requireAuth>

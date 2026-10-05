@@ -8,7 +8,6 @@ import { colors } from '@/shared/colors.shared'
 import { Moti } from '@/shared/constants.shared'
 import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import { hapticFeedback } from '@/shared/haptic.util'
-//import { shouldAnimate } from '@/shared/utils/animation.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
@@ -145,7 +144,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
   )
 
   return (
-    <AnimatePresence initial={false}>
+    <AnimatePresence initial={false} mode="wait">
       {isVisible ? (
         <Moti.div
           className={cn(
@@ -158,7 +157,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           exit={shouldAnimate ? { y: 100, opacity: 0 } : undefined}
           transition={{
             ...(shouldAnimate
-              ? { type: 'spring', stiffness: 300, damping: 30 }
+              ? { type: 'tween', duration: 0.18, ease: 'easeOut' }
               : { duration: 0 }),
           }}
           key="tabbar"
@@ -173,7 +172,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           />
 
           <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
-            <Moti.div className="  px-2 flex flex-row items-center w-full justify-center ">
+            <View className="px-2 flex flex-row items-center w-full justify-center">
               {tabs.map((tab) => {
                 const isActive = isActiveTab(
                   tab.route,
@@ -198,49 +197,23 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                   : `Double tap to switch to ${tab.label || tab.id} screen`
 
                 return (
-                  <Moti.div
+                  <View
                     key={tab.id}
                     className={cn(
                       'relative border-t-3 py-4 px-2',
                       tab.isSpecial && ' z-20',
                     )}
-                    whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
-                    transition={
-                      shouldAnimate
-                        ? { type: 'spring', stiffness: 400, damping: 17 }
-                        : { duration: 0 }
-                    }
                   >
                     {/* Active indicator background */}
                     {isActive && !tab.isSpecial && (
-                      <Moti.div
-                        className="absolute top-[-3px]  inset-0   flex items-start justify-center mt-full "
-                        layoutId={shouldAnimate ? 'activeTab' : undefined}
-                        initial={false}
-                        animate={
-                          shouldAnimate
-                            ? {
-                                //backgroundColor: colors.white,
-                              }
-                            : false
-                        }
-                        transition={
-                          shouldAnimate
-                            ? {
-                                type: 'spring',
-                                stiffness: 300,
-                                damping: 30,
-                              }
-                            : { duration: 0 }
-                        }
-                      >
-                        <View className=" text-white bg-accent-500  h-0.5 w-full "></View>
-                      </Moti.div>
+                      <View className="absolute top-[-3px] inset-x-0 flex items-start justify-center">
+                        <View className="text-white bg-accent-500 h-0.5 w-full" />
+                      </View>
                     )}
 
                     <TouchableOpacity
                       className={cn(
-                        'items-center flex overflow-hidden relative justify-center flex-row transition-all',
+                        'items-center flex overflow-hidden relative justify-center flex-row',
                         tab.isSpecial
                           ? 'p-1 py-0.5 mx-2 rounded-md bg-accent-400  shadow-black/30'
                           : 'rounded-full px-4 py-2',
@@ -252,34 +225,9 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                       testID={`tab-${tab.id}`}
                     >
                       <>
-                        {/* Icon with animation */}
-                        <Moti.div
-                          animate={
-                            shouldAnimate
-                              ? {
-                                  opacity: isActive ? 1 : 0.7,
-                                  scale: isActive ? 1 : 1,
-                                }
-                              : false
-                          }
-                          transition={
-                            shouldAnimate
-                              ? {
-                                  type: 'spring',
-                                  stiffness: 300,
-                                  damping: 20,
-                                }
-                              : { duration: 0 }
-                          }
+                        <View
                           className="relative flex items-center justify-center flex-col"
-                          style={
-                            !shouldAnimate
-                              ? {
-                                  opacity: isActive ? 1 : 0.7,
-                                  scale: isActive ? 1 : 1,
-                                }
-                              : undefined
-                          }
+                          style={{ opacity: isActive ? 1 : 0.7 }}
                         >
                           <tab.icon
                             color={iconColor}
@@ -307,13 +255,13 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                           >
                             {tab.label.toUpperCase()}
                           </Text>
-                        </Moti.div>
+                        </View>
                       </>
                     </TouchableOpacity>
-                  </Moti.div>
+                  </View>
                 )
               })}
-            </Moti.div>
+            </View>
             <BottomNotch />
           </View>
         </Moti.div>

@@ -1,4 +1,4 @@
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 import { useMemo } from 'react'
 
@@ -10,6 +10,7 @@ import { View } from '@/components/layout/view.component'
 import { usePaginatedRewindSessions } from '@/hooks/use-rewind.hook'
 import type { RewindSession } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 import { normalizePages } from '@/shared/utils/helpers.util'
 
 import {
@@ -23,6 +24,7 @@ import { RewindSessionRow } from './history/rewind-session-row.component'
 
 export default function RewindSessionArchiveScreen(): ReactElement {
   const navigate = useNavigate()
+  const router = useRouter()
   const {
     data,
     error,
@@ -47,7 +49,13 @@ export default function RewindSessionArchiveScreen(): ReactElement {
       <NoiseComponent>
         <TabHeader
           canGoBack
-          onBack={() => navigate({ replace: true, to: '/app/rewind-history' })}
+          onBack={() => {
+            void navigateBackWithinApp(
+              router,
+              '/app/rewind-history-sessions',
+              '/app/rewind-history',
+            )
+          }}
           title="Reflections"
         />
 

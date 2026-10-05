@@ -13,8 +13,9 @@ import { useGoal } from '@/hooks/use-goals.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { GoalListFilter } from '@/shared/api/goal.api'
 import { colors } from '@/shared/colors.shared'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 import { RiRefreshLine, RiSettings3Line } from '@remixicon/react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useNavigate, useParams, useRouter } from '@tanstack/react-router'
 
 export default function GoalDetailScreen({
   originFilter = 'ACTIVE',
@@ -22,6 +23,7 @@ export default function GoalDetailScreen({
   originFilter?: GoalListFilter
 }) {
   const navigate = useNavigate()
+  const router = useRouter()
   const { goalId } = useParams({ from: '/app/goal/$goalId' })
   const goal = useGoal(goalId)
   const bottomSheet = useBottomSheetController()
@@ -61,7 +63,9 @@ export default function GoalDetailScreen({
       <NoiseComponent>
         <TabHeader
           canGoBack
-          onBack={() => returnToLibrary()}
+          onBack={() => {
+            void navigateBackWithinApp(router, `/app/goal/${goalId}`)
+          }}
           title="Goal details"
         >
           {goal.data ? (

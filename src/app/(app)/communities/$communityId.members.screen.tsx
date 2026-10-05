@@ -9,6 +9,8 @@ import { useCommunity, useCommunityMembers } from '@/hooks/use-communities.hook'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
+
 export default function CommunityMembersScreen() {
   const router = useRouter()
   const { communityId } = useParams({
@@ -39,11 +41,7 @@ export default function CommunityMembersScreen() {
   }
 
   const handleBack = () => {
-    router.navigate({
-      params: { communityId },
-      replace: true,
-      to: '/app/community/$communityId',
-    })
+    void navigateBackWithinApp(router, `/app/community/members/${communityId}`)
   }
 
   const handleRefresh = async () => {

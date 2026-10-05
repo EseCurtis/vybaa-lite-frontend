@@ -1,5 +1,5 @@
 import { RiRefreshLine } from '@remixicon/react'
-import { useNavigate, useParams } from '@tanstack/react-router'
+import { useParams, useRouter } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
@@ -11,6 +11,7 @@ import { View } from '@/components/layout/view.component'
 import { useRewindSession } from '@/hooks/use-rewind.hook'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 import { RewindSessionDetail } from './history/rewind-session-detail-sheet.component'
 
@@ -21,7 +22,7 @@ export default function RewindSessionDetailScreen({
 }: {
   origin: RewindSessionDetailOrigin
 }): ReactElement {
-  const navigate = useNavigate()
+  const router = useRouter()
   const { sessionId } = useParams({ from: '/app/r/$sessionId' })
   const {
     data: session,
@@ -43,7 +44,13 @@ export default function RewindSessionDetailScreen({
       <NoiseComponent>
         <TabHeader
           canGoBack
-          onBack={() => navigate({ replace: true, to: returnPath })}
+          onBack={() => {
+            void navigateBackWithinApp(
+              router,
+              `/app/r/${sessionId}`,
+              returnPath,
+            )
+          }}
           title={persona?.name ?? 'Rewind'}
         />
 

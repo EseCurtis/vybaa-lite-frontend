@@ -5,7 +5,7 @@ import {
   RiSparkling2Line,
   RiTeamLine,
 } from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import { useState, type ReactElement, type ReactNode } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
@@ -16,6 +16,7 @@ import { View } from '@/components/layout/view.component'
 import { useProAccess } from '@/hooks/use-pro-access.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import { useSubscription } from '@/providers/subscription.provider'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 export type ProFeature = 'quick-goal-setup' | 'rewind-chats' | 'rewind-partners'
 
@@ -224,7 +225,7 @@ export function RewindChatProGate({
 }): ReactElement {
   const { isLoading, isPro, isSupported } = useSubscription()
   const { requestProAccess } = useProAccess()
-  const navigate = useNavigate()
+  const router = useRouter()
   const theme = FEATURE_THEMES['rewind-chats']
 
   if (isPro) return <>{children}</>
@@ -233,7 +234,13 @@ export function RewindChatProGate({
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
         <TabHeader
-          onBack={() => void navigate({ replace: true, to: '/app/rewind' })}
+          onBack={() => {
+            void navigateBackWithinApp(
+              router,
+              '/app/rewind-chats',
+              '/app/rewind',
+            )
+          }}
           title="Discussions"
         />
         <View className="flex-1 overflow-y-auto px-mg pb-[calc(var(--safe-area-inset-bottom,0px)+24px)] pt-6">

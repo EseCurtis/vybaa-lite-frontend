@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   getAppNavigationTransition,
   getAppParentPath,
   getAppTabRoot,
+  navigateBackWithinApp,
 } from './app-navigation.util'
 
 describe('app navigation hierarchy', () => {
@@ -70,5 +71,42 @@ describe('app navigation hierarchy', () => {
     expect(getAppNavigationTransition('/app/goal/create', '/app/goal')).toBe(
       'vybaa-workflow-back',
     )
+  })
+
+  it('uses the actual history entry before an inferred parent route', async () => {
+    const back = vi.fn()
+    const navigate = vi.fn()
+    const router: Parameters<typeof navigateBackWithinApp>[0] = {
+      history: { back, canGoBack: () => true },
+      navigate,
+    }
+
+    await navigateBackWithinApp(
+      router,
+      '/app/r/rewind_123',
+      '/app/rewind-history',
+    )
+
+    expect(back).toHaveBeenCalledOnce()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it('uses a fallback only when there is no history entry', async () => {
+    const navigate = vi.fn().mockResolvedValue(undefined)
+    const router: Parameters<typeof navigateBackWithinApp>[0] = {
+      history: { back: vi.fn(), canGoBack: () => false },
+      navigate,
+    }
+
+    await navigateBackWithinApp(
+      router,
+      '/app/r/rewind_123',
+      '/app/rewind-history',
+    )
+
+    expect(navigate).toHaveBeenCalledWith({
+      replace: true,
+      to: '/app/rewind-history',
+    })
   })
 })

@@ -14,6 +14,7 @@ import {
   useTemplateParticipants,
 } from '@/hooks/use-communities.hook'
 import { normalizePages } from '@/shared/utils/helpers.util'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 import { RiFileList3Line, RiRefreshLine } from '@remixicon/react'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -43,15 +44,14 @@ export default function TemplateDetailScreen() {
   }
 
   const handleBack = () => {
-    if (template?.communityId) {
-      router.navigate({
-        params: { communityId: template.communityId },
-        replace: true,
-        to: '/app/community/$communityId',
-      })
-    } else {
-      router.navigate({ replace: true, to: '/app/communities' })
-    }
+    const fallbackPath = template?.communityId
+      ? `/app/community/${template.communityId}`
+      : '/app/communities'
+    void navigateBackWithinApp(
+      router,
+      `/app/community/templates/${templateId}`,
+      fallbackPath,
+    )
   }
 
   if (isLoadingTemplate) {

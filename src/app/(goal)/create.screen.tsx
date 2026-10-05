@@ -5,7 +5,7 @@ import {
   RiLoader4Line,
   RiSparkling2Line,
 } from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
@@ -36,6 +36,7 @@ import {
   setGoalAlarmsEnabled,
 } from '@/shared/goal/goal-alarm.service'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 export type GoalDraftNavigation = {
   initialStep?: 1 | 2 | 3 | 4
@@ -360,6 +361,7 @@ function QuickGoalEditorSheet({
 
 export default function CreateGoalScreen() {
   const navigate = useNavigate()
+  const router = useRouter()
   const { user } = useAuth()
   const bottomSheet = useBottomSheetController()
   const { isPro } = useSubscription()
@@ -385,7 +387,7 @@ export default function CreateGoalScreen() {
   }, [bottomSheet])
 
   function handleBack(): void {
-    navigate({ to: '/app/goal' })
+    void navigateBackWithinApp(router, '/app/goal/create', '/app/goal')
   }
 
   function openQuickSetup(): void {

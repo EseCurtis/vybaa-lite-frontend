@@ -192,7 +192,7 @@ export default function NotificationsScreen(): ReactElement {
 
     const target = normalizeDeepLink(`https://vybaa.app${route}`)
     if (target) {
-      void navigateToDeepLinkTarget(router, target)
+      void navigateToDeepLinkTarget(router, target, { replace: false })
     }
   }
 

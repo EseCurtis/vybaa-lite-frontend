@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
+import type { AnyRouter } from '@tanstack/react-router'
 import {
   createContext,
   useCallback,
@@ -39,6 +40,8 @@ import {
   type RewindChatMessagesCache,
 } from '@/shared/rewind/rewind-chat-realtime.util'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import { navigateToDeepLinkTarget } from '@/shared/utils/auth-redirect.util'
+import { normalizeDeepLink } from '@/shared/utils/deep-link.util'
 
 interface NotificationContextValue {
   addNotification: (notification: Notification) => void
@@ -57,14 +60,23 @@ function getRewindChatRoute(chatId: string): string {
   return `/app/rewind-chat/${encodeURIComponent(chatId)}`
 }
 
-function openAppRoute(route: string): void {
-  window.location.assign(route)
+function openAppRoute(router: AnyRouter, route: string): void {
+  const target = normalizeDeepLink(`https://vybaa.app${route}`)
+  if (!target) {
+    if (route === '/notifications') {
+      void router.navigate({ to: '/notifications' })
+    }
+    return
+  }
+  void navigateToDeepLinkTarget(router, target, { replace: false })
 }
 
 export function NotificationProvider({
   children,
+  router,
 }: {
   children: ReactNode
+  router: AnyRouter
 }): ReactNode {
   const { isAuthenticated, user } = useAuth()
   const queryClient = useQueryClient()
@@ -120,13 +132,13 @@ export function NotificationProvider({
                 ? `${notification.sender.name} avatar`
                 : undefined,
             avatarUrl: isBatch ? undefined : notification.sender?.avatarUrl,
-            onOpen: route ? () => openAppRoute(route) : undefined,
+            onOpen: route ? () => openAppRoute(router, route) : undefined,
           })
         }
       }
       refreshNotificationData()
     },
-    [refreshNotificationData, toast],
+    [refreshNotificationData, router, toast],
   )
 
   const handleRewindEvent = useCallback(
@@ -183,7 +195,7 @@ export function NotificationProvider({
           toast.notification(event.message.content, {
             avatarAlt: `${sourcePersona.name} avatar`,
             avatarUrl: sourcePersona.avatar,
-            onOpen: () => openAppRoute(chatRoute),
+            onOpen: () => openAppRoute(router, chatRoute),
           })
         }
       }
@@ -211,7 +223,7 @@ export function NotificationProvider({
 
       for (const listener of rewindListenersRef.current) listener(event)
     },
-    [queryClient, toast],
+    [queryClient, router, toast],
   )
 
   useEffect(() => {

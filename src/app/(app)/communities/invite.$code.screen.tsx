@@ -6,6 +6,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useJoinByInviteCode } from '@/hooks/use-communities.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 import { useParams, useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
 
@@ -26,7 +27,11 @@ export default function InviteCodeScreen() {
         }}
         onClose={() => {
           bottomSheet.dismiss()
-          router.navigate({ to: '/app/communities' })
+          void navigateBackWithinApp(
+            router,
+            `/app/invite/${code}`,
+            '/app/communities',
+          )
         }}
       />,
       {
@@ -42,7 +47,13 @@ export default function InviteCodeScreen() {
         <TabHeader
           canGoBack
           title="Join Community"
-          onBack={() => router.navigate({ to: '/app/communities' })}
+          onBack={() => {
+            void navigateBackWithinApp(
+              router,
+              `/app/invite/${code}`,
+              '/app/communities',
+            )
+          }}
         />
         <View className="gap-4 px-mg py-5">
           <Skeleton className="h-44 w-full" rounded="xl" />

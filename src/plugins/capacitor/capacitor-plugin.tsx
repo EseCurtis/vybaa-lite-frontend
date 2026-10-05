@@ -56,7 +56,7 @@ export function CapacitorPlugin({
         return
       }
 
-      await navigateToDeepLinkTarget(router, target)
+      await navigateToDeepLinkTarget(router, target, { replace: false })
     },
     [isAuthenticated, router],
   )

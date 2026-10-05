@@ -1,5 +1,5 @@
 import { RiDeleteBinLine, RiLoader4Line } from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
+import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import type { ReactElement } from 'react'
 
@@ -23,6 +23,7 @@ import {
 } from '@/hooks/use-rewind.hook'
 import { useToast } from '@/providers/toast.provider'
 import { shouldAnimate } from '@/shared/utils/animation.util'
+import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 const MOOD_CONTROLS: ReadonlyArray<{
   key: keyof ConversationMood
@@ -289,19 +290,20 @@ export default function RewindChatSettingsScreen({
 }): ReactElement {
   const query = useRewindChatSettings(chatId)
   const navigate = useNavigate()
+  const router = useRouter()
   return (
     <View className="min-h-0 flex-1 overflow-hidden bg-cardd">
       <NoiseComponent>
         <View className="h-full min-h-0">
           <TabHeader
             title="Chat settings"
-            onBack={() =>
-              void navigate({
-                to: '/app/rewind-chat/$chatId',
-                params: { chatId },
-                replace: true,
-              })
-            }
+            onBack={() => {
+              void navigateBackWithinApp(
+                router,
+                `/app/rewind-chat/${chatId}/settings`,
+                `/app/rewind-chat/${chatId}`,
+              )
+            }}
           />
           {query.data ? (
             <SettingsForm settings={query.data} />

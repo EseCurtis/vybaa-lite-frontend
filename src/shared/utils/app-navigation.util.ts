@@ -20,6 +20,10 @@ export type AppNavigationTransition =
   | 'vybaa-workflow-back'
   | 'vybaa-workflow-forward'
 
+type AppBackRouter = Pick<AnyRouter, 'navigate'> & {
+  history: Pick<AnyRouter['history'], 'back' | 'canGoBack'>
+}
+
 function getCommunityParent(pathname: string): string | null {
   const communitySectionMatch = pathname.match(
     /^\/app\/community\/(?:activity|goals|members)\/([^/]+)$/,
@@ -132,9 +136,20 @@ export function getAppNavigationTransition(
 }
 
 export async function navigateBackWithinApp(
-  router: AnyRouter,
+  router: AppBackRouter,
   pathname: string,
+  fallbackPath?: string,
 ): Promise<boolean> {
+  if (router.history.canGoBack()) {
+    router.history.back()
+    return true
+  }
+
+  if (fallbackPath) {
+    await router.navigate({ replace: true, to: fallbackPath })
+    return true
+  }
+
   const parentPath = getAppParentPath(pathname)
   if (parentPath) {
     await router.navigate({ replace: true, to: parentPath })
