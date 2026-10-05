@@ -1,7 +1,8 @@
 import ENV from '@/env'
-import axios, { AxiosError, type InternalAxiosRequestConfig, } from 'axios'
+import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios'
 
 export type ApiErrorCode =
+  | 'EMAIL_NOT_CONFIRMED'
   | 'FREE_LIMIT_REACHED'
   | 'PLAN_LIMIT_REACHED'
   | 'PRO_REQUIRED'
@@ -11,7 +12,10 @@ export class ApiError extends Error {
   public readonly code?: string
   public readonly status?: number
 
-  public constructor(message: string, options?: { code?: string; status?: number }) {
+  public constructor(
+    message: string,
+    options?: { code?: string; status?: number },
+  ) {
     super(message)
     this.name = 'ApiError'
     this.code = options?.code
@@ -114,7 +118,10 @@ http.interceptors.request.use((config) => {
     const currentTimezone = getCurrentTimezone()
 
     // Add timezone headers only if timezone has changed or this is the first request
-    if (currentTimezone && (lastSentTimezone === null || currentTimezone !== lastSentTimezone)) {
+    if (
+      currentTimezone &&
+      (lastSentTimezone === null || currentTimezone !== lastSentTimezone)
+    ) {
       config.headers = config.headers ?? {}
       ;(config.headers as any)['x-user-tz'] = currentTimezone
       ;(config.headers as any)['tzx'] = currentTimezone
@@ -134,52 +141,68 @@ const processQueue = (token?: string) => {
 
 export const extractError = (data: unknown): string => {
   if (typeof data === 'string') {
-    return data;
+    return data
   }
   if (Array.isArray(data)) {
     const messages = data.map((item) => {
-      return `  ${extractError(item)}`;
-    });
+      return `  ${extractError(item)}`
+    })
 
-    return `${messages.join('')}`;
+    return `${messages.join('')}`
   }
 
   if (typeof data === 'object' && data !== null) {
     const messages = Object.entries(data).map((item) => {
-      const [key, value] = item;
-      const separator = Array.isArray(value) ? ':\n ' : ': ';
+      const [key, value] = item
+      const separator = Array.isArray(value) ? ':\n ' : ': '
 
-      return `- ${key}${separator}${extractError(value)} \n `;
-    });
-    return `${messages.join('')} `;
+      return `- ${key}${separator}${extractError(value)} \n `
+    })
+    return `${messages.join('')} `
   }
-  return 'Something went wrong ';
-};
-
+  return 'Something went wrong '
+}
 
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<any>) => {
-    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    const original = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean
+    }
     const status = error.response?.status
-
-    
 
     const responseData = error?.response?.data as
       | { code?: string; msg?: string }
       | undefined
     const message = responseData?.msg || error?.message || 'Request failed'
-    const properMessage =  extractError(
-    (error?.response?.data as any)?.msg || error?.response?.data
-  ).trimEnd();
+    const properMessage = extractError(
+      (error?.response?.data as any)?.msg || error?.response?.data,
+    ).trimEnd()
 
     const isSubscriptionError =
       typeof responseData?.code === 'string' &&
-      ['FREE_LIMIT_REACHED', 'PLAN_LIMIT_REACHED', 'PRO_REQUIRED', 'SUBSCRIPTION_UNAVAILABLE'].includes(
-        responseData.code,
-      )
+      [
+        'FREE_LIMIT_REACHED',
+        'PLAN_LIMIT_REACHED',
+        'PRO_REQUIRED',
+        'SUBSCRIPTION_UNAVAILABLE',
+      ].includes(responseData.code)
 
-    if ((status === 401 || (status === 403 && !isSubscriptionError)) && !original?._retry) {
+    const isEmailConfirmationRequired =
+      responseData?.code === 'EMAIL_NOT_CONFIRMED'
+
+    if (isEmailConfirmationRequired) {
+      localStorage.removeItem('authToken')
+      localStorage.removeItem('refreshToken')
+      return Promise.reject(
+        new ApiError(message, { code: responseData.code, status }),
+      )
+    }
+
+    if (
+      (status === 401 || (status === 403 && !isSubscriptionError)) &&
+      !original?._retry
+    ) {
       original._retry = true
       try {
         const refreshToken = localStorage.getItem('refreshToken')
@@ -196,9 +219,13 @@ http.interceptors.response.use(
         }
 
         isRefreshing = true
-        const { data } = await axios.post(`${ENV.API_BASE_URL}/api/v1/auth/refresh-token`, { refreshToken }, {
-          headers: { 'Content-Type': 'application/json' },
-        })
+        const { data } = await axios.post(
+          `${ENV.API_BASE_URL}/api/v1/auth/refresh-token`,
+          { refreshToken },
+          {
+            headers: { 'Content-Type': 'application/json' },
+          },
+        )
         const newToken: string | undefined = data?.data?.token
         const newRefresh: string | undefined = data?.data?.refreshToken
         if (!newToken) throw new Error('No token in refresh response')
@@ -214,10 +241,14 @@ http.interceptors.response.use(
         processQueue(undefined)
         localStorage.removeItem('authToken')
         localStorage.removeItem('refreshToken')
-        return Promise.reject(new ApiError(properMessage || 'Session expired', { status }))
+        return Promise.reject(
+          new ApiError(properMessage || 'Session expired', { status }),
+        )
       }
     }
 
-    return Promise.reject(new ApiError(message, { code: responseData?.code, status }))
+    return Promise.reject(
+      new ApiError(message, { code: responseData?.code, status }),
+    )
   },
 )

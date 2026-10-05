@@ -3,6 +3,7 @@ import type {
   GoalSuggestion,
   AuthResponse,
   AppleAuthRequest,
+  AccountConfirmationResponse,
   EmailCheckResponse,
   ForgotPasswordRequest,
   GoogleAuthRequest,
@@ -93,8 +94,10 @@ class AuthAPI {
     return res
   }
 
-  async confirmAccount(data: VerifyOTPRequest): Promise<any> {
-    const { data: res } = await http.post<any>(
+  async confirmAccount(
+    data: VerifyOTPRequest,
+  ): Promise<AccountConfirmationResponse> {
+    const { data: res } = await http.post<AccountConfirmationResponse>(
       `${API_V1}/auth/account-confirmation`,
       data,
     )

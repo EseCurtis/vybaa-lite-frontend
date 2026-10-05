@@ -4,10 +4,11 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
+import { getApiErrorMessage } from '@/shared/utils/api-error.util'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import { useState } from 'react'
 
-type ConfirmAccountAction = 'confirming-account' | null
+type ConfirmAccountAction = 'confirming-account' | 'resending-code' | null
 
 export default function ConfirmAccountScreen() {
   const navigate = useNavigate()
@@ -20,6 +21,8 @@ export default function ConfirmAccountScreen() {
   const [message, setMessage] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<ConfirmAccountAction>(null)
   const isConfirming = activeAction === 'confirming-account'
+  const isResending = activeAction === 'resending-code'
+  const isBusy = activeAction !== null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,8 +40,32 @@ export default function ConfirmAccountScreen() {
       setTimeout(() => {
         navigate({ to: '/auth/login' })
       }, 800)
-    } catch (err: any) {
-      const msg = err?.msg || err?.message || 'Confirmation failed'
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, 'Confirmation failed')
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setActiveAction(null)
+    }
+  }
+
+  const handleResend = async () => {
+    const normalizedEmail = email.trim()
+    setError(null)
+    setMessage(null)
+
+    if (!normalizedEmail) {
+      setError('Enter your email first')
+      return
+    }
+
+    setActiveAction('resending-code')
+    try {
+      await authAPI.requestConfirmation(normalizedEmail)
+      setMessage('A new confirmation code is on its way.')
+      toast.success('New confirmation code sent')
+    } catch (err: unknown) {
+      const msg = getApiErrorMessage(err, 'Could not resend the code')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -52,19 +79,23 @@ export default function ConfirmAccountScreen() {
       onBack={() => navigate({ to: '/auth/login' })}
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+        <Text className="text-card-lighter-2 text-sm font-bbh leading-5">
+          Confirm your email before you can log in. If the code expired, request
+          a fresh one below.
+        </Text>
         <Input
           label="Email"
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          disabled={isConfirming}
+          disabled={isBusy}
           placeholder="you@example.com"
         />
         <Input
           label="Confirmation code"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          disabled={isConfirming}
+          disabled={isBusy}
           placeholder="6‑digit code"
         />
 
@@ -85,8 +116,18 @@ export default function ConfirmAccountScreen() {
           label={isConfirming ? 'Confirming...' : 'Confirm account'}
           fullWidth
           loading={isConfirming}
-          disabled={isConfirming}
+          disabled={isBusy}
           className="mt-4"
+        />
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          label={isResending ? 'Sending new code...' : 'Request a new code'}
+          fullWidth
+          loading={isResending}
+          disabled={isBusy}
+          onClick={handleResend}
         />
       </form>
     </AuthScreenLayout>

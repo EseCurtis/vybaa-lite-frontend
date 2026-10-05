@@ -8,6 +8,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
+import { ApiError } from '@/shared/api/http'
 import { getApiErrorMessage } from '@/shared/utils/api-error.util'
 import { useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
@@ -40,6 +41,15 @@ export default function LoginScreen() {
       await loginWithEmail({ email, password })
       toast.success('Welcome back')
     } catch (error: unknown) {
+      if (error instanceof ApiError && error.code === 'EMAIL_NOT_CONFIRMED') {
+        setError(null)
+        navigate({
+          to: '/auth/confirm',
+          search: { email: email.trim() },
+        })
+        return
+      }
+
       const msg = getApiErrorMessage(error, 'Login failed')
       setError(msg)
       toast.error(msg)

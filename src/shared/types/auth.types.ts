@@ -108,6 +108,13 @@ export interface OTPResponse {
   }
 }
 
+export interface AccountConfirmationResponse {
+  msg: string
+  data: {
+    user: User
+  }
+}
+
 export interface VerifyOTPResponse {
   msg: string
   data: {
