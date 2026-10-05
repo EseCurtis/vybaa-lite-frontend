@@ -1,9 +1,7 @@
 // Auth API Request/Response Types
 export interface LoginRequest {
-  acceptedTerms: true
   email: string
   password: string
-  termsVersion: string
 }
 
 export interface RegisterRequest {

@@ -1,5 +1,6 @@
 import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
 import { Input } from '@/components/common/input.component'
+import { BottomNotch } from '@/components/common/notch.component'
 import { TermsConsent } from '@/components/common/terms-consent.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
@@ -8,13 +9,27 @@ import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { userAPI } from '@/shared/api/user.api'
-import { cn } from '@/shared/utils/helpers.util'
 import { CURRENT_TERMS_VERSION } from '@/shared/config/public-urls.config'
+import { getApiErrorMessage } from '@/shared/utils/api-error.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { RiCheckLine, RiCloseLine, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 type SignupAction = 'creating-account' | 'sending-code' | null
+
+function validateUsername(value: string): string | null {
+  if (!value) return 'Username is required'
+  if (value.length < 3) return 'Username must be at least 3 characters'
+  if (value.length > 20) return 'Username must be 20 characters or less'
+  if (!/^[a-z0-9_]+$/.test(value)) {
+    return 'Use lowercase letters, numbers, and underscores'
+  }
+  if (value.startsWith('_') || value.endsWith('_')) {
+    return 'Username can’t start or end with underscore'
+  }
+  return null
+}
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
@@ -37,6 +52,7 @@ export default function SignupScreen() {
   const navigate = useNavigate()
   const toast = useToast()
 
+  const formRef = useRef<HTMLFormElement>(null)
   const [email, setEmail] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
@@ -51,25 +67,14 @@ export default function SignupScreen() {
     boolean | null
   >(null)
   const [usernameError, setUsernameError] = useState<string | null>(null)
-  const [acceptedTerms, setAcceptedTerms] = useState(false)
-
-  const validateUsername = (value: string): string | null => {
-    if (!value) return 'Username is required'
-    if (value.length < 3) return 'Username must be at least 3 characters'
-    if (value.length > 20) return 'Username must be 20 characters or less'
-    if (!/^[a-z0-9_]+$/.test(value))
-      return 'Use lowercase letters, numbers, and underscores'
-    if (value.startsWith('_') || value.endsWith('_'))
-      return 'Username can’t start or end with underscore'
-    return null
-  }
+  const [hasTouchedUsername, setHasTouchedUsername] = useState(false)
 
   const debouncedUsername = useDebounce(username, 450)
 
   useEffect(() => {
     const cleaned = debouncedUsername.trim().toLowerCase()
     if (!cleaned) {
-      setUsernameError('Username is required')
+      setUsernameError(hasTouchedUsername ? 'Username is required' : null)
       setIsUsernameAvailable(null)
       setIsCheckingUsername(false)
       return
@@ -108,7 +113,7 @@ export default function SignupScreen() {
     return () => {
       cancelled = true
     }
-  }, [debouncedUsername])
+  }, [debouncedUsername, hasTouchedUsername])
 
   const canContinue = useMemo(() => {
     if (step !== 1) return true
@@ -140,28 +145,28 @@ export default function SignupScreen() {
     setError(null)
 
     if (step === 1) {
+      setHasTouchedUsername(true)
       if (!firstName || !lastName || !email) {
         setError('Please fill in your name and email to continue.')
-        toast.error('Fill in all fields to continue')
         return
       }
 
       if (isCheckingUsername) {
-        toast.loading('Checking username…')
+        setError('Wait a moment while we check that username.')
         return
       }
 
-      if (validateUsername(username.trim().toLowerCase())) {
-        const msg = validateUsername(username.trim().toLowerCase())!
-        setError(msg)
-        toast.error(msg)
+      const usernameValidationError = validateUsername(
+        username.trim().toLowerCase(),
+      )
+      if (usernameValidationError) {
+        setError(usernameValidationError)
         return
       }
 
       if (isUsernameAvailable !== true) {
         const msg = usernameError || 'Please choose an available username'
         setError(msg)
-        toast.error(msg)
         return
       }
       setStep(2)
@@ -170,19 +175,11 @@ export default function SignupScreen() {
 
     if (password.length < 8) {
       setError('Password must be at least 8 characters.')
-      toast.error('Password must be at least 8 characters.')
       return
     }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
-      toast.error('Passwords do not match.')
-      return
-    }
-
-    if (!acceptedTerms) {
-      setError('Accept the Terms of Use to create your account.')
-      toast.error('Accept the Terms of Use to sign up')
       return
     }
 
@@ -198,7 +195,7 @@ export default function SignupScreen() {
         termsVersion: CURRENT_TERMS_VERSION,
       })
 
-      if ('data' in res && (res as any).data?.confirmationRequired) {
+      if ('confirmationRequired' in res.data && res.data.confirmationRequired) {
         // Trigger confirmation code email and go to confirmation screen
         setActiveAction('sending-code')
         await authAPI.requestConfirmation(email)
@@ -216,9 +213,10 @@ export default function SignupScreen() {
         search: { email },
       })
       toast.success('Account created. Enter your confirmation code')
-    } catch (err: any) {
-      setError(err?.msg || err?.message || 'Sign up failed')
-      toast.error(err?.msg || err?.message || 'Sign up failed')
+    } catch (err: unknown) {
+      const message = getApiErrorMessage(err, 'Sign up failed')
+      setError(message)
+      toast.error(message)
     } finally {
       setActiveAction(null)
     }
@@ -235,15 +233,78 @@ export default function SignupScreen() {
         navigate({ to: '/' })
       }}
       rootClassName="pt-28"
+      footer={
+        <View className="mt-auto">
+          {step == 1 && (
+            <View className="gap-1 flex-row ml-auto !text-sm mb-3">
+              <span className="opacity-70 text-card-lighter-3">
+                Already have an account?
+              </span>
+              <b onClick={() => navigate({ to: '/auth/login' })}>Log in.</b>
+            </View>
+          )}
+          {step === 2 && <TermsConsent action="signup" />}
+
+          <Button
+            type="submit"
+            label={
+              activeAction === 'creating-account'
+                ? 'Creating account...'
+                : activeAction === 'sending-code'
+                  ? 'Sending code...'
+                  : step === 1
+                    ? 'Continue'
+                    : 'Sign up'
+            }
+            fullWidth
+            loading={isSubmitting}
+            disabled={isSubmitting || (step === 1 && !canContinue)}
+            className={cn('mt-2', step === 1 && !canContinue && 'opacity-70')}
+            onClick={() => {
+              formRef.current?.requestSubmit()
+            }}
+          />
+
+          <BottomNotch />
+        </View>
+      }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+      <form
+        ref={formRef}
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 w-full"
+      >
+        <View className="gap-2">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-xs font-bbh font-bold text-card-lighter-3">
+              Step {step} of 2
+            </Text>
+            <Text className="text-xs font-bbh text-card-lighter-3">
+              {step === 1 ? 'Your details' : 'Secure your account'}
+            </Text>
+          </View>
+          <View className="h-1 flex-row gap-2">
+            <View className="h-1 flex-1 rounded-full bg-white" />
+            <View
+              className={cn(
+                'h-1 flex-1 rounded-full',
+                step === 2 ? 'bg-white' : 'bg-card-light-100',
+              )}
+            />
+          </View>
+        </View>
+
         {step === 1 ? (
           <>
             <Input
               label="Username"
+              name="username"
               value={username}
               onChange={(e) => setUsername(e.target.value.toLowerCase())}
+              onBlur={() => setHasTouchedUsername(true)}
               disabled={isSubmitting}
+              autoCapitalize="none"
+              autoComplete="username"
               placeholder="vybee"
               leftIcon={
                 <Text
@@ -259,7 +320,9 @@ export default function SignupScreen() {
                   @
                 </Text>
               }
-              error={usernameError || undefined}
+              error={
+                hasTouchedUsername ? usernameError || undefined : undefined
+              }
               helperText={
                 !usernameError && isUsernameAvailable
                   ? 'Nice — that username is available'
@@ -278,28 +341,36 @@ export default function SignupScreen() {
                 ) : null
               }
             />
-            <View className="grid grid-cols-2 gap-3">
+            <View className="gap-4">
               <Input
                 label="First name"
+                name="firstName"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 disabled={isSubmitting}
+                autoComplete="given-name"
                 placeholder="Jane"
               />
               <Input
                 label="Last name"
+                name="lastName"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 disabled={isSubmitting}
+                autoComplete="family-name"
                 placeholder="Doe"
               />
             </View>
             <Input
               label="Email"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
+              autoCapitalize="none"
+              autoComplete="email"
+              inputMode="email"
               placeholder="you@example.com"
             />
           </>
@@ -307,23 +378,22 @@ export default function SignupScreen() {
           <>
             <Input
               label="Password"
+              name="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting}
+              autoComplete="new-password"
               placeholder="••••••••"
-            />
-            <TermsConsent
-              accepted={acceptedTerms}
-              disabled={isSubmitting}
-              onChange={setAcceptedTerms}
             />
             <Input
               label="Confirm password"
+              name="confirmPassword"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isSubmitting}
+              autoComplete="new-password"
               placeholder="••••••••"
             />
           </>
@@ -337,41 +407,7 @@ export default function SignupScreen() {
             {loadingText}
           </Text>
         )}
-        {/* {message && (
-            <Text className="text-green-400 text-sm font-bbh">{message}</Text>
-          )} */}
-
-        <Button
-          type="submit"
-          label={
-            activeAction === 'creating-account'
-              ? 'Creating account...'
-              : activeAction === 'sending-code'
-                ? 'Sending code...'
-                : step === 1
-                  ? 'Continue'
-                  : 'Sign up'
-          }
-          fullWidth
-          loading={isSubmitting}
-          disabled={
-            isSubmitting ||
-            (step === 1 && !canContinue) ||
-            (step === 2 && !acceptedTerms)
-          }
-          className={cn('mt-4', step === 1 && !canContinue && 'opacity-70')}
-        />
       </form>
-
-      <View className="mt-auto">
-        <Button
-          variant="ghost"
-          fullWidth
-          label="Already have an account? Log in"
-          disabled={isSubmitting}
-          onClick={() => navigate({ to: '/auth/login' })}
-        />
-      </View>
     </AuthScreenLayout>
   )
 }

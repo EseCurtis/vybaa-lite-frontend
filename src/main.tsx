@@ -7,6 +7,8 @@ import { AuthProvider } from './providers/auth.provider.tsx'
 import { NotificationProvider } from './providers/notification.provider.tsx'
 import { SubscriptionProvider } from './providers/subscription.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
+import { shouldAnimate } from './shared/utils/animation.util.ts'
+import { getAppNavigationTransition } from './shared/utils/app-navigation.util.ts'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -37,6 +39,19 @@ const router = createRouter({
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
+  defaultViewTransition: shouldAnimate
+    ? {
+        types: ({ fromLocation, pathChanged, toLocation }) => {
+          if (!pathChanged) return false
+          return [
+            getAppNavigationTransition(
+              fromLocation?.pathname,
+              toLocation.pathname,
+            ),
+          ]
+        },
+      }
+    : false,
 })
 
 // Register the router instance for type safety

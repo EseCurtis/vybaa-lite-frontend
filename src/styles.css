@@ -295,3 +295,211 @@ body,
   text-overflow: ellipsis;
   /* Optional: adds the '...' */
 }
+
+::view-transition-old(root),
+::view-transition-new(root),
+::view-transition-old(vybaa-tab-bar),
+::view-transition-new(vybaa-tab-bar) {
+  animation: none;
+}
+
+::view-transition-group(vybaa-screen) {
+  animation-duration: 240ms;
+  animation-timing-function: cubic-bezier(0.22, 0.72, 0, 1);
+}
+
+:root:active-view-transition-type(vybaa-push)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 240ms cubic-bezier(0.22, 0.72, 0, 1) both vybaa-push-old;
+  z-index: 1;
+}
+
+:root:active-view-transition-type(vybaa-push)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 240ms cubic-bezier(0.22, 0.72, 0, 1) both vybaa-push-new;
+  z-index: 2;
+}
+
+:root:active-view-transition-type(vybaa-pop)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 220ms cubic-bezier(0.4, 0, 0.2, 1) both vybaa-pop-old;
+  z-index: 2;
+}
+
+:root:active-view-transition-type(vybaa-pop)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 220ms cubic-bezier(0.4, 0, 0.2, 1) both vybaa-pop-new;
+  z-index: 1;
+}
+
+:root:active-view-transition-type(vybaa-workflow-forward)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 260ms cubic-bezier(0.22, 0.72, 0, 1) both vybaa-workflow-old;
+  z-index: 1;
+}
+
+:root:active-view-transition-type(vybaa-workflow-forward)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 260ms cubic-bezier(0.22, 0.72, 0, 1) both vybaa-workflow-new;
+  z-index: 2;
+}
+
+:root:active-view-transition-type(vybaa-workflow-back)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 230ms cubic-bezier(0.4, 0, 0.2, 1) both vybaa-workflow-back-old;
+  z-index: 2;
+}
+
+:root:active-view-transition-type(vybaa-workflow-back)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 230ms cubic-bezier(0.4, 0, 0.2, 1) both vybaa-workflow-back-new;
+  z-index: 1;
+}
+
+:root:active-view-transition-type(vybaa-tab-forward)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 190ms ease-out both vybaa-tab-forward-old;
+}
+
+:root:active-view-transition-type(vybaa-tab-forward)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 190ms ease-out both vybaa-tab-forward-new;
+}
+
+:root:active-view-transition-type(vybaa-tab-back)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 190ms ease-out both vybaa-tab-back-old;
+}
+
+:root:active-view-transition-type(vybaa-tab-back)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 190ms ease-out both vybaa-tab-back-new;
+}
+
+:root:active-view-transition-type(vybaa-fade)::view-transition-old(
+    vybaa-screen
+  ) {
+  animation: 150ms ease-out both vybaa-fade-old;
+}
+
+:root:active-view-transition-type(vybaa-fade)::view-transition-new(
+    vybaa-screen
+  ) {
+  animation: 180ms ease-out both vybaa-fade-new;
+}
+
+@keyframes vybaa-push-old {
+  to {
+    opacity: 0.72;
+    transform: translateX(-7%) scale(0.985);
+  }
+}
+
+@keyframes vybaa-push-new {
+  from {
+    opacity: 0.72;
+    transform: translateX(22%);
+  }
+}
+
+@keyframes vybaa-pop-old {
+  to {
+    opacity: 0.5;
+    transform: translateX(24%);
+  }
+}
+
+@keyframes vybaa-pop-new {
+  from {
+    opacity: 0.72;
+    transform: translateX(-7%) scale(0.985);
+  }
+}
+
+@keyframes vybaa-workflow-old {
+  to {
+    opacity: 0.78;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes vybaa-workflow-new {
+  from {
+    opacity: 0.65;
+    transform: translateY(16%);
+  }
+}
+
+@keyframes vybaa-workflow-back-old {
+  to {
+    opacity: 0.45;
+    transform: translateY(18%);
+  }
+}
+
+@keyframes vybaa-workflow-back-new {
+  from {
+    opacity: 0.78;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes vybaa-tab-forward-old {
+  to {
+    opacity: 0;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes vybaa-tab-forward-new {
+  from {
+    opacity: 0;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes vybaa-tab-back-old {
+  to {
+    opacity: 0;
+    transform: translateX(3%);
+  }
+}
+
+@keyframes vybaa-tab-back-new {
+  from {
+    opacity: 0;
+    transform: translateX(-3%);
+  }
+}
+
+@keyframes vybaa-fade-old {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vybaa-fade-new {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(vybaa-screen),
+  ::view-transition-old(vybaa-screen),
+  ::view-transition-new(vybaa-screen) {
+    animation-duration: 0.01ms !important;
+  }
+}

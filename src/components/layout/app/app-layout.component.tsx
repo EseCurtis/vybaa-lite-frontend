@@ -19,19 +19,24 @@ export function AppLayout() {
     location.pathname.startsWith('/app/') &&
     tabBarHideMatches
   const onATab = location.pathname.split('/').length < 4
+  const routeContent = (
+    <View className="flex-1 min-h-0 relative [view-transition-name:vybaa-screen]">
+      <Outlet />
+    </View>
+  )
 
   return (
     <>
       {IS_WEB ? (
         <View className="max-w-[400px] flex-1 mx-auto relative">
-          <Outlet />
+          {routeContent}
           {shouldShowTabBar && onATab && (
             <TabBar className="max-w-[400px] mx-auto  !left-1/2 !-translate-x-1/2" />
           )}
         </View>
       ) : (
         <>
-          <Outlet />
+          {routeContent}
           {shouldShowTabBar && onATab && <TabBar />}
         </>
       )}

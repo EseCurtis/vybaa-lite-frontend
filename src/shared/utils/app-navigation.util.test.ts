@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { getAppParentPath, getAppTabRoot } from './app-navigation.util'
+import {
+  getAppNavigationTransition,
+  getAppParentPath,
+  getAppTabRoot,
+} from './app-navigation.util'
 
 describe('app navigation hierarchy', () => {
   it('resolves community children to their owning stack', () => {
@@ -33,5 +37,38 @@ describe('app navigation hierarchy', () => {
   it('does not treat one root tab as a child of another tab', () => {
     expect(getAppParentPath('/app/goal')).toBeNull()
     expect(getAppTabRoot('/app/goal')).toBe('/app/goal')
+  })
+
+  it('classifies tabs by their visual order instead of treating them as pushes', () => {
+    expect(getAppNavigationTransition('/app/home', '/app/journal')).toBe(
+      'vybaa-tab-forward',
+    )
+    expect(getAppNavigationTransition('/app/profile', '/app/goal')).toBe(
+      'vybaa-tab-back',
+    )
+  })
+
+  it('classifies child routes as stacked pushes and pops', () => {
+    expect(getAppNavigationTransition('/app/goal', '/app/goal/goal_123')).toBe(
+      'vybaa-push',
+    )
+    expect(getAppNavigationTransition('/app/goal/goal_123', '/app/goal')).toBe(
+      'vybaa-pop',
+    )
+    expect(
+      getAppNavigationTransition(
+        '/app/rewind-history',
+        '/app/rewind-history-sessions',
+      ),
+    ).toBe('vybaa-push')
+  })
+
+  it('presents goal creation as a workflow above the active stack', () => {
+    expect(getAppNavigationTransition('/app/home', '/app/goal/create')).toBe(
+      'vybaa-workflow-forward',
+    )
+    expect(getAppNavigationTransition('/app/goal/create', '/app/goal')).toBe(
+      'vybaa-workflow-back',
+    )
   })
 })
