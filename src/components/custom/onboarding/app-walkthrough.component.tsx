@@ -292,6 +292,9 @@ function SpotlightWalkthrough({
 
       window.clearInterval(interval)
       previousFocusRef.current = document.activeElement as HTMLElement | null
+      // Record the walkthrough as seen when it opens. If the user navigates
+      // away before pressing Skip or Done, it should not surprise them again.
+      markWalkthroughCompleted(definition.id, userId)
       setIsOpen(true)
     }, 120)
 
