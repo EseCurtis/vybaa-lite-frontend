@@ -296,7 +296,7 @@ function ChatMessageBubble({
   showTime: boolean
 }): ReactElement {
   const bubbleRef = useRef<HTMLButtonElement | null>(null)
-  const reduceMotion = useReducedMotion()
+  const reduceMotion = useReducedMotion() || !shouldAnimate
   const gesture = useMessageGesture(
     () => onReply(message),
     () => onToggleReactionPicker(message, bubbleRef.current),
@@ -322,8 +322,9 @@ function ChatMessageBubble({
       animate={{ opacity: 1, scale: 1, y: 0 }}
       className={`flex w-full ${isReactionOverlayOpen ? 'relative z-50' : ''} ${isUser ? 'justify-end' : 'justify-start'}  [&_*]:!break-words [&_*]:!text-wrap overflow-x-hidden`}
       data-message-id={message.id}
-      initial={false}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.98, y: 8 }}
+      layout={!reduceMotion}
+      transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
     >
       <View className="max-w-[88%] min-w-0 flex-row items-end gap-2">
         {isGroup &&
