@@ -1,4 +1,5 @@
 import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
+import { AppLoadingState } from '@/components/common/app-loading-state.component'
 import { Input } from '@/components/common/input.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { TermsConsent } from '@/components/common/terms-consent.component'
@@ -6,17 +7,21 @@ import { Button } from '@/components/layout/button.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import ENV from '@/env'
+import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { ApiError } from '@/shared/api/http'
+import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { getApiErrorMessage } from '@/shared/utils/api-error.util'
+import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
-type LoginAction = 'email' | null
+type LoginAction = 'email' | 'google' | null
 
 export default function LoginScreen() {
-  const { loginWithEmail } = useAuth()
+  const { googleAuthStatus, loginWithEmail, loginWithGoogle } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -25,12 +30,18 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<LoginAction>(null)
+  const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
 
   const isEmailLoading = activeAction === 'email'
+  const isGoogleLoading = activeAction === 'google'
   const isSubmitting = activeAction !== null
-  const loadingText = isEmailLoading
-    ? 'Checking your email and password...'
-    : null
+  const loadingText =
+    activeAction === 'email'
+      ? 'Checking your email and password...'
+      : activeAction === 'google'
+        ? (getGoogleAuthStatusText(googleAuthStatus) ??
+          'Signing in with Google...')
+        : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -58,6 +69,20 @@ export default function LoginScreen() {
     }
   }
 
+  const handleGoogle = async () => {
+    setError(null)
+    setActiveAction('google')
+    try {
+      await loginWithGoogle()
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, 'Failed to sign in with Google')
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setActiveAction(null)
+    }
+  }
+
   return (
     <AuthScreenLayout
       headerTitle="Log in"
@@ -75,6 +100,38 @@ export default function LoginScreen() {
             buttonClassName="w-full"
             onClick={() => formRef.current?.requestSubmit()}
           />
+
+          {canUseGoogleLogin && (
+            <>
+              <View className="flex-row items-center gap-3 mt-3 w-full">
+                <View className="flex-1 h-px bg-card-lighter" />
+                <Text className="text-card-lighter text-[10px] font-bbh uppercase tracking-[0.2em]">
+                  or
+                </Text>
+                <View className="flex-1 h-px bg-card-lighter" />
+              </View>
+              <TouchableOpacity
+                className="w-full min-h-[52px] mt-1 rounded-full bg-cardd flex-row items-center justify-center gap-3 px-4"
+                disabled={isSubmitting}
+                onPress={handleGoogle}
+                accessibilityLabel="Continue with Google"
+              >
+                {isGoogleLoading ? (
+                  <RiLoader4Line
+                    className="text-white animate-spin"
+                    size={18}
+                  />
+                ) : (
+                  <RiGoogleFill className="text-white" size={18} />
+                )}
+                <Text className="text-white text-sm font-bbh font-bold">
+                  {isGoogleLoading
+                    ? 'Opening Google...'
+                    : 'Continue with Google'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           <BottomNotch />
         </View>
@@ -121,7 +178,7 @@ export default function LoginScreen() {
         {error && (
           <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
         )}
-        {loadingText && (
+        {loadingText && !isGoogleLoading && (
           <Text className="text-card-lighter-2 text-xs font-bbh">
             {loadingText}
           </Text>
@@ -134,6 +191,13 @@ export default function LoginScreen() {
           </b>
         </View>
       </form>
+      {isGoogleLoading && loadingText ? (
+        <AppLoadingState
+          detail="Finish choosing your account in the Google window."
+          message={loadingText}
+          mode="dock"
+        />
+      ) : null}
     </AuthScreenLayout>
   )
 }
