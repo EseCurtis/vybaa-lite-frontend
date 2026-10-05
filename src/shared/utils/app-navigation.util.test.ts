@@ -109,4 +109,39 @@ describe('app navigation hierarchy', () => {
       to: '/app/rewind-history',
     })
   })
+
+  it('always returns chat detail to the conversation list', async () => {
+    const back = vi.fn()
+    const navigate = vi.fn().mockResolvedValue(undefined)
+    const router: Parameters<typeof navigateBackWithinApp>[0] = {
+      history: { back, canGoBack: () => true },
+      navigate,
+    }
+
+    await navigateBackWithinApp(router, '/app/rewind-chat/chat_123')
+
+    expect(back).not.toHaveBeenCalled()
+    expect(navigate).toHaveBeenCalledWith({
+      replace: true,
+      to: '/app/rewind-chats',
+    })
+  })
+
+  it('keeps chat settings history behavior separate from chat detail', async () => {
+    const back = vi.fn()
+    const navigate = vi.fn()
+    const router: Parameters<typeof navigateBackWithinApp>[0] = {
+      history: { back, canGoBack: () => true },
+      navigate,
+    }
+
+    await navigateBackWithinApp(
+      router,
+      '/app/rewind-chat/chat_123/settings',
+      '/app/rewind-chat/chat_123',
+    )
+
+    expect(back).toHaveBeenCalledOnce()
+    expect(navigate).not.toHaveBeenCalled()
+  })
 })

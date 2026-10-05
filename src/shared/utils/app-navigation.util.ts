@@ -140,6 +140,14 @@ export async function navigateBackWithinApp(
   pathname: string,
   fallbackPath?: string,
 ): Promise<boolean> {
+  if (/^\/app\/rewind-chat\/[^/]+\/?$/.test(pathname)) {
+    await router.navigate({
+      replace: true,
+      to: fallbackPath ?? '/app/rewind-chats',
+    })
+    return true
+  }
+
   if (router.history.canGoBack()) {
     router.history.back()
     return true

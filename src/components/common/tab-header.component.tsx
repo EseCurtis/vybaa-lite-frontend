@@ -14,6 +14,7 @@ export function TabHeader({
   onBack,
   children,
   canGoBack = true,
+  closeToBack,
   className,
 }: {
   title?: ReactNode
@@ -21,6 +22,7 @@ export function TabHeader({
   children?: ReactNode
   canGoBack?: boolean
   className?: string
+  closeToBack?: ReactNode
 }): ReactElement {
   const router = useRouter()
   const location = useLocation()
@@ -31,7 +33,7 @@ export function TabHeader({
 
       <View className="flex-row justify-between  items-center">
         {canGoBack && (
-          <View className="">
+          <View className="flex-row gap-1">
             <Pressable
               accessibilityLabel="Go back"
               onPress={() => {
@@ -51,6 +53,8 @@ export function TabHeader({
             >
               <RiArrowLeftSLine size={24} className="text-cardx" />
             </Pressable>{' '}
+
+            {closeToBack}
           </View>
         )}
 

@@ -18,7 +18,9 @@ export function AppLayout() {
     isAuthenticated &&
     location.pathname.startsWith('/app/') &&
     tabBarHideMatches
-  const onATab = location.pathname.split('/').length < 4
+  const onATab = /^\/app\/(home|goal|communities|journal|profile)\/?$/.test(
+    location.pathname,
+  )
   const routeContent = (
     <View className="app-route-content flex-1 min-h-0 min-w-0 relative">
       <Outlet />

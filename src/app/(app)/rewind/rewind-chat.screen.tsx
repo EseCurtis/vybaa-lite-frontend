@@ -1,6 +1,6 @@
 import {
-  RiAtLine,
   RiArrowDownLine,
+  RiAtLine,
   RiCheckDoubleLine,
   RiCheckLine,
   RiCloseLine,
@@ -11,8 +11,8 @@ import {
   RiReplyLine,
   RiSendPlane2Fill,
 } from '@remixicon/react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useNavigate } from '@tanstack/react-router'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import {
   Fragment,
   useEffect,
@@ -24,7 +24,6 @@ import {
   type RefObject,
 } from 'react'
 
-import { useMessageGesture } from '@/hooks/use-message-gesture.hook'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
@@ -32,6 +31,7 @@ import { useKeyboard } from '@/components/layout/keyboard-avoiding-view.componen
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useMessageGesture } from '@/hooks/use-message-gesture.hook'
 import {
   useDeleteRewindChatMessage,
   useEnqueueRewindChatMessage,
@@ -58,8 +58,8 @@ import {
   REWIND_PERSONAS,
 } from '@/shared/rewind/rewind-personas'
 
-import { cn } from '@/shared/utils/helpers.util'
 import { shouldAnimate } from '@/shared/utils/animation.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { RewindChatAvatar } from './rewind-chat-avatar.component'
 
 function createMessageKey(): string {
@@ -1356,8 +1356,9 @@ export default function RewindChatScreen({
                 </Pressable>
               </View>
             }
-            title={
-              chat ? (
+
+            closeToBack={
+               chat ? (
                 <View className="flex-row items-center gap-2">
                   <RewindChatAvatar chat={chat} className="size-8" />
                   <View className="items-start">
@@ -1373,6 +1374,7 @@ export default function RewindChatScreen({
                 'Rewind chat'
               )
             }
+           
           />
 
           <div

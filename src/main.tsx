@@ -8,7 +8,10 @@ import { NotificationProvider } from './providers/notification.provider.tsx'
 import { SubscriptionProvider } from './providers/subscription.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
 import { shouldAnimate } from './shared/utils/animation.util.ts'
-import { getAppNavigationTransition } from './shared/utils/app-navigation.util.ts'
+import {
+  getAppNavigationTransition,
+  getAppTabRoot,
+} from './shared/utils/app-navigation.util.ts'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen.ts'
@@ -46,6 +49,16 @@ const router = createRouter({
           // it out of the view-transition lifecycle avoids a flash on cold
           // launches and auth restoration.
           if (!pathChanged || !fromLocation) return false
+          const fromPath = fromLocation.pathname.replace(/\/$/, '')
+          const toPath = toLocation.pathname.replace(/\/$/, '')
+          // Root tabs share persistent navigation. Snapshotting the document
+          // freezes its pressed/selected state and puts screen images over it.
+          if (
+            getAppTabRoot(fromPath) === fromPath &&
+            getAppTabRoot(toPath) === toPath
+          ) {
+            return false
+          }
           return [
             getAppNavigationTransition(
               fromLocation?.pathname,

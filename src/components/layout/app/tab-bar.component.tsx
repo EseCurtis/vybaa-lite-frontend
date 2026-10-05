@@ -5,14 +5,11 @@ import { useUnreadCount } from '@/hooks/use-notifications.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useTabBarController } from '@/providers/tab-bar.provider'
 import { colors } from '@/shared/colors.shared'
-import { Moti } from '@/shared/constants.shared'
 import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import { hapticFeedback } from '@/shared/haptic.util'
-import { shouldAnimate } from '@/shared/utils/animation.util'
 import { getAppTabRoot } from '@/shared/utils/app-navigation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { AnimatePresence } from 'framer-motion'
 import { BookOpenCheck, Plus } from 'lucide-react'
 import { memo, useCallback, useMemo } from 'react'
 import { Icons } from '../icon.component'
@@ -137,137 +134,124 @@ export const TabBar = memo(({ className }: { className?: string }) => {
       // Only navigate if not already on the route
       if (location.pathname !== route) {
         void hapticFeedback.light()
-        void navigate({ replace: true, to: route })
+        void navigate({
+          replace: true,
+          to: route,
+          // Also skip snapshots on WebViews without transition-type support.
+          viewTransition: getAppTabRoot(route) === route ? false : undefined,
+        })
       }
     },
     [location.pathname, navigate],
   )
 
-  return (
-    <AnimatePresence initial={false} mode="wait">
-      {isVisible ? (
-        <Moti.div
-          className={cn(
-            className,
-            'bottom-0 left-0 fixed !py-0 w-full z-50 p-0',
-          )}
-          data-walkthrough="main-navigation"
-          initial={shouldAnimate ? { y: 100, opacity: 0 } : false}
-          animate={{ y: 0, opacity: 1 }}
-          exit={shouldAnimate ? { y: 100, opacity: 0 } : undefined}
-          transition={{
-            ...(shouldAnimate
-              ? { type: 'tween', duration: 0.18, ease: 'easeOut' }
-              : { duration: 0 }),
-          }}
-          key="tabbar"
-        >
-          <LinearGradient
-            className="absolute hidden top-0 size-full left-0 backdrop-blur-xl "
-            colors={['transparent', colors.cardd]}
-            locations={[0, 0.5]}
-            style={{
-              mask: 'linear-gradient(transparent , #000 30%)',
-            }}
-          />
+  return isVisible ? (
+    <div
+      className={cn(className, 'bottom-0 left-0 fixed !py-0 w-full z-50 p-0')}
+      data-walkthrough="main-navigation"
+    >
+      <LinearGradient
+        className="absolute hidden top-0 size-full left-0 backdrop-blur-xl "
+        colors={['transparent', colors.cardd]}
+        locations={[0, 0.5]}
+        style={{
+          mask: 'linear-gradient(transparent , #000 30%)',
+        }}
+      />
 
-          <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
-            <View className="px-2 flex flex-row items-center w-full justify-center">
-              {tabs.map((tab) => {
-                const isActive = isActiveTab(
-                  tab.route,
-                  tab?.matchAllRoot,
-                  tab?.matchAlso,
-                )
-                let iconColor = colors['card-lighter-3']
-                let iconFill = 'transparent'
+      <View className="px-5 border-t-2 border-t-card-light z-10 relative bg-cardd">
+        <View className="px-2 flex flex-row items-center w-full justify-center">
+          {tabs.map((tab) => {
+            const isActive = isActiveTab(
+              tab.route,
+              tab?.matchAllRoot,
+              tab?.matchAlso,
+            )
+            let iconColor = colors['card-lighter-3']
+            let iconFill = 'transparent'
 
-                if (tab.isSpecial) {
-                  iconColor = colors.white
-                  iconFill = colors.white
-                } else if (isActive) {
-                  iconColor = colors.accent[400]
-                  iconFill = colors.accent[700] + '7a'
-                }
-                const accessibilityLabel = tab.isSpecial
-                  ? 'Create a new goal'
-                  : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} goals need attention` : ''}`
-                const accessibilityHint = tab.isSpecial
-                  ? 'Double tap to create a new goal'
-                  : `Double tap to switch to ${tab.label || tab.id} screen`
+            if (tab.isSpecial) {
+              iconColor = colors.white
+              iconFill = colors.white
+            } else if (isActive) {
+              iconColor = colors.accent[400]
+              iconFill = colors.accent[700] + '7a'
+            }
+            const accessibilityLabel = tab.isSpecial
+              ? 'Create a new goal'
+              : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} goals need attention` : ''}`
+            const accessibilityHint = tab.isSpecial
+              ? 'Double tap to create a new goal'
+              : `Double tap to switch to ${tab.label || tab.id} screen`
 
-                return (
-                  <View
-                    key={tab.id}
-                    className={cn(
-                      'relative border-t-3 py-4 px-2',
-                      tab.isSpecial && ' z-20',
-                    )}
-                  >
-                    {/* Active indicator background */}
-                    {isActive && !tab.isSpecial && (
-                      <View className="absolute top-[-3px] inset-x-0 flex items-start justify-center">
-                        <View className="text-white bg-accent-500 h-0.5 w-full" />
-                      </View>
-                    )}
-
-                    <TouchableOpacity
-                      className={cn(
-                        'items-center flex overflow-hidden relative justify-center flex-row',
-                        tab.isSpecial
-                          ? 'p-1 py-0.5 mx-2 rounded-md bg-accent-400  shadow-black/30'
-                          : 'rounded-full px-4 py-2',
-                      )}
-                      onPress={() => handleTabPress(tab.route)}
-                      accessibilityLabel={accessibilityLabel}
-                      accessibilityRole="button"
-                      accessibilityHint={accessibilityHint}
-                      testID={`tab-${tab.id}`}
-                    >
-                      <>
-                        <View
-                          className="relative flex items-center justify-center flex-col"
-                          style={{ opacity: isActive ? 1 : 0.7 }}
-                        >
-                          <tab.icon
-                            color={iconColor}
-                            size={tab.isSpecial ? 27 : 27}
-                            fill={iconFill}
-                            className="relative z-10"
-                          />
-                          {/* Notification Badge */}
-                          {typeof tab.badge === 'number' && tab.badge > 0 && (
-                            <span
-                              aria-label={`${tab.badge} goals need attention`}
-                              className="absolute z-10 flex items-center justify-center -right-2 -top-2 min-w-5 h-5 rounded-full bg-danger-500 px-1 text-center text-[10px] leading-5 font-bold text-white"
-                              role="status"
-                            >
-                              {tab.badge > 99 ? '99+' : tab.badge}
-                            </span>
-                          )}
-                          <Text
-                            style={{
-                              color: isActive
-                                ? 'transparent'
-                                : colors.card[100],
-                            }}
-                            className="text-white hidden whitespace-nowrap text-[5px] font-bold"
-                          >
-                            {tab.label.toUpperCase()}
-                          </Text>
-                        </View>
-                      </>
-                    </TouchableOpacity>
+            return (
+              <View
+                key={tab.id}
+                className={cn(
+                  'relative border-t-3 py-4 px-2',
+                  tab.isSpecial && ' z-20',
+                )}
+              >
+                {/* Active indicator background */}
+                {isActive && !tab.isSpecial && (
+                  <View className="absolute top-[-3px] inset-x-0 flex items-start justify-center">
+                    <View className="text-white bg-accent-500 h-0.5 w-full" />
                   </View>
-                )
-              })}
-            </View>
-            <BottomNotch />
-          </View>
-        </Moti.div>
-      ) : null}
-    </AnimatePresence>
-  )
+                )}
+
+                <TouchableOpacity
+                  className={cn(
+                    'items-center flex overflow-hidden relative justify-center flex-row',
+                    tab.isSpecial
+                      ? 'p-1 py-0.5 mx-2 rounded-md bg-accent-400  shadow-black/30'
+                      : 'rounded-full px-4 py-2',
+                  )}
+                  onPress={() => handleTabPress(tab.route)}
+                  accessibilityLabel={accessibilityLabel}
+                  accessibilityRole="button"
+                  accessibilityHint={accessibilityHint}
+                  testID={`tab-${tab.id}`}
+                >
+                  <>
+                    <View
+                      className="relative flex items-center justify-center flex-col"
+                      style={{ opacity: isActive ? 1 : 0.7 }}
+                    >
+                      <tab.icon
+                        color={iconColor}
+                        size={tab.isSpecial ? 27 : 27}
+                        fill={iconFill}
+                        className="relative z-10"
+                      />
+                      {/* Notification Badge */}
+                      {typeof tab.badge === 'number' && tab.badge > 0 && (
+                        <span
+                          aria-label={`${tab.badge} goals need attention`}
+                          className="absolute z-10 flex items-center justify-center -right-2 -top-2 min-w-5 h-5 rounded-full bg-danger-500 px-1 text-center text-[10px] leading-5 font-bold text-white"
+                          role="status"
+                        >
+                          {tab.badge > 99 ? '99+' : tab.badge}
+                        </span>
+                      )}
+                      <Text
+                        style={{
+                          color: isActive ? 'transparent' : colors.card[100],
+                        }}
+                        className="text-white hidden whitespace-nowrap text-[5px] font-bold"
+                      >
+                        {tab.label.toUpperCase()}
+                      </Text>
+                    </View>
+                  </>
+                </TouchableOpacity>
+              </View>
+            )
+          })}
+        </View>
+        <BottomNotch />
+      </View>
+    </div>
+  ) : null
 })
 
 TabBar.displayName = 'TabBar'
