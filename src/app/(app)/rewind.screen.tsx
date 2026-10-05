@@ -33,8 +33,8 @@ import {
 } from 'react'
 
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
-import { BottomNotch } from '@/components/common/notch.component'
 import { NoiseComponent } from '@/components/common/noise.component'
+import { BottomNotch } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { ProFeatureGateSheet } from '@/components/custom/subscription/pro-feature-gate.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -1519,7 +1519,7 @@ export default function RewindScreen(): ReactElement {
     )
   }
 
-  const opaqueColor = adjustColor(personaTheme?.darkColor || '', {
+  const opaqueColor = adjustColor(personaTheme?.darkColor || '#000', {
     alpha: -0.6,
   })
 
@@ -1532,7 +1532,7 @@ export default function RewindScreen(): ReactElement {
             ? {
                 '--theme': personaTheme.color,
                 '--theme-opaque': opaqueColor,
-                background: `radial-gradient(circle at top, ${opaqueColor} 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
+                background: `radial-gradient(circle at top, #000 0%, rgba(10,10,12,0.96) 45%, rgba(6,6,8,1) 100%)`,
               }
             : undefined),
         } as CSSProperties
@@ -1541,7 +1541,7 @@ export default function RewindScreen(): ReactElement {
       <img
         src={persona.avatar}
         alt=""
-        className="absolute opacity-5 inset-0 size-full object-cover"
+        className="absolute  opacity-5 inset-0 size-full object-cover"
       />
       <NoiseComponent>
         <TabHeader

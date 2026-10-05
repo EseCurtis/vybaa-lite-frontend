@@ -54,7 +54,7 @@ export const homeActions = (
       //enabled: featureFlags.insights,
       onAction() {
         navigate?.({
-          to: '/app/sub-profile/insights',
+          to: '/app/rewind-history',
         })
       },
     },

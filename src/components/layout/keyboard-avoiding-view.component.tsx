@@ -1,5 +1,5 @@
-import { cn } from '@/shared/utils/helpers.util'
 import { getAnimationDuration } from '@/shared/utils/animation.util'
+import { cn } from '@/shared/utils/helpers.util'
 import { KeyboardUtil, type KeyboardInfo } from '@/shared/utils/keyboard.util'
 import { Capacitor } from '@capacitor/core'
 import type { HTMLAttributes } from 'react'
@@ -203,7 +203,7 @@ export const KeyboardAvoidingView: React.FC<KeyboardAvoidingViewProps> = ({
     <div
       ref={containerRef}
       className={cn(
-        'keyboard-avoiding-view',
+        'keyboard-avoiding-view ',
         'flex flex-col',
         className
       )}

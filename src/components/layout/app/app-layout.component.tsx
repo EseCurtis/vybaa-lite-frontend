@@ -20,7 +20,7 @@ export function AppLayout() {
     tabBarHideMatches
   const onATab = location.pathname.split('/').length < 4
   const routeContent = (
-    <View className="flex-1 min-h-0 relative [view-transition-name:vybaa-screen]">
+    <View className="app-route-content flex-1 min-h-0 min-w-0 relative">
       <Outlet />
     </View>
   )

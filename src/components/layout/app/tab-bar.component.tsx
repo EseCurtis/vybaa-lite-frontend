@@ -150,7 +150,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         <Moti.div
           className={cn(
             className,
-            'bottom-0 left-0 fixed !py-0 w-full z-50 p-0 [view-transition-name:vybaa-tab-bar]',
+            'bottom-0 left-0 fixed !py-0 w-full z-50 p-0',
           )}
           data-walkthrough="main-navigation"
           initial={shouldAnimate ? { y: 100, opacity: 0 } : false}

@@ -42,7 +42,10 @@ const router = createRouter({
   defaultViewTransition: shouldAnimate
     ? {
         types: ({ fromLocation, pathChanged, toLocation }) => {
-          if (!pathChanged) return false
+          // The first render has no previous screen to animate from. Keeping
+          // it out of the view-transition lifecycle avoids a flash on cold
+          // launches and auth restoration.
+          if (!pathChanged || !fromLocation) return false
           return [
             getAppNavigationTransition(
               fromLocation?.pathname,

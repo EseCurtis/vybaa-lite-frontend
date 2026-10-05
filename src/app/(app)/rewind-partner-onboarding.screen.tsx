@@ -107,7 +107,7 @@ export default function RewindPartnerOnboardingScreen() {
         <header className="fixed inset-x-0 top-0 z-30 ">
           <TopNotch />
           <View className="mx-auto h-14 w-full max-w-xl flex-row items-center justify-between px-5">
-            <Text className="text-lg font-bold text-white">Rewind</Text>
+            <Text className="text-lg font-bold text-white">Rewind partner.</Text>
             <Pressable
               accessibilityLabel="Skip Rewind partner setup"
               className="min-h-11 min-w-11 items-center justify-center px-2"
@@ -122,18 +122,16 @@ export default function RewindPartnerOnboardingScreen() {
         <main className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-y-auto px-5 pb-5 pt-[calc(var(--safe-area-inset-top)+50px)]">
           <View className="gap-2 pt-5">
             <Text className="text-[29px] font-black leading-9 text-white">
-              Choose your Rewind partner.
+              Pick the voice you want in your corner.
             </Text>
             <Text className="max-w-md text-sm leading-6 text-card-lighter-2">
-              Pick the voice you want in your corner. You can change them later
-              in Rewind.
+              You can change them later
+              in Rewind. <br />
+
+            {!isPro && ` Ella and Lyra are included free. The full partner team comes
+                with Vybaa Pro.`}
             </Text>
-            {!isPro ? (
-              <Text className="max-w-md text-xs leading-5 text-card-lighter-3">
-                Ella and Lyra are included free. The full partner team comes
-                with Vybaa Pro.
-              </Text>
-            ) : null}
+          
           </View>
 
           <View className="mt-6 gap-5">
