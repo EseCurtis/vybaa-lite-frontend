@@ -6,11 +6,15 @@ import { AppLoadingState } from '@/components/common/app-loading-state.component
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
+import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
+import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
 import { publicUrls } from '@/shared/config/public-urls.config'
+import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { homeActions } from '@/components/custom/home/home-actions.component'
 import { Moti } from '@/shared/constants.shared'
@@ -28,8 +32,21 @@ function openLegalDocument(url: string): void {
 export default function AppScreen() {
   const navigate = useNavigate()
   const router = useRouter()
-  const { isAuthenticated, isLoading, error, stale, user } = useAuth()
-  const loadingText = isLoading ? 'Checking your session...' : null
+  const {
+    googleAuthStatus,
+    isAuthenticated,
+    isLoading,
+    error,
+    loginWithGoogle,
+    stale,
+    user,
+  } = useAuth()
+  const [loginError, setLoginError] = useState<string | null>(null)
+  const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
+  const isGoogleLoading = googleAuthStatus !== 'idle'
+  const loadingText =
+    getGoogleAuthStatusText(googleAuthStatus) ??
+    (isLoading ? 'Checking your session...' : null)
 
   // Navigate to home when authentication succeeds
   useEffect(() => {
@@ -39,12 +56,24 @@ export default function AppScreen() {
   }, [isAuthenticated, isLoading, router, user])
 
   const handleGetStarted = () => {
+    setLoginError(null)
     navigate({ to: '/auth/login' })
+  }
+
+  const handleGoogle = async () => {
+    try {
+      setLoginError(null)
+      await loginWithGoogle()
+    } catch (err: unknown) {
+      setLoginError(
+        err instanceof Error ? err.message : 'Failed to sign in with Google',
+      )
+    }
   }
 
   // The root route is an auth boundary. Never mount onboarding while a
   // session is being resolved or after authentication has been confirmed.
-  if (stale || isLoading || isAuthenticated) {
+  if (stale || (isLoading && !isGoogleLoading) || isAuthenticated) {
     return (
       <AppLoadingState
         detail="Your account and latest activity are being restored."
@@ -158,9 +187,9 @@ export default function AppScreen() {
               <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30" />
             </View>
 
-            {error && (
+            {(loginError || error) && (
               <Text className="text-pink-700 bg-pink-500/10 mx-auto px-3 py-1 rounded-full text-sm font-bbh text-center mt-2">
-                {error}
+                {loginError || error}
               </Text>
             )}
             <View className="z-10 gap-3">
@@ -183,13 +212,30 @@ export default function AppScreen() {
               <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto bg-blue-300/10 rounded-full">
                 <TouchableOpacity
                   className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
-                  disabled={isLoading}
+                  disabled={isLoading || isGoogleLoading}
                   onPress={handleGetStarted}
                 >
                   <Text className="text-black text-sm  font-semibold">
                     Get started
                   </Text>
                 </TouchableOpacity>
+                {canUseGoogleLogin && (
+                  <TouchableOpacity
+                    accessibilityLabel="Continue with Google"
+                    className="rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
+                    disabled={isLoading || isGoogleLoading}
+                    onPress={handleGoogle}
+                  >
+                    {isGoogleLoading ? (
+                      <RiLoader4Line
+                        className="text-white animate-spin"
+                        size={20}
+                      />
+                    ) : (
+                      <RiGoogleFill className="text-white" size={20} />
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View className="mt-2 flex-row items-center justify-center gap-4">
