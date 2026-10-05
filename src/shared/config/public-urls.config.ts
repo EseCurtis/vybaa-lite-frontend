@@ -55,7 +55,7 @@ export function getPublicProfileUrl(username: string): string | null {
   const normalizedUsername = normalizePublicUsername(username)
 
   return normalizedUsername
-    ? `https://${normalizedUsername}.${PUBLIC_PROFILE_ROOT_DOMAIN}`
+    ? `https://${PUBLIC_PROFILE_ROOT_DOMAIN}/u/${normalizedUsername}`
     : null
 }
 

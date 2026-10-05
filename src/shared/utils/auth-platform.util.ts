@@ -1,4 +1,5 @@
 export function isGoogleLoginAvailable(platform: string): boolean {
+  //return  true
   return platform === 'android'
 }
 
