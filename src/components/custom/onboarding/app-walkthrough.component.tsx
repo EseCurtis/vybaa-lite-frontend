@@ -103,7 +103,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
       {
         description:
-          'Talk through your day with a Rewind partner, then revisit the patterns your conversations reveal.',
+          'Check in with a few questions chosen for your day, then revisit the patterns your answers reveal.',
         selector: '[data-testid="home-action-rewind"]',
         title: 'Reflect with Rewind',
       },
@@ -137,9 +137,9 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
     steps: [
       {
         description:
-          'Tap when you are ready to speak. Rewind listens, reflects with you, and closes the conversation gracefully.',
-        selector: '[aria-label="Start your Rewind"]',
-        title: 'Begin a live Rewind',
+          'Your partner chooses a few questions for your day. Pick an answer beneath each card, or open “In my own words” to write your own.',
+        selector: '[data-walkthrough="rewind-questionnaire"]',
+        title: 'Your daily Rewind',
       },
       {
         description:
@@ -149,7 +149,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
       {
         description:
-          'Choose the voice that fits you. Free accounts can switch between two partners; Pro unlocks the full lineup.',
+          'Choose the perspective that fits you. Free accounts can switch between two partners; Pro unlocks the full lineup.',
         selector: '[aria-label^="Change Rewind partner"]',
         title: 'Your Rewind partner',
       },
@@ -166,7 +166,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
       {
         description:
-          'Use this to return to live Rewind whenever you are done browsing conversations.',
+          'Use this to return to your daily Rewind whenever you are done browsing conversations.',
         selector: '[data-testid="tab-header-back"]',
         title: 'Back to Rewind',
       },

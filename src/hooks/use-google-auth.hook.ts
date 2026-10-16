@@ -37,7 +37,7 @@ async function ensureGoogleInitialized(): Promise<void> {
   await SocialLogin.initialize({
     google: {
       iOSClientId: ENV.GOOGLE_IOS_CLIENT_ID,
-      iOSServerClientId: ENV.GOOGLE_IOS_CLIENT_ID,
+      iOSServerClientId: ENV.GOOGLE_CLIENT_ID,
       webClientId: ENV.GOOGLE_CLIENT_ID,
     },
   })

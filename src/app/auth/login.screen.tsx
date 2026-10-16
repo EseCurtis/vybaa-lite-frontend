@@ -8,20 +8,32 @@ import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
-import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
+import {
+  getAppleAuthStatusText,
+  getGoogleAuthStatusText,
+} from '@/shared/utils/auth-status.util'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { ApiError } from '@/shared/api/http'
-import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
+import {
+  isAppleLoginAvailable,
+  isGoogleLoginAvailable,
+} from '@/shared/utils/auth-platform.util'
 import { getApiErrorMessage } from '@/shared/utils/api-error.util'
-import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
+import { RiAppleFill, RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
-type LoginAction = 'email' | 'google' | null
+type LoginAction = 'apple' | 'email' | 'google' | null
 
 export default function LoginScreen() {
-  const { googleAuthStatus, loginWithEmail, loginWithGoogle } = useAuth()
+  const {
+    appleAuthStatus,
+    googleAuthStatus,
+    loginWithApple,
+    loginWithEmail,
+    loginWithGoogle,
+  } = useAuth()
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -30,18 +42,23 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<LoginAction>(null)
+  const canUseAppleLogin = isAppleLoginAvailable(ENV.PLATFORM)
   const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
 
   const isEmailLoading = activeAction === 'email'
+  const isAppleLoading = activeAction === 'apple'
   const isGoogleLoading = activeAction === 'google'
   const isSubmitting = activeAction !== null
-  const loadingText =
-    activeAction === 'email'
-      ? 'Checking your email and password...'
-      : activeAction === 'google'
-        ? (getGoogleAuthStatusText(googleAuthStatus) ??
-          'Signing in with Google...')
-        : null
+  let loadingText: string | null = null
+  if (activeAction === 'email') {
+    loadingText = 'Checking your email and password...'
+  } else if (activeAction === 'google') {
+    loadingText =
+      getGoogleAuthStatusText(googleAuthStatus) ?? 'Signing in with Google...'
+  } else if (activeAction === 'apple') {
+    loadingText =
+      getAppleAuthStatusText(appleAuthStatus) ?? 'Signing in with Apple...'
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,6 +100,20 @@ export default function LoginScreen() {
     }
   }
 
+  const handleApple = async () => {
+    setError(null)
+    setActiveAction('apple')
+    try {
+      await loginWithApple()
+    } catch (error: unknown) {
+      const msg = getApiErrorMessage(error, 'Failed to sign in with Apple')
+      setError(msg)
+      toast.error(msg)
+    } finally {
+      setActiveAction(null)
+    }
+  }
+
   return (
     <AuthScreenLayout
       headerTitle="Log in"
@@ -101,7 +132,7 @@ export default function LoginScreen() {
             onClick={() => formRef.current?.requestSubmit()}
           />
 
-          {canUseGoogleLogin && (
+          {(canUseGoogleLogin || canUseAppleLogin) && (
             <>
               <View className="flex-row items-center gap-3 mt-3 w-full">
                 <View className="flex-1 h-px bg-card-lighter" />
@@ -110,26 +141,50 @@ export default function LoginScreen() {
                 </Text>
                 <View className="flex-1 h-px bg-card-lighter" />
               </View>
-              <TouchableOpacity
-                className="w-full min-h-[52px] mt-1 rounded-full bg-cardd flex-row items-center justify-center gap-3 px-4"
-                disabled={isSubmitting}
-                onPress={handleGoogle}
-                accessibilityLabel="Continue with Google"
-              >
-                {isGoogleLoading ? (
-                  <RiLoader4Line
-                    className="text-white animate-spin"
-                    size={18}
-                  />
-                ) : (
-                  <RiGoogleFill className="text-white" size={18} />
-                )}
-                <Text className="text-white text-sm font-bbh font-bold">
-                  {isGoogleLoading
-                    ? 'Opening Google...'
-                    : 'Continue with Google'}
-                </Text>
-              </TouchableOpacity>
+              {canUseGoogleLogin && (
+                <TouchableOpacity
+                  className="w-full min-h-[52px] mt-1 rounded-full bg-cardd flex-row items-center justify-center gap-3 px-4"
+                  disabled={isSubmitting}
+                  onPress={handleGoogle}
+                  accessibilityLabel="Continue with Google"
+                >
+                  {isGoogleLoading ? (
+                    <RiLoader4Line
+                      className="text-white animate-spin"
+                      size={18}
+                    />
+                  ) : (
+                    <RiGoogleFill className="text-white" size={18} />
+                  )}
+                  <Text className="text-white text-sm font-bbh font-bold">
+                    {isGoogleLoading
+                      ? 'Opening Google...'
+                      : 'Continue with Google'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+              {canUseAppleLogin && (
+                <TouchableOpacity
+                  className="w-full min-h-[52px] mt-1 rounded-full bg-cardd flex-row items-center justify-center gap-3 px-4"
+                  disabled={isSubmitting}
+                  onPress={handleApple}
+                  accessibilityLabel="Continue with Apple"
+                >
+                  {isAppleLoading ? (
+                    <RiLoader4Line
+                      className="text-white animate-spin"
+                      size={18}
+                    />
+                  ) : (
+                    <RiAppleFill className="text-white" size={18} />
+                  )}
+                  <Text className="text-white text-sm font-bbh font-bold">
+                    {isAppleLoading
+                      ? 'Opening Apple...'
+                      : 'Continue with Apple'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 
@@ -191,9 +246,13 @@ export default function LoginScreen() {
           </b>
         </View>
       </form>
-      {isGoogleLoading && loadingText ? (
+      {(isGoogleLoading || isAppleLoading) && loadingText ? (
         <AppLoadingState
-          detail="Finish choosing your account in the Google window."
+          detail={
+            isAppleLoading
+              ? 'Finish signing in with Apple.'
+              : 'Finish choosing your account in the Google window.'
+          }
           message={loadingText}
           mode="dock"
         />

@@ -12,6 +12,9 @@ export const colors = {
   'card-lighter-3': '#848ba6',
   'success-green': '#16BA81',
   'warning-yellow': '#fb9a24',
+  'studio-action-ink': '#AFC7DC',
+  'studio-info-ink': '#D7CB98',
+  'studio-warning-ink': '#D5AA90',
   border: '#242424',
   card: {
     50: '#7D7D7D',

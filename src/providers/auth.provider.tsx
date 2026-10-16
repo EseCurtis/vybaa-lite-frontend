@@ -3,6 +3,10 @@ import { resetTimezoneTracking } from '@/shared/api/http'
 import { userAPI } from '@/shared/api/user.api'
 import { cancelAllDeviceAlarms } from '@/plugins/capacitor/plugins/device-alarm.plugin'
 import {
+  logoutAppleNativeSession,
+  useAppleAuth,
+} from '@/hooks/use-apple-auth.hook'
+import {
   logoutGoogleNativeSession,
   useGoogleAuth,
 } from '@/hooks/use-google-auth.hook'
@@ -108,6 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [queryClient])
 
   const google = useGoogleAuth()
+  const apple = useAppleAuth()
 
   const persistTokens = useCallback((data: AuthResponse['data']) => {
     if (typeof window === 'undefined') return
@@ -170,6 +175,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await authAPI.logout({ fcmToken })
       } finally {
         await logoutGoogleNativeSession()
+        await logoutAppleNativeSession()
       }
     },
     onSettled: clearAuthState,
@@ -181,6 +187,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     },
     onSettled: async () => {
       await logoutGoogleNativeSession()
+      await logoutAppleNativeSession()
       clearAuthState()
     },
   })
@@ -189,6 +196,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     await google.signInWithGoogle()
     await handleAuthSuccess()
   }, [google, handleAuthSuccess])
+
+  const loginWithApple = useCallback(async () => {
+    await apple.signInWithApple()
+    await handleAuthSuccess()
+  }, [apple, handleAuthSuccess])
 
   const logout = useCallback(async () => {
     await logoutMutation.mutateAsync()
@@ -208,16 +220,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       error:
         state.error ??
         google.error ??
+        apple.error ??
         logoutMutation.error?.message ??
         deleteAccountMutation.error?.message ??
         null,
       isLoading:
         state.isLoading ||
         google.isLoading ||
+        apple.isLoading ||
         logoutMutation.isPending ||
         deleteAccountMutation.isPending,
       googleAuthStatus: google.status,
+      appleAuthStatus: apple.status,
       deleteAccount,
+      loginWithApple,
       loginWithGoogle,
       loginWithEmail,
       registerWithEmail,
@@ -225,12 +241,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       refreshSession,
     }),
     [
+      apple.error,
+      apple.isLoading,
+      apple.status,
       google.error,
       google.isLoading,
       google.status,
       deleteAccount,
       deleteAccountMutation.error?.message,
       deleteAccountMutation.isPending,
+      loginWithApple,
       loginWithGoogle,
       logout,
       logoutMutation.error?.message,

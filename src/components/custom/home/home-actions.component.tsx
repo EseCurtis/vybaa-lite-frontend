@@ -13,6 +13,7 @@ import {
   type RemixiconComponentType,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import { HomeRewindTimer } from './home-rewind-timer.component'
 
 export const homeActions = (
   navigate?: (...params: any) => void,
@@ -144,6 +145,7 @@ function HomeActionCard({
         <Icon color={darkColor} size={70} className="text-white z-10" />
         <View className="mt-1 flex-col items-center justify-center z-10">
           <Text className="font-bold  text-card-lighter-3">{name}</Text>
+          {name === 'Rewind' ? <HomeRewindTimer /> : null}
           <Text className="text-sm hidden leading-tight text-card-lighter-3/60">
             {description}
           </Text>

@@ -63,6 +63,23 @@ describe('normalizeDeepLink', () => {
     })
   })
 
+  it('preserves the X OAuth result from a native callback', () => {
+    expect(
+      normalizeDeepLink('vybaa://app/social?xSocial=connected'),
+    ).toEqual({
+      path: '/app/social',
+      requiresAuth: true,
+      route: 'social',
+      socialStatus: 'connected',
+    })
+
+    expect(normalizeDeepLink('vybaa://app/social?xSocial=unknown')).toEqual({
+      path: '/app/social',
+      requiresAuth: true,
+      route: 'social',
+    })
+  })
+
   it('preserves a supported community tab from a notification route', () => {
     expect(
       normalizeDeepLink(

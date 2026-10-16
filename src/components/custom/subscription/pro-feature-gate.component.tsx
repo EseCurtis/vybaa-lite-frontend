@@ -56,7 +56,7 @@ const PRO_FEATURE_COPY: Record<ProFeature, ProFeatureCopy> = {
     highlights: [
       'Continue conversations between Rewinds',
       'Chat one-to-one or with the whole room',
-      'Scheduled live Rewind stays free',
+      'Your scheduled daily Rewind stays free',
     ],
     title: 'Keep the conversation going',
   },

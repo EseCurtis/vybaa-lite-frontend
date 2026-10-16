@@ -77,6 +77,15 @@ export async function navigateToDeepLinkTarget(
     return
   }
 
+  if (target.route === 'social') {
+    await router.navigate({
+      replace,
+      search: target.socialStatus ? { xSocial: target.socialStatus } : {},
+      to: '/app/social',
+    })
+    return
+  }
+
   await router.navigate({
     replace,
     to: target.path,

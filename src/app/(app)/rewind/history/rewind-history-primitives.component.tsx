@@ -122,7 +122,7 @@ export function RewindEmptyState({
       >
         {isFiltered
           ? 'Try another partner or day.'
-          : 'Start a Rewind conversation and the saved reflections will collect here.'}
+          : 'Complete a daily Rewind and your saved reflections will collect here.'}
       </Text>
       {isFiltered && onReset ? (
         <Button

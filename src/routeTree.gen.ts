@@ -22,6 +22,7 @@ import { Route as AuthLoginRouteImport } from './routes/auth/login'
 import { Route as AuthForgotPasswordRouteImport } from './routes/auth/forgot-password'
 import { Route as AuthConfirmRouteImport } from './routes/auth/confirm'
 import { Route as AppWellnessRouteImport } from './routes/app/wellness'
+import { Route as AppSocialRouteImport } from './routes/app/social'
 import { Route as AppRewindRoutineRouteImport } from './routes/app/rewind-routine'
 import { Route as AppRewindObservationsRouteImport } from './routes/app/rewind-observations'
 import { Route as AppRewindHistorySessionsRouteImport } from './routes/app/rewind-history-sessions'
@@ -123,6 +124,11 @@ const AuthConfirmRoute = AuthConfirmRouteImport.update({
 const AppWellnessRoute = AppWellnessRouteImport.update({
   id: '/app/wellness',
   path: '/app/wellness',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppSocialRoute = AppSocialRouteImport.update({
+  id: '/app/social',
+  path: '/app/social',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRewindRoutineRoute = AppRewindRoutineRouteImport.update({
@@ -338,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
   '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
+  '/app/social': typeof AppSocialRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
   '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
+  '/app/social': typeof AppSocialRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -441,6 +449,7 @@ export interface FileRoutesById {
   '/app/rewind-history-sessions': typeof AppRewindHistorySessionsRoute
   '/app/rewind-observations': typeof AppRewindObservationsRoute
   '/app/rewind-routine': typeof AppRewindRoutineRoute
+  '/app/social': typeof AppSocialRoute
   '/app/wellness': typeof AppWellnessRoute
   '/auth/confirm': typeof AuthConfirmRoute
   '/auth/forgot-password': typeof AuthForgotPasswordRoute
@@ -495,6 +504,7 @@ export interface FileRouteTypes {
     | '/app/rewind-history-sessions'
     | '/app/rewind-observations'
     | '/app/rewind-routine'
+    | '/app/social'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/app/rewind-history-sessions'
     | '/app/rewind-observations'
     | '/app/rewind-routine'
+    | '/app/social'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -597,6 +608,7 @@ export interface FileRouteTypes {
     | '/app/rewind-history-sessions'
     | '/app/rewind-observations'
     | '/app/rewind-routine'
+    | '/app/social'
     | '/app/wellness'
     | '/auth/confirm'
     | '/auth/forgot-password'
@@ -650,6 +662,7 @@ export interface RootRouteChildren {
   AppRewindHistorySessionsRoute: typeof AppRewindHistorySessionsRoute
   AppRewindObservationsRoute: typeof AppRewindObservationsRoute
   AppRewindRoutineRoute: typeof AppRewindRoutineRoute
+  AppSocialRoute: typeof AppSocialRoute
   AppWellnessRoute: typeof AppWellnessRoute
   AuthConfirmRoute: typeof AuthConfirmRoute
   AuthForgotPasswordRoute: typeof AuthForgotPasswordRoute
@@ -769,6 +782,13 @@ declare module '@tanstack/react-router' {
       path: '/app/wellness'
       fullPath: '/app/wellness'
       preLoaderRoute: typeof AppWellnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/social': {
+      id: '/app/social'
+      path: '/app/social'
+      fullPath: '/app/social'
+      preLoaderRoute: typeof AppSocialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app/rewind-routine': {
@@ -1093,6 +1113,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppRewindHistorySessionsRoute: AppRewindHistorySessionsRoute,
   AppRewindObservationsRoute: AppRewindObservationsRoute,
   AppRewindRoutineRoute: AppRewindRoutineRoute,
+  AppSocialRoute: AppSocialRoute,
   AppWellnessRoute: AppWellnessRoute,
   AuthConfirmRoute: AuthConfirmRoute,
   AuthForgotPasswordRoute: AuthForgotPasswordRoute,

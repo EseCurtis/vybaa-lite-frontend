@@ -122,7 +122,7 @@ export default function RewindPartnerOnboardingScreen() {
         <main className="mx-auto flex min-h-0 w-full max-w-xl flex-1 flex-col overflow-y-auto px-5 pb-5 pt-[calc(var(--safe-area-inset-top)+50px)]">
           <View className="gap-2 pt-5">
             <Text className="text-[29px] font-black leading-9 text-white">
-              Pick the voice you want in your corner.
+              Pick the partner you want in your corner.
             </Text>
             <Text className="max-w-md text-sm leading-6 text-card-lighter-2">
               You can change them later

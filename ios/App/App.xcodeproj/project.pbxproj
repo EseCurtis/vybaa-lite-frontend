@@ -218,6 +218,11 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+						SystemCapabilities = {
+							com.apple.SignInWithApple = {
+								enabled = 1;
+							};
+						};
 					};
 					EB0EFF7999023B36F529F04A = {
 						CreatedOnToolsVersion = 26.2;

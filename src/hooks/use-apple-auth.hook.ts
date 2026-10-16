@@ -39,6 +39,10 @@ async function ensureAppleInitialized(): Promise<void> {
 }
 
 export async function logoutAppleNativeSession(): Promise<void> {
+  if (ENV.PLATFORM !== 'ios') {
+    return
+  }
+
   try {
     await ensureAppleInitialized()
     await SocialLogin.logout({ provider: 'apple' })

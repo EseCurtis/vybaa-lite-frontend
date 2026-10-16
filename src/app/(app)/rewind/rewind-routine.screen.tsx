@@ -395,7 +395,7 @@ export function RewindRoutineScreen({
                   Choose your focus
                 </Text>
                 <Text className="muted font-bbh text-xs">
-                  Your partner uses this to guide the conversation.
+                  Your partner uses this to choose your daily questions.
                 </Text>
               </View>
 

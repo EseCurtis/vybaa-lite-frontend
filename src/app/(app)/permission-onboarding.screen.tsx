@@ -60,7 +60,7 @@ const PERMISSION_OPTIONS: PermissionOption[] = [
     label: 'Notifications',
   },
   {
-    body: 'This is used when you talk with your Rewind partner or record a voice note.',
+    body: 'This is used to record voice notes. Your daily Rewind questions do not need microphone access.',
     icon: RiMicLine,
     iconClassName: 'text-success-300',
     iconSurfaceClassName: 'bg-success-900',

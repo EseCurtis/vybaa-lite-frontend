@@ -21,6 +21,7 @@ import {
   RiHeart3Fill,
   RiSettings3Fill,
   RiTrophyFill,
+  RiTwitterXLine,
 } from '@remixicon/react'
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
@@ -78,6 +79,12 @@ function validateProfileFormData(formData: ProfileFormData): string | null {
 }
 
 const profileQuickActions: ProfileQuickAction[] = [
+  {
+    title: 'Social Studio',
+    description: 'Connect X and create drafts for review',
+    to: '/app/social',
+    icon: <RiTwitterXLine size={20} className="text-white" />,
+  },
   {
     title: 'Play rewards',
     description: 'View your Play Points wallet',

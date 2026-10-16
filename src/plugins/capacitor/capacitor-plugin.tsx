@@ -1,4 +1,6 @@
 import { App } from '@capacitor/app'
+import { Browser } from '@capacitor/browser'
+import { Capacitor } from '@capacitor/core'
 import { useQueryClient } from '@tanstack/react-query'
 import type { AnyRouter } from '@tanstack/react-router'
 import { useCallback, useEffect, type ReactElement } from 'react'
@@ -61,6 +63,31 @@ export function CapacitorPlugin({
     [isAuthenticated, router],
   )
 
+  const handleAppUrlOpen = useCallback(
+    async (url: string): Promise<void> => {
+      const target = normalizeDeepLink(url)
+      if (!target) return
+
+      if (
+        Capacitor.isNativePlatform() &&
+        target.route === 'social' &&
+        target.socialStatus
+      ) {
+        try {
+          await Browser.close()
+        } catch (error: unknown) {
+          console.warn(
+            'Could not close the X OAuth browser automatically',
+            error instanceof Error ? error.name : 'UnknownError',
+          )
+        }
+      }
+
+      await handleDeepLink(url)
+    },
+    [handleDeepLink],
+  )
+
   const handleForegroundPushNotification = useCallback(
     (notification: InAppNotification): void => {
       if (
@@ -118,7 +145,7 @@ export function CapacitorPlugin({
       const appUrlOpenListener = await App.addListener(
         'appUrlOpen',
         (event) => {
-          void handleDeepLink(event.url)
+          void handleAppUrlOpen(event.url)
         },
       )
       const backButtonListener = await App.addListener(
@@ -147,7 +174,7 @@ export function CapacitorPlugin({
       )
 
       if (launchUrl?.url) {
-        void handleDeepLink(launchUrl.url)
+        void handleAppUrlOpen(launchUrl.url)
       }
 
       return (): void => {
@@ -167,7 +194,12 @@ export function CapacitorPlugin({
       setForegroundPushNotificationHandler(null)
       setPushNotificationRouteHandler(null)
     }
-  }, [handleDeepLink, handleForegroundPushNotification, queryClient, router])
+  }, [
+    handleAppUrlOpen,
+    handleForegroundPushNotification,
+    queryClient,
+    router,
+  ])
 
   useEffect(() => {
     if (!isAuthenticated || !user) return

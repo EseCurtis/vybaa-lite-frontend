@@ -14,6 +14,7 @@ export type DeepLinkRouteName =
   | 'rewindRoutine'
   | 'rewindSession'
   | 'rewards'
+  | 'social'
 
 export type DeepLinkTarget = {
   chatId?: string
@@ -22,6 +23,7 @@ export type DeepLinkTarget = {
   goalId?: string
   hash?: string
   sessionId?: string
+  socialStatus?: 'connected' | 'failed'
   path: string
   requiresAuth: boolean
   route: DeepLinkRouteName
@@ -63,6 +65,11 @@ const allowedAppPaths: Record<string, DeepLinkTarget> = {
     path: '/app/rewards',
     requiresAuth: true,
     route: 'rewards',
+  },
+  '/app/social': {
+    path: '/app/social',
+    requiresAuth: true,
+    route: 'social',
   },
   '/app/rewind': {
     path: '/app/rewind',
@@ -174,6 +181,16 @@ function getTargetFromPath(
     return {
       ...allowedAppPaths['/app/goal'],
       ...(goalId ? { goalId } : {}),
+    }
+  }
+
+  if (pathname === '/app/social') {
+    const socialStatus = searchParams?.get('xSocial')
+    return {
+      ...allowedAppPaths['/app/social'],
+      ...(socialStatus === 'connected' || socialStatus === 'failed'
+        ? { socialStatus }
+        : {}),
     }
   }
 

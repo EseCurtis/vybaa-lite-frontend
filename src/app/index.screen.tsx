@@ -8,11 +8,17 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
-import { getGoogleAuthStatusText } from '@/shared/utils/auth-status.util'
-import { isGoogleLoginAvailable } from '@/shared/utils/auth-platform.util'
+import {
+  getAppleAuthStatusText,
+  getGoogleAuthStatusText,
+} from '@/shared/utils/auth-status.util'
+import {
+  isAppleLoginAvailable,
+  isGoogleLoginAvailable,
+} from '@/shared/utils/auth-platform.util'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
 import { publicUrls } from '@/shared/config/public-urls.config'
-import { RiGoogleFill, RiLoader4Line } from '@remixicon/react'
+import { RiAppleFill, RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 
@@ -33,20 +39,27 @@ export default function AppScreen() {
   const navigate = useNavigate()
   const router = useRouter()
   const {
+    appleAuthStatus,
     googleAuthStatus,
     isAuthenticated,
     isLoading,
     error,
+    loginWithApple,
     loginWithGoogle,
     stale,
     user,
   } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
+  const canUseAppleLogin = isAppleLoginAvailable(ENV.PLATFORM)
   const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
+  const isAppleLoading = appleAuthStatus !== 'idle'
   const isGoogleLoading = googleAuthStatus !== 'idle'
+  const isSocialLoading = isAppleLoading || isGoogleLoading
+  const authLoadingText = isAppleLoading
+    ? getAppleAuthStatusText(appleAuthStatus)
+    : getGoogleAuthStatusText(googleAuthStatus)
   const loadingText =
-    getGoogleAuthStatusText(googleAuthStatus) ??
-    (isLoading ? 'Checking your session...' : null)
+    authLoadingText ?? (isLoading ? 'Checking your session...' : null)
 
   // Navigate to home when authentication succeeds
   useEffect(() => {
@@ -71,9 +84,20 @@ export default function AppScreen() {
     }
   }
 
+  const handleApple = async () => {
+    try {
+      setLoginError(null)
+      await loginWithApple()
+    } catch (err: unknown) {
+      setLoginError(
+        err instanceof Error ? err.message : 'Failed to sign in with Apple',
+      )
+    }
+  }
+
   // The root route is an auth boundary. Never mount onboarding while a
   // session is being resolved or after authentication has been confirmed.
-  if (stale || (isLoading && !isGoogleLoading) || isAuthenticated) {
+  if (stale || (isLoading && !isSocialLoading) || isAuthenticated) {
     return (
       <AppLoadingState
         detail="Your account and latest activity are being restored."
@@ -212,7 +236,7 @@ export default function AppScreen() {
               <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto bg-blue-300/10 rounded-full">
                 <TouchableOpacity
                   className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
-                  disabled={isLoading || isGoogleLoading}
+                  disabled={isLoading || isSocialLoading}
                   onPress={handleGetStarted}
                 >
                   <Text className="text-black text-sm  font-semibold">
@@ -223,7 +247,7 @@ export default function AppScreen() {
                   <TouchableOpacity
                     accessibilityLabel="Continue with Google"
                     className="rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
-                    disabled={isLoading || isGoogleLoading}
+                    disabled={isLoading || isSocialLoading}
                     onPress={handleGoogle}
                   >
                     {isGoogleLoading ? (
@@ -233,6 +257,23 @@ export default function AppScreen() {
                       />
                     ) : (
                       <RiGoogleFill className="text-white" size={20} />
+                    )}
+                  </TouchableOpacity>
+                )}
+                {canUseAppleLogin && (
+                  <TouchableOpacity
+                    accessibilityLabel="Continue with Apple"
+                    className="rounded-full bg-card-light-50 p-4 flex items-center justify-center aspect-square"
+                    disabled={isLoading || isSocialLoading}
+                    onPress={handleApple}
+                  >
+                    {isAppleLoading ? (
+                      <RiLoader4Line
+                        className="text-white animate-spin"
+                        size={20}
+                      />
+                    ) : (
+                      <RiAppleFill className="text-white" size={20} />
                     )}
                   </TouchableOpacity>
                 )}

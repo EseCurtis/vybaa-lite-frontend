@@ -20,6 +20,7 @@ export interface ProfileQuickAction {
   to:
     | '/achievements'
     | '/app/rewards'
+    | '/app/social'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
 }

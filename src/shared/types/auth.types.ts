@@ -236,7 +236,13 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
+  appleAuthStatus: AppleAuthStatus
   googleAuthStatus: GoogleAuthStatus
+
+  /**
+   * Perform an Apple login via the native social-login plugin.
+   */
+  loginWithApple: () => Promise<void>
 
   /**
    * Perform a Google login via the native social-login plugin.

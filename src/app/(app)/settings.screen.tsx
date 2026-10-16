@@ -9,6 +9,7 @@ import {
   RiMailLine,
   RiShieldCheckLine,
   RiTimeLine,
+  RiTwitterXLine,
   RiVipCrownLine,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -189,7 +190,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = async () => {
     const confirmed = confirm(
-      'Delete your account permanently? This will remove your profile, goals, journals, achievements, communities, wallet history, and settings. This cannot be undone.',
+      'Delete your account permanently? This will remove your profile, goals, journals, achievements, communities, wallet history, connected social accounts and drafts, and settings. This cannot be undone.',
     )
 
     if (!confirmed) {
@@ -298,6 +299,32 @@ export default function SettingsScreen() {
                   </View>
                 </View>
               ) : null}
+
+              <Text className="px-1 text-sm font-semibold text-card-lighter-2">
+                Connections
+              </Text>
+              <Pressable
+                accessibilityLabel="Open Social Studio"
+                className="flex-row items-center justify-between rounded-2xl bg-cardx px-5 py-4"
+                onPress={() => {
+                  void navigate({ to: '/app/social' })
+                }}
+              >
+                <View className="min-w-0 flex-1 flex-row items-center gap-4">
+                  <View className="size-10 items-center justify-center rounded-xl bg-card-light">
+                    <RiTwitterXLine className="text-white" size={20} />
+                  </View>
+                  <View className="min-w-0 flex-1 gap-1">
+                    <Text className="text-sm font-semibold text-white">
+                      Social Studio
+                    </Text>
+                    <Text className="text-xs leading-5 text-card-lighter-2">
+                      Connect X and create drafts for review
+                    </Text>
+                  </View>
+                </View>
+                <RiArrowRightSLine className="text-card-lighter-2" size={20} />
+              </Pressable>
 
               <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
                 Rewind
