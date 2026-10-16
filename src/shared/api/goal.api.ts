@@ -279,8 +279,8 @@ export const goalAPI = {
     }>(`${GOALS_V2}/quick-setup`, { answers, edit, prompt })
     return response.data
   },
-  get: async (goalId: string): Promise<GoalResponse> => {
-    const response = await http.get<GoalResponse>(`${GOALS_V2}/${goalId}`)
+  get: async (goalId: string, signal?: AbortSignal): Promise<GoalResponse> => {
+    const response = await http.get<GoalResponse>(`${GOALS_V2}/${goalId}`, { signal })
     return response.data
   },
   getAlarmManifest: async (): Promise<GoalAlarmManifest> => {
@@ -294,15 +294,18 @@ export const goalAPI = {
     filter: GoalListFilter,
     cursor?: string,
     limit = 20,
+    signal?: AbortSignal,
   ): Promise<GoalsListResponse> => {
     const response = await http.get<GoalsListResponse>(GOALS_V2, {
       params: { cursor, filter, limit },
+      signal,
     })
     return response.data
   },
-  listLegacy: async (): Promise<{ data: LegacyGoal[] }> => {
+  listLegacy: async (signal?: AbortSignal): Promise<{ data: LegacyGoal[] }> => {
     const response = await http.get<{ data: LegacyGoal[] }>(
       `${GOALS_V2}/legacy`,
+      { signal },
     )
     return response.data
   },
@@ -310,10 +313,11 @@ export const goalAPI = {
     goalId: string,
     cursor?: string,
     limit = 20,
+    signal?: AbortSignal,
   ): Promise<GoalOccurrencesResponse> => {
     const response = await http.get<GoalOccurrencesResponse>(
       `${GOALS_V2}/${goalId}/occurrences`,
-      { params: { cursor, limit } },
+      { params: { cursor, limit }, signal },
     )
     return response.data
   },

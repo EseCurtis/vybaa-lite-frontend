@@ -1,6 +1,7 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
 import { Skeleton } from '@/components/common/skeleton.component'
+import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { readGoalCreationDraft } from '@/components/custom/goal/create-goal-sheet.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -309,7 +310,7 @@ function GoalFeed({
     () => query.data?.pages.flatMap((page) => page.data) ?? [],
     [query.data],
   )
-  if (query.isLoading) {
+  if (query.isPending && !query.data) {
     return (
       <View className="space-y-2">
         {[0, 1, 2].map((item) => (
@@ -328,18 +329,21 @@ function GoalFeed({
       </View>
     )
   }
+  if (query.isError && !query.data) return <QueryFeedback message="Your goals couldn't load." onRetry={() => void query.refetch()} retrying={query.isFetching} />
   if (!goals.length) {
     const emptyState = emptyStateForFilter(filter)
     return <GoalEmptyState {...emptyState} onAction={onCreate} />
   }
   return (
     <View>
+      {query.isError ? <QueryFeedback message="Showing your saved goals. Refresh couldn't complete." onRetry={() => void query.refetch()} retrying={query.isFetching} /> : null}
       {goals.map((goal) => (
         <GoalCard goal={goal} key={goal.id} onOpen={onOpen} />
       ))}
       {query.hasNextPage ? (
         <Pressable
           className="mx-auto rounded-full bg-card-light px-5 py-3"
+          disabled={query.isFetchingNextPage}
           onPress={() => query.fetchNextPage()}
         >
           <Text>{query.isFetchingNextPage ? 'Loading…' : 'Load more'}</Text>

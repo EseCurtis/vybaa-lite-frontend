@@ -104,9 +104,11 @@ class AuthAPI {
     return res
   }
 
-  async getSession(): Promise<SessionResponse> {
+  async getSession(signal?: AbortSignal): Promise<SessionResponse> {
     const { data: res } = await http.post<SessionResponse>(
       `${API_V1}/auth/session`,
+      undefined,
+      { signal, timeout: 15_000 },
     )
     return res
   }

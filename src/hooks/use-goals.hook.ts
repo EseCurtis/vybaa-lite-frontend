@@ -42,16 +42,19 @@ export function useInfiniteGoals({
     getNextPageParam: (lastPage: GoalsListResponse) =>
       lastPage.pagination.nextCursor ?? undefined,
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }): Promise<GoalsListResponse> =>
-      goalAPI.list(filter, pageParam, limit),
-    queryKey: goalQueryKeys.list(filter),
+    queryFn: ({ pageParam, signal }): Promise<GoalsListResponse> =>
+      goalAPI.list(filter, pageParam, limit, signal),
+    queryKey: goalQueryKeys.list(filter, limit),
   })
 }
 
 export function useGoal(goalId?: string) {
   return useQuery({
     enabled: Boolean(goalId),
-    queryFn: async () => (await goalAPI.get(goalId!)).data,
+    queryFn: async ({ signal }) => {
+      if (!goalId) throw new Error('A goal ID is required')
+      return (await goalAPI.get(goalId, signal)).data
+    },
     queryKey: goalQueryKeys.detail(goalId ?? 'none'),
   })
 }
@@ -59,7 +62,7 @@ export function useGoal(goalId?: string) {
 export function useLegacyGoals(enabled = true) {
   return useQuery({
     enabled,
-    queryFn: async () => (await goalAPI.listLegacy()).data,
+    queryFn: async ({ signal }) => (await goalAPI.listLegacy(signal)).data,
     queryKey: goalQueryKeys.legacy(),
   })
 }
@@ -70,8 +73,8 @@ export function useGoalOccurrences(goalId: string, enabled = true) {
     getNextPageParam: (lastPage: GoalOccurrencesResponse) =>
       lastPage.pagination.nextCursor ?? undefined,
     initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }): Promise<GoalOccurrencesResponse> =>
-      goalAPI.listOccurrences(goalId, pageParam),
+    queryFn: ({ pageParam, signal }): Promise<GoalOccurrencesResponse> =>
+      goalAPI.listOccurrences(goalId, pageParam, 20, signal),
     queryKey: goalQueryKeys.occurrences(goalId),
   })
 }

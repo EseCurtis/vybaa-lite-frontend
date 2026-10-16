@@ -12,9 +12,9 @@ type ProtectedViewComponentProps = {
 export const ProtectedViewComponent = ({
   children,
 }: ProtectedViewComponentProps) => {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, stale } = useAuth()
 
-  if (isLoading) {
+  if (stale) {
     return <AppLoadingState message="Loading your space..." />
   }
 

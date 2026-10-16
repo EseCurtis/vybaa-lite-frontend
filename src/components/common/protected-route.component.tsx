@@ -24,7 +24,7 @@ export const ProtectedRoute = ({
   requireAuth = true,
   redirectTo,
 }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading, user } = useAuth()
+  const { isAuthenticated, isLoading, stale, user } = useAuth()
   const navigate = useNavigate()
   const router = useRouter()
 
@@ -52,11 +52,12 @@ export const ProtectedRoute = ({
     user,
   ])
 
-  if (isLoading) {
+  if (stale) {
     return (
       <AppLoadingState
         detail="Your account and latest activity are being restored."
         message="Checking your session..."
+        layout={requireAuth ? 'home' : 'auth'}
       />
     )
   }

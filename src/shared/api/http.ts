@@ -107,6 +107,7 @@ if (typeof window !== 'undefined') {
 }
 
 http.interceptors.request.use((config) => {
+  if (config.method === 'get' && !config.timeout) config.timeout = 20_000
   try {
     const token = localStorage.getItem('authToken')
     if (token) {
@@ -166,6 +167,7 @@ export const extractError = (data: unknown): string => {
 http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<any>) => {
+    if (axios.isCancel(error)) return Promise.reject(error)
     const original = error.config as InternalAxiosRequestConfig & {
       _retry?: boolean
     }

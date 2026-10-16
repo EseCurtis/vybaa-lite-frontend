@@ -35,7 +35,7 @@ function HomeRouteScreen() {
   }, [router, user])
 
   if (!user || resolvedUserId !== user.id) {
-    return <AppLoadingState message="Getting your home ready..." />
+    return <AppLoadingState message="Getting your home ready..." layout="home" />
   }
 
   return <Home2Screen />

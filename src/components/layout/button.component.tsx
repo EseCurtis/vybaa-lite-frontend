@@ -156,10 +156,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         disabled={disabled || loading}
+        aria-busy={loading}
         className={cn(
           'cursor-pointer',
           disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
-          loading ? '!pr-0' : '',
         buttonClassName
         )}
         {...props}
@@ -174,17 +174,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <>{children}</>
           ) : (
             <>
-              {loading ? (
-                <div
-                  className={cn(
-                    'animate-spin rounded-full border-2 border-t-transparent',
-                    styles.indicator()
-                  )}
-                  style={{ width: '20px', height: '20px' }}
-                  role="status"
-                  aria-label="Loading"
-                />
-              ) : (
                 <>
                   {leftIcon}
                   {text && (
@@ -200,10 +189,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
                     <Icon name="ArrowRight" size="md" color="currentColor" />
                   ) : null}
                 </>
-              )}
             </>
           )}
         </LinearGradient>
+        {loading ? <span className="sr-only" role="status">In progress</span> : null}
       </button>
     )
   }

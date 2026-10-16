@@ -1,4 +1,6 @@
 import { Pressable } from '@/components/layout/pressables.component'
+import { HomeGoalsSkeleton } from '@/components/common/loading-layouts.component'
+import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
@@ -45,7 +47,7 @@ function HomeGoalItem({
 
 export function HomeGoals() {
   const navigate = useNavigate()
-  const { data } = useInfiniteGoals({ filter: 'DUE' })
+  const { data, isPending, isError, isFetching, refetch } = useInfiniteGoals({ filter: 'DUE' })
   const goals = data?.pages.flatMap((page) => page.data) ?? []
   const noGoals = goals.length == 0
 
@@ -56,6 +58,9 @@ export function HomeGoals() {
   const handleCreateGoal = () => {
     navigate({ to: '/app/goal/create' })
   }
+
+  if (isPending && !data) return <div className="pt-mg"><HomeGoalsSkeleton /></div>
+  if (isError && !data) return <div className="px-mg pt-mg"><QueryFeedback message="Your goals couldn't load." onRetry={() => void refetch()} retrying={isFetching} /></div>
 
   return (
     <View className="pt-mg">

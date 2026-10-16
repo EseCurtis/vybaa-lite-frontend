@@ -25,8 +25,6 @@ import { useEffect, useState } from 'react'
 import { homeActions } from '@/components/custom/home/home-actions.component'
 import { Moti } from '@/shared/constants.shared'
 import { adjustColor, seededColor } from '@/shared/utils/helpers.util'
-import { LineWobble } from 'ldrs/react'
-import 'ldrs/react/LineWobble.css'
 
 function openLegalDocument(url: string): void {
   void Browser.open({ presentationStyle: 'fullscreen', url })
@@ -102,6 +100,7 @@ export default function AppScreen() {
       <AppLoadingState
         detail="Your account and latest activity are being restored."
         message={loadingText ?? 'Opening Vybaa...'}
+        layout="auth"
       />
     )
   }
@@ -219,13 +218,6 @@ export default function AppScreen() {
             <View className="z-10 gap-3">
               {isLoading && (
                 <View className="items-center gap-2">
-                  <LineWobble
-                    size="50"
-                    stroke="12"
-                    bgOpacity="0.1"
-                    speed="1.8"
-                    color="white"
-                  />
                   {loadingText && (
                     <Text className="text-card-lighter-2 text-xs font-bbh text-center">
                       {loadingText}

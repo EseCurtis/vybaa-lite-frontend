@@ -1,5 +1,5 @@
 import { Input } from '@/components/common/input.component'
-import { Spinner } from '@/components/common/spinner.component'
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -99,8 +99,11 @@ export function InviteSheet({ communityId, communityName }: InviteSheetProps) {
       {tab === 'share' ? (
         <View className="space-y-4">
           {isLoadingInvites ? (
-            <View className="items-center py-6">
-              <Spinner />
+            <View role="status" aria-label="Loading invites" className="min-h-[215px] items-center gap-4 py-6">
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-10 w-44" />
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-3 h-12 w-full" rounded="xl" />
             </View>
           ) : generalInvite ? (
             <>

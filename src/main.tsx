@@ -1,5 +1,5 @@
 import { installServerConsoleBridge } from '@/utils/server-console-bridge'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
@@ -8,6 +8,8 @@ import { NotificationProvider } from './providers/notification.provider.tsx'
 import { SubscriptionProvider } from './providers/subscription.provider.tsx'
 import { ToastProvider } from './providers/toast.provider.tsx'
 import { shouldAnimate } from './shared/utils/animation.util.ts'
+import { createAppQueryClient } from './shared/query-client.ts'
+import { AppLoadingState } from './components/common/app-loading-state.component.tsx'
 import {
   getAppNavigationTransition,
   getAppTabRoot,
@@ -25,20 +27,16 @@ import './styles.css'
 installServerConsoleBridge()
 
 // Create a QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-})
+const queryClient = createAppQueryClient()
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
   context: {},
   defaultPreload: 'intent',
+  defaultPendingComponent: () => <AppLoadingState message="Opening page…" />,
+  defaultPendingMs: 0,
+  defaultPendingMinMs: 0,
   scrollRestoration: true,
   defaultStructuralSharing: true,
   defaultPreloadStaleTime: 0,
@@ -101,9 +99,6 @@ if (rootElement && !rootElement.innerHTML) {
   }
 
   loadBody()
-  // Let React commit the first screen before fading the static loader away.
-  // This prevents a black gap between the HTML shell and the app's first paint.
-  requestAnimationFrame(() => document.body.classList.add('loaded'))
 }
 
 // If you want to start measuring performance in your app, pass a function

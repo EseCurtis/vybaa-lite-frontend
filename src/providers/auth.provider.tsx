@@ -53,9 +53,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const sessionQuery = useQuery<SessionResponse, Error>({
     queryKey: SESSION_QUERY_KEY,
-    queryFn: async () => authAPI.getSession(),
+    queryFn: async ({ signal }) => authAPI.getSession(signal),
     enabled: hasTokens,
-    retry: 1,
+    staleTime: 60_000,
+    retry: false,
+    networkMode: 'always',
   })
 
   useEffect(() => {
@@ -68,7 +70,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return
     }
 
-    if (sessionQuery.isError) {
+    if (sessionQuery.isError && (!sessionQuery.data || !hasTokens)) {
       setState({
         user: null,
         isAuthenticated: false,
@@ -79,7 +81,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       return
     }
 
-    if (sessionQuery.data) {
+    if (sessionQuery.data && hasTokens) {
       const user: AuthUser = sessionQuery.data.data.user
       setState({
         user,
@@ -102,12 +104,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     sessionQuery.error,
     sessionQuery.isError,
     sessionQuery.isLoading,
+    hasTokens,
   ])
 
   const handleAuthSuccess = useCallback(async () => {
     await queryClient.fetchQuery({
       queryKey: SESSION_QUERY_KEY,
       queryFn: async () => authAPI.getSession(),
+      staleTime: 0,
     })
   }, [queryClient])
 

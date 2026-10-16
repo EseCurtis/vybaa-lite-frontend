@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+.vybaa-skeleton {
+  background-color: #1b1f2b;
+  animation: vybaa-skeleton-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes vybaa-skeleton-pulse {
+  50% { background-color: #292d3d; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vybaa-skeleton { animation: none; }
+}
+
 .touchable-opacity {
   transition: opacity 150ms ease;
 }
