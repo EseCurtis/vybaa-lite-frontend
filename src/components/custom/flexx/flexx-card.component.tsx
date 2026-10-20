@@ -1,12 +1,11 @@
 import { Text } from '@/components/layout/text.component'
+import { AchievementBadge } from '@/components/custom/achievement/achievement-badge.component'
 import { View } from '@/components/layout/view.component'
 import { Avatar } from '@/components/user/avatar.component'
 import { UserCheckmark } from '@/components/user/checkmark.component'
 import type { Achievement } from '@/shared/api/achievement.api'
 import type { RewindInsights } from '@/shared/api/rewind.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { cn } from '@/shared/utils/helpers.util'
-import { Icon } from '@iconify/react'
 import {
   RiFireFill,
   RiFlashlightFill,
@@ -111,8 +110,12 @@ export function FlexxCard({
 
   const getIcon = (size: number = 40) => {
     if (type === 'achievement' && achievement) {
-      const emojiIcon = getEmojiIcon(achievement.badgeIcon)
-      return <Icon icon={emojiIcon} width={size} height={size} />
+      return (
+        <AchievementBadge
+          badge={achievement}
+          style={{ width: size, height: size }}
+        />
+      )
     }
 
     switch (type) {
@@ -151,12 +154,12 @@ export function FlexxCard({
     return 'text-4xl' // 1000+
   }
 
-  const className = "rounded-3xl "
+  const className = 'rounded-3xl '
 
   // Different layouts for each card type
   if (type === 'daily') {
     return (
-      <View className={cn("size-full relative overflow-hidden", className)}>
+      <View className={cn('size-full relative overflow-hidden', className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -236,7 +239,7 @@ export function FlexxCard({
 
   if (type === 'weekly') {
     return (
-      <View className={cn("size-full relative overflow-hidden", className)}>
+      <View className={cn('size-full relative overflow-hidden', className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -324,7 +327,7 @@ export function FlexxCard({
 
   if (type === 'streak') {
     return (
-      <View className={cn("size-full relative overflow-hidden", className)}>
+      <View className={cn('size-full relative overflow-hidden', className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -423,7 +426,7 @@ export function FlexxCard({
   if (type === 'achievement') {
     if (!achievement) {
       return (
-        <View className={cn("size-full relative overflow-hidden", className)}>
+        <View className={cn('size-full relative overflow-hidden', className)}>
           <div
             className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
           />
@@ -470,7 +473,7 @@ export function FlexxCard({
     )
 
     return (
-      <View className={cn("size-full relative overflow-hidden", className)}>
+      <View className={cn('size-full relative overflow-hidden', className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -529,11 +532,7 @@ export function FlexxCard({
               />
 
               <View className="relative z-10 flex items-center justify-center">
-                <Icon
-                  icon={getEmojiIcon(achievement.badgeIcon)}
-                  width={160}
-                  height={160}
-                />
+                <AchievementBadge badge={achievement} className="size-40" />
               </View>
             </motion.div>
 
@@ -583,7 +582,7 @@ export function FlexxCard({
       'A little reflection can reveal what your days are asking for.'
 
     return (
-      <View className={cn("size-full relative overflow-hidden", className)}>
+      <View className={cn('size-full relative overflow-hidden', className)}>
         <div
           className={`absolute inset-0 bg-gradient-to-br ${getGradient()}`}
         />
@@ -612,7 +611,7 @@ export function FlexxCard({
 
           <View className="flex-1 justify-center">
             <Text className="text-white/60 text-xs font-bbh uppercase tracking-[0.2em] mb-4">
-              Sessions 
+              Sessions
             </Text>
             <Text
               className={`text-white ${getHeroFontSize(completedSessions)} leading-none font-bbh font-bold`}

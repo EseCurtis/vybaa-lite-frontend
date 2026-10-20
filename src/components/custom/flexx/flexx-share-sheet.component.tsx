@@ -1,10 +1,9 @@
 import { Button } from '@/components/layout/button.component'
+import { AchievementBadge } from '@/components/custom/achievement/achievement-badge.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { Achievement } from '@/shared/api/achievement.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { Icon } from '@iconify/react'
 import {
   RiInstagramLine,
   RiTwitterXLine,
@@ -38,7 +37,6 @@ export function AchievementSelector({
       <View className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
         {achievements.map((achievement) => {
           const isSelected = selectedId === achievement.id
-          const emojiIcon = getEmojiIcon(achievement.badgeIcon)
 
           return (
             <Pressable
@@ -51,7 +49,7 @@ export function AchievementSelector({
                   : 'bg-card-light-100 text-white hover:bg-card-light'
               }`}
             >
-              <Icon icon={emojiIcon} width={48} height={48} className="mb-2" />
+              <AchievementBadge badge={achievement} className="mb-2 size-14" />
               <Text className="w-full break-words text-xs font-bbh text-center leading-tight line-clamp-2">
                 {achievement.title}
               </Text>

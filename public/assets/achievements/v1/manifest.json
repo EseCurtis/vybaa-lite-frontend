@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "key": "streak_milestone-3",
+      "filename": "streak_milestone-3.webp",
+      "batch": 1,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-7",
+      "filename": "streak_milestone-7.webp",
+      "batch": 1,
+      "crop": {
+        "left": 396,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-14",
+      "filename": "streak_milestone-14.webp",
+      "batch": 1,
+      "crop": {
+        "left": 792,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-21",
+      "filename": "streak_milestone-21.webp",
+      "batch": 1,
+      "crop": {
+        "left": 1188,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-30",
+      "filename": "streak_milestone-30.webp",
+      "batch": 1,
+      "crop": {
+        "left": 1586,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-50",
+      "filename": "streak_milestone-50.webp",
+      "batch": 1,
+      "crop": {
+        "left": 0,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-100",
+      "filename": "streak_milestone-100.webp",
+      "batch": 1,
+      "crop": {
+        "left": 396,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "streak_milestone-365",
+      "filename": "streak_milestone-365.webp",
+      "batch": 1,
+      "crop": {
+        "left": 792,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_goals-3",
+      "filename": "total_goals-3.webp",
+      "batch": 1,
+      "crop": {
+        "left": 1188,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_goals-5",
+      "filename": "total_goals-5.webp",
+      "batch": 1,
+      "crop": {
+        "left": 1586,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_goals-10",
+      "filename": "total_goals-10.webp",
+      "batch": 2,
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_checkins-50",
+      "filename": "total_checkins-50.webp",
+      "batch": 2,
+      "crop": {
+        "left": 396,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_checkins-100",
+      "filename": "total_checkins-100.webp",
+      "batch": 2,
+      "crop": {
+        "left": 792,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_checkins-200",
+      "filename": "total_checkins-200.webp",
+      "batch": 2,
+      "crop": {
+        "left": 1188,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "total_checkins-500",
+      "filename": "total_checkins-500.webp",
+      "batch": 2,
+      "crop": {
+        "left": 1586,
+        "top": 0,
+        "size": 396
+      }
+    },
+    {
+      "key": "perfect_week-1",
+      "filename": "perfect_week-1.webp",
+      "batch": 2,
+      "crop": {
+        "left": 0,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "comeback-1",
+      "filename": "comeback-1.webp",
+      "batch": 2,
+      "crop": {
+        "left": 396,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "early_bird-1",
+      "filename": "early_bird-1.webp",
+      "batch": 2,
+      "crop": {
+        "left": 792,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "night_owl-1",
+      "filename": "night_owl-1.webp",
+      "batch": 2,
+      "crop": {
+        "left": 1188,
+        "top": 396,
+        "size": 396
+      }
+    },
+    {
+      "key": "signature",
+      "filename": "signature.webp",
+      "batch": 2,
+      "crop": {
+        "left": 1586,
+        "top": 396,
+        "size": 396
+      }
+    }
+  ]
+}

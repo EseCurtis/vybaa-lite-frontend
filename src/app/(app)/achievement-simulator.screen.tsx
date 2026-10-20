@@ -1,11 +1,10 @@
 import { TabHeader } from '@/components/common/tab-header.component'
+import { AchievementBadge } from '@/components/custom/achievement/achievement-badge.component'
 import { AchievementModal } from '@/components/custom/achievement/achievement-modal.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { Achievement } from '@/shared/api/achievement.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { Icon } from '@iconify/react'
 import { useState } from 'react'
 
 // Sample achievements based on badge definitions
@@ -104,7 +103,7 @@ const SAMPLE_ACHIEVEMENTS: Achievement[] = [
     type: 'total_checkins',
     milestone: 100,
     title: 'Consistency Champion',
-    description: '100 total check-ins - you\'re unstoppable',
+    description: "100 total check-ins - you're unstoppable",
     badgeIcon: '👑',
     earnedAt: new Date().toISOString(),
   },
@@ -156,7 +155,8 @@ const SAMPLE_ACHIEVEMENTS: Achievement[] = [
 ]
 
 export default function AchievementSimulatorScreen() {
-  const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null)
+  const [selectedAchievement, setSelectedAchievement] =
+    useState<Achievement | null>(null)
 
   const handleShowModal = (achievement: Achievement) => {
     setSelectedAchievement(achievement)
@@ -176,7 +176,7 @@ export default function AchievementSimulatorScreen() {
       acc[type].push(achievement)
       return acc
     },
-    {} as Record<string, Achievement[]>
+    {} as Record<string, Achievement[]>,
   )
 
   const getTypeLabel = (type: string): string => {
@@ -218,10 +218,9 @@ export default function AchievementSimulatorScreen() {
                     className="!bg-card-700/40 !border-2 !border-white/10 hover:!border-primary-500/50 transition-all"
                   >
                     <View className="flex flex-col items-center gap-3 p-4">
-                      <Icon
-                        icon={getEmojiIcon(achievement.badgeIcon)}
-                        className="text-white"
-                        style={{ fontSize: '48px' }}
+                      <AchievementBadge
+                        badge={achievement}
+                        className="size-16"
                       />
                       <View className="items-center">
                         <Text className="text-white font-bbh font-bold text-sm text-center">

@@ -1,4 +1,5 @@
 import { TabHeader } from '@/components/common/tab-header.component'
+import { AchievementBadge } from '@/components/custom/achievement/achievement-badge.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -89,10 +90,9 @@ function BadgeCard({
               isEarned ? '' : 'bg-cardx'
             }`}
           >
-            <Icon
-              icon={getEmojiIcon(badge.badgeIcon)}
-              className={`text-card-lighter ${!isEarned && 'opacity-30 grayscale'}`}
-              style={{ fontSize: '48px' }}
+            <AchievementBadge
+              badge={badge}
+              className={`size-20 ${!isEarned ? 'grayscale' : ''}`}
             />
           </View>
         </View>
@@ -146,11 +146,7 @@ function BadgeDetailsSheet({
           !isEarned && 'grayscale opacity-50',
         )}
       >
-        <Icon
-          icon={getEmojiIcon(badge.badgeIcon)}
-          className="text-card-lighter"
-          style={{ fontSize: '68px' }}
-        />
+        <AchievementBadge badge={badge} className="size-28" />
       </View>
 
       <Text className="mt-5 text-center text-2xl font-display font-bold text-card-lighter">
@@ -462,10 +458,9 @@ export default function AchievementsScreen() {
                   >
                     <View className="bg-cardx rounded-2xl p-4 flex flex-row items-center gap-3 min-w-[200px]">
                       <View className="p-1">
-                        <Icon
-                          icon={getEmojiIcon(badge.badgeIcon)}
-                          className="text-card-lighter"
-                          style={{ fontSize: '36px' }}
+                        <AchievementBadge
+                          badge={achievementsById.get(badge.id)}
+                          className="size-12"
                         />
                       </View>
                       <View>

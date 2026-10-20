@@ -1,10 +1,9 @@
 import { Button } from '@/components/layout/button.component'
+import { AchievementBadge } from './achievement-badge.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import type { Achievement } from '@/shared/api/achievement.api'
 import { hapticFeedback } from '@/shared/haptic.util'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
-import { Icon } from '@iconify/react'
 import { motion, useAnimation } from 'framer-motion'
 import { useEffect } from 'react'
 
@@ -13,7 +12,10 @@ interface AchievementModalProps {
   onDismiss: () => void
 }
 
-export function AchievementModal({ achievement, onDismiss }: AchievementModalProps) {
+export function AchievementModal({
+  achievement,
+  onDismiss,
+}: AchievementModalProps) {
   const glowControls = useAnimation()
 
   useEffect(() => {
@@ -66,13 +68,14 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
               '#FFD93D', // gold
               '#6BCF7F', // green
             ]
-            const randomColor = colors[Math.floor(Math.random() * colors.length)]
+            const randomColor =
+              colors[Math.floor(Math.random() * colors.length)]
             const size = 8 + Math.random() * 8 // Random size between 8-16px
             const startX = Math.random() * 100 // Full width 0-100%
             const startXPx = `${startX}%`
-            const driftAmount = (Math.random() * 100 - 50) // Drift -50px to +50px
+            const driftAmount = Math.random() * 100 - 50 // Drift -50px to +50px
             const rotation = Math.random() * 360
-            
+
             return (
               <motion.div
                 key={i}
@@ -81,12 +84,12 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
                   top: '-30px',
                   left: startXPx, // Position across full width
                 }}
-                initial={{ 
+                initial={{
                   y: 0,
-                  x: 0, 
-                  opacity: 0, 
-                  rotate: rotation, 
-                  scale: 0 
+                  x: 0,
+                  opacity: 0,
+                  rotate: rotation,
+                  scale: 0,
                 }}
                 animate={{
                   y: 500,
@@ -102,9 +105,9 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
                 }}
               >
                 {/* Colored confetti square */}
-                <View 
+                <View
                   className="rounded-sm shadow-lg"
-                  style={{ 
+                  style={{
                     width: `${size}px`,
                     height: `${size}px`,
                     backgroundColor: randomColor,
@@ -156,12 +159,12 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
                   delay: 0.5,
                 }}
               />
-              
+
               {/* Main badge container */}
               <View className="relative w-32 h-32 bg-gradient-to-br from-primary-500/30 to-accent-500/30 rounded-full flex items-center justify-center border-4 border-primary-400/40 shadow-2xl">
                 {/* Inner glow */}
                 <View className="absolute inset-2 rounded-full bg-gradient-to-br from-white/10 to-transparent" />
-                
+
                 {/* Icon */}
                 <motion.div
                   animate={{
@@ -173,13 +176,9 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
                     ease: 'easeInOut',
                   }}
                 >
-                  <Icon 
-                    icon={getEmojiIcon(achievement.badgeIcon)} 
-                    className="text-white drop-shadow-2xl relative z-10" 
-                    style={{ 
-                      fontSize: '72px',
-                      filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.4))'
-                    }}
+                  <AchievementBadge
+                    badge={achievement}
+                    className="relative z-10 size-28"
                   />
                 </motion.div>
               </View>
@@ -254,10 +253,7 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
             transition={{ delay: 0.8 }}
             className="w-full pt-4"
           >
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button
                 label="Continue"
                 variant="default"
@@ -276,7 +272,11 @@ export function AchievementModal({ achievement, onDismiss }: AchievementModalPro
             transition={{ delay: 1 }}
           >
             <Text className="text-white/30 text-xs font-bbh text-center">
-              Earned {new Date(achievement.earnedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              Earned{' '}
+              {new Date(achievement.earnedAt).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
             </Text>
           </motion.div>
         </View>

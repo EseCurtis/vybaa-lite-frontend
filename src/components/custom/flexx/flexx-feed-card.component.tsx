@@ -1,4 +1,3 @@
-import { Icon } from '@iconify/react'
 import {
   RiFireFill,
   RiFlashlightFill,
@@ -9,13 +8,13 @@ import {
 import type { ReactElement } from 'react'
 
 import { VybaaMark } from '@/components/common/vybaa-mark.component'
+import { AchievementBadge } from '@/components/custom/achievement/achievement-badge.component'
 import type { AvatarUser } from '@/components/user/avatar.component'
 import { Avatar } from '@/components/user/avatar.component'
 import { UserCheckmark } from '@/components/user/checkmark.component'
 import type { FlexxDesign, FlexxMetric } from '@/shared/flexx/flexx-design'
 import { FLEXX_THEMES, metricValue } from '@/shared/flexx/flexx-design'
 import { flexxPresentation } from '@/shared/flexx/flexx-presentation'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { cn } from '@/shared/utils/helpers.util'
 import type { FlexxCardProps } from './flexx-card.component'
 import { FlexxPartnerExpression } from './flexx-partner-expression.component'
@@ -232,8 +231,8 @@ export function FlexxFeedCard({
           <div className="flex min-h-0 flex-col items-center justify-center gap-[5cqw] !text-center">
             {achievement ? (
               <>
-                <Icon
-                  icon={getEmojiIcon(achievement.badgeIcon)}
+                <AchievementBadge
+                  badge={achievement}
                   className="size-[36cqw] shrink-0"
                 />
                 <p className="w-full break-words font-display text-[8cqw] font-extrabold leading-tight">
