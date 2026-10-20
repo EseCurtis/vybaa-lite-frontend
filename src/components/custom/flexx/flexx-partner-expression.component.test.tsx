@@ -20,10 +20,10 @@ it('uses the author identity with reserved space, decorative semantics and no ov
   expect(wrapper?.className).not.toContain('absolute')
   expect(wrapper?.getAttribute('aria-hidden')).toBe('true')
   expect(img?.getAttribute('src')).toBe(
-    '/assets/rewind/expressions/v1/tobi/thinking.webp',
+    '/assets/rewind/expressions/v2-detached-heads/tobi/thinking.webp',
   )
-  expect(img?.getAttribute('width')).toBe('480')
-  expect(img?.getAttribute('height')).toBe('480')
+  expect(img?.getAttribute('width')).toBe('443')
+  expect(img?.getAttribute('height')).toBe('443')
   expect(img?.getAttribute('alt')).toBe('')
 })
 
@@ -40,6 +40,6 @@ it('retains the slot on image failure and can display another expression afterwa
   )
   rerender(<FlexxPartnerExpression partnerId="lyra" expression="calm" />)
   expect(container.querySelector('img')?.getAttribute('src')).toBe(
-    '/assets/rewind/expressions/v1/lyra/calm.webp',
+    '/assets/rewind/expressions/v2-detached-heads/lyra/listening.webp',
   )
 })

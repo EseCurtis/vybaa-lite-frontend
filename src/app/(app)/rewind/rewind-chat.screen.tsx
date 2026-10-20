@@ -5,6 +5,7 @@ import {
   RiCheckLine,
   RiCloseLine,
   RiDeleteBinLine,
+  RiEmotionHappyLine,
   RiMore2Line,
   RiNotificationLine,
   RiNotificationOffLine,
@@ -27,6 +28,9 @@ import {
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TabHeader } from '@/components/common/tab-header.component'
+import { PartnerEmojiPicker } from '@/components/custom/rewind/partner-emoji-picker.component'
+import { PartnerEmojiText } from '@/components/custom/rewind/partner-emoji-text.component'
+import { PartnerTyping } from '@/components/custom/rewind/partner-typing.component'
 import { useKeyboard } from '@/components/layout/keyboard-avoiding-view.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
@@ -49,6 +53,8 @@ import type {
   RewindChatReactionKind,
 } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
+import { partnerEmojiToken } from '@/shared/rewind/partner-emojis'
+import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 import {
   getRewindChatReactionActorLabel,
   getRewindChatReactionEmoji,
@@ -245,10 +251,14 @@ function MentionText({
   className,
   content,
   style,
+  partnerId,
+  renderEmojis = false,
 }: {
   className: string
   content: string
   style?: CSSProperties
+  partnerId?: RewindPersonaId
+  renderEmojis?: boolean
 }): ReactElement {
   const segments = content.split(MENTION_PATTERN)
   return (
@@ -259,6 +269,12 @@ function MentionText({
           <span className="font-black" key={`${segment}-${index}`}>
             {segment}
           </span>
+        ) : renderEmojis ? (
+          <PartnerEmojiText
+            key={index}
+            content={segment}
+            partnerId={partnerId}
+          />
         ) : (
           segment
         )
@@ -394,6 +410,8 @@ function ChatMessageBubble({
               <MentionText
                 className="whitespace-pre-wrap [overflow-wrap:anywhere] font-bbh text-[15px] px-2 py-1 leading-6"
                 content={message.content}
+                partnerId={message.personaId ?? undefined}
+                renderEmojis
                 style={{ color: colors.white }}
               />
 
@@ -604,27 +622,7 @@ function StreamingPartnerBubble({
               {persona.name}
             </Text>
           ) : null}
-          <View className="min-h-11 justify-center rounded-[18px] rounded-bl-md bg-card-light px-4 py-2.5">
-            <View className="flex-row gap-1.5 py-1">
-              {[0, 1, 2].map((index) => (
-                <motion.div
-                  animate={
-                    reduceMotion
-                      ? { opacity: 1 }
-                      : { opacity: [0.35, 1, 0.35], y: [0, -3, 0] }
-                  }
-                  className="size-1.5 rounded-full bg-card-lighter-3"
-                  key={index}
-                  transition={{
-                    delay: index * 0.12,
-                    duration: 0.8,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }}
-                />
-              ))}
-            </View>
-          </View>
+          <PartnerTyping partnerId={persona.id} />
         </View>
       </View>
     </motion.div>
@@ -715,6 +713,7 @@ export default function RewindChatScreen({
   const navigate = useNavigate()
   const [composerValue, setComposerValue] = useState('')
   const [mentionsOpen, setMentionsOpen] = useState(false)
+  const [emojisOpen, setEmojisOpen] = useState(false)
   const [pendingMessages, setPendingMessages] = useState<PendingMessageState[]>(
     [],
   )
@@ -1006,7 +1005,10 @@ export default function RewindChatScreen({
   }, [chatId, subscribeRewindChat])
 
   useEffect(() => {
-    if (!isConnected) return
+    if (!isConnected) {
+      setStreamingPartners([])
+      return
+    }
     void messagesQuery.refetch()
     void chatsQuery.refetch()
   }, [isConnected])
@@ -1148,15 +1150,16 @@ export default function RewindChatScreen({
     }
   }
 
-  const sendMessage = (): void => {
-    const content = composerValue.trim()
+  const sendMessage = (emojiContent?: string): void => {
+    const content = (emojiContent ?? composerValue).trim()
     if (!content) return
     const idempotencyKey = createMessageKey()
     const replyTo = replyingToMessage
     shouldStickToBottomRef.current = true
     setIsAtBottom(true)
     setUnreadArrivalCount(0)
-    setComposerValue('')
+    if (!emojiContent) setComposerValue('')
+    setEmojisOpen(false)
     setMentionsOpen(false)
     setReplyingToMessage(null)
     composerInputRef.current?.focus({ preventScroll: true })
@@ -1356,9 +1359,8 @@ export default function RewindChatScreen({
                 </Pressable>
               </View>
             }
-
             closeToBack={
-               chat ? (
+              chat ? (
                 <View className="flex-row items-center gap-2">
                   <RewindChatAvatar chat={chat} className="size-8" />
                   <View className="items-start">
@@ -1374,7 +1376,6 @@ export default function RewindChatScreen({
                 'Rewind chat'
               )
             }
-           
           />
 
           <div
@@ -1571,6 +1572,12 @@ export default function RewindChatScreen({
                 : 'pb-[calc(var(--safe-area-inset-bottom,0px)+12px)]',
             )}
           >
+            {emojisOpen ? (
+              <PartnerEmojiPicker
+                initialPartnerId={chat?.personaId ?? 'ella'}
+                onSelect={(emoji) => sendMessage(partnerEmojiToken(emoji))}
+              />
+            ) : null}
             <AnimatePresence initial={false}>
               {chat?.type === 'GROUP' && mentionsOpen ? (
                 <motion.div
@@ -1621,6 +1628,18 @@ export default function RewindChatScreen({
               />
             ) : null}
             <View className="flex-row items-end gap-2">
+              <Pressable
+                accessibilityLabel="Partner emojis"
+                aria-expanded={emojisOpen}
+                aria-pressed={emojisOpen}
+                className={`size-11 shrink-0 items-center justify-center rounded-full ${emojisOpen ? 'bg-white text-black' : 'bg-card-light text-card-lighter-2'}`}
+                onPress={() => {
+                  setEmojisOpen((current) => !current)
+                  setMentionsOpen(false)
+                }}
+              >
+                <RiEmotionHappyLine size={21} />
+              </Pressable>
               {chat?.type === 'GROUP' ? (
                 <Pressable
                   accessibilityLabel="Mention a Rewind partner"
@@ -1651,7 +1670,7 @@ export default function RewindChatScreen({
                 onPressIn={() => {
                   composerInputRef.current?.focus({ preventScroll: true })
                 }}
-                onPress={sendMessage}
+                onPress={() => sendMessage()}
               >
                 <RiSendPlane2Fill size={20} className="text-cardd" />
               </Pressable>

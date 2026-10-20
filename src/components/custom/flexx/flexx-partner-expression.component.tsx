@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ReactElement } from 'react'
 
-import { rewindExpressionAsset } from '@/shared/rewind/rewind-expressions'
+import { partnerEmojiAsset } from '@/shared/rewind/partner-emojis'
 import type { RewindExpression } from '@/shared/rewind/rewind-expressions'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 import { cn } from '@/shared/utils/helpers.util'
@@ -15,7 +15,10 @@ export function FlexxPartnerExpression({
   expression: RewindExpression
   className?: string
 }): ReactElement {
-  const src = rewindExpressionAsset(partnerId, expression)
+  const src = partnerEmojiAsset({
+    partnerId,
+    emotion: expression === 'calm' ? 'listening' : expression,
+  })
   const [failedSource, setFailedSource] = useState<string | null>(null)
   return (
     <div
@@ -28,8 +31,8 @@ export function FlexxPartnerExpression({
           key={src}
           src={src}
           alt=""
-          width={480}
-          height={480}
+          width={443}
+          height={443}
           decoding="async"
           draggable={false}
           onError={() => setFailedSource(src)}

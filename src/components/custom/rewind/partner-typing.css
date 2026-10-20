@@ -1,0 +1,35 @@
+[data-partner-typing] .partner-typing-head {
+  animation: partner-typing-peek 2.4s ease-in-out infinite;
+  animation-play-state: paused;
+}
+[data-partner-typing] .partner-typing-cursor {
+  animation: partner-typing-pulse 1.2s ease-in-out infinite;
+  animation-play-state: paused;
+}
+[data-partner-typing][data-animate='true'] .partner-typing-head,
+[data-partner-typing][data-animate='true'] .partner-typing-cursor {
+  animation-play-state: running;
+}
+@keyframes partner-typing-peek {
+  0%,
+  100% {
+    transform: translateY(2px) rotate(-3deg);
+  }
+  45% {
+    transform: translateY(-3px) rotate(2deg);
+  }
+  60% {
+    transform: translateY(-2px) rotate(0);
+  }
+}
+@keyframes partner-typing-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-partner-typing] .partner-typing-head,
+  [data-partner-typing] .partner-typing-cursor {
+    animation: none;
+  }
+}
