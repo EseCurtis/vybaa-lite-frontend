@@ -11,12 +11,15 @@ import { PartnerEmoji } from './partner-emoji.component'
 export function PartnerEmojiText({
   content,
   partnerId,
+  compact = false,
 }: {
   content: string
   partnerId?: RewindPersonaId
+  compact?: boolean
 }): ReactElement {
   const standalone = parsePartnerEmoji(content.trim())
-  if (standalone) return <PartnerEmoji {...standalone} className="size-28" />
+  if (standalone && !compact)
+    return <PartnerEmoji {...standalone} className="size-28" />
   return (
     <>
       {content.split(PARTNER_EMOJI_PATTERN).map((segment, index) => {

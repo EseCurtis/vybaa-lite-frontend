@@ -53,7 +53,10 @@ import type {
   RewindChatReactionKind,
 } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
-import { partnerEmojiToken } from '@/shared/rewind/partner-emojis'
+import {
+  parsePartnerEmoji,
+  partnerEmojiToken,
+} from '@/shared/rewind/partner-emojis'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 import {
   getRewindChatReactionActorLabel,
@@ -318,6 +321,10 @@ function ChatMessageBubble({
     () => onToggleReactionPicker(message, bubbleRef.current),
   )
   const isUser = message.role === 'USER'
+  const emoji = parsePartnerEmoji(message.content.trim())
+  const accessibleContent = emoji
+    ? `${getRewindPersona(emoji.partnerId).name}, ${emoji.emotion} emoji`
+    : message.content
   const persona = message.personaId ? getRewindPersona(message.personaId) : null
   let deliveryLabel = deliveryStatus
     ? deliveryStatus.charAt(0) + deliveryStatus.slice(1).toLowerCase()
@@ -373,14 +380,16 @@ function ChatMessageBubble({
               />
             ) : null}
             <motion.button
-              aria-label={`${getReplyAuthor(message)}: ${message.content}. Hold for actions or swipe right to reply.`}
+              aria-label={`${getReplyAuthor(message)}: ${accessibleContent}. Hold for actions or swipe right to reply.`}
               aria-haspopup="dialog"
               aria-expanded={isReactionPickerOpen}
               className={cn(
                 'relative flex min-h-11 min-w-0 max-w-full select-none appearance-none flex-col gap-1 rounded-2xl px-1 py-1 text-left touch-pan-y',
-                isUser
-                  ? ' rounded-br-md bg-accent-700'
-                  : 'rounded-bl-md bg-card-light',
+                emoji
+                  ? 'bg-transparent'
+                  : isUser
+                    ? ' rounded-br-md bg-accent-700'
+                    : 'rounded-bl-md bg-card-light',
               )}
               {...gesture.handlers}
               style={{
@@ -403,7 +412,7 @@ function ChatMessageBubble({
                     className="font-bbh text-xs leading-4 text-card-lighter-2"
                     lines={1}
                   >
-                    {replyTo.content}
+                    <PartnerEmojiText content={replyTo.content} compact />
                   </Text>
                 </View>
               ) : null}
@@ -690,7 +699,7 @@ function ReplyComposerPreview({
           className="font-bbh text-xs leading-4 text-card-lighter-2"
           lines={1}
         >
-          {message.content}
+          <PartnerEmojiText content={message.content} compact />
         </Text>
       </View>
       <Pressable
@@ -875,7 +884,7 @@ export default function RewindChatScreen({
     return subscribeRewindChat((event) => {
       if (event.chatId !== chatId) return
       if (event.type === 'run_state') {
-        if (event.status === 'CANCELLED') {
+        if (['CANCELLED', 'COMPLETED', 'FAILED'].includes(event.status)) {
           inactiveRunIdsRef.current.add(event.runId)
           setStreamingPartners((current) => {
             current
@@ -1049,7 +1058,7 @@ export default function RewindChatScreen({
   )
   const activeTurnKey = activeGeneratingTurns.map((turn) => turn.id).join(',')
   useEffect(() => {
-    if (!activeGeneratingTurns.length) return
+    if (!isConnected || !activeGeneratingTurns.length) return
     setStreamingPartners((current) => {
       const known = new Set(current.map((stream) => stream.turnId))
       const recovered = activeGeneratingTurns
@@ -1065,7 +1074,7 @@ export default function RewindChatScreen({
         }))
       return recovered.length ? [...current, ...recovered] : current
     })
-  }, [activeTurnKey])
+  }, [activeTurnKey, isConnected])
 
   const messageLookup = new Map<string, RewindChatMessage>()
   for (const message of messages) {
