@@ -37,6 +37,7 @@ const GOAL_CREATION_DRAFT_KEY = 'goal:create-draft:v2'
 const GOAL_FIELD_SURFACE = 'bg-cardx placeholder:text-card-lighter-3'
 
 interface GoalCreationDraft {
+  finishOnce?: boolean
   breakStreakOnMiss: boolean
   description: string
   endDate: string
@@ -164,7 +165,7 @@ function progressInfo(
         ? `${count} check-ins`
         : 'your chosen number of check-ins'
     return {
-      body: `Each time you complete the activity, you will tap Check in. Your goal will stay active until you reach ${target}; missed days are kept in your history and handled by your goal settings.`,
+      body: `Each time you complete the activity, you will tap Check in. Your task will stay active until you reach ${target}; missed days are kept in your history and handled by your task settings.`,
       title: 'A simple completion signal',
     }
   }
@@ -182,9 +183,9 @@ function progressInfo(
   }
   return {
     body: endDate
-      ? `This is a single finish line: complete the activity by ${formatDateLabel(endDate)}. There is no repeating check-in target after that date.`
-      : 'This is a single finish line. Choose the date you want to complete the activity by, and the goal will close when that date arrives.',
-    title: 'One clear finish line',
+      ? `Check in on every scheduled day until ${formatDateLabel(endDate)}. This tracks consistency across the whole routine.`
+      : 'Choose an end date and keep checking in on your scheduled days. This tracks consistency across the whole routine.',
+    title: 'A routine with an end date',
   }
 }
 
@@ -203,10 +204,11 @@ function ChoicePressable({
 }) {
   return (
     <Pressable
+      aria-pressed={active}
       className={cn(
         description ? 'w-full rounded-2xl px-4 py-3' : 'rounded-full px-3 py-2',
-        active ? 'bg-white' : '',
-        'flex flex-row items-center justify-between border',
+        active ? 'bg-white' : 'bg-card-light',
+        'min-h-11 flex flex-row items-center justify-between gap-3',
         className,
       )}
       onPress={(...all) => {
@@ -327,6 +329,7 @@ function DateSheet({ initialDate, minDate, onDone, title }: DateSheetProps) {
   return (
     <View className="space-y-5 pb-4">
       <Input
+        aria-label={title ?? 'Task date'}
         autoFocus
         className={GOAL_FIELD_SURFACE}
         min={minDate}
@@ -334,7 +337,12 @@ function DateSheet({ initialDate, minDate, onDone, title }: DateSheetProps) {
         value={date}
         onChange={(event) => setDate(event.target.value)}
       />
-      <Button fullWidth label="Done" onClick={() => onDone(date)} />
+      <Button
+        fullWidth
+        label="Done"
+        disabled={!date || Boolean(minDate && date < minDate)}
+        onClick={() => onDone(date)}
+      />
     </View>
   )
 }
@@ -430,7 +438,7 @@ function CustomizeRulesSheet({
         <View className="flex-1 pr-3">
           <Text className="font-bold">Release immediately</Text>
           <Text className="mt-1 text-xs text-card-lighter-2">
-            Otherwise points wait until you complete the goal.
+            Otherwise points wait until you complete the task.
           </Text>
         </View>
         <View
@@ -502,7 +510,7 @@ function CustomizeRulesSheet({
                   </Text>
                   <InfoHint
                     label="stop after repeated misses"
-                    text="Set a number to automatically end this goal after that many consecutive missed occurrences. Leave it empty to never use this rule."
+                    text="Set a number to automatically end this task after that many consecutive missed occurrences. Leave it empty to never use this rule."
                   />
                 </View>
               </View>
@@ -520,8 +528,8 @@ function CustomizeRulesSheet({
             <View className="rounded-xl bg-warning-900 px-3 py-2">
               <Text className="text-xs text-warning-200">
                 {maxConsecutiveMisses
-                  ? `This goal will end after ${maxConsecutiveMisses} consecutive ${Number(maxConsecutiveMisses) === 1 ? 'miss' : 'misses'}.`
-                  : 'Leave empty to keep the goal active until its deadline or maximum duration.'}
+                  ? `This task will end after ${maxConsecutiveMisses} consecutive ${Number(maxConsecutiveMisses) === 1 ? 'miss' : 'misses'}.`
+                  : 'Leave empty to keep the task active until its deadline or maximum duration.'}
               </Text>
             </View>
           </View>
@@ -594,6 +602,12 @@ export function CreateGoalSheet({
   const draftValues = initialValues
   const initialTarget = draftValues?.target ?? initialValues?.target
   const initialSchedule = draftValues?.schedule ?? initialValues?.schedule
+  const [finishOnce, setFinishOnce] = useState(
+    savedDraft?.finishOnce ??
+      (initialSchedule?.type === 'ONE_TIME' &&
+        initialTarget?.type === 'CHECK_IN_COUNT' &&
+        initialTarget.count === 1),
+  )
   const [step, setStep] = useState<1 | 2 | 3 | 4>(
     initialStep ?? savedDraft?.step ?? 1,
   )
@@ -696,6 +710,7 @@ export function CreateGoalSheet({
       window.localStorage.setItem(
         GOAL_CREATION_DRAFT_KEY,
         JSON.stringify({
+          finishOnce,
           breakStreakOnMiss,
           description,
           endDate,
@@ -720,6 +735,7 @@ export function CreateGoalSheet({
       // Storage can be unavailable; keep the draft in component state.
     }
   }, [
+    finishOnce,
     breakStreakOnMiss,
     description,
     endDate,
@@ -763,6 +779,7 @@ export function CreateGoalSheet({
   ])
 
   function buildTarget(): GoalTarget | null {
+    if (finishOnce) return { count: 1, type: 'CHECK_IN_COUNT' }
     if (targetType === 'UNTIL_DATE') {
       return endDate ? { endDate, type: 'UNTIL_DATE' } : null
     }
@@ -779,6 +796,8 @@ export function CreateGoalSheet({
   }
 
   function buildSchedule(): GoalSchedule | null {
+    if (finishOnce)
+      return startDate ? { date: startDate, type: 'ONE_TIME' } : null
     if (scheduleType === 'ONE_TIME') {
       return startDate ? { date: startDate, type: 'ONE_TIME' } : null
     }
@@ -797,7 +816,7 @@ export function CreateGoalSheet({
     const target = buildTarget()
     const schedule = buildSchedule()
     if (!title.trim()) {
-      toast.warning('Give your goal a clear title')
+      toast.warning('Give your task a clear title')
       return
     }
     if (!target) {
@@ -808,20 +827,26 @@ export function CreateGoalSheet({
       toast.warning('Choose a valid schedule')
       return
     }
-    const selectedEndDate =
-      target.type === 'UNTIL_DATE' ? target.endDate : endDate
+    const selectedEndDate = finishOnce
+      ? startDate
+      : target.type === 'UNTIL_DATE'
+        ? target.endDate
+        : endDate
     const selectedStartDate =
       schedule.type === 'ONE_TIME' ? schedule.date : schedule.startDate
     if (selectedEndDate && selectedEndDate < selectedStartDate) {
       toast.warning(
-        'Your end date is before the start date. Update it before creating this goal.',
+        'Your end date is before the start date. Update it before creating this task.',
       )
       return
     }
     const payload: CreateGoalRequest = {
       description: description.trim() || undefined,
-      hardStopDate:
-        target.type !== 'UNTIL_DATE' && endDate ? endDate : undefined,
+      hardStopDate: finishOnce
+        ? startDate
+        : target.type !== 'UNTIL_DATE' && endDate
+          ? endDate
+          : undefined,
       missPolicy: {
         mode: missMode,
         breakStreakOnMiss,
@@ -852,12 +877,27 @@ export function CreateGoalSheet({
 
   function handleContinue(): void {
     if (step === 1 && !title.trim()) {
-      toast.warning('Give your goal a clear title')
+      toast.warning('Give your task a clear title')
       return
     }
     if (step === 2 && !buildTarget()) {
       toast.warning('Choose how you will track progress')
       return
+    }
+    if (step === 3) {
+      const schedule = buildSchedule()
+      if (!schedule) {
+        toast.warning('Choose a date and at least one scheduled day')
+        return
+      }
+      if (
+        !finishOnce &&
+        targetType === 'UNTIL_DATE' &&
+        schedule.type === 'ONE_TIME'
+      ) {
+        toast.warning('Choose a repeating routine for consistency tracking')
+        return
+      }
     }
     setStep((current) => (current === 4 ? 4 : ((current + 1) as 2 | 3 | 4)))
   }
@@ -882,7 +922,7 @@ export function CreateGoalSheet({
               ? 'How will you track progress?'
               : step === 3
                 ? 'When will you do it?'
-                : 'Review your goal'}
+                : 'Review your task'}
         </Text>
         <Text className="text-xs font-bold text-card-lighter-2">
           {step} of 4
@@ -890,12 +930,9 @@ export function CreateGoalSheet({
       </View>
 
       {step === 1 ? (
-        <View
-          className="space-y-3"
-          data-walkthrough="goal-definition-fields"
-        >
+        <View className="space-y-3" data-walkthrough="goal-definition-fields">
           <Input
-            aria-label="Goal title"
+            aria-label="Task title"
             autoFocus={hasSeenGoalAlarmOnboarding()}
             className={GOAL_FIELD_SURFACE}
             maxLength={500}
@@ -935,25 +972,40 @@ export function CreateGoalSheet({
         <View className="space-y-4 relative z-10">
           <View className="space-y-2">
             <ChoicePressable
-              active={targetType === 'CHECK_IN_COUNT'}
+              active={!finishOnce && targetType === 'CHECK_IN_COUNT'}
               description="Mark it done each time"
               label="Check in"
-              onPress={() => setTargetType('CHECK_IN_COUNT')}
+              onPress={() => {
+                setFinishOnce(false)
+                setTargetType('CHECK_IN_COUNT')
+              }}
             />
             <ChoicePressable
-              active={targetType === 'QUANTITY'}
+              active={!finishOnce && targetType === 'QUANTITY'}
               description="Track a number"
               label="Count"
-              onPress={() => setTargetType('QUANTITY')}
+              onPress={() => {
+                setFinishOnce(false)
+                setTargetType('QUANTITY')
+              }}
             />
             <ChoicePressable
-              active={targetType === 'UNTIL_DATE'}
-              description="Complete it by a date"
+              active={finishOnce}
+              description="One task, one completion"
               label="Finish once"
-              onPress={() => setTargetType('UNTIL_DATE')}
+              onPress={() => setFinishOnce(true)}
+            />
+            <ChoicePressable
+              active={!finishOnce && targetType === 'UNTIL_DATE'}
+              description="Keep a routine until a date"
+              label="Stay consistent"
+              onPress={() => {
+                setFinishOnce(false)
+                setTargetType('UNTIL_DATE')
+              }}
             />
           </View>
-          {targetType === 'UNTIL_DATE' ? (
+          {finishOnce ? null : targetType === 'UNTIL_DATE' ? (
             <View className="space-y-2">
               <Text className="text-xs text-card-lighter-2">Finish by</Text>
               <Input
@@ -967,7 +1019,7 @@ export function CreateGoalSheet({
           ) : (
             <View className="space-y-2">
               <Text className="text-xs text-card-lighter-2">
-                {targetType === 'QUANTITY' ? 'Target' : 'Goal target'}
+                {targetType === 'QUANTITY' ? 'Target' : 'Task target'}
               </Text>
               <View className="flex-row gap-2">
                 <Input
@@ -990,10 +1042,13 @@ export function CreateGoalSheet({
           )}
           <View className="rounded-xl bg-warning-900 p-4">
             <Text className="text-sm flex items-center font-bold gap-1 text-warning-200">
-              <InfoIcon size={16} /> {progressExplanation.title}
+              <InfoIcon size={16} />{' '}
+              {finishOnce ? 'One clear finish line' : progressExplanation.title}
             </Text>
             <Text className="mt-2 text-sm leading-relaxed text-warning-200">
-              {progressExplanation.body}
+              {finishOnce
+                ? 'Choose the day, then mark this task complete once. Add subtasks after creating it if you want smaller steps.'
+                : progressExplanation.body}
             </Text>
           </View>
         </View>
@@ -1001,28 +1056,35 @@ export function CreateGoalSheet({
 
       {step === 3 ? (
         <View className="space-y-4 z-10">
-          <View className="flex-row flex-wrap gap-2">
-            <ChoicePressable
-              active={scheduleType === 'DAILY'}
-              label="Daily"
-              onPress={() => setScheduleType('DAILY')}
-            />
-            <ChoicePressable
-              active={scheduleType === 'WEEKLY'}
-              label="Weekly"
-              onPress={() => setScheduleType('WEEKLY')}
-            />
-            <ChoicePressable
-              active={scheduleType === 'SELECTED_WEEKDAYS'}
-              label="Custom"
-              onPress={() => setScheduleType('SELECTED_WEEKDAYS')}
-            />
-            <ChoicePressable
-              active={scheduleType === 'ONE_TIME'}
-              label="One-time"
-              onPress={() => setScheduleType('ONE_TIME')}
-            />
-          </View>
+          {!finishOnce ? (
+            <View className="flex-row flex-wrap gap-2">
+              <ChoicePressable
+                active={scheduleType === 'DAILY'}
+                label="Daily"
+                onPress={() => setScheduleType('DAILY')}
+              />
+              <ChoicePressable
+                active={scheduleType === 'WEEKLY'}
+                label="Weekly"
+                onPress={() => setScheduleType('WEEKLY')}
+              />
+              <ChoicePressable
+                active={scheduleType === 'SELECTED_WEEKDAYS'}
+                label="Custom"
+                onPress={() => setScheduleType('SELECTED_WEEKDAYS')}
+              />
+              {targetType !== 'UNTIL_DATE' ? (
+                <ChoicePressable
+                  active={scheduleType === 'ONE_TIME'}
+                  label="One-time"
+                  onPress={() => {
+                    if (targetType === 'CHECK_IN_COUNT') setFinishOnce(true)
+                    else setScheduleType('ONE_TIME')
+                  }}
+                />
+              ) : null}
+            </View>
+          ) : null}
           <Pressable
             className="flex-row items-center justify-between rounded-xl bg-cardx p-4"
             onPress={() =>
@@ -1039,15 +1101,19 @@ export function CreateGoalSheet({
             }
           >
             <View>
-              <Text className="text-xs text-card-lighter-2">Starts</Text>
+              <Text className="text-xs text-card-lighter-2">
+                {finishOnce ? 'Due' : 'Starts'}
+              </Text>
               <Text className="mt-1 font-bold">
                 {formatDateLabel(startDate)}
               </Text>
             </View>
             <Text className="text-card-lighter-2">›</Text>
           </Pressable>
-          {scheduleType === 'WEEKLY' || scheduleType === 'SELECTED_WEEKDAYS' ? (
-            <View className="flex-row gap-1 mx-auto">
+          {!finishOnce &&
+          (scheduleType === 'WEEKLY' ||
+            scheduleType === 'SELECTED_WEEKDAYS') ? (
+            <View className="no-scrollbar w-full flex-row gap-1 overflow-x-auto">
               {weekdays.map((day) => {
                 const active =
                   scheduleType === 'WEEKLY'
@@ -1056,8 +1122,20 @@ export function CreateGoalSheet({
                 return (
                   <Pressable
                     key={day.value}
+                    aria-pressed={active}
+                    accessibilityLabel={
+                      [
+                        'Monday',
+                        'Tuesday',
+                        'Wednesday',
+                        'Thursday',
+                        'Friday',
+                        'Saturday',
+                        'Sunday',
+                      ][day.value - 1]
+                    }
                     className={cn(
-                      'size-9 items-center justify-center rounded-full',
+                      'size-11 shrink-0 items-center justify-center rounded-full',
                       active ? 'bg-white' : 'bg-cardx',
                     )}
                     onPress={() => {
@@ -1084,7 +1162,9 @@ export function CreateGoalSheet({
               })}
             </View>
           ) : null}
-          {targetType !== 'UNTIL_DATE' && scheduleType !== 'ONE_TIME' ? (
+          {!finishOnce &&
+          targetType !== 'UNTIL_DATE' &&
+          scheduleType !== 'ONE_TIME' ? (
             <View>
               {!endDate ? (
                 <Pressable
@@ -1207,12 +1287,12 @@ export function CreateGoalSheet({
                 }}
                 releaseImmediately={releaseImmediately}
               />,
-              { size: 'semi-full', title: 'How should this goal feel?' },
+              { size: 'semi-full', title: 'How should this task feel?' },
             )
           }
         >
           <View className="flex-1 pr-3">
-            <Text className="font-bold">Goal settings</Text>
+            <Text className="font-bold">Task settings</Text>
             <Text className="mt-1 text-xs text-card-lighter-2">
               {missMode === 'NO_STREAK'
                 ? 'No streak · points on completion'
@@ -1230,7 +1310,7 @@ export function CreateGoalSheet({
           </Text>
           <View className="space-y-2 rounded-2xl bg-cardx p-4">
             <View className="space-y-1">
-              <Text className="text-xs text-card-lighter-2">Goal</Text>
+              <Text className="text-xs text-card-lighter-2">Task</Text>
               <Text className="font-bold">{title.trim()}</Text>
               {description.trim() ? (
                 <Text className="text-sm text-card-lighter-2">
@@ -1242,23 +1322,27 @@ export function CreateGoalSheet({
               <View className="flex-1">
                 <Text className="text-xs text-card-lighter-2">Target</Text>
                 <Text className="mt-1 font-bold">
-                  {targetType === 'CHECK_IN_COUNT'
-                    ? `${targetValue || '0'} check-ins`
-                    : targetType === 'QUANTITY'
-                      ? `${targetValue || '0'} ${unit || 'units'}`
-                      : `By ${endDate || 'a selected date'}`}
+                  {finishOnce
+                    ? 'Complete once'
+                    : targetType === 'CHECK_IN_COUNT'
+                      ? `${targetValue || '0'} check-ins`
+                      : targetType === 'QUANTITY'
+                        ? `${targetValue || '0'} ${unit || 'units'}`
+                        : `By ${endDate || 'a selected date'}`}
                 </Text>
               </View>
               <View className="flex-1">
                 <Text className="text-xs text-card-lighter-2">Schedule</Text>
                 <Text className="mt-1 font-bold">
-                  {scheduleType === 'DAILY'
-                    ? 'Daily'
-                    : scheduleType === 'WEEKLY'
-                      ? `Weekly · ${weekdays.find((day) => day.value === weeklyDay)?.label ?? ''}`
-                      : scheduleType === 'SELECTED_WEEKDAYS'
-                        ? `${selectedWeekdays.length} selected days`
-                        : 'One-time'}
+                  {finishOnce
+                    ? 'One-time'
+                    : scheduleType === 'DAILY'
+                      ? 'Daily'
+                      : scheduleType === 'WEEKLY'
+                        ? `Weekly · ${weekdays.find((day) => day.value === weeklyDay)?.label ?? ''}`
+                        : scheduleType === 'SELECTED_WEEKDAYS'
+                          ? `${selectedWeekdays.length} selected days`
+                          : 'One-time'}
                 </Text>
               </View>
             </View>
@@ -1278,7 +1362,7 @@ export function CreateGoalSheet({
             </View>
           </View>
           <View className="rounded-2xl bg-cardx p-4">
-            <Text className="text-xs text-card-lighter-2">Goal settings</Text>
+            <Text className="text-xs text-card-lighter-2">Task settings</Text>
             <Text className="mt-1 text-sm font-bold">
               {missMode === 'NO_STREAK'
                 ? 'No streak'
@@ -1323,7 +1407,7 @@ export function CreateGoalSheet({
             <RiLoader4Line className="animate-spin text-black" size={20} />
           ) : (
             <Text className="font-bold text-black">
-              {step === 4 ? 'Create goal' : step === 3 ? 'Review' : 'Continue'}
+              {step === 4 ? 'Create task' : step === 3 ? 'Review' : 'Continue'}
             </Text>
           )}
         </Pressable>

@@ -55,9 +55,9 @@ function quickGoalSetupButtonLabel(
   isGenerating: boolean,
   hasQuestions: boolean,
 ): string {
-  if (isGenerating) return 'Planning your goal…'
-  if (hasQuestions) return 'Build goal'
-  return 'Plan goal'
+  if (isGenerating) return 'Planning your task…'
+  if (hasQuestions) return 'Build task'
+  return 'Plan task'
 }
 
 function GoalAlarmOnboardingSheet() {
@@ -80,7 +80,7 @@ function GoalAlarmOnboardingSheet() {
       if (status.permission !== 'granted') {
         toast.info('Finish enabling alarm permission, then return to Vybaa.')
       } else {
-        toast.success('Goal alarms are on')
+        toast.success('Task alarms are on')
       }
       bottomSheet.dismiss()
     } catch (error: unknown) {
@@ -88,7 +88,7 @@ function GoalAlarmOnboardingSheet() {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not enable goal alarms yet',
+          : 'Could not enable task alarms yet',
       )
     } finally {
       setIsUpdating(false)
@@ -104,20 +104,20 @@ function GoalAlarmOnboardingSheet() {
         <View className="flex-1 gap-1">
           <Text className="font-bold">Make reminders harder to miss</Text>
           <Text className="text-sm !text-center leading-5 text-card-lighter-2">
-            Vybaa can ring a device alarm for your goals, even when the app is
+            Vybaa can ring a device alarm for your tasks, even when the app is
             closed. You can stop or snooze it for 10 minutes.
           </Text>
         </View>
       </View>
       <View className="flex-row items-center justify-between rounded-2xl bg-cardx p-4">
         <View className="flex-1 pr-3">
-          <Text className="font-semibold">Goal alarms</Text>
+          <Text className="font-semibold">Task alarms</Text>
           <Text className="mt-1 text-xs leading-5 text-card-lighter-2">
             You can change this later in Settings.
           </Text>
         </View>
         <Switch
-          accessibilityLabel="Enable goal alarms"
+          accessibilityLabel="Enable task alarms"
           checked={enabled}
           disabled={isUpdating}
           onChange={(nextEnabled) => void handleChange(nextEnabled)}
@@ -165,7 +165,7 @@ function QuickGoalSetupSheet({
         }))
       : undefined
     if (planningAnswers?.some(({ answer }) => !answer)) {
-      toast.warning('Answer each question before creating the goal')
+      toast.warning('Answer each question before creating the task')
       return
     }
 
@@ -183,7 +183,7 @@ function QuickGoalSetupSheet({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not set up that goal. Try again.',
+          : 'Could not set up that task. Try again.',
       )
     } finally {
       setIsGenerating(false)
@@ -194,7 +194,7 @@ function QuickGoalSetupSheet({
     <View className="gap-4 pb-2">
       <Text className="text-sm text-card-lighter-2">
         {partnerName
-          ? `${partnerName} will ask only if a detail matters, then build a goal you can edit.`
+          ? `${partnerName} will ask only if a detail matters, then build a task you can edit.`
           : 'Share what you want to make progress on. You will only be asked when a detail matters.'}
       </Text>
       <TextArea
@@ -296,7 +296,7 @@ function QuickGoalEditorSheet({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Could not adjust that goal. Try again.',
+          : 'Could not adjust that task. Try again.',
       )
     } finally {
       setIsEditing(false)
@@ -319,7 +319,7 @@ function QuickGoalEditorSheet({
       </View>
       <View className="gap-2 rounded-2xl bg-card-light p-4 hidden">
         <Text className="text-xs font-bold text-card-lighter-2">
-          Current goal
+          Current task
         </Text>
         <Text className="font-bold">{draft.title}</Text>
         {draft.description ? (
@@ -345,7 +345,7 @@ function QuickGoalEditorSheet({
       <Button
         disabled={isEditing || !instruction.trim()}
         fullWidth
-        label={isEditing ? 'Adjusting goal…' : 'Adjust goal'}
+        label={isEditing ? 'Adjusting task…' : 'Adjust task'}
         leftIcon={
           isEditing ? (
             <RiLoader4Line className="animate-spin" size={18} />
@@ -438,7 +438,7 @@ export default function CreateGoalScreen() {
         size: 'semi-full',
         title: selectedPersona
           ? `Adjusting with ${selectedPersona.name}`
-          : 'Adjust goal with AI',
+          : 'Adjust task with AI',
       },
     )
   }
@@ -454,7 +454,7 @@ export default function CreateGoalScreen() {
         feature="quick-goal-setup"
         onUnlocked={openPartnerAssistantContent}
       />,
-      { size: 'semi-full', title: 'Quick Goal Setup' },
+      { size: 'semi-full', title: 'Quick Task Setup' },
     )
   }
 
@@ -469,14 +469,14 @@ export default function CreateGoalScreen() {
         <View className="flex-1 overflow-y-auto px-mg z-10">
           <View className="mb-5 mt-mg pb-mg flex-row items-center gap-3">
             <Pressable
-              accessibilityLabel="Back to goals"
+              accessibilityLabel="Back to tasks"
               className="size-10 items-center justify-center rounded-full bg-white"
               onPress={handleBack}
             >
               <RiArrowLeftLine className="text-black" size={20} />
             </Pressable>
             <View className="flex-1">
-              <Text className="text-2xl font-bold">Set Goal</Text>
+              <Text className="text-2xl font-bold">Set Task</Text>
               {/* <Text className="text-sm text-card-lighter-2">
               A small, clear commitment.
             </Text> */}
@@ -485,11 +485,11 @@ export default function CreateGoalScreen() {
               accessibilityLabel={
                 canAdjustDraft
                   ? selectedPersona
-                    ? `Adjust this goal with ${selectedPersona.name}`
-                    : 'Adjust this goal with AI'
+                    ? `Adjust this task with ${selectedPersona.name}`
+                    : 'Adjust this task with AI'
                   : selectedPersona
-                    ? `Set up a goal with ${selectedPersona.name}`
-                    : 'Set up a goal with AI'
+                    ? `Set up a task with ${selectedPersona.name}`
+                    : 'Set up a task with AI'
               }
               className="relative size-11 items-center justify-center rounded-full bg-card-light-50"
               onPress={openPartnerAssistant}
