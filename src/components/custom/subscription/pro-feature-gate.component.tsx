@@ -40,14 +40,14 @@ type ProFeatureTheme = {
 const PRO_FEATURE_COPY: Record<ProFeature, ProFeatureCopy> = {
   'quick-goal-setup': {
     description:
-      'Let your Rewind partner turn a rough idea into a complete goal you can review and edit.',
-    eyebrow: 'Quick Goal Setup',
+      'Let your Rewind partner turn a rough idea into a complete task you can review and edit.',
+    eyebrow: 'Quick Task Setup',
     highlights: [
       'Build a clear plan from a few words',
       'Ask your partner to adjust the draft',
-      'Manual goal creation stays free',
+      'Manual task creation stays free',
     ],
-    title: 'Plan goals faster with Pro',
+    title: 'Plan tasks faster with Pro',
   },
   'rewind-chats': {
     description:

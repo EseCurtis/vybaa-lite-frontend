@@ -57,15 +57,15 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
     steps: [
       {
         description:
-          'Start a goal here. If you leave midway, the pencil and dot show that your draft is waiting.',
+          'Start a task here. If you leave midway, the pencil and dot show that your draft is waiting.',
         selector: '[data-testid="goal-create-button"]',
-        title: 'Create or continue a goal',
+        title: 'Create or continue a task',
       },
       {
         description:
-          'Move between goals in progress, paused goals, and ended history without losing your place.',
+          'Move between tasks in progress, paused tasks, and ended history without losing your place.',
         selector: '[data-walkthrough="goal-library-tabs"]',
-        title: 'Your goal library',
+        title: 'Your task library',
       },
     ],
   },
@@ -74,7 +74,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
     steps: [
       {
         description:
-          'You will define the goal, choose how progress works, set its routine, and review everything before creating it.',
+          'You will define the task, choose how progress works, set its routine, and review everything before creating it.',
         selector: '[data-walkthrough="goal-creation-progress"]',
         title: 'Four small steps',
       },
@@ -99,7 +99,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
         description:
           'Turn something you care about into a trackable commitment. Your unfinished setup is saved as a draft.',
         selector: '[data-testid="home-action-new-goal"]',
-        title: 'Start with a goal',
+        title: 'Start with a task',
       },
       {
         description:
@@ -109,7 +109,7 @@ const WALKTHROUGHS: Record<string, WalkthroughDefinition> = {
       },
       {
         description:
-          'Use the bottom bar to return Home, review every goal, create quickly, write in your Journal, or open your profile.',
+          'Use the bottom bar to return Home, review every task, create quickly, write in your Journal, or open your profile.',
         selector: '[data-walkthrough="main-navigation"]',
         title: 'Everything stays within reach',
       },

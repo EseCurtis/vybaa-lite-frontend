@@ -21,7 +21,7 @@ export const homeActions = (
 ) =>
   [
     {
-      name: 'New Goal',
+      name: 'New Task',
       description: 'Commit to a new cause',
       icon: RiFireLine,
       onAction() {
@@ -102,8 +102,9 @@ function HomeActionCard({
 }) {
   const { user } = useAuth()
   const Icon = icon
+  const colorSeed = name === 'New Task' ? 'New Goal' : name
   const color = seededColor(
-    JSON.stringify(name),
+    JSON.stringify(colorSeed),
     user?.username || user?.email || 'default',
   )
   const darkColor = adjustColor(color, { lightness: -5 })
@@ -174,7 +175,11 @@ export function HomeActions() {
             onAction={item?.onAction}
             icon={item.icon}
             filled={actions.length % 2 !== 0 && index === actions.length - 1}
-            testID={`home-action-${item.name.toLowerCase().replaceAll(' ', '-')}`}
+            testID={
+              item.name === 'New Task'
+                ? 'home-action-new-goal'
+                : `home-action-${item.name.toLowerCase().replaceAll(' ', '-')}`
+            }
           />
         )
       })}

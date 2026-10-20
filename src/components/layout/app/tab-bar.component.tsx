@@ -54,7 +54,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           id: 'goals',
           route: '/app/goal',
           icon: Icons.Target,
-          label: 'Goals',
+          label: 'Tasks',
           isSpecial: false,
           badge: goalAttentionCount,
           matchAllRoot: true,
@@ -65,7 +65,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
           id: 'create-goal',
           route: '/app/goal/create',
           icon: Plus,
-          label: 'Create goal',
+          label: 'Create task',
           isSpecial: true,
           badge: null,
           enabled: true,
@@ -178,10 +178,10 @@ export const TabBar = memo(({ className }: { className?: string }) => {
               iconFill = colors.accent[700] + '7a'
             }
             const accessibilityLabel = tab.isSpecial
-              ? 'Create a new goal'
-              : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} goals need attention` : ''}`
+              ? 'Create a new task'
+              : `Navigate to ${tab.label || tab.id} tab${tab.id === 'goals' && tab.badge ? `, ${tab.badge} tasks need attention` : ''}`
             const accessibilityHint = tab.isSpecial
-              ? 'Double tap to create a new goal'
+              ? 'Double tap to create a new task'
               : `Double tap to switch to ${tab.label || tab.id} screen`
 
             return (
@@ -226,7 +226,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
                       {/* Notification Badge */}
                       {typeof tab.badge === 'number' && tab.badge > 0 && (
                         <span
-                          aria-label={`${tab.badge} goals need attention`}
+                          aria-label={`${tab.badge} tasks need attention`}
                           className="absolute z-10 flex items-center justify-center -right-2 -top-2 min-w-5 h-5 rounded-full bg-danger-500 px-1 text-center text-[10px] leading-5 font-bold text-white"
                           role="status"
                         >

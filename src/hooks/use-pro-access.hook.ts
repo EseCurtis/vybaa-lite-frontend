@@ -75,7 +75,7 @@ export function useProAccess(): ProAccessResult {
 
       if (error.code === 'FREE_LIMIT_REACHED') {
         const limitMessage =
-          'You have reached the 3 active-goal limit on the free plan. Upgrade to Vybaa Pro to create more.'
+          'You have reached the 3 active-task limit on the free plan. Upgrade to Vybaa Pro to create more.'
         if (!isSupported) {
           toast.info(
             `${limitMessage} Pro upgrades are available in the mobile app.`,

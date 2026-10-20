@@ -297,9 +297,10 @@ export const goalAPI = {
     cursor?: string,
     limit = 20,
     signal?: AbortSignal,
+    query?: string,
   ): Promise<GoalsListResponse> => {
     const response = await http.get<GoalsListResponse>(GOALS_V2, {
-      params: { cursor, filter, limit },
+      params: { cursor, filter, limit, query: query || undefined },
       signal,
     })
     return response.data

@@ -1,8 +1,10 @@
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
-import { Skeleton } from '@/components/common/skeleton.component'
+import { GoalRowSkeleton } from '@/components/common/loading-layouts.component'
 import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { readGoalCreationDraft } from '@/components/custom/goal/create-goal-sheet.component'
+import { TaskListRow } from '@/components/custom/goal/task-list-row.component'
+import { TaskQuickAdd } from '@/components/custom/goal/task-quick-add.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -14,7 +16,6 @@ import {
   useReopenLegacyGoal,
 } from '@/hooks/use-goals.hook'
 import type { Goal, GoalListFilter, LegacyGoal } from '@/shared/api/goal.api'
-import { goalNeedsAttention } from '@/shared/goal/goal-due.util'
 import {
   getGoalLibraryTab,
   isActiveGoalFilter,
@@ -29,15 +30,15 @@ import {
 import {
   RiAddFill,
   RiArchiveLine,
-  RiArrowRightSLine,
   RiCalendarCheckLine,
   RiCloseLine,
   RiPauseLine,
   RiQuillPenFill,
+  RiSearchLine,
   RiTargetLine,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 const PAUSED_INFO_DISMISSED_KEY = 'goals:paused-info-dismissed'
 
@@ -57,74 +58,7 @@ function GoalCard({
   goal: Goal
   onOpen: (goal: Goal) => void
 }) {
-  const color = seededColor(goal.title)
-  const textColor = contrastingTextColor(color)
-  const progress = Math.min(100, Math.max(0, goal.progress.percentage))
-  const targetSummary =
-    goal.target.type === 'QUANTITY'
-      ? `${goal.progress.value.toLocaleString()} / ${goal.target.amount.toLocaleString()} ${goal.target.unit ?? ''}`
-      : goal.target.type === 'CHECK_IN_COUNT'
-        ? `${goal.progress.completedOccurrences} / ${goal.target.count} check-ins`
-        : `${Math.round(goal.progress.adherenceRate)}% adherence`
-  const nextSummary = goal.nextOccurrence
-    ? `Next ${new Date(goal.nextOccurrence.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
-    : targetSummary
-  const needsAttention = goalNeedsAttention(goal)
-  const dueLabel = goal.isOverdue ? 'Overdue' : 'Due'
-  return (
-    <Pressable
-      accessibilityLabel={`${goal.title}${needsAttention ? `, ${dueLabel}` : ''}`}
-      className="mb-2 flex flex-col gap-2 text-left rounded-2xl bg-card-light-50 pt-1 p-2 pr-3"
-      onPress={() => onOpen(goal)}
-    >
-      <View className="flex-row items-center   gap-3">
-        <View
-          className="size-11 items-center justify-center rounded-lg overflow-hidden"
-          style={{ backgroundColor: color }}
-        >
-          <Text
-            className="text-lg font-bold scale-[3.5] opacity-35 rotate-45"
-            style={{ color: textColor }}
-          >
-            {goal.title.trim().charAt(0).toUpperCase() || 'G'}
-          </Text>
-        </View>
-        <View className="min-w-0 flex-1 gap-1">
-          <View className="flex-row items-center gap-2">
-            <Text className="flex-1 text-left truncate text-base font-bold text-white">
-              {goal.title}
-            </Text>
-            {needsAttention ? (
-              <span
-                aria-label={dueLabel}
-                className="h-2.5 w-2.5 shrink-0 rounded-full bg-danger-500"
-                role="status"
-                title={dueLabel}
-              />
-            ) : null}
-          </View>
-          <View className="flex-row items-center gap-2">
-            <Text className="text-[11px] font-bold text-card-lighter-2">
-              {Math.round(progress)}%
-            </Text>
-            <View className="h-1 w-full max-w-[75%] overflow-hidden rounded-full bg-card-light">
-              <View
-                className="h-full rounded-full bg-card-lighter-3"
-                style={{ width: `${progress}%` }}
-              />
-            </View>
-          </View>
-        </View>
-        <RiArrowRightSLine className="text-card-lighter-2 hidden" size={20} />
-      </View>
-      <View className="px-1 flex-row w-full justify-between truncate text-[11px] text-card-lighter-2">
-        <Text className="text-[10px] font-bold capitalize text-card-lighter-2">
-          {goal.status.replace('_', ' ').toLowerCase()}
-        </Text>
-        <Text className="">{nextSummary}</Text>
-      </View>
-    </Pressable>
-  )
+  return <TaskListRow goal={goal} onOpen={onOpen} />
 }
 
 function LegacyCard({ goal }: { goal: LegacyGoal }) {
@@ -194,7 +128,7 @@ function LegacyCard({ goal }: { goal: LegacyGoal }) {
             onPress={() => {
               if (
                 confirm(
-                  'Permanently delete this legacy goal? Historical reward transactions will remain.',
+                  'Permanently delete this legacy task? Historical reward transactions will remain.',
                 )
               ) {
                 permanentlyDelete.mutate(goal.id)
@@ -259,15 +193,15 @@ function emptyStateForFilter(filter: GoalListFilter): {
   }
   if (filter === 'OVERDUE') {
     return {
-      description: 'No active goal has slipped past its scheduled day.',
+      description: 'No active task has slipped past its scheduled day.',
       icon: <RiCalendarCheckLine className="text-card-lighter-2" size={22} />,
-      title: 'No overdue goals',
+      title: 'No overdue tasks',
     }
   }
   if (filter === 'PAUSED') {
     return {
       description:
-        'Goals you pause will appear here while their schedule is on hold.',
+        'Tasks you pause will appear here while their schedule is on hold.',
       icon: <RiPauseLine className="text-card-lighter-2" size={22} />,
       title: 'Nothing paused',
     }
@@ -275,7 +209,7 @@ function emptyStateForFilter(filter: GoalListFilter): {
   if (filter === 'ENDED') {
     return {
       description:
-        'Completed and abandoned goals will become part of your history here.',
+        'Completed and abandoned tasks will become part of your history here.',
       icon: <RiTargetLine className="text-card-lighter-2" size={22} />,
       title: 'Your history is clear',
     }
@@ -283,29 +217,31 @@ function emptyStateForFilter(filter: GoalListFilter): {
   if (filter === 'ARCHIVED') {
     return {
       description:
-        'Archived goals stay out of your active library but remain available here.',
+        'Archived tasks stay out of your active library but remain available here.',
       icon: <RiArchiveLine className="text-card-lighter-2" size={22} />,
-      title: 'No archived goals',
+      title: 'No archived tasks',
     }
   }
   return {
-    actionLabel: 'Create a goal',
+    actionLabel: 'Create a task',
     description: 'Choose one small finish line and build from there.',
     icon: <RiTargetLine className="text-card-lighter-2" size={22} />,
-    title: 'Start with one goal',
+    title: 'Start with one task',
   }
 }
 
 function GoalFeed({
   filter,
+  search,
   onCreate,
   onOpen,
 }: {
   filter: GoalListFilter
+  search: string
   onCreate: () => void
   onOpen: (goal: Goal) => void
 }) {
-  const query = useInfiniteGoals({ filter })
+  const query = useInfiniteGoals({ filter, query: search })
   const goals = useMemo(
     () => query.data?.pages.flatMap((page) => page.data) ?? [],
     [query.data],
@@ -314,17 +250,7 @@ function GoalFeed({
     return (
       <View className="space-y-2">
         {[0, 1, 2].map((item) => (
-          <View
-            className="flex-row items-center gap-3 rounded-2xl bg-card-light-50 p-3"
-            key={item}
-          >
-            <Skeleton className="size-11" rounded="lg" />
-            <View className="flex-1 gap-2">
-              <Skeleton className="h-4 w-3/5" rounded="sm" />
-              <Skeleton className="h-2 w-4/5" rounded="full" />
-            </View>
-            <Skeleton className="h-3 w-10" rounded="sm" />
-          </View>
+          <GoalRowSkeleton key={item} />
         ))}
       </View>
     )
@@ -332,12 +258,20 @@ function GoalFeed({
   if (query.isError && !query.data)
     return (
       <QueryFeedback
-        message="Your goals couldn't load."
+        message="Your tasks couldn't load."
         onRetry={() => void query.refetch()}
         retrying={query.isFetching}
       />
     )
   if (!goals.length) {
+    if (search)
+      return (
+        <GoalEmptyState
+          description="Try another title or change the selected list."
+          icon={<RiSearchLine size={22} />}
+          title="No matching tasks"
+        />
+      )
     const emptyState = emptyStateForFilter(filter)
     return <GoalEmptyState {...emptyState} onAction={onCreate} />
   }
@@ -345,7 +279,7 @@ function GoalFeed({
     <View>
       {query.isError ? (
         <QueryFeedback
-          message="Showing your saved goals. Refresh couldn't complete."
+          message="Showing your saved tasks. Refresh couldn't complete."
           onRetry={() => void query.refetch()}
           retrying={query.isFetching}
         />
@@ -372,6 +306,12 @@ export default function GoalsAppScreen({
   filter?: GoalListFilter
 }) {
   const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  useEffect(() => {
+    const timer = window.setTimeout(() => setSearchQuery(search.trim()), 250)
+    return () => window.clearTimeout(timer)
+  }, [search])
   const [savedDraft] = useState(() => readGoalCreationDraft())
   const [activeFilter, setActiveFilter] = useState<
     'ACTIVE' | 'DUE' | 'OVERDUE'
@@ -411,11 +351,11 @@ export default function GoalsAppScreen({
         <View className="flex h-full min-h-0 flex-col px-mg">
           <View className="mb-5 mt-2 shrink-0 flex-row items-center justify-between">
             <View>
-              <Text className="text-2xl font-bold">Goals</Text>
+              <Text className="text-2xl font-bold">Tasks</Text>
             </View>
             <Pressable
               accessibilityLabel={
-                savedDraft?.title ? 'Continue goal draft' : 'Create a new goal'
+                savedDraft?.title ? 'Continue task draft' : 'Create a new task'
               }
               className="size-11 relative items-center justify-center rounded-full bg-white"
               onPress={openCreate}
@@ -436,6 +376,18 @@ export default function GoalsAppScreen({
             </Pressable>
           </View>
 
+          <label className="mb-3 flex min-h-12 shrink-0 items-center gap-2 rounded-xl bg-card-light-50 px-3">
+            <RiSearchLine size={18} className="shrink-0 text-card-lighter-3" />
+            <input
+              aria-label="Search tasks in this list"
+              placeholder="Search tasks"
+              maxLength={200}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              className="min-h-12 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-card-lighter-3"
+            />
+          </label>
+
           <View className="z-30 -mx-mg shrink-0 flex-row items-center justify-center  py-2">
             <View
               className="justify-center rounded-full bg-cardx flex-row gap-2 p-1"
@@ -444,8 +396,9 @@ export default function GoalsAppScreen({
               {(['Active', 'Paused', 'Ended'] as GoalLibraryTab[]).map(
                 (item) => (
                   <Pressable
+                    aria-pressed={tab === item}
                     className={cn(
-                      'rounded-full px-3 py-2',
+                      'min-h-11 items-center rounded-full px-3 py-2',
                       tab === item ? 'bg-white' : 'bg-transparent',
                     )}
                     key={item}
@@ -467,8 +420,19 @@ export default function GoalsAppScreen({
           </View>
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-28 no-scrollbar">
+            {tab === 'Active' && !search ? (
+              <TaskQuickAdd
+                onCreated={(goalId) => {
+                  void navigate({
+                    to: '/app/goal/$goalId',
+                    params: { goalId },
+                    search: { from: filter },
+                  })
+                }}
+              />
+            ) : null}
             {tab === 'Active' ? (
-              <View className="mb-4 flex-row justify-end gap-2 border-y pt-2 border-card-lighter/20">
+              <View className="mb-4 flex-row flex-wrap gap-2 pt-2">
                 {(
                   [
                     {
@@ -481,16 +445,12 @@ export default function GoalsAppScreen({
                   ] as const
                 ).map((item) => (
                   <Pressable
-                    style={
-                      {
-                        '--tw-active-border-color': seededColor(item.value),
-                      } as any
-                    }
+                    aria-pressed={filter === item.value}
                     className={cn(
-                      'flex-row border-b-2 items-center gap-1 px-3 pb-3.5 pt-1.5',
-                      activeFilter === item.value
-                        ? 'border-[var(--tw-active-border-color)]'
-                        : 'border-card-light-50',
+                      'min-h-11 flex-row items-center gap-1.5 rounded-full px-3',
+                      filter === item.value
+                        ? 'bg-white text-black'
+                        : 'bg-card-light text-card-lighter-2',
                     )}
                     key={item.value}
                     onPress={() => {
@@ -502,30 +462,23 @@ export default function GoalsAppScreen({
                       })
                     }}
                   >
-                    <item.icon
-                      size={13}
-                      className="text-[var(--tw-active-border-color)]"
-                    />
-                    <Text className="text-xs">{item.label}</Text>
+                    <item.icon size={13} aria-hidden="true" />
+                    <Text className="text-xs text-current">{item.label}</Text>
                   </Pressable>
                 ))}
               </View>
             ) : null}
 
             {tab === 'Ended' ? (
-              <View className="mb-4 flex-row justify-end gap-2 border-y border-card-lighter/20 pt-2">
+              <View className="mb-4 flex-row gap-2 pt-2">
                 {(['ENDED', 'ARCHIVED'] as const).map((item) => (
                   <Pressable
-                    style={
-                      {
-                        '--tw-active-border-color': seededColor(item),
-                      } as any
-                    }
+                    aria-pressed={filter === item}
                     className={cn(
-                      'flex-row items-center gap-1 border-b-2 px-3 pb-3.5 pt-1.5',
-                      endedFilter === item
-                        ? 'border-[var(--tw-active-border-color)]'
-                        : 'border-card-light-50',
+                      'min-h-11 flex-row items-center gap-1.5 rounded-full px-3',
+                      filter === item
+                        ? 'bg-white text-black'
+                        : 'bg-card-light text-card-lighter-2',
                     )}
                     key={item}
                     onPress={() => {
@@ -538,17 +491,11 @@ export default function GoalsAppScreen({
                     }}
                   >
                     {item === 'ENDED' ? (
-                      <RiCalendarCheckLine
-                        className="text-[var(--tw-active-border-color)]"
-                        size={13}
-                      />
+                      <RiCalendarCheckLine aria-hidden="true" size={13} />
                     ) : (
-                      <RiArchiveLine
-                        className="text-[var(--tw-active-border-color)]"
-                        size={13}
-                      />
+                      <RiArchiveLine aria-hidden="true" size={13} />
                     )}
-                    <Text className="text-xs">
+                    <Text className="text-xs text-current">
                       {item === 'ENDED' ? 'History' : 'Archived'}
                     </Text>
                   </Pressable>
@@ -556,13 +503,19 @@ export default function GoalsAppScreen({
               </View>
             ) : null}
 
-            <GoalFeed filter={filter} onCreate={openCreate} onOpen={openGoal} />
+            <GoalFeed
+              key={filter}
+              filter={filter}
+              search={searchQuery}
+              onCreate={openCreate}
+              onOpen={openGoal}
+            />
 
             {tab === 'Ended' && legacy.data?.length ? (
               <View className="mt-8">
                 <Text className="mb-1 font-bold">Legacy</Text>
                 <Text className="mb-4 text-xs text-card-lighter-2">
-                  Goals from the old streak system are preserved as read-only
+                  Tasks from the old streak system are preserved as read-only
                   history.
                 </Text>
                 {legacy.data.map((goal) => (
@@ -575,11 +528,11 @@ export default function GoalsAppScreen({
               <View className="mt-8">
                 <Text className="mb-3 font-bold">Legacy</Text>
                 <GoalEmptyState
-                  description="Older streak-based goals will appear here as read-only history."
+                  description="Older streak-based tasks will appear here as read-only history."
                   icon={
                     <RiArchiveLine className="text-card-lighter-2" size={20} />
                   }
-                  title="No legacy goals"
+                  title="No legacy tasks"
                 />
               </View>
             ) : null}
@@ -594,11 +547,11 @@ export default function GoalsAppScreen({
                   size={17}
                 />
                 <Text className="flex-1 text-xs leading-4 text-warning-yellow">
-                  Paused goals take a break: no reminders, new occurrences, or
+                  Paused tasks take a break: no reminders, new occurrences, or
                   missed days are recorded.
                 </Text>
                 <Pressable
-                  accessibilityLabel="Dismiss paused goals information"
+                  accessibilityLabel="Dismiss paused tasks information"
                   className="size-6 items-center justify-center rounded-full"
                   onPress={() => {
                     try {

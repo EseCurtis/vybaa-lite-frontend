@@ -12,7 +12,7 @@ function transactionLabel(transaction: RewardTransaction): string {
     return transaction.metadata.milestoneName
   }
   if (transaction.metadata.source === 'legacy_pending_points') {
-    return 'Previously earned goal points'
+    return 'Previously earned task points'
   }
   if (transaction.type === 'BUY_POINTS') return 'Points purchase'
   if (transaction.type === 'WITHDRAW_POINTS') return 'Points withdrawal'
@@ -21,13 +21,13 @@ function transactionLabel(transaction: RewardTransaction): string {
 
 function transactionDetail(transaction: RewardTransaction): string {
   if (transaction.metadata.milestoneDay) {
-    return `Goal milestone · Day ${transaction.metadata.milestoneDay}`
+    return `Task milestone · Day ${transaction.metadata.milestoneDay}`
   }
   if (transaction.metadata.source === 'legacy_pending_points') {
-    return 'Released when the goal was completed'
+    return 'Released when the task was completed'
   }
   return transaction.status === 'PENDING'
-    ? 'Pending goal completion'
+    ? 'Pending task completion'
     : 'Play Points ledger'
 }
 
@@ -131,7 +131,7 @@ export function RewardActivityTrail() {
         </View>
       ) : transactions.length === 0 ? (
         <Text className="muted py-3 font-bbh text-xs">
-          Goal awards will appear here as you earn them.
+          Task awards will appear here as you earn them.
         </Text>
       ) : (
         <View>

@@ -44,7 +44,7 @@ function getGoalAlarmDescription(
   enabled: boolean,
   status: DeviceAlarmStatus | null,
 ): string {
-  if (!enabled) return 'Goal reminders use regular notifications'
+  if (!enabled) return 'Task reminders use regular notifications'
   if (status?.permission === 'granted') {
     return `${status.scheduledCount} upcoming alarms on this device`
   }
@@ -124,14 +124,14 @@ export default function SettingsScreen() {
       setGoalAlarmStatus(status)
       if (enabled && status.permission !== 'granted') {
         toast.warning(
-          'Goal alarms need device permission. Push reminders stay on.',
+          'Task alarms need device permission. Push reminders stay on.',
         )
         return
       }
-      toast.success(enabled ? 'Goal alarms are on' : 'Goal alarms are off')
+      toast.success(enabled ? 'Task alarms are on' : 'Task alarms are off')
     } catch (error: unknown) {
       toast.error(
-        error instanceof Error ? error.message : 'Could not update goal alarms',
+        error instanceof Error ? error.message : 'Could not update task alarms',
       )
     } finally {
       setIsUpdatingGoalAlarms(false)
@@ -190,7 +190,7 @@ export default function SettingsScreen() {
 
   const handleDeleteAccount = async () => {
     const confirmed = confirm(
-      'Delete your account permanently? This will remove your profile, goals, journals, achievements, communities, wallet history, connected social accounts and drafts, and settings. This cannot be undone.',
+      'Delete your account permanently? This will remove your profile, tasks, journals, achievements, communities, wallet history, connected social accounts and drafts, and settings. This cannot be undone.',
     )
 
     if (!confirmed) {
@@ -280,7 +280,7 @@ export default function SettingsScreen() {
                       </View>
                       <View className="min-w-0 flex-1 gap-1">
                         <Text className="text-sm font-semibold text-white">
-                          Goal alarms
+                          Task alarms
                         </Text>
                         <Text className="text-xs leading-5 text-card-lighter-2">
                           {goalAlarmDescription}
@@ -288,7 +288,7 @@ export default function SettingsScreen() {
                       </View>
                     </View>
                     <Switch
-                      accessibilityLabel="Use device alarms for goal reminders"
+                      accessibilityLabel="Use device alarms for task reminders"
                       checked={goalAlarmsEnabled}
                       className="shrink-0"
                       disabled={isUpdatingGoalAlarms}

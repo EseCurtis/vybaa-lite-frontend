@@ -44,7 +44,7 @@ export default function InsightsScreen() {
               <EmptyList
                 icon={<RiBarChartBoxLine size={64} className="text-white" />}
                 title="No insights yet"
-                description="Start creating and tracking goals to see your progress insights"
+                description="Start creating and tracking tasks to see your progress insights"
               />
             </View>
           ) : (
@@ -133,7 +133,7 @@ export default function InsightsScreen() {
                     className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex flex-col rounded-2xl p-5 "
                   >
                     <Text className="text-blue-300/70 text-xs font-bbh mb-2 uppercase tracking-wide">
-                      Total Goals
+                      Total Tasks
                     </Text>
                     <Text className="text-white text-4xl font-bbh font-bold drop-shadow-lg">
                       {insights?.totalGoals || 0}

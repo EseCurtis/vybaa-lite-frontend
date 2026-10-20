@@ -34,17 +34,21 @@ function getMutationGoalId(input: unknown): string | null {
 export function useInfiniteGoals({
   filter = 'ACTIVE',
   limit = 20,
+  query = '',
 }: {
   filter?: GoalListFilter
   limit?: number
+  query?: string
 } = {}) {
   return useInfiniteQuery({
     getNextPageParam: (lastPage: GoalsListResponse) =>
       lastPage.pagination.nextCursor ?? undefined,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam, signal }): Promise<GoalsListResponse> =>
-      goalAPI.list(filter, pageParam, limit, signal),
-    queryKey: goalQueryKeys.list(filter, limit),
+      goalAPI.list(filter, pageParam, limit, signal, query),
+    queryKey: query
+      ? [...goalQueryKeys.list(filter, limit), { query }]
+      : goalQueryKeys.list(filter, limit),
   })
 }
 
@@ -52,7 +56,7 @@ export function useGoal(goalId?: string) {
   return useQuery({
     enabled: Boolean(goalId),
     queryFn: async ({ signal }) => {
-      if (!goalId) throw new Error('A goal ID is required')
+      if (!goalId) throw new Error('A task ID is required')
       return (await goalAPI.get(goalId, signal)).data
     },
     queryKey: goalQueryKeys.detail(goalId ?? 'none'),
@@ -88,7 +92,7 @@ function useGoalMutation<TInput, TResult>(
   return useMutation({
     mutationFn,
     onError: (error: unknown) =>
-      toast.error(getErrorMessage(error, 'Goal update failed')),
+      toast.error(getErrorMessage(error, 'Task update failed')),
     onSuccess: (_result: TResult, input: TInput) => {
       void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
       void queryClient.invalidateQueries({ queryKey: insightsQueryKeys.all })
@@ -109,12 +113,12 @@ export function useCreateGoal() {
     mutationFn: (input: CreateGoalRequest) => goalAPI.create(input),
     onError: (error: unknown) => {
       if (isSubscriptionApiError(error)) return
-      toast.error(getErrorMessage(error, 'Failed to create goal'))
+      toast.error(getErrorMessage(error, 'Failed to create task'))
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: goalQueryKeys.all })
       void requestGoalAlarmSync().catch(() => undefined)
-      toast.success('Goal created successfully')
+      toast.success('Task created successfully')
     },
   })
 }
@@ -177,7 +181,7 @@ export function useRescheduleGoalOccurrence() {
 export function usePauseGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.pause(goalId),
-    'Goal paused',
+    'Task paused',
   )
 }
 
@@ -187,35 +191,35 @@ export function useResumeGoal() {
       deadlinePolicy: 'KEEP_DEADLINE' | 'SHIFT_DEADLINE'
       goalId: string
     }) => goalAPI.resume(input.goalId, input.deadlinePolicy),
-    'Goal resumed',
+    'Task resumed',
   )
 }
 
 export function useAbandonGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.abandon(goalId),
-    'Goal abandoned — history preserved',
+    'Task abandoned — history preserved',
   )
 }
 
 export function useArchiveGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.archive(goalId),
-    'Goal archived',
+    'Task archived',
   )
 }
 
 export function usePermanentlyDeleteGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.permanentlyDelete(goalId),
-    'Goal permanently deleted',
+    'Task permanently deleted',
   )
 }
 
 export function useReopenGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.reopen(goalId),
-    'New goal run started',
+    'New task run started',
   )
 }
 
@@ -235,20 +239,20 @@ export function useSaveGoalReview() {
 export function useArchiveLegacyGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.archiveLegacy(goalId),
-    'Legacy goal archived',
+    'Legacy task archived',
   )
 }
 
 export function useReopenLegacyGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.reopenLegacy(goalId),
-    'New goal run started',
+    'New task run started',
   )
 }
 
 export function useDeleteLegacyGoal() {
   return useGoalMutation(
     (goalId: string) => goalAPI.deleteLegacy(goalId),
-    'Legacy goal permanently deleted',
+    'Legacy task permanently deleted',
   )
 }

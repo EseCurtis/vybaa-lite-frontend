@@ -77,7 +77,7 @@ export function HomeGoals() {
     return (
       <div className="px-mg pt-mg">
         <QueryFeedback
-          message="Your goals couldn't load."
+          message="Your tasks couldn't load."
           onRetry={() => void refetch()}
           retrying={isFetching}
         />
@@ -144,7 +144,7 @@ export function HomeGoals() {
               }}
               className="snap-center bg-warning-yellow ml-2 !pr-2 text-black   rounded-full flex-row gap-2 items-center justify-center px-4  py-3 font-bold"
             >
-              <Text className="whitespace-nowrap text-sm">Goals</Text>
+              <Text className="whitespace-nowrap text-sm">Tasks</Text>
               <RiArrowRightCircleFill />
             </Pressable>
           </View>

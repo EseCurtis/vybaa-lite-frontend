@@ -4,13 +4,15 @@ import { Skeleton, SkeletonCard } from './skeleton.component'
 
 export function GoalRowSkeleton(): ReactElement {
   return (
-    <div aria-hidden="true" className="flex min-h-20 items-center gap-3 py-4">
-      <Skeleton className="size-11" rounded="lg" />
-      <div className="flex flex-1 flex-col gap-3">
-        <Skeleton className="h-4 w-3/5" />
-        <Skeleton className="h-2 w-4/5" rounded="full" />
+    <div aria-hidden="true" className="flex min-h-20 items-center gap-1 py-2">
+      <div className="flex size-11 shrink-0 items-center justify-center">
+        <Skeleton className="size-7" rounded="full" />
       </div>
-      <Skeleton className="h-3 w-10" />
+      <div className="flex min-h-16 flex-1 flex-col justify-center gap-2 px-2">
+        <Skeleton className="h-4 w-3/5" />
+        <Skeleton className="h-3 w-2/5" />
+      </div>
+      <Skeleton className="h-3 w-3" />
     </div>
   )
 }
@@ -19,7 +21,7 @@ export function HomeGoalsSkeleton(): ReactElement {
   return (
     <div
       role="status"
-      aria-label="Loading your goals"
+      aria-label="Loading your tasks"
       aria-busy="true"
       className="flex min-h-[76px] items-center gap-3 overflow-hidden px-mg py-3"
     >
