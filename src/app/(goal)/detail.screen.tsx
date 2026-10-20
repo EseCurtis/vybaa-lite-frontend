@@ -66,11 +66,11 @@ export default function GoalDetailScreen({
           onBack={() => {
             void navigateBackWithinApp(router, `/app/goal/${goalId}`)
           }}
-          title="Goal details"
+          title="Task details"
         >
           {goal.data ? (
             <Pressable
-              accessibilityLabel="Open goal settings"
+              accessibilityLabel="Open task settings"
               className="size-10 items-center justify-center rounded-full bg-card-light-50"
               onPress={openGoalActions}
             >
@@ -89,12 +89,12 @@ export default function GoalDetailScreen({
             ) : goal.isError ? (
               <View className="gap-4 rounded-[24px] bg-card-light-50 px-4 py-5">
                 <Text className="text-base font-bold">
-                  Could not open this goal
+                  Could not open this task
                 </Text>
                 <Text className="text-sm leading-6 text-card-lighter-2">
                   {goal.error instanceof Error
                     ? goal.error.message
-                    : 'Try refreshing the goal.'}
+                    : 'Try refreshing the task.'}
                 </Text>
                 <Button
                   label="Retry"

@@ -32,6 +32,7 @@ import {
 } from '@remixicon/react'
 import moment from 'moment'
 import { useState } from 'react'
+import { TaskSubtasks } from './task-subtasks.component'
 import {
   AttachmentPicker,
   type Attachment,
@@ -42,7 +43,7 @@ interface GoalDetailsSheetProps {
   onDismiss?: () => void
 }
 
-type GoalDetailsTab = 'timeline' | 'rewards' | 'review'
+type GoalDetailsTab = 'overview' | 'timeline' | 'rewards' | 'review'
 
 function targetLabel(goal: Goal): string {
   if (goal.target.type === 'QUANTITY') {
@@ -113,7 +114,7 @@ export function GoalActionsSheet({
 
   async function handleAbandon(): Promise<void> {
     if (
-      !confirm('End this goal as abandoned? Your history will be preserved.')
+      !confirm('End this task as abandoned? Your history will be preserved.')
     ) {
       return
     }
@@ -137,7 +138,7 @@ export function GoalActionsSheet({
   async function handleDelete(): Promise<void> {
     if (
       !confirm(
-        'Permanently delete this goal content? Reward ledger records will be retained.',
+        'Permanently delete this task content? Reward ledger records will be retained.',
       )
     ) {
       return
@@ -189,7 +190,7 @@ export function GoalActionsSheet({
         <View className="space-y-3 pt-5">
           <View className="flex-row items-center gap-2">
             <RiPauseLine className="text-card-lighter-2" size={18} />
-            <Text className="font-bold">Pause goal</Text>
+            <Text className="font-bold">Pause task</Text>
           </View>
           <Text className="text-xs leading-4 text-card-lighter-2">
             Pause reminders and occurrences. Nothing is counted as missed while
@@ -197,7 +198,7 @@ export function GoalActionsSheet({
           </Text>
           <Button
             disabled={pauseGoal.isPending}
-            label={pauseGoal.isPending ? 'Pausing…' : 'Pause goal'}
+            label={pauseGoal.isPending ? 'Pausing…' : 'Pause task'}
             onClick={async () => {
               await pauseGoal.mutateAsync(goal.id)
               onDone()
@@ -213,7 +214,7 @@ export function GoalActionsSheet({
         <View className="space-y-3">
           <View className="flex-row items-center gap-2">
             <RiPlayLine className="text-card-lighter-2" size={18} />
-            <Text className="font-bold">Resume goal</Text>
+            <Text className="font-bold">Resume task</Text>
           </View>
           <Text className="text-xs leading-4 text-card-lighter-2">
             Choose whether the original deadline stays fixed or moves by the
@@ -254,14 +255,14 @@ export function GoalActionsSheet({
 
       {['ACTIVE', 'PAUSED'].includes(goal.status) ? (
         <View className="space-y-3 pt-5">
-          <Text className="font-bold text-danger-400">End goal</Text>
+          <Text className="font-bold text-danger-400">End task</Text>
           <Text className="text-xs leading-4 text-card-lighter-2">
-            Abandoning preserves your timeline and records the goal as
+            Abandoning preserves your timeline and records the task as
             unfinished.
           </Text>
           <Button
             disabled={abandonGoal.isPending}
-            label={abandonGoal.isPending ? 'Ending…' : 'Abandon goal'}
+            label={abandonGoal.isPending ? 'Ending…' : 'Abandon task'}
             onClick={() => void handleAbandon()}
             size="sm"
             variant="destructive"
@@ -279,12 +280,12 @@ export function GoalActionsSheet({
               <Text className="font-bold">Start again</Text>
             </View>
             <Text className="text-xs leading-4 text-card-lighter-2">
-              Create a separate new run with the same goal setup. This history
+              Create a separate new run with the same task setup. This history
               stays unchanged.
             </Text>
             <Button
               disabled={reopenGoal.isPending}
-              label={reopenGoal.isPending ? 'Starting…' : 'Start as a new goal'}
+              label={reopenGoal.isPending ? 'Starting…' : 'Start as a new task'}
               onClick={() => void handleRestart()}
               size="sm"
               fullWidth
@@ -293,14 +294,14 @@ export function GoalActionsSheet({
 
           {!goal.archivedAt ? (
             <View className="space-y-2 pt-4">
-              <Text className="font-bold">Archive goal</Text>
+              <Text className="font-bold">Archive task</Text>
               <Text className="text-xs leading-4 text-card-lighter-2">
-                Move this goal out of your main history. You can still find it
+                Move this task out of your main history. You can still find it
                 under Archived.
               </Text>
               <Button
                 disabled={archiveGoal.isPending}
-                label={archiveGoal.isPending ? 'Archiving…' : 'Archive goal'}
+                label={archiveGoal.isPending ? 'Archiving…' : 'Archive task'}
                 onClick={() => void handleArchive()}
                 size="sm"
                 variant="secondary"
@@ -313,7 +314,7 @@ export function GoalActionsSheet({
                 Permanently delete
               </Text>
               <Text className="text-xs leading-4 text-card-lighter-2">
-                Delete this goal’s content. Historical reward transactions are
+                Delete this task’s content. Historical reward transactions are
                 retained.
               </Text>
               <Button
@@ -338,7 +339,7 @@ export function GoalActionsSheet({
 }
 
 export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
-  const [activeTab, setActiveTab] = useState<GoalDetailsTab>('timeline')
+  const [activeTab, setActiveTab] = useState<GoalDetailsTab>('overview')
   const occurrences = useGoalOccurrences(goal.id, activeTab === 'timeline')
   const recordProgress = useRecordGoalProgress()
   const correctProgress = useCorrectGoalProgress()
@@ -438,7 +439,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         <View className="rounded-xl bg-green-950 p-6 text-center">
           <RiTrophyLine className="mx-auto text-green-300" size={40} />
           <Text className="mt-3   !text-center text-xl font-bold">
-            You completed this goal!
+            You completed this task!
           </Text>
           <Text className="mt-1 !text-center text-sm text-green-400">
             Your conclusion and earned rewards are now saved.
@@ -457,11 +458,11 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
           <View className="min-w-0 flex-1 gap-1">
             <Text className="font-bold text-warning-100">
               {goal.status === 'AUTO_ABANDONED'
-                ? 'This goal ended automatically'
-                : 'This goal was abandoned'}
+                ? 'This task ended automatically'
+                : 'This task was abandoned'}
             </Text>
             <Text className="text-xs leading-5 text-warning-200">
-              Its history is saved. Open goal settings to start a separate new
+              Its history is saved. Open task settings to start a separate new
               run or archive this one.
             </Text>
           </View>
@@ -471,7 +472,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         {goal.status === 'COMPLETED' ? (
           <View className="mb-3 flex-row items-center gap-2">
             <RiTrophyLine className="text-black" size={20} />
-            <Text className="font-bold text-black">Goal completed</Text>
+            <Text className="font-bold text-black">Task completed</Text>
           </View>
         ) : null}
         <Text className="text-lg font-bold text-black">{goal.title}</Text>
@@ -574,14 +575,16 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         <View className="flex-row gap-1 rounded-2xl bg-card-light-50 p-1">
           {(
             [
+              ['overview', 'Overview'],
               ['timeline', 'Timeline'],
               ['rewards', 'Rewards'],
               ['review', 'Review'],
             ] as const
           ).map(([value, label]) => (
             <Pressable
+              aria-pressed={activeTab === value}
               className={cn(
-                'flex-1 rounded-xl px-2 py-2.5 text-center flex justify-center',
+                'min-h-11 flex-1 rounded-xl px-2 py-2.5 text-center flex justify-center',
                 activeTab === value ? 'bg-white' : 'bg-transparent',
               )}
               key={value}
@@ -600,12 +603,14 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         </View>
       </View>
 
+      {activeTab === 'overview' ? <TaskSubtasks goal={goal} /> : null}
+
       {activeTab === 'rewards' ? (
         <View className="space-y-2">
           <Text className="font-bold">Reward path</Text>
           {!goal.reward.eligible ? (
             <Text className="text-sm text-card-lighter-2">
-              This short goal does not award Play Points.
+              This short task does not award Play Points.
             </Text>
           ) : (
             goal.reward.milestones.map((milestone, index) => {
@@ -874,7 +879,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
           {reviewSaved ? (
             <View className="rounded-xl bg-card-light px-3 py-2">
               <Text className="text-xs leading-4 text-card-lighter-2">
-                This reflection is part of the goal’s history and can still be
+                This reflection is part of the task’s history and can still be
                 edited.
               </Text>
             </View>
@@ -891,7 +896,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
           <Text className="font-bold">Review after you finish</Text>
           <Text className="mt-2 text-sm leading-6 text-card-lighter-2">
             Your reflection, rating, and next step will appear here when this
-            goal reaches a conclusion.
+            task reaches a conclusion.
           </Text>
         </View>
       ) : null}
