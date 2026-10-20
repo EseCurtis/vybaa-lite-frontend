@@ -10,9 +10,7 @@ import {
 } from '@/hooks/use-achievements.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { Achievement, BadgeDefinition } from '@/shared/api/achievement.api'
-import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
 import { cn } from '@/shared/utils/helpers.util'
-import { Icon } from '@iconify/react'
 import { RiFilter3Line } from '@remixicon/react'
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
@@ -488,11 +486,7 @@ export default function AchievementsScreen() {
           </View>
         ) : Object.keys(badgesByType).length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
-            <Icon
-              icon={getEmojiIcon('🏆')}
-              className="text-card-lighter/60 mb-4"
-              style={{ fontSize: '64px' }}
-            />
+            <AchievementBadge className="mb-4 size-16" />
             <Text className="text-card-lighter/60 text-lg font-bbh text-center">
               No badges match these filters
             </Text>
