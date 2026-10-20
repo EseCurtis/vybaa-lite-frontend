@@ -4,7 +4,9 @@ import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useInfiniteGoals } from '@/hooks/use-goals.hook'
-import type { Goal } from '@/shared/api/goal.api'
+import { goalAPI, type Goal } from '@/shared/api/goal.api'
+import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { useQueryClient } from '@tanstack/react-query'
 import { seededColor, smartTruncate } from '@/shared/utils/helpers.util'
 import {
   RiAddCircleFill,
@@ -18,10 +20,12 @@ function HomeGoalItem({
   title,
   progressLabel,
   onOpen,
+  onWarm,
 }: {
   title: string
   progressLabel: string
   onOpen: () => void
+  onWarm: () => void
 }) {
   const color = seededColor(title)
 
@@ -31,6 +35,7 @@ function HomeGoalItem({
         backgroundColor: color,
       }}
       onPress={onOpen}
+      onPressIn={onWarm}
       accessibilityLabel={title}
       className="relative snap-center max-w-[97%] flex-row gap-3 items-center font-bold rounded-full p-2 pr-4 shrink-0"
     >
@@ -47,7 +52,10 @@ function HomeGoalItem({
 
 export function HomeGoals() {
   const navigate = useNavigate()
-  const { data, isPending, isError, isFetching, refetch } = useInfiniteGoals({ filter: 'DUE' })
+  const queryClient = useQueryClient()
+  const { data, isPending, isError, isFetching, refetch } = useInfiniteGoals({
+    filter: 'DUE',
+  })
   const goals = data?.pages.flatMap((page) => page.data) ?? []
   const noGoals = goals.length == 0
 
@@ -59,12 +67,26 @@ export function HomeGoals() {
     navigate({ to: '/app/goal/create' })
   }
 
-  if (isPending && !data) return <div className="pt-mg"><HomeGoalsSkeleton /></div>
-  if (isError && !data) return <div className="px-mg pt-mg"><QueryFeedback message="Your goals couldn't load." onRetry={() => void refetch()} retrying={isFetching} /></div>
+  if (isPending && !data)
+    return (
+      <div className="pt-mg">
+        <HomeGoalsSkeleton />
+      </div>
+    )
+  if (isError && !data)
+    return (
+      <div className="px-mg pt-mg">
+        <QueryFeedback
+          message="Your goals couldn't load."
+          onRetry={() => void refetch()}
+          retrying={isFetching}
+        />
+      </div>
+    )
 
   return (
     <View className="pt-mg">
-      <View className="overflow-x-scroll bg-cardd py-3 rounded-full snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar  ">
+      <View className="min-h-[76px] overflow-x-scroll bg-cardd py-3 rounded-full snap-x snap-mandatory flex-row  px-mg shrink-0 no-scrollbar  ">
         {goals.map((goal, index) => {
           const progressLabel =
             goal.target.type === 'CHECK_IN_COUNT'
@@ -77,6 +99,13 @@ export function HomeGoals() {
               key={index}
               progressLabel={progressLabel}
               title={goal.title}
+              onWarm={() =>
+                void queryClient.prefetchQuery({
+                  queryKey: goalQueryKeys.detail(goal.id),
+                  queryFn: async ({ signal }) =>
+                    (await goalAPI.get(goal.id, signal)).data,
+                })
+              }
               onOpen={() => {
                 handleGoalClick(goal)
               }}

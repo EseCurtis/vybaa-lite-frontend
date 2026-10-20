@@ -88,7 +88,8 @@ const button = tv({
 type ButtonVariants = VariantProps<typeof button>
 
 interface ButtonProps
-  extends ButtonVariants,
+  extends
+    ButtonVariants,
     Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'disabled'> {
   label?: string | number
   loading?: boolean
@@ -98,7 +99,7 @@ interface ButtonProps
   withIcon?: boolean
   leftIcon?: React.ReactNode
   rightIcon?: React.ReactNode
-  bgColor?: string 
+  bgColor?: string
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -120,16 +121,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       children,
       ...props
     },
-    ref
+    ref,
   ) => {
     const styles = React.useMemo(
       () => button({ variant, disabled, size, fullWidth }),
-      [variant, disabled, size, fullWidth]
+      [variant, disabled, size, fullWidth],
     )
 
     const gradientColors = React.useMemo(() => {
-      if(bgColor) return  [bgColor, bgColor];
-
+      if (bgColor) return [bgColor, bgColor]
 
       if (variant === 'default') {
         return [colors.white, colors.white]
@@ -159,8 +159,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-busy={loading}
         className={cn(
           'cursor-pointer',
-          disabled || loading ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
-        buttonClassName
+          disabled || loading
+            ? 'opacity-50 cursor-not-allowed'
+            : 'hover:opacity-90',
+          buttonClassName,
         )}
         {...props}
       >
@@ -174,28 +176,35 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <>{children}</>
           ) : (
             <>
-                <>
-                  {leftIcon}
-                  {text && (
-                    <Text
-                      className={cn('!text-black', styles.label({ className: textClassName }))}
-                    >
-                      {text}
-                    </Text>
-                  )}
-                  {rightIcon ? (
-                    rightIcon
-                  ) : withIcon ? (
-                    <Icon name="ArrowRight" size="md" color="currentColor" />
-                  ) : null}
-                </>
+              <>
+                {leftIcon}
+                {text && (
+                  <Text
+                    className={cn(
+                      '!text-black',
+                      styles.label({ className: textClassName }),
+                    )}
+                  >
+                    {text}
+                  </Text>
+                )}
+                {rightIcon ? (
+                  rightIcon
+                ) : withIcon ? (
+                  <Icon name="ArrowRight" size="md" color="currentColor" />
+                ) : null}
+              </>
             </>
           )}
         </LinearGradient>
-        {loading ? <span className="sr-only" role="status">In progress</span> : null}
+        {loading ? (
+          <span className="sr-only" role="status">
+            In progress
+          </span>
+        ) : null}
       </button>
     )
-  }
+  },
 )
 
 Button.displayName = 'Button'

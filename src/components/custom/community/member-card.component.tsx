@@ -1,8 +1,14 @@
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Avatar } from '@/components/user/avatar.component'
 import type { CommunityMember } from '@/shared/api/community.api'
-import { RiCoinsLine, RiShieldLine, RiShieldStarLine, RiUserLine } from '@remixicon/react'
+import {
+  RiCoinsLine,
+  RiShieldLine,
+  RiShieldStarLine,
+  RiUserLine,
+} from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import moment from 'moment'
 
@@ -10,7 +16,10 @@ interface MemberCardProps {
   member: CommunityMember
   currentUserRole?: 'OWNER' | 'MOD' | 'MEMBER' | null
   onPress?: (member: CommunityMember) => void
-  onRoleChange?: (member: CommunityMember, newRole: 'OWNER' | 'MOD' | 'MEMBER') => void
+  onRoleChange?: (
+    member: CommunityMember,
+    newRole: 'OWNER' | 'MOD' | 'MEMBER',
+  ) => void
 }
 
 const roleIcons = {
@@ -29,8 +38,9 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
   const navigate = useNavigate()
   const RoleIcon = roleIcons[member.role] || RiUserLine
   const roleLabel = roleLabels[member.role] || 'Member'
-  const displayName = member.user.username || 
-    [member.user.firstName, member.user.lastName].filter(Boolean).join(' ') || 
+  const displayName =
+    member.user.username ||
+    [member.user.firstName, member.user.lastName].filter(Boolean).join(' ') ||
     'User'
 
   const handlePress = () => {
@@ -40,7 +50,10 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
     }
 
     if (member.user.username) {
-      navigate({ to: '/app/u/$username', params: { username: member.user.username } })
+      navigate({
+        to: '/app/u/$username',
+        params: { username: member.user.username },
+      })
     }
   }
 
@@ -51,19 +64,7 @@ export function MemberCard({ member, onPress }: MemberCardProps) {
     >
       <View className="flex-row items-center gap-3 w-full">
         {/* Avatar */}
-        <View className="w-12 h-12 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
-          {member.user.avatarUrl ? (
-            <img
-              src={member.user.avatarUrl}
-              alt={displayName}
-              className="w-full h-full rounded-full object-cover"
-            />
-          ) : (
-            <Text className="text-white/60 text-base font-bold font-bbh">
-              {displayName[0].toUpperCase()}
-            </Text>
-          )}
-        </View>
+        <Avatar user={member.user} size={48} />
 
         {/* Member Info */}
         <View className="flex-1 min-w-0">

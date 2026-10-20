@@ -11,8 +11,6 @@ import {
   type ReactNode,
 } from 'react'
 
-import { Spinner } from '@/components/common/spinner.component'
-import { Text } from '@/components/layout/text.component'
 import { useAuth } from '@/providers/auth.provider'
 import {
   addRevenueCatCustomerInfoListener,
@@ -246,20 +244,15 @@ export function SubscriptionProvider({
     <SubscriptionContext.Provider value={value}>
       {children}
       {isPresentingPaywall ? (
-        <div
+        <span
           aria-live="polite"
           aria-label="Opening Vybaa Pro"
           aria-busy="true"
           role="status"
-          className="fixed inset-0 z-[2000000] flex items-center justify-center bg-black/60 px-6"
+          className="sr-only"
         >
-          <div className="flex min-h-16 w-full max-w-[280px] items-center justify-center gap-3 rounded-2xl bg-cardx px-5 py-4">
-            <Spinner size={22} />
-            <Text className="font-bbh text-sm font-semibold text-white">
-              Opening Vybaa Pro...
-            </Text>
-          </div>
-        </div>
+          Opening Vybaa Pro…
+        </span>
       ) : null}
     </SubscriptionContext.Provider>
   )

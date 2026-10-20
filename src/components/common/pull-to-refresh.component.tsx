@@ -1,4 +1,5 @@
 import { Text } from '@/components/layout/text.component'
+import { RiArrowDownLine } from '@remixicon/react'
 import { useEffect, useRef, useState } from 'react'
 
 interface PullToRefreshProps {
@@ -91,7 +92,9 @@ export function PullToRefresh({
       setIsPulling(false)
     }
 
-    container.addEventListener('touchstart', handleTouchStart, { passive: false })
+    container.addEventListener('touchstart', handleTouchStart, {
+      passive: false,
+    })
     container.addEventListener('touchmove', handleTouchMove, { passive: false })
     container.addEventListener('touchend', handleTouchEnd)
 
@@ -100,7 +103,15 @@ export function PullToRefresh({
       container.removeEventListener('touchmove', handleTouchMove)
       container.removeEventListener('touchend', handleTouchEnd)
     }
-  }, [isPulling, startY, pullDistance, pullThreshold, disabled, refreshing, onRefresh])
+  }, [
+    isPulling,
+    startY,
+    pullDistance,
+    pullThreshold,
+    disabled,
+    refreshing,
+    onRefresh,
+  ])
 
   // Calculate refresh indicator opacity and rotation
   const refreshIndicatorOpacity = Math.min(pullDistance / pullThreshold, 1)
@@ -122,20 +133,23 @@ export function PullToRefresh({
           <div className="flex items-center gap-2 py-2">
             {refreshing ? (
               <>
-                <div className="animate-spin rounded-full border-2 border-white/30 border-t-white w-5 h-5" />
-                <Text className="text-white/80 text-sm font-bbh">Refreshing...</Text>
+                <span
+                  role="status"
+                  aria-busy="true"
+                  className="font-bbh text-sm text-card-lighter-3"
+                >
+                  Refreshing…
+                </span>
               </>
             ) : (
               <>
-                <div
-                  className="w-5 h-5 border-2 border-white/60 rounded-full flex items-center justify-center"
+                <RiArrowDownLine
+                  className="size-5 text-card-lighter-3"
                   style={{
-                    transform: `rotate(${pullDistance * 2}deg)`,
+                    transform: `rotate(${isReadyToRefresh ? 180 : 0}deg)`,
                   }}
-                >
-                  <div className="w-2 h-2 bg-white/60 rounded-full" />
-                </div>
-                <Text className="text-white/80 text-sm font-bbh">
+                />
+                <Text className="text-card-lighter-3 text-sm font-bbh">
                   {isReadyToRefresh ? 'Release to refresh' : 'Pull to refresh'}
                 </Text>
               </>
@@ -156,4 +170,3 @@ export function PullToRefresh({
     </div>
   )
 }
-

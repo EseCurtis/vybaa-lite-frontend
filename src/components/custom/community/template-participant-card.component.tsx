@@ -12,20 +12,20 @@ interface TemplateParticipantCardProps {
   templateGoalText: string
 }
 
-export function TemplateParticipantCard({ participant, templateGoalText }: TemplateParticipantCardProps) {
+export function TemplateParticipantCard({
+  participant,
+  templateGoalText,
+}: TemplateParticipantCardProps) {
   const bgColor = seededColor(templateGoalText)
-  const displayName = participant.user.firstName && participant.user.lastName
-    ? `${participant.user.firstName} ${participant.user.lastName}`
-    : participant.user.username || 'Anonymous';
-
-    
+  const displayName =
+    participant.user.firstName && participant.user.lastName
+      ? `${participant.user.firstName} ${participant.user.lastName}`
+      : participant.user.username || 'Anonymous'
 
   return (
-    <Pressable
-      className="p-4 rounded-2xl bg-card-light/20 mb-3 w-full flex-col justify-between shrink-0"
-    >
+    <Pressable className="p-4 rounded-2xl bg-card-light/20 mb-3 w-full flex-col justify-between shrink-0">
       <View className="flex-row items-center  gap-3 mb-3">
-        <Avatar url={participant.user.avatarUrl!} />
+        <Avatar user={participant.user} />
         <View className="flex-1 justify-start text-left">
           <Text className="text-white text-sm font-bold font-bbh">
             {displayName}

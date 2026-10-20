@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import { journalAPI } from '@/shared/api/journal.api'
-import type { CreateJournalRequest, UpdateJournalRequest } from '@/shared/types/auth.types'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type {
+  CreateJournalRequest,
+  UpdateJournalRequest,
+} from '@/shared/types/auth.types'
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 
 export const journalKeys = {
   all: ['journals'] as const,
@@ -13,28 +22,35 @@ export const journalKeys = {
   today: () => [...journalKeys.all, 'today'] as const,
   summary: () => [...journalKeys.all, 'summary'] as const,
   stats: () => [...journalKeys.all, 'stats'] as const,
-  paginated: (page: number, limit: number) => [...journalKeys.all, 'paginated', { page, limit }] as const,
-  infinite: () => [...journalKeys.all, 'infinite'] as const,
+  paginated: (page: number, limit: number) =>
+    [...journalKeys.all, 'paginated', { page, limit }] as const,
+  infinite: (limit?: number) =>
+    limit === undefined
+      ? ([...journalKeys.all, 'infinite'] as const)
+      : ([...journalKeys.all, 'infinite', { limit }] as const),
 }
 
 export const useJournals = () => {
   return useQuery({
     queryKey: journalKeys.lists(),
-    queryFn: () => journalAPI.getJournals(),
+    queryFn: ({ signal }) => journalAPI.getJournals(1, 20, signal),
     staleTime: 5 * 60 * 1000,
   })
 }
 
 export const useJournalsInfinite = (limit = 10) => {
   return useInfiniteQuery({
-    queryKey: journalKeys.infinite(),
+    queryKey: journalKeys.infinite(limit),
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => journalAPI.getJournalsPage(pageParam, limit),
+    queryFn: ({ pageParam, signal }) =>
+      journalAPI.getJournalsPage(pageParam, limit, signal),
     getNextPageParam: (lastPage) => {
-      return lastPage?.data?.meta?.hasNext ? (lastPage?.data?.meta?.page || 1) + 1 : undefined
+      return lastPage.pagination.hasMore
+        ? lastPage.pagination.page + 1
+        : undefined
     },
     staleTime: 60 * 1000,
-    refetchOnMount: false,
+    refetchOnMount: true,
   })
 }
 
@@ -54,8 +70,13 @@ export const useUpdateJournal = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ journalId, data }: { journalId: string; data: UpdateJournalRequest }) =>
-      journalAPI.updateJournal(journalId, data),
+    mutationFn: ({
+      journalId,
+      data,
+    }: {
+      journalId: string
+      data: UpdateJournalRequest
+    }) => journalAPI.updateJournal(journalId, data),
     onSuccess: (_, { journalId }) => {
       queryClient.invalidateQueries({ queryKey: journalKeys.lists() })
       queryClient.invalidateQueries({ queryKey: journalKeys.infinite() })
@@ -127,10 +148,8 @@ export const useJournalStats = () => {
 export const usePaginatedJournals = (page: number = 1, limit: number = 20) => {
   return useQuery({
     queryKey: journalKeys.paginated(page, limit),
-    queryFn: () => journalAPI.getJournals(page, limit),
+    queryFn: ({ signal }) => journalAPI.getJournals(page, limit, signal),
     staleTime: 1000 * 60 * 5, // 5 minutes
-    keepPreviousData: true,
+    placeholderData: keepPreviousData,
   })
 }
-
-

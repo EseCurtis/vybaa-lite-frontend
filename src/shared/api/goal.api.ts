@@ -217,7 +217,7 @@ export interface QuickGoalSetupDraft {
   schedule: GoalSchedule
   target: GoalTarget
   title: string
-  remarks?: string;
+  remarks?: string
 }
 
 export interface QuickGoalSetupAnswer {
@@ -280,7 +280,9 @@ export const goalAPI = {
     return response.data
   },
   get: async (goalId: string, signal?: AbortSignal): Promise<GoalResponse> => {
-    const response = await http.get<GoalResponse>(`${GOALS_V2}/${goalId}`, { signal })
+    const response = await http.get<GoalResponse>(`${GOALS_V2}/${goalId}`, {
+      signal,
+    })
     return response.data
   },
   getAlarmManifest: async (): Promise<GoalAlarmManifest> => {

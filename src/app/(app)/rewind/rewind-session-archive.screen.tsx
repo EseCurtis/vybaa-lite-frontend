@@ -8,6 +8,7 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { usePaginatedRewindSessions } from '@/hooks/use-rewind.hook'
+import { useAuth } from '@/providers/auth.provider'
 import type { RewindSession } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
@@ -25,6 +26,7 @@ import { RewindSessionRow } from './history/rewind-session-row.component'
 export default function RewindSessionArchiveScreen(): ReactElement {
   const navigate = useNavigate()
   const router = useRouter()
+  const { user } = useAuth()
   const {
     data,
     error,
@@ -61,13 +63,6 @@ export default function RewindSessionArchiveScreen(): ReactElement {
 
         <View className="flex-1 overflow-y-auto px-mg pb-[120px] pt-2">
           <View className="mx-auto w-full max-w-3xl gap-5">
-            <View className="gap-1 px-1">
-              <Text className="muted font-bbh text-sm leading-6">
-                Your saved Rewinds, grouped by day. Reflections from the same
-                day share one daily observation.
-              </Text>
-            </View>
-
             {isLoading ? (
               <View className="gap-3">
                 {Array.from({ length: 4 }).map((_, index) => (
@@ -81,7 +76,7 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                 }}
               />
             ) : groupedSessions.length ? (
-              <View className="gap-4">
+              <View className="gap-3">
                 {groupedSessions.map((group) => (
                   <RewindDaySection
                     key={group.dayKey}
@@ -100,6 +95,7 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                           })
                         }}
                         session={session}
+                        user={user ?? undefined}
                       />
                     ))}
                   </RewindDaySection>

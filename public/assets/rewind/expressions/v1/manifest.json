@@ -1,0 +1,293 @@
+{
+  "version": "v1",
+  "assets": [
+    {
+      "partner": "ella",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/ella/thinking.webp",
+      "bytes": 48900
+    },
+    {
+      "partner": "ella",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/ella/typing.webp",
+      "bytes": 50990
+    },
+    {
+      "partner": "ella",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/ella/cheering.webp",
+      "bytes": 51606
+    },
+    {
+      "partner": "ella",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/ella/laughing.webp",
+      "bytes": 50208
+    },
+    {
+      "partner": "ella",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/ella/surprised.webp",
+      "bytes": 51938
+    },
+    {
+      "partner": "ella",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/ella/listening.webp",
+      "bytes": 50690
+    },
+    {
+      "partner": "ella",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/ella/skeptical.webp",
+      "bytes": 49938
+    },
+    {
+      "partner": "ella",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/ella/calm.webp",
+      "bytes": 50490
+    },
+    {
+      "partner": "lyra",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/lyra/thinking.webp",
+      "bytes": 59526
+    },
+    {
+      "partner": "lyra",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/lyra/typing.webp",
+      "bytes": 59750
+    },
+    {
+      "partner": "lyra",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/lyra/cheering.webp",
+      "bytes": 61880
+    },
+    {
+      "partner": "lyra",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/lyra/laughing.webp",
+      "bytes": 61876
+    },
+    {
+      "partner": "lyra",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/lyra/surprised.webp",
+      "bytes": 65966
+    },
+    {
+      "partner": "lyra",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/lyra/listening.webp",
+      "bytes": 59704
+    },
+    {
+      "partner": "lyra",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/lyra/skeptical.webp",
+      "bytes": 62148
+    },
+    {
+      "partner": "lyra",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/lyra/calm.webp",
+      "bytes": 63710
+    },
+    {
+      "partner": "jake",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/jake/thinking.webp",
+      "bytes": 59368
+    },
+    {
+      "partner": "jake",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/jake/typing.webp",
+      "bytes": 60752
+    },
+    {
+      "partner": "jake",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/jake/cheering.webp",
+      "bytes": 59148
+    },
+    {
+      "partner": "jake",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/jake/laughing.webp",
+      "bytes": 59384
+    },
+    {
+      "partner": "jake",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/jake/surprised.webp",
+      "bytes": 63484
+    },
+    {
+      "partner": "jake",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/jake/listening.webp",
+      "bytes": 58344
+    },
+    {
+      "partner": "jake",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/jake/skeptical.webp",
+      "bytes": 58616
+    },
+    {
+      "partner": "jake",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/jake/calm.webp",
+      "bytes": 60378
+    },
+    {
+      "partner": "ariel",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/ariel/thinking.webp",
+      "bytes": 61386
+    },
+    {
+      "partner": "ariel",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/ariel/typing.webp",
+      "bytes": 65416
+    },
+    {
+      "partner": "ariel",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/ariel/cheering.webp",
+      "bytes": 66438
+    },
+    {
+      "partner": "ariel",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/ariel/laughing.webp",
+      "bytes": 62308
+    },
+    {
+      "partner": "ariel",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/ariel/surprised.webp",
+      "bytes": 69354
+    },
+    {
+      "partner": "ariel",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/ariel/listening.webp",
+      "bytes": 62524
+    },
+    {
+      "partner": "ariel",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/ariel/skeptical.webp",
+      "bytes": 63072
+    },
+    {
+      "partner": "ariel",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/ariel/calm.webp",
+      "bytes": 67586
+    },
+    {
+      "partner": "tobi",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/tobi/thinking.webp",
+      "bytes": 43314
+    },
+    {
+      "partner": "tobi",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/tobi/typing.webp",
+      "bytes": 45340
+    },
+    {
+      "partner": "tobi",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/tobi/cheering.webp",
+      "bytes": 47934
+    },
+    {
+      "partner": "tobi",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/tobi/laughing.webp",
+      "bytes": 43504
+    },
+    {
+      "partner": "tobi",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/tobi/surprised.webp",
+      "bytes": 51342
+    },
+    {
+      "partner": "tobi",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/tobi/listening.webp",
+      "bytes": 44202
+    },
+    {
+      "partner": "tobi",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/tobi/skeptical.webp",
+      "bytes": 43548
+    },
+    {
+      "partner": "tobi",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/tobi/calm.webp",
+      "bytes": 45012
+    },
+    {
+      "partner": "neeja",
+      "expression": "thinking",
+      "file": "/assets/rewind/expressions/v1/neeja/thinking.webp",
+      "bytes": 52716
+    },
+    {
+      "partner": "neeja",
+      "expression": "typing",
+      "file": "/assets/rewind/expressions/v1/neeja/typing.webp",
+      "bytes": 52054
+    },
+    {
+      "partner": "neeja",
+      "expression": "cheering",
+      "file": "/assets/rewind/expressions/v1/neeja/cheering.webp",
+      "bytes": 60534
+    },
+    {
+      "partner": "neeja",
+      "expression": "laughing",
+      "file": "/assets/rewind/expressions/v1/neeja/laughing.webp",
+      "bytes": 53756
+    },
+    {
+      "partner": "neeja",
+      "expression": "surprised",
+      "file": "/assets/rewind/expressions/v1/neeja/surprised.webp",
+      "bytes": 61762
+    },
+    {
+      "partner": "neeja",
+      "expression": "listening",
+      "file": "/assets/rewind/expressions/v1/neeja/listening.webp",
+      "bytes": 54390
+    },
+    {
+      "partner": "neeja",
+      "expression": "skeptical",
+      "file": "/assets/rewind/expressions/v1/neeja/skeptical.webp",
+      "bytes": 49666
+    },
+    {
+      "partner": "neeja",
+      "expression": "calm",
+      "file": "/assets/rewind/expressions/v1/neeja/calm.webp",
+      "bytes": 51268
+    }
+  ]
+}

@@ -79,6 +79,12 @@ const frequencyOptions: FrequencyOption[] = [
     schedule: 'Choose 2 times',
     value: 'CUSTOM',
   },
+  {
+    detail: 'Request a Rewind anytime. No fixed times or reminders.',
+    label: 'Flexible',
+    schedule: 'Anytime',
+    value: 'FLEXIBLE',
+  },
 ]
 
 const intentOptions: IntentOption[] = [
@@ -278,9 +284,11 @@ export function RewindRoutineScreen({
                 <Text className="font-bbh text-base font-bold text-white">
                   Choose a schedule
                 </Text>
-                <Text className="muted font-bbh text-xs">
-                  Each Rewind stays open for one hour.
-                </Text>
+                {frequency !== 'FLEXIBLE' ? (
+                  <Text className="muted font-bbh text-xs">
+                    Each Rewind stays open for one hour.
+                  </Text>
+                ) : null}
               </View>
 
               <View className="grid grid-cols-2 gap-3">
@@ -291,11 +299,14 @@ export function RewindRoutineScreen({
                     <Pressable
                       key={option.value}
                       accessibilityLabel={`${option.label}, ${option.schedule}`}
+                      aria-pressed={selected}
                       className={cn(
-                        'min-h-[104px] !flex !flex-row w-full justify-between rounded-2xl border px-4 py-4 text-left',
-                        selected ? 'border-accent-500' : 'border-transparent',
+                        'min-h-[104px] !flex !flex-row w-full justify-between rounded-2xl px-4 py-4 text-left',
+                        option.value === 'FLEXIBLE' && 'col-span-2',
                       )}
-                      style={{ backgroundColor: colors.cardx }}
+                      style={{
+                        backgroundColor: selected ? '#ffffff' : colors.cardx,
+                      }}
                       onPress={() => {
                         if (!requiresPro) {
                           setFrequency(option.value)
@@ -309,12 +320,20 @@ export function RewindRoutineScreen({
                     >
                       <View className="flex-col items-start justify-between gap-2">
                         <Text
-                          className="min-w-0 flex-1 font-bbh text-xs font-semibold leading-5 text-white"
+                          className={cn(
+                            'min-w-0 flex-1 font-bbh text-xs font-semibold leading-5',
+                            selected ? 'text-black' : 'text-white',
+                          )}
                           lines={2}
                         >
                           {option.label}
                         </Text>
-                        <Text className="muted font-bbh text-[11px] tabular-nums">
+                        <Text
+                          className={cn(
+                            'font-bbh text-[11px] tabular-nums',
+                            selected ? 'text-black' : 'text-card-lighter-2',
+                          )}
+                        >
                           {option.schedule}
                         </Text>
                       </View>

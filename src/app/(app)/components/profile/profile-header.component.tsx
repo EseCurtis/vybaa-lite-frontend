@@ -3,6 +3,7 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { UserCheckmark } from '@/components/user/checkmark.component'
+import { Avatar } from '@/components/user/avatar.component'
 import { cn } from '@/shared/utils/helpers.util'
 import { motion } from 'framer-motion'
 import type { ProfileUser } from './profile.types'
@@ -36,21 +37,14 @@ export function ProfileHeader({
               onImageSelect={onImageSelect}
               initials={initials}
               size="xl"
+              user={user ?? undefined}
             />
           ) : (
-            <View className="rounded-full w-24 h-24 bg-card-light/60 flex items-center justify-center overflow-hidden relative z-k">
-              {imagePreview || user?.avatarUrl ? (
-                <img
-                  src={imagePreview || user?.avatarUrl}
-                  alt={displayName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <Text className="text-white text-4xl font-display font-bold">
-                  {initials}
-                </Text>
-              )}
-            </View>
+            <Avatar
+              user={user ?? undefined}
+              previewUrl={imagePreview ?? undefined}
+              size={96}
+            />
           )}
         </View>
 

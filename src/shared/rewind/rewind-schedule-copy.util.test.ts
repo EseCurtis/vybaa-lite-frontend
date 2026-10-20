@@ -34,6 +34,44 @@ const overview: RewindRoutineOverview = {
   },
 }
 
+it('Flexible stays available after completion with partner-specific copy and no countdown', () => {
+  const routine = overview.routine
+  if (!routine) throw new Error('Expected routine fixture')
+  const flexible: RewindRoutineOverview = {
+    ...overview,
+    routine: { ...routine, frequency: 'FLEXIBLE', times: [] },
+    nextSession: null,
+  }
+  const tobi = getRewindScheduleCopy({
+    overview: flexible,
+    now,
+    personaId: 'tobi',
+    seed: 'user',
+  })
+  const ella = getRewindScheduleCopy({
+    overview: flexible,
+    now: now + 86_400_000,
+    personaId: 'ella',
+    seed: 'user',
+  })
+  expect(tobi.available).toBe(true)
+  expect(ella.available).toBe(true)
+  expect(tobi.countdown).toBeNull()
+  expect(ella.countdown).toBeNull()
+  expect(tobi.text).not.toBe(ella.text)
+  expect(
+    getRewindScheduleCopy({
+      overview: {
+        ...flexible,
+        routine: { ...routine, frequency: 'FLEXIBLE', enabled: false },
+      },
+      now,
+      personaId: 'tobi',
+      seed: 'user',
+    }).available,
+  ).toBe(false)
+})
+
 it('uses the scheduled timezone, real remaining time, and the selected partner’s voice', () => {
   const tobi = getRewindScheduleCopy({
     overview,

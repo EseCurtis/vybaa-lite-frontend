@@ -50,12 +50,16 @@ export function CommunityHeader({ community, stats }: CommunityHeaderProps) {
             </View>
           )}
           <View className="absolute bottom-mg  w-full left-0 p-1">
-            <View onClick={() => {
-              //open public
-            }} className="bg-cardx drop-shadow-xl items-center gap-1 flex-row rounded-r-[70px] p-1 rounded-l-[70px]">
-              <Avatar size={40} user={community?.owner as any}/>
-              <Text className="text-card-lighter-2 text-xs">@{community?.owner?.username}</Text>
-
+            <View
+              onClick={() => {
+                //open public
+              }}
+              className="bg-cardx drop-shadow-xl items-center gap-1 flex-row rounded-r-[70px] p-1 rounded-l-[70px]"
+            >
+              <Avatar size={40} user={community.owner ?? undefined} />
+              <Text className="text-card-lighter-2 text-xs">
+                @{community?.owner?.username}
+              </Text>
             </View>
           </View>
         </View>

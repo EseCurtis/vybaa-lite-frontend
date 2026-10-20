@@ -6,6 +6,7 @@ import { ContentSafetySheet } from '@/components/custom/community/content-safety
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Avatar } from '@/components/user/avatar.component'
 import { usePublicProfile } from '@/hooks/use-public-profile.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
@@ -31,20 +32,6 @@ function getPublicProfileDisplayName(profile: {
     profile.email ||
     'User'
   )
-}
-
-function getPublicProfileInitials(profile: {
-  firstName: string | null
-  lastName: string | null
-  username: string | null
-}): string {
-  const initials =
-    [profile.firstName?.[0], profile.lastName?.[0]]
-      .filter(Boolean)
-      .join('')
-      .toUpperCase() || profile.username?.[0]?.toUpperCase()
-
-  return initials || 'U'
 }
 
 interface PublicProfileViewProps {
@@ -107,7 +94,6 @@ export function PublicProfileView({
   }
 
   const displayName = getPublicProfileDisplayName(profile)
-  const initials = getPublicProfileInitials(profile)
 
   return (
     <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
@@ -117,19 +103,7 @@ export function PublicProfileView({
         <View className="px-mg pb-20 pt-3 space-y-5">
           <View className="rounded-[28px] bg-card-light/25 p-5">
             <View className="flex-row items-center gap-4">
-              <View className="w-20 h-20 rounded-full bg-card-light/60 overflow-hidden items-center justify-center">
-                {profile.avatarUrl ? (
-                  <img
-                    src={profile.avatarUrl}
-                    alt={displayName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Text className="text-white text-2xl font-bbh font-bold">
-                    {initials}
-                  </Text>
-                )}
-              </View>
+              <Avatar user={profile} size={80} />
 
               <View className="flex-1 min-w-0">
                 <Text className="text-white text-2xl font-bbh font-bold">

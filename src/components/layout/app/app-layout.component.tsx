@@ -1,7 +1,8 @@
-import { TabBar } from '@/components/layout/app/tab-bar.component'
-import { AppWalkthrough } from '@/components/custom/onboarding/app-walkthrough.component'
-import { StartupHandoff } from '@/components/common/startup-handoff.component'
+import { ConnectionNotice } from '@/components/common/connection-notice.component'
 import { QueryFeedback } from '@/components/common/query-feedback.component'
+import { StartupHandoff } from '@/components/common/startup-handoff.component'
+import { AppWalkthrough } from '@/components/custom/onboarding/app-walkthrough.component'
+import { TabBar } from '@/components/layout/app/tab-bar.component'
 import { useAuth } from '@/providers/auth.provider'
 import { IS_WEB } from '@/shared/constants.shared'
 import { Outlet, useLocation } from '@tanstack/react-router'
@@ -29,21 +30,35 @@ export function AppLayout() {
     </View>
   )
 
-  if (!stale && !isAuthenticated && error && localStorage.getItem('authToken') && localStorage.getItem('refreshToken')) {
-    return <>
-      <StartupHandoff />
-      <View className="min-h-dvh items-center justify-center bg-cardd px-6">
-        <div className="w-full max-w-sm">
-          <p className="font-display text-xl font-bold text-white">Couldn't restore your session</p>
-          <QueryFeedback message="Check your connection. Your account hasn't been signed out." onRetry={() => void refreshSession()} />
-        </div>
-      </View>
-    </>
+  if (
+    !stale &&
+    !isAuthenticated &&
+    error &&
+    localStorage.getItem('authToken') &&
+    localStorage.getItem('refreshToken')
+  ) {
+    return (
+      <>
+        <StartupHandoff />
+        <View className="min-h-dvh [&_*]:!text-center !items-center !justify-center bg-cardd px-6">
+          <div className="w-full max-w-sm ">
+            <p className="font-display text-xl font-bold text-white">
+              Something went wrong.
+            </p>
+            <QueryFeedback
+              message="Check your connection."
+              onRetry={() => void refreshSession()}
+            />
+          </div>
+        </View>
+      </>
+    )
   }
 
   return (
     <>
       <StartupHandoff />
+      <ConnectionNotice />
       {IS_WEB ? (
         <View className="max-w-[400px] flex-1 mx-auto relative">
           {routeContent}

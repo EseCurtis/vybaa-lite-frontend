@@ -54,7 +54,7 @@ export function CommunityCard({
             className="rounded-3xl  z-10 absolute right-0 translate-x-[5px] -bottom-[5px] border-2 border-black"
             style={{ backgroundColor: bgColor }}
           >
-            <Avatar user={community?.owner as any} url={community?.owner?.avatarUrl ?? undefined} />
+            <Avatar user={community.owner} />
           </View>
         )}
 

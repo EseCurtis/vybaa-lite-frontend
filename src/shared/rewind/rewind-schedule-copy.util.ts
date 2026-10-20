@@ -2,6 +2,7 @@ import type { RewindRoutineOverview } from '@/shared/api/rewind.api'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 type PartnerScheduleCopy = {
+  flexible: string
   future: Array<(time: string, remaining: string) => string>
   open: string
   setup: string
@@ -11,6 +12,7 @@ type PartnerScheduleCopy = {
 
 const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
   ella: {
+    flexible: "Whenever you need a little space, I'm here. Let's Rewind 💛",
     future: [
       (time, remaining) =>
         `Hope you're ready for our Rewind ${time}. It's in ${remaining}, a little space just for you 💛`,
@@ -25,6 +27,7 @@ const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
     waiting: 'Your next little pause is on its way. No need to rush 💭',
   },
   lyra: {
+    flexible: 'No clock to beat. Rewind whenever you feel like it 🌙',
     future: [
       (time, remaining) =>
         `Rewind ${time}. That's in ${remaining}. No grand speech needed 🌙`,
@@ -39,6 +42,7 @@ const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
     waiting: "A little downtime until our next Rewind. You're good 🌙",
   },
   jake: {
+    flexible: "Ready when you are. Let's take an honest look at your day 🎯",
     future: [
       (time, remaining) =>
         `Rewind ${time}. ${remaining} to go. Show up for yourself 🎯`,
@@ -54,6 +58,7 @@ const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
     waiting: "We'll pick this up at the next Rewind. One thing at a time 🎯",
   },
   ariel: {
+    flexible: "You don't need an appointment for a little care. I'm here 🤍",
     future: [
       (time, remaining) =>
         `Little heads-up: our Rewind is ${time}, in ${remaining}. Leave yourself a minute, okay? 🤍`,
@@ -70,6 +75,7 @@ const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
       "We'll check in again soon. Be a little kind to yourself in the meantime 🤍",
   },
   tobi: {
+    flexible: 'Got gist? Oya, we can Rewind anytime 👀',
     future: [
       (time, remaining) =>
         `Oya, hope you're ready for Rewind ${time}. It's in ${remaining}. Small heads-up! 👀`,
@@ -85,6 +91,8 @@ const PARTNER_COPY: Record<RewindPersonaId, PartnerScheduleCopy> = {
     waiting: 'Next Rewind is loading. Go gather fresh gist in the meantime 👀',
   },
   neeja: {
+    flexible:
+      "Something on your mind? Let's connect the dots whenever you're ready 💭",
     future: [
       (time, remaining) =>
         `Our Rewind is ${time}, in ${remaining}. Notice what stays with you until then 💭`,
@@ -153,6 +161,12 @@ export function getRewindScheduleCopy({
     }
   if (!overview.routine)
     return { text: copy.setup, countdown: null, available: false }
+  if (overview.routine.frequency === 'FLEXIBLE')
+    return {
+      text: copy.flexible,
+      countdown: null,
+      available: overview.routine.enabled,
+    }
   const current = overview.currentSession
   const next = overview.nextSession
   const currentEndsAt = current?.windowEndsAt

@@ -10,7 +10,14 @@ export function formatSessionDate(value: string): string {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
-  }).format(new Date(value))
+  }).format(parseHistoryDate(value))
+}
+
+function parseHistoryDate(value: string): Date {
+  // A calendar day is not UTC midnight: parsing it as UTC can show the day before.
+  return new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T12:00:00` : value,
+  )
 }
 
 export function formatSessionTime(value: string): string {
@@ -21,11 +28,11 @@ export function formatSessionTime(value: string): string {
 }
 
 export function formatDayKey(value: string): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(value))
+  const date = parseHistoryDate(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 export function formatDayLabel(dayKey: string): string {
@@ -118,23 +125,22 @@ export function getCenteredTabScrollLeft({
 export function groupSessionsByDay(
   sessions: RewindSession[],
 ): RewindDayGroup[] {
-  const groups: RewindDayGroup[] = []
+  const groups = new Map<string, RewindSession[]>()
 
   for (const session of sessions) {
     const dayKey = getDayKey(session)
-    const existingGroup = groups.find((group) => group.dayKey === dayKey)
-
-    if (existingGroup) {
-      existingGroup.sessions.push(session)
-      continue
-    }
-
-    groups.push({
-      dayKey,
-      label: formatDayLabel(dayKey),
-      sessions: [session],
-    })
+    groups.set(dayKey, [...(groups.get(dayKey) ?? []), session])
   }
 
-  return groups
+  return [...groups.entries()]
+    .sort(([left], [right]) => right.localeCompare(left))
+    .map(([dayKey, daySessions]) => ({
+      dayKey,
+      label: formatDayLabel(dayKey),
+      sessions: [...daySessions].sort(
+        (left, right) =>
+          Date.parse(right.createdAt) - Date.parse(left.createdAt) ||
+          right.id.localeCompare(left.id),
+      ),
+    }))
 }

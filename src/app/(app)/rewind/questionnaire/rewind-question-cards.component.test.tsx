@@ -15,7 +15,9 @@ it('shows a visual preparation state without a question counter or introductory 
   expect(
     screen.queryByText('A little space to check in with yourself.'),
   ).toBeNull()
-  expect(screen.getByRole('status').querySelectorAll('span')).toHaveLength(6)
+  expect(
+    screen.getByRole('status').querySelectorAll('.vybaa-skeleton'),
+  ).toHaveLength(2)
 })
 
 it('shows progress only when there is an actual question', () => {

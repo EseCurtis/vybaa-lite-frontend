@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { ReactElement } from 'react'
 
+import { Skeleton } from '@/components/common/skeleton.component'
 import type { RewindQuestion } from '@/shared/api/rewind-questionnaire.api'
 import { colors } from '@/shared/colors.shared'
 
@@ -136,23 +137,8 @@ function PreparingRewindCard(): ReactElement {
         className="flex flex-col items-center gap-2"
         style={{ color: colors.warning[700] }}
       >
-        <span className="h-2 w-32 rounded-full bg-current" />
-        <span className="h-2 w-24 rounded-full bg-current" />
-        <div className="mt-3 flex gap-2">
-          {[0, 1, 2].map((dot) => (
-            <motion.span
-              key={dot}
-              className="size-2 rounded-full bg-current"
-              animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
-              transition={{
-                duration: 1.2,
-                repeat: Infinity,
-                delay: dot * 0.18,
-                ease: 'easeInOut',
-              }}
-            />
-          ))}
-        </div>
+        <Skeleton className="h-2 w-32" rounded="full" />
+        <Skeleton className="h-2 w-24" rounded="full" />
       </div>
     </div>
   )

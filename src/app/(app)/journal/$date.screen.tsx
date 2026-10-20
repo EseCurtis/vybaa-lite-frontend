@@ -1,9 +1,13 @@
+import { RiCheckLine, RiDeleteBin6Line } from '@remixicon/react'
+import { useNavigate } from '@tanstack/react-router'
+import { useEffect, useState } from 'react'
+import type { ReactElement } from 'react'
+
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TabHeader } from '@/components/common/tab-header.component'
-import { TextArea } from '@/components/common/textarea.component'
-import { MoodSelector } from '@/components/custom/journal/mood-selector.component'
+import { JournalComposer } from '@/components/custom/journal/journal-composer.component'
 import { Button } from '@/components/layout/button.component'
-import { Text } from '@/components/layout/text.component'
+import { Pressable } from '@/components/layout/pressables.component'
 import { View } from '@/components/layout/view.component'
 import {
   useCreateJournal,
@@ -19,12 +23,12 @@ import {
 } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 import { useToast } from '@/providers/toast.provider'
 import { getDailyPrompt } from '@/shared/data/journal-prompts'
-import { RiDeleteBin6Line, RiMicFill, RiSaveLine } from '@remixicon/react'
-import { useNavigate } from '@tanstack/react-router'
-import moment from 'moment'
-import { useEffect, useState } from 'react'
 
-export default function JournalEditorScreen({ date }: { date: string }) {
+export default function JournalEditorScreen({
+  date,
+}: {
+  date: string
+}): ReactElement {
   const navigate = useNavigate()
   const toast = useToast()
 
@@ -92,13 +96,6 @@ export default function JournalEditorScreen({ date }: { date: string }) {
     }
 
     try {
-      console.log('Saving journal...', {
-        hasJournal: !!journal,
-        content,
-        mood,
-        date,
-      })
-
       if (journal) {
         // Update existing
         await updateJournal({
@@ -117,7 +114,6 @@ export default function JournalEditorScreen({ date }: { date: string }) {
         })
       }
 
-      console.log('Journal saved successfully')
       navigate({ to: '/app/journal' })
     } catch (error) {
       console.error('Error saving journal:', error)
@@ -176,131 +172,59 @@ export default function JournalEditorScreen({ date }: { date: string }) {
   }
 
   return (
-    <View className="flex-1 bg-cardd">
+    <View className="relative min-h-0 flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader title={moment(date).format('MMM D, YYYY')}>
-          <View className="flex flex-row items-center gap-2">
-            {journal && (
-              <button
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className="p-3"
-              >
-                <RiDeleteBin6Line size={24} className="text-danger-400" />
-              </button>
-            )}
-          </View>
-        </TabHeader>
-
-        <View className="min-h-0 flex-1">
-          <View className="flex-1 px-4 pt-6 max-w-2xl mx-auto overflow-y-auto">
-            {isLoading ? (
-              <View className="flex-1 flex items-center justify-center">
-                <Text className="text-white/50 font-bbh">Loading...</Text>
-              </View>
-            ) : (
-              <View className="space-y-6">
-                {/* Daily Prompt */}
-                <View className="bg-gradient-to-r from-pink-500/10 to-rose-500/10 rounded-2xl p-4 ">
-                  <Text className="text-pink-200/70 flex justify-center text-center mx-auto text-sm font-bbh italic">
-                    "{prompt}"
-                  </Text>
-                </View>
-
-                {/* Mood Selector */}
-                <MoodSelector selected={mood} onSelect={setMood} />
-
-                {/* Journal Content */}
-                <View className="space-y-3">
-                  <View className="flex flex-row items-center justify-between">
-                    <Text className="text-white/70 text-sm font-bbh">
-                      Your thoughts
-                    </Text>
-                  </View>
-
-                  {isRecording && (
-                    <View className="rounded-2xl border border-danger-400/20 bg-danger-500/10 px-4 py-3">
-                      <View className="flex flex-row items-center gap-2">
-                        <RiMicFill size={16} className="text-danger-300" />
-                        <Text className="text-danger-100 text-sm font-bbh">
-                          Recording voice note... tap the mic again to stop.
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {voiceNote && (
-                    <View className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 space-y-3">
-                      <View className="flex flex-row items-center justify-between gap-3">
-                        <View>
-                          <Text className="text-white/90 text-sm font-bbh">
-                            Voice note preview
-                          </Text>
-                          <Text className="text-white/50 text-xs font-bbh">
-                            {Math.max(
-                              1,
-                              Math.round(voiceNote.durationMs / 1000),
-                            )}
-                            s{' • '}
-                            {voiceNote.mimeType}
-                          </Text>
-                        </View>
-
-                        <button
-                          onClick={discardVoiceNote}
-                          className="p-2 rounded-full bg-white/10 hover:bg-white/20"
-                        >
-                          <RiDeleteBin6Line
-                            size={16}
-                            className="text-white/70"
-                          />
-                        </button>
-                      </View>
-
-                      <audio
-                        controls
-                        src={voiceNote.audioUrl}
-                        className="w-full"
-                      />
-
-                      <Text className="text-white/45 text-xs font-bbh">
-                        This voice note stays local for now and is not saved
-                        with the journal entry yet.
-                      </Text>
-                    </View>
-                  )}
-
-                  <TextArea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Start writing... Let your thoughts flow freely."
-                    className="min-h-[300px] bg-cardx rounded-xl border-white/10 text-white/90 text-base"
-                    maxLength={5000}
-                  />
-
-                  <Text className="text-white/40 text-xs font-bbh text-right">
-                    {content.length} / 5000
-                  </Text>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {!isLoading ? (
-            <View className="shrink-0 border-t border-white/10 bg-cardd px-4 pb-4 pt-3">
-              <View className="mx-auto w-full max-w-2xl">
-                <Button
-                  label={journal ? 'Save changes' : 'Save journal'}
-                  leftIcon={<RiSaveLine size={18} />}
-                  onClick={handleSave}
-                  disabled={!hasChanges}
-                  loading={isCreating || isUpdating}
-                  fullWidth
-                />
-              </View>
-            </View>
+        <TabHeader title="Journal">
+          {journal ? (
+            <Pressable
+              type="button"
+              onPress={handleDelete}
+              disabled={isDeleting || isCreating || isUpdating}
+              accessibilityLabel="Delete journal entry"
+              className="size-11 items-center justify-center rounded-full bg-card-light-100 text-card-lighter-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+            >
+              <RiDeleteBin6Line size={20} aria-hidden="true" />
+            </Pressable>
           ) : null}
+        </TabHeader>
+        <View className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <JournalComposer
+            date={date}
+            prompt={prompt}
+            content={content}
+            mood={mood}
+            isLoading={isLoading}
+            disabled={isCreating || isUpdating || isDeleting}
+            onContentChange={setContent}
+            onMoodChange={setMood}
+            isRecording={isRecording}
+            isProcessingVoice={isProcessingVoice}
+            voiceNote={voiceNote}
+            onVoiceRecord={handleVoiceRecord}
+            onDiscardVoiceNote={discardVoiceNote}
+          />
         </View>
+        {!isLoading ? (
+          <View className="shrink-0 bg-cardd px-5 pt-3 pb-[max(16px,env(safe-area-inset-bottom))] sm:px-8">
+            <View className="mx-auto w-full max-w-2xl">
+              <Button
+                label={journal ? 'Save changes' : 'Save journal'}
+                rightIcon={
+                  <RiCheckLine
+                    size={20}
+                    className="text-black"
+                    aria-hidden="true"
+                  />
+                }
+                onClick={handleSave}
+                disabled={!hasChanges || isDeleting}
+                loading={isCreating || isUpdating}
+                fullWidth
+                buttonClassName="w-full"
+              />
+            </View>
+          </View>
+        ) : null}
       </NoiseComponent>
     </View>
   )

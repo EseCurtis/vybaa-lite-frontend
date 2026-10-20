@@ -401,6 +401,8 @@ export default function RewindScreen(): ReactElement {
   if (!overview?.routine) startLabel = 'Set my routine'
   else if (overview.currentSession?.status === 'IN_PROGRESS')
     startLabel = 'Continue my Rewind'
+  else if (overview.routine.frequency === 'FLEXIBLE')
+    startLabel = 'Request a Rewind'
 
   return (
     <View className="relative flex-1 overflow-hidden bg-cardd">

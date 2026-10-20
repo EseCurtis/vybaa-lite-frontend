@@ -152,6 +152,7 @@ export type RewindLiveTokenResponse = {
 }
 
 export type RewindRoutineFrequency =
+  | 'FLEXIBLE'
   | 'MORNINGS_AND_EVENINGS'
   | 'JUST_MORNINGS'
   | 'JUST_EVENINGS'
@@ -710,6 +711,7 @@ class RewindAPI {
     page: number = 1,
     limit: number = 10,
     filters?: RewindSessionsFilters,
+    signal?: AbortSignal,
   ): Promise<PaginatedRewindSessionsResponse> {
     const { data: res } = await http.get<PaginatedRewindSessionsResponse>(
       `${API_V1}/rewind/sessions`,
@@ -720,14 +722,16 @@ class RewindAPI {
           page,
           personaId: filters?.personaId,
         },
+        signal,
       },
     )
     return res
   }
 
-  async getRoutine(): Promise<RewindRoutineResponse> {
+  async getRoutine(signal?: AbortSignal): Promise<RewindRoutineResponse> {
     const { data: res } = await http.get<RewindRoutineResponse>(
       `${API_V1}/rewind/routine`,
+      { signal },
     )
     return res
   }
@@ -742,41 +746,47 @@ class RewindAPI {
     return res
   }
 
-  async getSession(sessionId: string): Promise<RewindSessionResponse> {
+  async getSession(
+    sessionId: string,
+    signal?: AbortSignal,
+  ): Promise<RewindSessionResponse> {
     const { data: res } = await http.get<RewindSessionResponse>(
       `${API_V1}/rewind/sessions/${sessionId}`,
+      { signal },
     )
     return res
   }
 
   async getInsights(
     range: RewindInsightsRange,
+    signal?: AbortSignal,
   ): Promise<RewindInsightsResponse> {
     const { data: res } = await http.get<RewindInsightsResponse>(
       `${API_V1}/rewind/insights`,
-      { params: { range } },
+      { params: { range }, signal },
     )
     return res
   }
 
-  async getHomeGreeting(): Promise<{
+  async getHomeGreeting(signal?: AbortSignal): Promise<{
     data: RewindHomeGreeting | null
     msg: string
   }> {
     const { data: res } = await http.get<{
       data: RewindHomeGreeting | null
       msg: string
-    }>(`${API_V1}/rewind/home-greeting`)
+    }>(`${API_V1}/rewind/home-greeting`, { signal })
     return res
   }
 
   async getObservations(
     cursor?: string,
     limit: number = 12,
+    signal?: AbortSignal,
   ): Promise<RewindObservationsResponse> {
     const { data: res } = await http.get<RewindObservationsResponse>(
       `${API_V1}/rewind/observations`,
-      { params: { cursor, limit } },
+      { params: { cursor, limit }, signal },
     )
     return res
   }
@@ -795,9 +805,10 @@ class RewindAPI {
     return res
   }
 
-  async getV2Chats(): Promise<RewindChatsResponse> {
+  async getV2Chats(signal?: AbortSignal): Promise<RewindChatsResponse> {
     const { data: res } = await http.get<RewindChatsResponse>(
       `${API_V2}/rewind/chats`,
+      { signal },
     )
     return res
   }
@@ -806,10 +817,11 @@ class RewindAPI {
     chatId: string,
     cursor?: string,
     limit: number = 30,
+    signal?: AbortSignal,
   ): Promise<RewindV2ChatMessagesResponse> {
     const { data: res } = await http.get<RewindV2ChatMessagesResponse>(
       `${API_V2}/rewind/chats/${chatId}/messages`,
-      { params: { cursor, limit } },
+      { params: { cursor, limit }, signal },
     )
     return res
   }

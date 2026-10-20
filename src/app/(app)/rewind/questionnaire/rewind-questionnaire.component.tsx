@@ -77,7 +77,7 @@ export function RewindQuestionnaireContent({
   return (
     <View
       data-walkthrough="rewind-questionnaire"
-      className="w-full mt-10 items-center gap-4 pb-7 pt-5"
+      className="mt-10 w-full min-w-0 shrink-0 items-center gap-4 pb-7 pt-5"
     >
       <RewindQuestionCards
         question={currentQuestion ?? null}
@@ -89,7 +89,7 @@ export function RewindQuestionnaireContent({
       {currentQuestion ? (
         <>
           <View
-            className="w-full max-w-[350px] flex-row flex-wrap justify-center gap-2 px-1"
+            className="w-full min-w-0 max-w-[350px] flex-row flex-wrap justify-center gap-2 px-1"
             role="group"
             aria-label="Choose your answer"
           >
@@ -106,7 +106,7 @@ export function RewindQuestionnaireContent({
                   })
                 }
                 className={cn(
-                  'min-h-11 items-center justify-center rounded-full px-4 py-3 text-center',
+                  'min-h-11 min-w-0 max-w-full items-center justify-center rounded-full px-4 py-3 text-center',
                   selected?.text === option && !selected.custom
                     ? 'bg-white'
                     : 'bg-card-light-50',
@@ -114,7 +114,7 @@ export function RewindQuestionnaireContent({
               >
                 <Text
                   className={cn(
-                    'font-bbh text-sm font-semibold',
+                    'min-w-0 max-w-full whitespace-normal font-bbh text-sm font-semibold [overflow-wrap:anywhere]',
                     selected?.text === option && !selected.custom
                       ? 'text-black'
                       : 'text-card-lighter-2',
@@ -129,19 +129,20 @@ export function RewindQuestionnaireContent({
               disabled={isBusy}
               onPress={openCustomAnswer}
               className={cn(
-                'min-h-11 max-w-full flex-row items-center justify-center gap-2 rounded-full px-4 py-3',
+                'min-h-11 min-w-0 max-w-full flex-row items-center justify-center gap-2 rounded-full px-4 py-3',
                 selected?.custom ? 'bg-white' : 'bg-card-light-50',
               )}
             >
               <RiEditLine
                 size={16}
-                className={
-                  selected?.custom ? 'text-black' : 'text-card-lighter-2'
-                }
+                className={cn(
+                  'shrink-0',
+                  selected?.custom ? 'text-black' : 'text-card-lighter-2',
+                )}
               />
               <Text
                 className={cn(
-                  'line-clamp-2 font-bbh text-sm font-semibold',
+                  'min-w-0 line-clamp-2 whitespace-normal font-bbh text-sm font-semibold [overflow-wrap:anywhere]',
                   selected?.custom ? 'text-black' : 'text-card-lighter-2',
                 )}
               >
@@ -191,7 +192,7 @@ export function RewindQuestionnaireContent({
       {error ? (
         <Text
           role="alert"
-          className="max-w-[320px] text-center font-bbh text-sm text-card-lighter-2"
+          className="max-w-[320px] !text-center font-bbh text-sm text-card-lighter-2"
         >
           {getQuestionnaireError(error)}
         </Text>

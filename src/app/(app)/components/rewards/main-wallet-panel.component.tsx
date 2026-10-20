@@ -26,6 +26,15 @@ export function MainWalletPanel({
   onFundWithPolar,
   wallet,
 }: MainWalletPanelProps) {
+  if (isLoadingWallet && !wallet) {
+    return (
+      <View className="gap-4 py-10">
+        <Skeleton className="h-32 w-full" rounded="xl" />
+        <Skeleton className="h-20 w-full" rounded="xl" />
+      </View>
+    )
+  }
+
   if (!wallet?.realWalletEnabled) {
     return (
       <View className="rounded-2xl bg-card-light/10 p-6">
@@ -34,15 +43,6 @@ export function MainWalletPanel({
           title="Main Wallet - Coming soon"
           description="We’ll roll this out soon."
         />
-      </View>
-    )
-  }
-
-  if (isLoadingWallet) {
-    return (
-      <View className="gap-4 py-10">
-        <Skeleton className="h-32 w-full" rounded="xl" />
-        <Skeleton className="h-20 w-full" rounded="xl" />
       </View>
     )
   }

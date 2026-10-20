@@ -62,7 +62,7 @@ export default function RewindSessionDetailScreen({
                 <Skeleton className="h-28 w-full" rounded="xl" />
                 <Skeleton className="h-24 w-full" rounded="xl" />
               </View>
-            ) : isError ? (
+            ) : isError && !session ? (
               <View
                 className="gap-4 rounded-[24px] px-4 py-5"
                 style={{ backgroundColor: colors['card-light-50'] }}

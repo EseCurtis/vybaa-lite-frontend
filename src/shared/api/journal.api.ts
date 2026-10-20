@@ -2,9 +2,21 @@ import { http } from '@/shared/api/http'
 import type {
   CreateJournalRequest,
   JournalResponse,
-  JournalsResponse,
+  Journal,
   UpdateJournalRequest,
 } from '@/shared/types/auth.types'
+
+export interface JournalPageResponse {
+  msg: string
+  data: Journal[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasMore: boolean
+  }
+}
 
 class JournalAPI {
   private base = '/api/v1/journals'
@@ -15,7 +27,9 @@ class JournalAPI {
   }
 
   async getJournalByDate(date: string): Promise<JournalResponse> {
-    const { data } = await http.get<JournalResponse>(`${this.base}/date/${date}`)
+    const { data } = await http.get<JournalResponse>(
+      `${this.base}/date/${date}`,
+    )
     return data
   }
 
@@ -26,14 +40,22 @@ class JournalAPI {
     return data
   }
 
-  async getJournalsPage(pageParam, limit) {
-     const { data } = await http.get<any>(`${this.base}/date`)
-    return data
+  async getJournalsPage(
+    page: number,
+    limit: number,
+    signal?: AbortSignal,
+  ): Promise<JournalPageResponse> {
+    return this.getJournals(page, limit, signal)
   }
 
-  async getJournals(page: number = 1, limit: number = 20): Promise<JournalsResponse> {
-    const { data } = await http.get<JournalsResponse>(this.base, {
+  async getJournals(
+    page: number = 1,
+    limit: number = 20,
+    signal?: AbortSignal,
+  ): Promise<JournalPageResponse> {
+    const { data } = await http.get<JournalPageResponse>(this.base, {
       params: { page, limit },
+      signal,
     })
     return data
   }
@@ -43,13 +65,21 @@ class JournalAPI {
     return data
   }
 
-  async updateJournal(journalId: string, payload: UpdateJournalRequest): Promise<{ msg: string }> {
-    const { data } = await http.put<{ msg: string }>(`${this.base}/${journalId}`, payload)
+  async updateJournal(
+    journalId: string,
+    payload: UpdateJournalRequest,
+  ): Promise<{ msg: string }> {
+    const { data } = await http.put<{ msg: string }>(
+      `${this.base}/${journalId}`,
+      payload,
+    )
     return data
   }
 
   async deleteJournal(journalId: string): Promise<{ msg: string }> {
-    const { data } = await http.delete<{ msg: string }>(`${this.base}/${journalId}`)
+    const { data } = await http.delete<{ msg: string }>(
+      `${this.base}/${journalId}`,
+    )
     return data
   }
 
@@ -91,4 +121,3 @@ class JournalAPI {
 }
 
 export const journalAPI = new JournalAPI()
-

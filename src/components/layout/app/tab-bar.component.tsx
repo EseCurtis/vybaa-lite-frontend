@@ -102,7 +102,7 @@ export const TabBar = memo(({ className }: { className?: string }) => {
         {
           id: 'profile',
           route: '/app/profile',
-          icon: user?.avatarUrl ? () => <Avatar user={user} /> : Icons.User,
+          icon: () => <Avatar user={user ?? undefined} size={27} />,
           label: 'Me',
           isSpecial: false,
           badge: null,

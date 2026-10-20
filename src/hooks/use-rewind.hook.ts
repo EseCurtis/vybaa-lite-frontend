@@ -29,13 +29,14 @@ export function usePaginatedRewindSessions(
   return useInfiniteQuery({
     queryKey: rewindQueryKeys.paginatedSessions(page, limit, filters),
     initialPageParam: page,
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam, signal }) => {
       const currentPage =
         typeof pageParam === 'number' && pageParam > 0 ? pageParam : page
       const response = await rewindAPI.getPaginatedSessions(
         currentPage,
         limit,
         filters,
+        signal,
       )
       const {
         filters: responseFilters,
@@ -79,8 +80,8 @@ export function usePaginatedRewindSessions(
 export function useRewindSession(sessionId: string) {
   return useQuery({
     enabled: Boolean(sessionId),
-    queryFn: async () => {
-      const response = await rewindAPI.getSession(sessionId)
+    queryFn: async ({ signal }) => {
+      const response = await rewindAPI.getSession(sessionId, signal)
       return response.data
     },
     queryKey: rewindQueryKeys.session(sessionId),
@@ -93,8 +94,8 @@ export function useRewindSession(sessionId: string) {
 export function useRewindInsights(range: RewindInsightsRange) {
   return useQuery({
     queryKey: rewindQueryKeys.insights(range),
-    queryFn: async () => {
-      const response = await rewindAPI.getInsights(range)
+    queryFn: async ({ signal }) => {
+      const response = await rewindAPI.getInsights(range, signal)
       return response.data
     },
     staleTime: 1000 * 60,
@@ -103,8 +104,8 @@ export function useRewindInsights(range: RewindInsightsRange) {
 
 export function useRewindHomeGreeting(personaId?: RewindPersonaId | null) {
   return useQuery({
-    queryFn: async () => {
-      const response = await rewindAPI.getHomeGreeting()
+    queryFn: async ({ signal }) => {
+      const response = await rewindAPI.getHomeGreeting(signal)
       return response.data
     },
     queryKey: [...rewindQueryKeys.homeGreeting(), personaId ?? 'unselected'],
@@ -124,10 +125,12 @@ export function useRewindObservations(limit: number = 12) {
     initialPageParam: '',
     queryFn: async ({
       pageParam,
+      signal,
     }): Promise<RewindObservationsResponse['data']> => {
       const response = await rewindAPI.getObservations(
         pageParam || undefined,
         limit,
+        signal,
       )
       return response.data
     },
@@ -158,8 +161,8 @@ export function useDismissRewindObservation() {
 export function useRewindChats(enabled: boolean = true) {
   return useQuery({
     enabled,
-    queryFn: async () => {
-      const response = await rewindAPI.getV2Chats()
+    queryFn: async ({ signal }) => {
+      const response = await rewindAPI.getV2Chats(signal)
       return response.data.chats
     },
     queryKey: rewindQueryKeys.chats(),
@@ -180,11 +183,13 @@ export function useRewindChatMessages(chatId: string, limit: number = 30) {
     initialPageParam: '',
     queryFn: async ({
       pageParam,
+      signal,
     }): Promise<RewindV2ChatMessagesResponse['data']> => {
       const response = await rewindAPI.getV2ChatMessages(
         chatId,
         pageParam || undefined,
         limit,
+        signal,
       )
       return response.data
     },
@@ -400,8 +405,8 @@ function isInfiniteMessageData(value: unknown): value is InfiniteMessageData {
 export function useRewindRoutine() {
   return useQuery({
     queryKey: rewindQueryKeys.routine(),
-    queryFn: async () => {
-      const response = await rewindAPI.getRoutine()
+    queryFn: async ({ signal }) => {
+      const response = await rewindAPI.getRoutine(signal)
       return response.data
     },
     staleTime: 1000 * 30,

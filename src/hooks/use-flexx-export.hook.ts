@@ -1,7 +1,9 @@
-import { useToast } from '@/providers/toast.provider'
-import { shareImageBlob } from '@/shared/utils/filesystem.util'
 import html2canvas from 'html2canvas'
 import { useCallback } from 'react'
+
+import { useToast } from '@/providers/toast.provider'
+import { freezeFlexxForExport } from '@/shared/flexx/flexx-motion.util'
+import { shareImageBlob } from '@/shared/utils/filesystem.util'
 
 /**
  * Custom hook to export Flexx cards as images using html2canvas
@@ -26,6 +28,13 @@ export function useFlexxExport() {
         const targetHeight = 1920
         const scale = targetWidth / rect.width
 
+        // Tailwind makes images block elements, including html2canvas's hidden
+        // one-pixel font probe. Restore its inline baseline without changing UI.
+        const fontProbeStyle = document.createElement('style')
+        fontProbeStyle.textContent =
+          'body > div[style*="visibility: hidden"] > img[width="1"][height="1"] { display: inline-block; }'
+        document.head.appendChild(fontProbeStyle)
+
         // Use html2canvas to capture the actual styled DOM
         const canvas = await html2canvas(element, {
           scale: scale, // Calculate scale to match target dimensions
@@ -39,7 +48,8 @@ export function useFlexxExport() {
           y: 0,
           scrollX: 0,
           scrollY: 0,
-        })
+          onclone: freezeFlexxForExport,
+        }).finally(() => fontProbeStyle.remove())
 
         // Create a new canvas with exact dimensions and black background
         const finalCanvas = document.createElement('canvas')

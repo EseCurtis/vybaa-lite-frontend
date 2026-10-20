@@ -1,5 +1,9 @@
 import { NoiseComponent } from '@/components/common/noise.component'
-import { SkeletonCard } from '@/components/common/skeleton.component'
+import {
+  SkeletonCard,
+  SkeletonStatsCard,
+} from '@/components/common/skeleton.component'
+import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
@@ -37,16 +41,15 @@ export default function JournalListScreen() {
     isLoading,
     error,
     isFetching,
+    refetch,
+    isPlaceholderData,
   } = usePaginatedJournals(currentPage, JOURNALS_PER_PAGE)
 
-  const { data: stats } = useJournalStats()
+  const statsQuery = useJournalStats()
+  const stats = statsQuery.data
 
-  //@ts-ignore
-  const journals = journalsData?.data || []
-  //@ts-ignore
+  const journals = journalsData?.data ?? []
   const pagination = journalsData?.pagination
-
-  console.log(journals)
 
   const handleCreateToday = () => {
     const today = moment().format('YYYY-MM-DD')
@@ -88,6 +91,24 @@ export default function JournalListScreen() {
 
         <View className="flex-1 px-4 pb-[120px] pt-6 max-w-4xl mx-auto overflow-y-auto">
           {/* Stats */}
+          {statsQuery.isPending && !stats ? (
+            <div
+              role="status"
+              aria-label="Loading journal stats"
+              className="mb-6 grid min-h-[100px] grid-cols-3 gap-1"
+            >
+              {[0, 1, 2].map((item) => (
+                <SkeletonStatsCard key={item} />
+              ))}
+            </div>
+          ) : null}
+          {statsQuery.isError && !stats ? (
+            <QueryFeedback
+              message="Journal stats couldn't load."
+              onRetry={() => void statsQuery.refetch()}
+              retrying={statsQuery.isFetching}
+            />
+          ) : null}
           {stats && (
             <View className="grid grid-cols-3 gap-1 mb-6">
               <View className="bg-gradient-to-br from-pink-500 to-rose-500 rounded-lg p-4 flex flex-col">
@@ -128,23 +149,23 @@ export default function JournalListScreen() {
               </Text>
               {pagination && pagination.totalPages > 1 && (
                 <Text className="text-white/50 text-sm font-bbh">
-                  Page {currentPage} of {pagination.totalPages}
+                  Page {pagination.page} of {pagination.totalPages}
                 </Text>
               )}
             </View>
 
             {isLoading && !journalsData ? (
               <View className="space-y-3">
-                {[...Array(JOURNALS_PER_PAGE)].map((_, i) => (
+                {[0, 1, 2, 3].map((i) => (
                   <SkeletonCard key={i} />
                 ))}
               </View>
-            ) : error ? (
-              <View className="flex items-center justify-center py-12">
-                <Text className="text-white/50 font-bbh text-center">
-                  Failed to load journals
-                </Text>
-              </View>
+            ) : error && !journalsData ? (
+              <QueryFeedback
+                message="Your journals couldn't load."
+                onRetry={() => void refetch()}
+                retrying={isFetching}
+              />
             ) : journals.length === 0 ? (
               <View className="flex items-center justify-center py-12">
                 <Icon
@@ -168,8 +189,15 @@ export default function JournalListScreen() {
               </View>
             ) : (
               <>
-                <View key={currentPage} className="space-y-3">
-                  {journals.map((journal: any, index: number) => (
+                {error ? (
+                  <QueryFeedback
+                    message="Showing saved entries. Refresh couldn't complete."
+                    onRetry={() => void refetch()}
+                    retrying={isFetching}
+                  />
+                ) : null}
+                <View className="space-y-3" aria-busy={isFetching}>
+                  {journals.map((journal, index) => (
                     <JournalCard
                       key={journal.id}
                       journal={journal}
@@ -199,7 +227,9 @@ export default function JournalListScreen() {
                       rightIcon={<RiArrowRightSLine size={18} />}
                       variant="secondary"
                       onClick={() => setCurrentPage((p) => p + 1)}
-                      disabled={!pagination.hasMore || isFetching}
+                      disabled={
+                        !pagination.hasMore || isFetching || isPlaceholderData
+                      }
                       className="bg-white/5 hover:bg-white/10"
                     />
                   </View>

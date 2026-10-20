@@ -1,40 +1,34 @@
-import {
-  RiCloseLine,
-  RiRefreshLine,
-  RiUserVoiceLine
-} from '@remixicon/react'
+import { RiCloseLine, RiRefreshLine, RiUserVoiceLine } from '@remixicon/react'
 import type { ReactElement } from 'react'
 
+import { Skeleton } from '@/components/common/skeleton.component'
 import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { colors } from '@/shared/colors.shared'
-
 import { formatRelativeDayLabel } from './rewind-history.utils'
 
 export function RewindSkeletonRow(): ReactElement {
   return (
     <View
-      className="gap-3 rounded-[22px] px-4 py-4"
-      style={{ backgroundColor: colors['card-light-50'] }}
+      aria-hidden="true"
+      className="flex-row items-start gap-3 px-1 py-3 sm:gap-4"
     >
-      <View
-        className="h-3 w-28 animate-pulse rounded-full"
-        style={{ backgroundColor: colors['card-lighter'] }}
-      />
-      <View
-        className="h-5 w-44 max-w-full animate-pulse rounded-full"
-        style={{ backgroundColor: colors['card-lighter'] }}
-      />
-      <View
-        className="h-3 w-full animate-pulse rounded-full"
-        style={{ backgroundColor: colors.card[300] }}
-      />
-      <View
-        className="h-3 w-2/3 animate-pulse rounded-full"
-        style={{ backgroundColor: colors.card[300] }}
-      />
+      <View className="relative size-16 shrink-0">
+        <Skeleton width={48} height={48} rounded="full" />
+        <Skeleton
+          width={40}
+          height={40}
+          rounded="full"
+          className="absolute bottom-0 right-0"
+        />
+      </View>
+      <View className="min-w-0 flex-1 gap-2 py-1">
+        <Skeleton width="80%" height={16} />
+        <Skeleton width={110} height={12} />
+        <Skeleton width="95%" height={14} className="mt-2" />
+      </View>
     </View>
   )
 }
@@ -67,7 +61,6 @@ export function RewindFilterPill({
         opacity: disabled ? 0.42 : 1,
       }}
     >
-
       <Text
         className="font-bbh text-xs font-bold  tracking-[0.1em]"
         style={{ color: active ? colors.black : colors.white }}
@@ -176,22 +169,20 @@ export function RewindDaySection({
   total: number
 }): ReactElement {
   return (
-    <View className="gap-2">
-      <View className="flex-row items-end justify-between px-1">
+    <View className="gap-2 border-b pb-3 border-card-lighter/20">
+      <View
+        className="flex-row items-end justify-between px-1"
+        role="group"
+        aria-label={`${label}, ${formatRelativeDayLabel(total)}`}
+      >
         <Text
           className="font-bbh text-sm font-bold"
           style={{ color: colors.white }}
         >
           {label}
         </Text>
-        <Text
-          className="font-bbh  text-[11px] uppercase tracking-[0.14em]"
-          style={{ color: colors['card-lighter-3'] }}
-        >
-          {formatRelativeDayLabel(total)}
-        </Text>
       </View>
-      <View className="gap-2 ">{children}</View>
+      <View className="gap-1">{children}</View>
     </View>
   )
 }

@@ -7,7 +7,12 @@ interface SkeletonProps {
   rounded?: 'none' | 'sm' | 'md' | 'lg' | 'xl' | 'full'
 }
 
-export function Skeleton({ className = '', width, height, rounded = 'md' }: SkeletonProps) {
+export function Skeleton({
+  className = '',
+  width,
+  height,
+  rounded = 'md',
+}: SkeletonProps) {
   const roundedClasses = {
     none: '',
     sm: 'rounded-sm',
@@ -28,7 +33,10 @@ export function Skeleton({ className = '', width, height, rounded = 'md' }: Skel
 
 export function SkeletonCard() {
   return (
-    <View aria-hidden="true" className="bg-card-light-50 min-h-[160px] rounded-xl p-5">
+    <View
+      aria-hidden="true"
+      className="bg-card-light-50 min-h-[160px] rounded-xl p-5"
+    >
       <View className="flex flex-row items-start justify-between gap-4">
         <View className="flex-1 space-y-3">
           <Skeleton width="40%" height={12} rounded="sm" />
@@ -43,7 +51,10 @@ export function SkeletonCard() {
 
 export function SkeletonStatsCard() {
   return (
-    <View aria-hidden="true" className="bg-card-light-50 min-h-[100px] rounded-lg p-4">
+    <View
+      aria-hidden="true"
+      className="bg-card-light-50 min-h-[100px] rounded-lg p-4"
+    >
       <Skeleton width="60%" height={12} rounded="sm" className="mb-2" />
       <Skeleton width="40%" height={32} />
     </View>

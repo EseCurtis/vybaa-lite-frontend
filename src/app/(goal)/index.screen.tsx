@@ -329,14 +329,27 @@ function GoalFeed({
       </View>
     )
   }
-  if (query.isError && !query.data) return <QueryFeedback message="Your goals couldn't load." onRetry={() => void query.refetch()} retrying={query.isFetching} />
+  if (query.isError && !query.data)
+    return (
+      <QueryFeedback
+        message="Your goals couldn't load."
+        onRetry={() => void query.refetch()}
+        retrying={query.isFetching}
+      />
+    )
   if (!goals.length) {
     const emptyState = emptyStateForFilter(filter)
     return <GoalEmptyState {...emptyState} onAction={onCreate} />
   }
   return (
     <View>
-      {query.isError ? <QueryFeedback message="Showing your saved goals. Refresh couldn't complete." onRetry={() => void query.refetch()} retrying={query.isFetching} /> : null}
+      {query.isError ? (
+        <QueryFeedback
+          message="Showing your saved goals. Refresh couldn't complete."
+          onRetry={() => void query.refetch()}
+          retrying={query.isFetching}
+        />
+      ) : null}
       {goals.map((goal) => (
         <GoalCard goal={goal} key={goal.id} onOpen={onOpen} />
       ))}

@@ -8,11 +8,15 @@
 }
 
 @keyframes vybaa-skeleton-pulse {
-  50% { background-color: #292d3d; }
+  50% {
+    background-color: #292d3d;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .vybaa-skeleton { animation: none; }
+  .vybaa-skeleton {
+    animation: none;
+  }
 }
 
 .touchable-opacity {

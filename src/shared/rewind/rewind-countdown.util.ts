@@ -6,7 +6,7 @@ import { formatRewindCountdown } from './rewind-schedule-copy.util'
 
 export type RewindCountdownState =
   | { status: 'idle'; boundary: null }
-  | { status: 'ready'; boundary: number; resume: boolean }
+  | { status: 'ready'; boundary: number | null; resume: boolean }
   | {
       status: 'waiting'
       boundary: number
@@ -26,6 +26,13 @@ export function getRewindCountdownState(
   now: number,
 ): RewindCountdownState {
   if (!overview?.routine?.enabled) return { status: 'idle', boundary: null }
+  if (overview.routine.frequency === 'FLEXIBLE') {
+    return {
+      status: 'ready',
+      boundary: null,
+      resume: overview.currentSession?.status === 'IN_PROGRESS',
+    }
+  }
   const open = [overview.currentSession, overview.nextSession].find((session) =>
     isOpen(session, now),
   )

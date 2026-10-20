@@ -2,6 +2,7 @@ import { ContentSafetySheet } from '@/components/custom/community/content-safety
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { Avatar } from '@/components/user/avatar.component'
 import type { CommunityActivity } from '@/shared/api/community.api'
 import { seededColor } from '@/shared/utils/helpers.util'
 import { useAuth } from '@/providers/auth.provider'
@@ -132,21 +133,7 @@ export function ActivityItem({
     <View className="mb-1 rounded-2xl">
       <View className="flex-row items-start gap-3 mb-3">
         <View className="">
-          <View className="w-12 h-12 rounded-full bg-card-lighter flex items-center justify-center shrink-0">
-            {activity.user.avatarUrl ? (
-              <img
-                src={activity.user.avatarUrl}
-                alt={activity.user.username || 'User'}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <Text className="text-card-lighter-3/60 text-sm font-bold font-bbh">
-                {(activity.user.username ||
-                  activity.user.firstName ||
-                  'U')[0].toUpperCase()}
-              </Text>
-            )}
-          </View>
+          <Avatar user={activity.user} size={48} />
           {!isLastItem && (
             <View className="h-7 scale-y-[1.7] border-l border-dashed mx-auto mt-4 -translate-x-0.5 border-card-lighter-3/30 "></View>
           )}

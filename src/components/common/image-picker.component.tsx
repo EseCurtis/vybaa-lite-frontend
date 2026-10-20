@@ -1,5 +1,7 @@
 import { Icons } from '@/components/layout/icon.component'
 import { Text } from '@/components/layout/text.component'
+import { Avatar } from '@/components/user/avatar.component'
+import type { AvatarUser } from '@/components/user/avatar.component'
 import { useToast } from '@/providers/toast.provider'
 import { IS_IOS } from '@/shared/constants.shared'
 import { cn } from '@/shared/utils/helpers.util'
@@ -18,6 +20,7 @@ interface ImagePickerProps {
   size?: 'sm' | 'md' | 'lg' | 'xl'
   className?: string
   initials?: string
+  user?: AvatarUser
 }
 
 export function ImagePicker({
@@ -26,6 +29,7 @@ export function ImagePicker({
   size = 'lg',
   className,
   initials = 'U',
+  user,
 }: ImagePickerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
@@ -38,6 +42,7 @@ export function ImagePicker({
     lg: 'w-24 h-24 text-3xl',
     xl: 'w-32 h-32 text-4xl',
   }
+  const avatarSizes = { sm: 64, md: 80, lg: 96, xl: 128 }
 
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -169,15 +174,23 @@ export function ImagePicker({
               sizeClasses[size],
             )}
           >
-            {displayImage ? (
+            {user ? (
+              <Avatar
+                user={user}
+                previewUrl={displayImage}
+                size={avatarSizes[size]}
+              />
+            ) : null}
+            {!user && displayImage ? (
               <img
                 src={displayImage}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />
-            ) : (
+            ) : null}
+            {!user && !displayImage ? (
               <Text className="text-white font-bbh">{initials}</Text>
-            )}
+            ) : null}
 
             {/* Overlay on hover */}
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">

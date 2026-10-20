@@ -14,7 +14,10 @@ import { useAuth } from '@/providers/auth.provider'
 export function Home2Screen() {
   const { user } = useAuth()
 
-  if (!user) return <AppLoadingState message="Getting your home ready..." layout="home" />
+  if (!user)
+    return (
+      <AppLoadingState message="Getting your home ready..." layout="home" />
+    )
 
   const userName =
     [user.firstName, user.lastName].filter(Boolean).join(' ') ||

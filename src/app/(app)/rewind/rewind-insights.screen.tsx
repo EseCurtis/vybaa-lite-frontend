@@ -108,14 +108,22 @@ export default function RewindInsightsScreen(): ReactElement {
               </View>
               <Pressable
                 accessibilityLabel="Open saved Rewind reflections"
-                className="min-h-11 shrink-0 rounded-full w-full flex-row items-center gap-2  bg-card-light px-3"
+                className="min-h-11 shrink-0 border-t-card-light w-full flex-row items-center gap-2 px-2 border-t"
                 onPress={() => navigate({ to: '/app/rewind-history-sessions' })}
               >
-                <RiBookOpenLine size={17} className="text-white" />
-                <Text className="font-bbh mx-auto text-xs font-bold text-white">
-                  See Reflections and history
-                </Text>
-                <RiArrowRightLine size={15} className="text-card-lighter-2 ml-auto" />
+                <View className="flex-row gap-2">
+                  <RiBookOpenLine size={17} className="text-white" />
+                  <Text className="font-bbh mx-auto text-xs font-bold text-white">
+                    See Reflections and history
+                  </Text>
+                </View>
+
+                <View className=" bg-card-light rounded-full  p-1 ml-auto">
+                  <RiArrowRightLine
+                    size={15}
+                    className="text-card-lighter-2 "
+                  />
+                </View>
               </Pressable>
             </View>
 

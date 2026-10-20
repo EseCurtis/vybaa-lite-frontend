@@ -31,6 +31,49 @@ const overview = {
   },
 } satisfies RewindRoutineOverview
 
+it('Flexible is ready at any hour without a fake countdown or expiry', () => {
+  const routine = {
+    ...overview.routine,
+    frequency: 'FLEXIBLE',
+    times: [],
+  } as const
+  const flexible: RewindRoutineOverview = {
+    ...overview,
+    routine: { ...routine, times: [] },
+    nextSession: null,
+  }
+  for (const time of [target, target + 86_400_000, target - 86_400_000]) {
+    expect(getRewindCountdownState(flexible, time)).toEqual({
+      status: 'ready',
+      boundary: null,
+      resume: false,
+    })
+  }
+  expect(
+    getRewindCountdownState(
+      {
+        ...flexible,
+        currentSession: {
+          id: 'active',
+          status: 'IN_PROGRESS',
+          scheduledFor: null,
+          windowEndsAt: null,
+        },
+      },
+      target,
+    ),
+  ).toEqual({ status: 'ready', boundary: null, resume: true })
+  expect(
+    getRewindCountdownState(
+      {
+        ...flexible,
+        routine: { ...routine, times: [], enabled: false },
+      },
+      target,
+    ),
+  ).toEqual({ status: 'idle', boundary: null })
+})
+
 it('ticks the actual countdown without drifting', () => {
   expect(getRewindCountdownState(overview, target - 12 * 3_600_000)).toEqual({
     status: 'waiting',

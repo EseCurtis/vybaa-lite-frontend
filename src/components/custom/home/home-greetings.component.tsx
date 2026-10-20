@@ -79,8 +79,13 @@ export function HomeGreetings({
 }): ReactElement {
   const navigate = useNavigate()
   const bottomSheet = useBottomSheet()
-  const chatsQuery = useRewindChats()
   const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
+  const matchingGreeting =
+    contextualGreetingQuery.data?.personaId === rewindPersona
+  const chatsQuery = useRewindChats(
+    contextualGreetingQuery.isFetched &&
+      (!matchingGreeting || !contextualGreetingQuery.data?.chatId),
+  )
   const firstName = userName.trim().split(/\s+/)[0] ?? 'friend'
   const genericGreetings = randomGreetings(firstName)
   const contextualGreeting = contextualGreetingQuery.data
@@ -100,7 +105,7 @@ export function HomeGreetings({
       ? contextualGreeting.message
       : null
   const greetingTitle = contextualMessage
-    ? contextualGreeting.title
+    ? (contextualGreeting?.title ?? greetings[0])
     : greetings[0]
   const greetingMessage = contextualMessage ?? greetings[1]
   const partnerChat = chatsQuery.data?.find(

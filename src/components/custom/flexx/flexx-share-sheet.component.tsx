@@ -10,7 +10,6 @@ import {
   RiTwitterXLine,
   RiWhatsappLine,
 } from '@remixicon/react'
-import { motion } from 'framer-motion'
 import type { CardType } from './flexx-card.component'
 
 export interface ShareBottomSheetContentProps {
@@ -33,7 +32,7 @@ export function AchievementSelector({
 }: AchievementSelectorProps) {
   return (
     <View className="space-y-3">
-      <Text className="text-white/70 text-sm font-bbh mb-2">
+      <Text className="text-card-lighter-3 text-sm font-bbh mb-2">
         Select Achievement to Flex
       </Text>
       <View className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto">
@@ -42,47 +41,27 @@ export function AchievementSelector({
           const emojiIcon = getEmojiIcon(achievement.badgeIcon)
 
           return (
-            <motion.div
+            <Pressable
               key={achievement.id}
-              whileTap={{ scale: 0.95 }}
-              animate={
+              onPress={() => onSelect(achievement)}
+              aria-pressed={isSelected}
+              className={`min-h-28 w-full min-w-0 flex flex-col items-center justify-center gap-2 p-3 rounded-2xl !transition-colors ${
                 isSelected
-                  ? {
-                      scale: [1, 1.1, 1],
-                      rotate: [0, -5, 5, -5, 0],
-                    }
-                  : {}
-              }
-              transition={{
-                duration: 0.5,
-                ease: 'easeInOut',
-              }}
+                  ? 'bg-white text-black'
+                  : 'bg-card-light-100 text-white hover:bg-card-light'
+              }`}
             >
-              <Pressable
-                onPress={() => onSelect(achievement)}
-                className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all ${
-                  isSelected
-                    ? 'bg-warning-yellow/20 border-2 border-warning-yellow'
-                    : 'bg-card-light border-2 border-transparent hover:bg-card-light/80'
-                }`}
-              >
-                <Icon
-                  icon={emojiIcon}
-                  width={48}
-                  height={48}
-                  className="mb-2"
-                />
-                <Text className="text-white text-xs font-bbh text-center leading-tight line-clamp-2">
-                  {achievement.title}
-                </Text>
-              </Pressable>
-            </motion.div>
+              <Icon icon={emojiIcon} width={48} height={48} className="mb-2" />
+              <Text className="w-full break-words text-xs font-bbh text-center leading-tight line-clamp-2">
+                {achievement.title}
+              </Text>
+            </Pressable>
           )
         })}
       </View>
       {achievements.length === 0 && (
         <View className="py-12 items-center">
-          <Text className="text-white/40 text-sm font-bbh text-center">
+          <Text className="text-card-lighter-3 text-sm font-bbh text-center">
             No achievements yet. Keep going! 💪
           </Text>
         </View>
@@ -107,6 +86,8 @@ export function ShareBottomSheetContent({
         return 'Streak Power'
       case 'rewind':
         return 'Rewind Reflection'
+      case 'achievement':
+        return 'Achievement'
     }
   }
 
@@ -140,45 +121,44 @@ export function ShareBottomSheetContent({
 
       {/* Share Options */}
       <View className="space-y-3">
-        <Text className="text-white/70 text-sm font-bbh">Share to</Text>
+        <Text className="text-card-lighter-3 text-sm font-bbh">
+          Share your progress
+        </Text>
 
         <View className="grid grid-cols-3 gap-3">
           <Pressable
             onPress={handleShareAndClose}
-            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-pink-600/10 hover:bg-pink-600/20 transition-colors"
+            className="min-h-24 flex flex-col items-center justify-center p-4 rounded-2xl bg-card-light-100 hover:bg-card-light !transition-colors"
           >
-            <RiInstagramLine size={32} className="text-pink-600 mb-2" />
-            <Text className="text-pink-600 text-xs font-bbh font-semibold">
+            <RiInstagramLine size={28} className="text-white mb-2" />
+            <Text className="text-white text-xs font-bbh font-semibold">
               Instagram
             </Text>
           </Pressable>
 
           <Pressable
             onPress={handleShareAndClose}
-            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-success-green/10 hover:bg-success-green/20 transition-colors"
+            className="min-h-24 flex flex-col items-center justify-center p-4 rounded-2xl bg-card-light-100 hover:bg-card-light !transition-colors"
           >
-            <RiWhatsappLine size={32} className="text-success-green mb-2" />
-            <Text className="text-success-green text-xs font-bbh font-semibold">
+            <RiWhatsappLine size={28} className="text-white mb-2" />
+            <Text className="text-white text-xs font-bbh font-semibold">
               WhatsApp
             </Text>
           </Pressable>
 
           <Pressable
             onPress={handleShareAndClose}
-            className="flex flex-col items-center justify-center p-4 rounded-2xl bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+            className="min-h-24 flex flex-col items-center justify-center p-4 rounded-2xl bg-card-light-100 hover:bg-card-light !transition-colors"
           >
-            <RiTwitterXLine size={32} className="text-blue-500 mb-2" />
-            <Text className="text-blue-500 text-xs font-bbh font-semibold">
-              Twitter
-            </Text>
+            <RiTwitterXLine size={28} className="text-white mb-2" />
+            <Text className="text-white text-xs font-bbh font-semibold">X</Text>
           </Pressable>
         </View>
 
         <Button
           label="Download"
           onClick={handleShareAndClose}
-          variant="outline"
-          className="w-full"
+          className="w-full !rounded-full !bg-white !text-black"
         />
       </View>
     </View>

@@ -2,7 +2,7 @@ import { PlayWalletPanel } from '@/app/(app)/components/rewards/play-wallet-pane
 import { RewardsHeader } from '@/app/(app)/components/rewards/rewards-header.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { Skeleton } from '@/components/common/skeleton.component'
-import { Text } from '@/components/layout/text.component'
+import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { View } from '@/components/layout/view.component'
 import { rewardsQueryKeys, useRewards } from '@/hooks/use-rewards.hook'
 import type { RewardsData } from '@/shared/api/rewards.api'
@@ -16,7 +16,6 @@ export default function RewardsScreen() {
 
   function handleRefresh(): void {
     queryClient.invalidateQueries({ queryKey: rewardsQueryKeys.all })
-    refetch()
   }
 
   if (isLoading) {
@@ -42,9 +41,11 @@ export default function RewardsScreen() {
         <NoiseComponent>
           <RewardsHeader onRefresh={handleRefresh} />
           <View className="flex-1 items-center justify-center px-8">
-            <Text className="text-white/60 text-lg font-bbh text-center">
-              Unable to load wallet
-            </Text>
+            <QueryFeedback
+              message="Your wallet couldn't load."
+              onRetry={() => void refetch()}
+              retrying={rewardsQuery.isFetching}
+            />
           </View>
         </NoiseComponent>
       </View>

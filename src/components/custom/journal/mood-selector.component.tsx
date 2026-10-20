@@ -1,5 +1,3 @@
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
 import anxiousFaceWithSweat from '@iconify-icons/twemoji/anxious-face-with-sweat'
 import beamingFaceWithSmilingEyes from '@iconify-icons/twemoji/beaming-face-with-smiling-eyes'
 import cryingFace from '@iconify-icons/twemoji/crying-face'
@@ -9,99 +7,105 @@ import partyingFace from '@iconify-icons/twemoji/partying-face'
 import relievedFace from '@iconify-icons/twemoji/relieved-face'
 import sleepingFace from '@iconify-icons/twemoji/sleeping-face'
 import { Icon } from '@iconify/react'
+import type { ReactElement } from 'react'
+
+import { Pressable } from '@/components/layout/pressables.component'
+import { Text } from '@/components/layout/text.component'
+import { View } from '@/components/layout/view.component'
 
 const MOODS = [
   {
     value: 'happy',
     label: 'Happy',
     icon: beamingFaceWithSmilingEyes,
-    color: 'from-yellow-500/30 to-amber-500/30',
   },
   {
     value: 'sad',
     label: 'Sad',
     icon: cryingFace,
-    color: 'from-blue-500/30 to-indigo-500/30',
   },
   {
     value: 'anxious',
     label: 'Anxious',
     icon: anxiousFaceWithSweat,
-    color: 'from-orange-500/30 to-red-500/30',
   },
   {
     value: 'calm',
     label: 'Calm',
     icon: relievedFace,
-    color: 'from-teal-500/30 to-cyan-500/30',
   },
   {
     value: 'excited',
     label: 'Excited',
     icon: partyingFace,
-    color: 'from-pink-500/30 to-rose-500/30',
   },
   {
     value: 'tired',
     label: 'Tired',
     icon: sleepingFace,
-    color: 'from-purple-500/30 to-violet-500/30',
   },
   {
     value: 'frustrated',
     label: 'Frustrated',
     icon: faceWithSteamFromNose,
-    color: 'from-red-500/30 to-orange-500/30',
   },
   {
     value: 'neutral',
     label: 'Neutral',
     icon: neutralFace,
-    color: 'from-gray-500/30 to-slate-500/30',
   },
 ]
 
 interface MoodSelectorProps {
   selected?: string | null
   onSelect: (mood: string) => void
+  disabled?: boolean
 }
 
-export function MoodSelector({ selected, onSelect }: MoodSelectorProps) {
+export function MoodSelector({
+  selected,
+  onSelect,
+  disabled = false,
+}: MoodSelectorProps): ReactElement {
   return (
-    <View className="w-full">
-      <Text className="text-white/70 text-sm font-bbh mb-3">
+    <View className="w-full gap-3" role="group" aria-label="Journal mood">
+      <Text className="text-card-lighter-3 text-sm font-bbh">
         How are you feeling?
       </Text>
 
-      <View className="grid grid-cols-4 justify-between gap-2 overflow-x-auto pb-2 no-scrollbar">
+      <View className="grid grid-cols-4 gap-2">
         {MOODS.map((mood) => {
           const isSelected = selected === mood.value
 
           return (
-            <button
+            <Pressable
               key={mood.value}
-              onClick={() => onSelect(mood.value)}
-              className={`shrink-0 aspect-square rounded-2xl px-4 py-3 ${
+              type="button"
+              onPress={() => onSelect(mood.value)}
+              aria-pressed={isSelected}
+              disabled={disabled}
+              accessibilityLabel={mood.label}
+              className={`min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 py-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none ${
                 isSelected
-                  ? 'border-white/40 bg-gradient-to-br ' + mood.color
-                  : 'border-white/10 bg-card-700/40'
+                  ? 'bg-white text-black'
+                  : 'bg-card-light-100 text-card-lighter-3 active:bg-card-light'
               }`}
             >
-              <View className="flex flex-col items-center gap-1">
-                <Icon
-                  icon={mood.icon}
-                  className="text-white"
-                  style={{ fontSize: '32px' }}
-                />
-                <Text
-                  className={`text-xs font-bbh font-semibold ${
-                    isSelected ? 'text-white' : 'text-white/60'
-                  }`}
-                >
-                  {mood.label}
-                </Text>
-              </View>
-            </button>
+              <Icon
+                icon={mood.icon}
+                aria-hidden="true"
+                width={20}
+                height={20}
+                className="shrink-0"
+              />
+              <Text
+                className={`text-xs font-bbh font-semibold ${
+                  isSelected ? 'text-black' : 'text-card-lighter-3'
+                }`}
+              >
+                {mood.label}
+              </Text>
+            </Pressable>
           )
         })}
       </View>

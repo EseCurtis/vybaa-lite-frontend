@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="theme-color" content="#0a0e16" />
-    <meta name="description" content="Streaking with epic rewards? Totally worth starting!" />
+    <meta
+      name="description"
+      content="Streaking with epic rewards? Totally worth starting!"
+    />
     <link rel="apple-touch-icon" href="/logo192.png" />
     <link rel="manifest" href="/manifest.json" />
     <link rel="preload" href="/assets/glass-icon.png" as="image" />
@@ -17,29 +20,80 @@
         font-weight: 800;
         font-display: swap;
       }
-      html, body { margin: 0; background: #0a0e16; }
-      #startup-splash {
-        position: fixed; inset: 0; z-index: 2000001;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        gap: 12px; background: #0a0e16; color: #fff;
-        transition: opacity 180ms ease-out, visibility 0s linear 180ms;
+      html,
+      body {
+        margin: 0;
+        background: #0a0e16;
       }
-      #startup-splash img { width: 80px; height: 80px; border-radius: 24px; }
-      .startup-wordmark { font: 800 32px/1 'Vybaa Startup', sans-serif; letter-spacing: -1px; }
-      body.loaded #startup-splash { opacity: 0; visibility: hidden; pointer-events: none; }
-      #startup-error { max-width: 260px; text-align: center; font: 14px/1.6 sans-serif; color: #848ba6; }
-      #startup-error a { display: block; padding: 12px; color: #fff; }
-      @media (prefers-reduced-motion: reduce) { #startup-splash { transition: none; } }
+      #startup-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2000001;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        background: #0a0e16;
+        color: #fff;
+        transition:
+          opacity 180ms ease-out,
+          visibility 0s linear 180ms;
+      }
+      #startup-splash img {
+        width: 80px;
+        height: 80px;
+        border-radius: 24px;
+      }
+      .startup-wordmark {
+        font:
+          800 32px/1 'Vybaa Startup',
+          sans-serif;
+        letter-spacing: -1px;
+      }
+      body.loaded #startup-splash {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #startup-error {
+        max-width: 260px;
+        text-align: center;
+        font: 14px/1.6 sans-serif;
+        color: #848ba6;
+      }
+      #startup-error a {
+        display: block;
+        padding: 12px;
+        color: #fff;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #startup-splash {
+          transition: none;
+        }
+      }
     </style>
   </head>
   <body class="font-mona-sans-x text-white [&_*]:text-left">
     <div id="startup-splash" role="status" aria-label="Opening Vybaa">
-      <img src="/assets/glass-icon.png" alt="" width="80" height="80" fetchpriority="high" />
+      <img
+        src="/assets/glass-icon.png"
+        alt=""
+        width="80"
+        height="80"
+        fetchpriority="high"
+      />
       <span class="startup-wordmark" aria-hidden="true">vybaa</span>
-      <div id="startup-error" hidden>Vybaa couldn't open. Check your connection.<a href="">Try again</a></div>
+      <div id="startup-error" hidden>
+        Vybaa couldn't open. Check your connection.<a href="">Try again</a>
+      </div>
       <noscript>Enable JavaScript to open Vybaa.</noscript>
     </div>
-    <div id="app"></div>
-    <script type="module" src="/src/main.tsx" onerror="document.getElementById('startup-error').hidden = false"></script>
+    <div id="app" inert aria-hidden="true"></div>
+    <script
+      type="module"
+      src="/src/main.tsx"
+      onerror="document.getElementById('startup-error').hidden = false"
+    ></script>
   </body>
 </html>
