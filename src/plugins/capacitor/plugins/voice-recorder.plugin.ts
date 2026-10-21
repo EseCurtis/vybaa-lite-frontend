@@ -21,14 +21,19 @@ type NativeVoiceRecorderPlugin = {
   requestAudioRecordingPermission: () => Promise<GenericResponse>
   hasAudioRecordingPermission: () => Promise<GenericResponse>
   startRecording: () => Promise<GenericResponse>
-  stopRecording: () => Promise<RecordingData>
+  stopRecording: () => Promise<{ value: RecordingData }>
   pauseRecording: () => Promise<GenericResponse>
   resumeRecording: () => Promise<GenericResponse>
   getCurrentStatus: () => Promise<CurrentRecordingStatus>
 }
 
 type LegacyMicrophonePermissionStatus = {
-  microphone: 'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'limited'
+  microphone:
+    | 'prompt'
+    | 'prompt-with-rationale'
+    | 'granted'
+    | 'denied'
+    | 'limited'
 }
 
 type LegacyMicrophoneRecordingData = {
@@ -47,9 +52,8 @@ export type VoiceRecordingResult = {
   mimeType: string
 }
 
-const NativeVoiceRecorder = registerPlugin<NativeVoiceRecorderPlugin>(
-  'VoiceRecorder',
-)
+const NativeVoiceRecorder =
+  registerPlugin<NativeVoiceRecorderPlugin>('VoiceRecorder')
 
 type WebRecorderState = {
   mediaRecorder: MediaRecorder | null
@@ -76,7 +80,10 @@ function ensureBrowserRecorderSupport() {
     throw new Error('Voice recording is unavailable in this environment.')
   }
 
-  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+  if (
+    !navigator.mediaDevices?.getUserMedia ||
+    typeof MediaRecorder === 'undefined'
+  ) {
     throw new Error('This device cannot record audio.')
   }
 }
@@ -105,7 +112,8 @@ function blobToBase64(blob: Blob): Promise<string> {
       const [, base64 = ''] = result.split(',')
       resolve(base64)
     }
-    reader.onerror = () => reject(reader.error ?? new Error('Failed to read recorded audio.'))
+    reader.onerror = () =>
+      reject(reader.error ?? new Error('Failed to read recorded audio.'))
     reader.readAsDataURL(blob)
   })
 }
@@ -190,41 +198,50 @@ async function startRecordingWeb() {
   }
 
   const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-  const mimeType = getPreferredWebMimeType()
-  const mediaRecorder = mimeType
-    ? new MediaRecorder(stream, { mimeType })
-    : new MediaRecorder(stream)
+  try {
+    const mimeType = getPreferredWebMimeType()
+    const mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream)
 
-  webRecorderState.mediaRecorder = mediaRecorder
-  webRecorderState.stream = stream
-  webRecorderState.chunks = []
-  webRecorderState.startedAt = Date.now()
-  webRecorderState.status = 'RECORDING'
-
-  mediaRecorder.ondataavailable = (event) => {
-    if (event.data.size > 0) {
-      webRecorderState.chunks.push(event.data)
-    }
-  }
-
-  mediaRecorder.onpause = () => {
-    webRecorderState.status = 'PAUSED'
-  }
-
-  mediaRecorder.onresume = () => {
+    webRecorderState.mediaRecorder = mediaRecorder
+    webRecorderState.stream = stream
+    webRecorderState.chunks = []
+    webRecorderState.startedAt = Date.now()
     webRecorderState.status = 'RECORDING'
-  }
 
-  mediaRecorder.onstop = () => {
-    webRecorderState.stream?.getTracks().forEach((track) => track.stop())
-    webRecorderState.stream = null
-    webRecorderState.mediaRecorder = null
-    if (webRecorderState.status !== 'NONE') {
-      webRecorderState.status = 'NONE'
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        webRecorderState.chunks.push(event.data)
+      }
     }
-  }
 
-  mediaRecorder.start()
+    mediaRecorder.onpause = () => {
+      webRecorderState.status = 'PAUSED'
+    }
+
+    mediaRecorder.onresume = () => {
+      webRecorderState.status = 'RECORDING'
+    }
+
+    mediaRecorder.onerror = resetWebRecorder
+    mediaRecorder.onstop = resetWebRecorder
+
+    mediaRecorder.start()
+  } catch (error: unknown) {
+    stream.getTracks().forEach((track) => track.stop())
+    resetWebRecorder()
+    throw error
+  }
+}
+
+function resetWebRecorder(): void {
+  webRecorderState.stream?.getTracks().forEach((track) => track.stop())
+  webRecorderState.stream = null
+  webRecorderState.mediaRecorder = null
+  webRecorderState.chunks = []
+  webRecorderState.startedAt = null
+  webRecorderState.status = 'NONE'
 }
 
 async function stopRecordingWeb(): Promise<VoiceRecordingResult> {
@@ -237,6 +254,7 @@ async function stopRecordingWeb(): Promise<VoiceRecordingResult> {
 
   const blob = await new Promise<Blob>((resolve, reject) => {
     recorder.onerror = () => {
+      resetWebRecorder()
       reject(new Error('Failed to record audio.'))
     }
 
@@ -253,23 +271,33 @@ async function stopRecordingWeb(): Promise<VoiceRecordingResult> {
       resolve(recordedBlob)
     }
 
-    recorder.stop()
+    try {
+      recorder.stop()
+    } catch (error: unknown) {
+      resetWebRecorder()
+      reject(error)
+    }
   })
 
-  const base64 = await blobToBase64(blob)
-  webRecorderState.chunks = []
-  webRecorderState.startedAt = null
-
-  return {
-    audioUrl: `data:${blob.type || 'audio/webm'};base64,${base64}`,
-    base64,
-    durationMs: Math.max(0, Date.now() - startedAt),
-    mimeType: blob.type || 'audio/webm',
+  try {
+    const base64 = await blobToBase64(blob)
+    return {
+      audioUrl: `data:${blob.type || 'audio/webm'};base64,${base64}`,
+      base64,
+      durationMs: Math.max(0, Date.now() - startedAt),
+      mimeType: blob.type || 'audio/webm',
+    }
+  } finally {
+    webRecorderState.chunks = []
+    webRecorderState.startedAt = null
   }
 }
 
 async function pauseRecordingWeb() {
-  if (!webRecorderState.mediaRecorder || webRecorderState.status !== 'RECORDING') {
+  if (
+    !webRecorderState.mediaRecorder ||
+    webRecorderState.status !== 'RECORDING'
+  ) {
     throw new Error('No recording is in progress.')
   }
 
@@ -395,7 +423,7 @@ export async function stopVoiceRecording(): Promise<VoiceRecordingResult> {
     }
 
     try {
-      const result = await NativeVoiceRecorder.stopRecording()
+      const { value: result } = await NativeVoiceRecorder.stopRecording()
       const base64 = result.recordDataBase64
 
       if (!base64) {
@@ -415,13 +443,17 @@ export async function stopVoiceRecording(): Promise<VoiceRecordingResult> {
         throw error
       }
 
-      const result: LegacyMicrophoneRecordingData = await Microphone.stopRecording()
+      const result: LegacyMicrophoneRecordingData =
+        await Microphone.stopRecording()
       const base64 = result.base64String
       const mimeType = result.mimeType || 'audio/aac'
-      const audioUrl = result.dataUrl || (base64 ? `data:${mimeType};base64,${base64}` : '')
+      const audioUrl =
+        result.dataUrl || (base64 ? `data:${mimeType};base64,${base64}` : '')
 
       if (!base64 || !audioUrl) {
-        throw new Error('The microphone plugin did not return usable audio data.')
+        throw new Error(
+          'The microphone plugin did not return usable audio data.',
+        )
       }
 
       return {
