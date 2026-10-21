@@ -8,8 +8,6 @@ import { View } from '@/components/layout/view.component'
 import {
   useAbandonGoal,
   useArchiveGoal,
-  useCorrectGoalProgress,
-  useGoalOccurrences,
   usePauseGoal,
   usePermanentlyDeleteGoal,
   useRecordGoalProgress,
@@ -17,9 +15,8 @@ import {
   useRescheduleGoalOccurrence,
   useResumeGoal,
   useSaveGoalReview,
-  useUndoGoalProgress,
 } from '@/hooks/use-goals.hook'
-import type { Goal, GoalOccurrence } from '@/shared/api/goal.api'
+import type { Goal } from '@/shared/api/goal.api'
 import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
 import { cn, seededColor } from '@/shared/utils/helpers.util'
 import {
@@ -33,6 +30,7 @@ import {
 } from '@remixicon/react'
 import moment from 'moment'
 import { useState } from 'react'
+import { TaskTimeline } from './task-timeline.component'
 import { TaskSubtasksTrigger } from './task-subtasks-trigger.component'
 import {
   AttachmentPicker,
@@ -54,37 +52,6 @@ function targetLabel(goal: Goal): string {
     return `Perfect adherence until ${goal.target.endDate ?? goal.hardStopDate}`
   }
   return `${goal.progress.completedOccurrences} / ${goal.target.count} check-ins`
-}
-
-function occurrenceTone(status: string): string {
-  if (status === 'COMPLETED') return 'text-green-400 bg-green-400/10'
-  if (status === 'MISSED') return 'text-danger-400 bg-danger-400/10'
-  if (status === 'GRACE') return 'text-warning-yellow bg-yellow-400/10'
-  return 'text-card-lighter-2'
-}
-
-function formatOccurrenceDate(value: string): string {
-  return new Date(value).toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    weekday: 'short',
-  })
-}
-
-function occurrenceLabel(status: GoalOccurrence['status']): string {
-  if (status === 'COMPLETED') return 'Completed'
-  if (status === 'MISSED') return 'Missed'
-  if (status === 'GRACE') return 'Grace window'
-  if (status === 'CANCELLED') return 'Cancelled'
-  return 'Upcoming'
-}
-
-function occurrenceDot(status: GoalOccurrence['status']): string {
-  if (status === 'COMPLETED') return 'bg-green-400'
-  if (status === 'MISSED') return 'bg-danger-400'
-  if (status === 'GRACE') return 'bg-warning-yellow'
-  if (status === 'CANCELLED') return 'bg-card-lighter'
-  return 'bg-card-lighter-3'
 }
 
 export function GoalActionsSheet({
@@ -342,10 +309,7 @@ export function GoalActionsSheet({
 export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
   const [activeTab, setActiveTab] = useState<GoalDetailsTab>('overview')
   const [subtaskDraft] = useState(createSubtaskDraft)
-  const occurrences = useGoalOccurrences(goal.id, activeTab === 'timeline')
   const recordProgress = useRecordGoalProgress()
-  const correctProgress = useCorrectGoalProgress()
-  const undoProgress = useUndoGoalProgress()
   const saveReview = useSaveGoalReview()
   const [showProgress, setShowProgress] = useState(false)
   const [amount, setAmount] = useState('')
@@ -354,11 +318,6 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
   const [reviewAttachments, setReviewAttachments] = useState<Attachment[]>(
     (goal.conclusion?.attachments ?? []) as Attachment[],
   )
-  const [editingOccurrenceId, setEditingOccurrenceId] = useState<string | null>(
-    null,
-  )
-  const [editAmount, setEditAmount] = useState('')
-  const [editNotes, setEditNotes] = useState('')
   const [showCelebration, setShowCelebration] = useState(false)
   const [rating, setRating] = useState(goal.conclusion?.rating ?? 0)
   const [reflection, setReflection] = useState(
@@ -373,12 +332,9 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
       goal.conclusion?.attachments?.length,
     ),
   )
-  const occurrenceList =
-    occurrences.data?.pages.flatMap((page) => page.data) ?? []
   const ended = ['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(
     goal.status,
   )
-  const today = new Date().toLocaleDateString('en-CA')
   const color = seededColor(goal.title)
 
   async function submitProgress(): Promise<void> {
@@ -407,32 +363,6 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
       reflection: reflection.trim() || null,
     })
     setReviewSaved(true)
-  }
-
-  function beginCorrection(occurrence: GoalOccurrence): void {
-    setEditingOccurrenceId(occurrence.id)
-    setEditAmount(String(occurrence.progress?.amount ?? 1))
-    setEditNotes(occurrence.progress?.notes ?? '')
-  }
-
-  async function saveCorrection(occurrenceId: string): Promise<void> {
-    await correctProgress.mutateAsync({
-      amount: goal.target.type === 'QUANTITY' ? Number(editAmount) : undefined,
-      goalId: goal.id,
-      notes: editNotes,
-      occurrenceId,
-    })
-    setEditingOccurrenceId(null)
-  }
-
-  async function undo(occurrenceId: string): Promise<void> {
-    if (
-      !confirm(
-        'Undo this progress entry? This is only allowed before today closes.',
-      )
-    )
-      return
-    await undoProgress.mutateAsync({ goalId: goal.id, occurrenceId })
   }
 
   return (
@@ -675,158 +605,7 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         </View>
       ) : null}
 
-      {activeTab === 'timeline' ? (
-        <View className="space-y-3">
-          <View className="flex-row items-end justify-between">
-            <View>
-              <Text className="font-bold">Your timeline</Text>
-              <Text className="mt-1 text-xs text-card-lighter-2">
-                Every planned day, kept in order.
-              </Text>
-            </View>
-            <Text className="text-xs text-card-lighter-2">
-              {occurrenceList.length} days
-            </Text>
-          </View>
-          <View className="relative">
-            <View className="absolute bottom-5 left-[15px] top-5 w-px bg-card-light" />
-            <View className="space-y-3">
-              {occurrenceList.map((occurrence) => {
-                const moved =
-                  occurrence.originalDueDate.slice(0, 10) !==
-                  occurrence.dueDate.slice(0, 10)
-                const isToday = occurrence.dueDate.slice(0, 10) === today
-
-                const colorSet = {
-                  bg: seededColor(
-                    goal.target.type === 'QUANTITY'
-                      ? `${occurrence.progress?.amount ?? 0} ${goal.target.unit ?? 'units'} logged`
-                      : 'Check-in logged',
-                  ),
-                }
-                return (
-                  <View className="relative pl-10" key={occurrence.id}>
-                    <View
-                      className={cn(
-                        'absolute left-2.5 top-5 size-3 rounded-full ring-4 ring-cardd',
-                        occurrenceDot(occurrence.status),
-                      )}
-                    />
-                    <View className="rounded-2xl bg-card-light-50 p-4">
-                      <View className="flex-row items-start justify-between gap-3">
-                        <View className="flex-1">
-                          <Text className="font-bold">
-                            {formatOccurrenceDate(occurrence.dueDate)}
-                          </Text>
-                          <Text className="mt-0.5 text-xs text-card-lighter-2">
-                            {isToday ? 'Today · ' : ''}Scheduled occurrence
-                          </Text>
-                        </View>
-                        <Text
-                          className={cn(
-                            'rounded-full bg-card-light px-2.5 py-1 text-[10px] font-bold',
-                            occurrenceTone(occurrence.status),
-                          )}
-                        >
-                          {occurrenceLabel(occurrence.status)}
-                        </Text>
-                      </View>
-                      {occurrence.progress ? (
-                        <View
-                          style={
-                            {
-                              '--tw-card-color': colorSet.bg,
-                            } as any
-                          }
-                          className="mt-3 rounded-xl bg-card-lighter/20 p-3"
-                        >
-                          <Text className="text-sm text-white font-bold">
-                            {goal.target.type === 'QUANTITY'
-                              ? `${occurrence.progress.amount.toLocaleString()} ${goal.target.unit ?? 'units'} logged`
-                              : 'Check-in logged'}
-                          </Text>
-                          {occurrence.progress.notes ? (
-                            <Text className="mt-1 text-xs leading-5 text-card-lighter-3/70">
-                              {occurrence.progress.notes}
-                            </Text>
-                          ) : null}
-                        </View>
-                      ) : occurrence.status === 'MISSED' ? (
-                        <Text className="mt-3 text-xs text-card-lighter-2">
-                          This day closed without a check-in.
-                        </Text>
-                      ) : occurrence.status === 'PENDING' ? (
-                        <Text className="mt-3 text-xs text-card-lighter-2">
-                          Ready when you are.
-                        </Text>
-                      ) : null}
-                      {moved ? (
-                        <Text className="mt-3 text-[10px] text-card-lighter-2">
-                          Rescheduled from{' '}
-                          {formatOccurrenceDate(occurrence.originalDueDate)}
-                        </Text>
-                      ) : null}
-                      {goal.status === 'ACTIVE' &&
-                      occurrence.status === 'COMPLETED' &&
-                      isToday ? (
-                        <View className="mt-3 w-full flex-row gap-4">
-                          <Pressable
-                            onPress={() => beginCorrection(occurrence)}
-                          >
-                            <Text className="text-xs font-bold text-purple-300">
-                              Edit entry
-                            </Text>
-                          </Pressable>
-                          <Pressable onPress={() => undo(occurrence.id)}>
-                            <Text className="text-xs font-bold text-danger-400">
-                              Undo
-                            </Text>
-                          </Pressable>
-                        </View>
-                      ) : null}
-                      {editingOccurrenceId === occurrence.id ? (
-                        <View className="mt-3 space-y-2 rounded-xl bg-card-light p-3">
-                          {goal.target.type === 'QUANTITY' ? (
-                            <Input
-                              min={0.01}
-                              type="number"
-                              value={editAmount}
-                              onChange={(event) =>
-                                setEditAmount(event.target.value)
-                              }
-                            />
-                          ) : null}
-                          <Input
-                            placeholder="Notes"
-                            value={editNotes}
-                            onChange={(event) =>
-                              setEditNotes(event.target.value)
-                            }
-                          />
-                          <Button
-                            label="Save correction"
-                            size="sm"
-                            onClick={() => saveCorrection(occurrence.id)}
-                          />
-                        </View>
-                      ) : null}
-                    </View>
-                  </View>
-                )
-              })}
-            </View>
-          </View>
-          {occurrences.hasNextPage ? (
-            <Button
-              disabled={occurrences.isFetchingNextPage}
-              label={occurrences.isFetchingNextPage ? 'Loading…' : 'Load more'}
-              onClick={() => void occurrences.fetchNextPage()}
-              size="sm"
-              variant="secondary"
-            />
-          ) : null}
-        </View>
-      ) : null}
+      <TaskTimeline goal={goal} active={activeTab === 'timeline'} />
 
       {activeTab === 'review' && ended && goal.conclusion ? (
         <View className="space-y-4 rounded-2xl bg-cardd p-4">
