@@ -136,6 +136,13 @@ export function useTimelineScroll(
       checkEdges()
     }
     function key(event: KeyboardEvent): void {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.matches(
+          'input, textarea, select, [contenteditable="true"]',
+        )
+      )
+        return
       if (['ArrowUp', 'PageUp', 'Home'].includes(event.key)) intent = 'before'
       else if (['ArrowDown', 'PageDown', 'End'].includes(event.key))
         intent = 'after'

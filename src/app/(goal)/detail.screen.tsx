@@ -71,7 +71,7 @@ export default function GoalDetailScreen({
           {goal.data ? (
             <Pressable
               accessibilityLabel="Open task settings"
-              className="size-10 items-center justify-center rounded-full bg-card-light-50"
+              className="size-11 items-center justify-center rounded-full bg-card-light-50"
               onPress={openGoalActions}
             >
               <RiSettings3Line className="text-white" size={19} />
@@ -82,11 +82,12 @@ export default function GoalDetailScreen({
           <View className="mx-auto w-full max-w-3xl">
             {goal.isLoading ? (
               <View className="gap-4 py-4">
-                <Skeleton className="h-40 w-full" rounded="xl" />
-                <Skeleton className="h-28 w-full" rounded="xl" />
-                <Skeleton className="h-64 w-full" rounded="xl" />
+                <Skeleton className="h-16 w-full" rounded="xl" />
+                <Skeleton className="h-12 w-full" rounded="xl" />
+                <Skeleton className="h-20 w-full" rounded="xl" />
+                <Skeleton className="h-12 w-full" rounded="full" />
               </View>
-            ) : goal.isError ? (
+            ) : goal.isError && !goal.data ? (
               <View className="gap-4 rounded-[24px] bg-card-light-50 px-4 py-5">
                 <Text className="text-base font-bold">
                   Could not open this task
@@ -105,6 +106,7 @@ export default function GoalDetailScreen({
               </View>
             ) : goal.data ? (
               <GoalDetailsSheet
+                key={goal.data.id}
                 goal={goal.data}
                 onDismiss={() => returnToLibrary()}
               />

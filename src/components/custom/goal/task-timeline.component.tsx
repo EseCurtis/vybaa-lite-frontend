@@ -342,6 +342,33 @@ export function TaskTimeline({
           {pageBoundary('after')}
         </>
       ) : null}
+      <details className="pt-4 text-sm">
+        <summary className="min-h-11 cursor-pointer py-3 font-semibold text-card-lighter-3">
+          Task stats
+        </summary>
+        <dl className="space-y-3 pb-3">
+          <div className="flex justify-between gap-4">
+            <dt className="text-card-lighter-3">Current streak</dt>
+            <dd>{goal.progress.currentStreak}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-card-lighter-3">Longest streak</dt>
+            <dd>{goal.progress.longestStreak}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-card-lighter-3">Adherence</dt>
+            <dd>{Math.round(goal.progress.adherenceRate)}%</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-card-lighter-3">Completed check-ins</dt>
+            <dd>{goal.progress.completedOccurrences}</dd>
+          </div>
+          <div className="flex justify-between gap-4">
+            <dt className="text-card-lighter-3">Missed check-ins</dt>
+            <dd>{goal.progress.missedOccurrences}</dd>
+          </div>
+        </dl>
+      </details>
       {error ? (
         <p role="alert" className="text-sm text-danger-400">
           {error}

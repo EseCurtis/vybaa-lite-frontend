@@ -9,6 +9,13 @@ export function useTaskSheetFocus(
   useEffect(() => {
     const dialog = content.current?.closest<HTMLElement>('[role="dialog"]')
     if (!dialog) return
+    if (!dialog.contains(document.activeElement)) {
+      dialog
+        .querySelector<HTMLElement>(
+          'input:not([type="file"]):not([disabled]), textarea:not([disabled]), button:not([disabled])',
+        )
+        ?.focus({ preventScroll: true })
+    }
     function handleKey(event: KeyboardEvent): void {
       if (event.key === 'Escape') {
         event.preventDefault()

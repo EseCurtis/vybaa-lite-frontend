@@ -5,8 +5,21 @@ import { useToast } from '@/providers/toast.provider'
 import { uploadAPI } from '@/shared/api/upload.api'
 import { smartTruncate } from '@/shared/utils/helpers.util'
 import { RiCloseLine, RiImageLine, RiMicLine } from '@remixicon/react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { useRef, useState } from 'react'
+import type { ChangeEvent, ReactElement } from 'react'
+
+function attachmentError(error: unknown, fallback: string): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'message' in error &&
+    typeof error.message === 'string' &&
+    error.message
+  )
+    return error.message
+  return fallback
+}
 
 export interface Attachment {
   type: 'image' | 'audio'
@@ -19,21 +32,26 @@ interface AttachmentPickerProps {
   attachments: Attachment[]
   onAttachmentsChange: (attachments: Attachment[]) => void
   maxAttachments?: number
+  onUploadingChange?: (uploading: boolean) => void
 }
 
 export function AttachmentPicker({
   attachments,
   onAttachmentsChange,
   maxAttachments = 5,
-}: AttachmentPickerProps) {
+  onUploadingChange,
+}: AttachmentPickerProps): ReactElement {
   const imageInputRef = useRef<HTMLInputElement>(null)
   const audioInputRef = useRef<HTMLInputElement>(null)
   const toast = useToast()
   const [uploading, setUploading] = useState(false)
+  const reducedMotion = useReducedMotion()
+  function changeUploading(value: boolean): void {
+    setUploading(value)
+    onUploadingChange?.(value)
+  }
 
-  const handleImageSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleImageSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -53,11 +71,13 @@ export function AttachmentPicker({
     }
 
     try {
-      setUploading(true)
+      changeUploading(true)
       const reader = new FileReader()
       reader.onload = async (e) => {
-        const base64 = e.target?.result as string
+        const base64 = e.target?.result
         try {
+          if (typeof base64 !== 'string')
+            throw new Error('Failed to read image file')
           const response = await uploadAPI.uploadImage({
             image: base64,
             folder: 'check-ins',
@@ -72,20 +92,20 @@ export function AttachmentPicker({
             },
           ])
           toast.success('Image uploaded successfully')
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to upload image')
+        } catch (error: unknown) {
+          toast.error(attachmentError(error, 'Failed to upload image'))
         } finally {
-          setUploading(false)
+          changeUploading(false)
         }
       }
       reader.onerror = () => {
         toast.error('Failed to read image file')
-        setUploading(false)
+        changeUploading(false)
       }
       reader.readAsDataURL(file)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to process image')
-      setUploading(false)
+    } catch (error: unknown) {
+      toast.error(attachmentError(error, 'Failed to process image'))
+      changeUploading(false)
     }
 
     // Reset input
@@ -94,9 +114,7 @@ export function AttachmentPicker({
     }
   }
 
-  const handleAudioSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleAudioSelect = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
 
@@ -117,11 +135,13 @@ export function AttachmentPicker({
     }
 
     try {
-      setUploading(true)
+      changeUploading(true)
       const reader = new FileReader()
       reader.onload = async (e) => {
-        const base64 = e.target?.result as string
+        const base64 = e.target?.result
         try {
+          if (typeof base64 !== 'string')
+            throw new Error('Failed to read audio file')
           // For audio, we'll use the image upload endpoint (Cloudinary supports audio too)
           // Or we might need a separate audio upload endpoint
           const response = await uploadAPI.uploadImage({
@@ -138,20 +158,20 @@ export function AttachmentPicker({
             },
           ])
           toast.success('Audio uploaded successfully')
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to upload audio')
+        } catch (error: unknown) {
+          toast.error(attachmentError(error, 'Failed to upload audio'))
         } finally {
-          setUploading(false)
+          changeUploading(false)
         }
       }
       reader.onerror = () => {
         toast.error('Failed to read audio file')
-        setUploading(false)
+        changeUploading(false)
       }
       reader.readAsDataURL(file)
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to process audio')
-      setUploading(false)
+    } catch (error: unknown) {
+      toast.error(attachmentError(error, 'Failed to process audio'))
+      changeUploading(false)
     }
 
     // Reset input
@@ -162,6 +182,7 @@ export function AttachmentPicker({
 
   const removeAttachment = (index: number) => {
     const attachment = attachments[index]
+    if (!attachment) return
     const newAttachments = attachments.filter((_, i) => i !== index)
     onAttachmentsChange(newAttachments)
 
@@ -177,17 +198,21 @@ export function AttachmentPicker({
     <View className="space-y-2">
       <View className="flex-row gap-2">
         <Pressable
+          type="button"
+          accessibilityLabel="Add image attachment"
           onPress={() => imageInputRef.current?.click()}
           disabled={uploading || attachments.length >= maxAttachments}
-          className="bg-cardd-700/30 hover:bg-cardd-700/40 rounded-lg px-3 py-2 flex-row items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
+          className="min-h-11 min-w-11 rounded-xl bg-card-light px-3 items-center justify-center"
         >
           <RiImageLine size={16} className="text-card-lighter-2" />
         </Pressable>
 
         <Pressable
+          type="button"
+          accessibilityLabel="Add audio attachment"
           onPress={() => audioInputRef.current?.click()}
           disabled={uploading || attachments.length >= maxAttachments}
-          className="bg-cardd-700/30 hover:bg-cardd-700/40 rounded-lg px-3 py-2 flex-row items-center justify-center gap-1.5 transition-colors disabled:opacity-40"
+          className="min-h-11 min-w-11 rounded-xl bg-card-light px-3 items-center justify-center"
         >
           <RiMicLine size={16} className="text-card-lighter-2" />
         </Pressable>
@@ -216,9 +241,11 @@ export function AttachmentPicker({
             {attachments.map((attachment, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 10 }}
+                initial={reducedMotion ? false : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9 }}
+                exit={
+                  reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.9 }
+                }
                 className="bg-card-light-50 rounded-lg p-2.5 flex-row items-center gap-2.5"
               >
                 {attachment.type === 'image' ? (
@@ -228,8 +255,8 @@ export function AttachmentPicker({
                     className="w-12 h-12 rounded-md object-cover"
                   />
                 ) : (
-                  <View className="w-12 h-12 rounded-md bg-primary-500/20 flex items-center justify-center">
-                    <RiMicLine size={18} className="text-primary-400" />
+                  <View className="w-12 h-12 rounded-md bg-card-light flex items-center justify-center">
+                    <RiMicLine size={18} className="text-card-lighter-3" />
                   </View>
                 )}
                 <View className="flex-1 min-w-0">
@@ -257,8 +284,10 @@ export function AttachmentPicker({
                   )}
                 </View>
                 <Pressable
+                  type="button"
+                  accessibilityLabel={`Remove attachment ${attachment.name ?? index + 1}`}
                   onPress={() => removeAttachment(index)}
-                  className="p-1 rounded-md hover:bg-card-light transition-colors"
+                  className="min-h-11 min-w-11 items-center justify-center rounded-xl"
                 >
                   <RiCloseLine size={14} className="text-card-lighter-2" />
                 </Pressable>
