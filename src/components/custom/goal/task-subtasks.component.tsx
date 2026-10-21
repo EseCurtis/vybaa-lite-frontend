@@ -5,53 +5,77 @@ import {
   RiDeleteBinLine,
   RiPencilLine,
 } from '@remixicon/react'
-import { useRef, useState } from 'react'
 import type { FormEvent, ReactElement } from 'react'
+import { useRef, useState, useSyncExternalStore } from 'react'
 
 import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { Skeleton } from '@/components/common/skeleton.component'
 import { Pressable } from '@/components/layout/pressables.component'
 import { useGoalSubtasks } from '@/hooks/use-goal-subtasks.hook'
-import type { Goal } from '@/shared/api/goal.api'
+import { useTaskSheetFocus } from '@/hooks/use-task-sheet-focus.hook'
+import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { GoalSubtask } from '@/shared/api/goal-subtask.api'
+import type { Goal } from '@/shared/api/goal.api'
+import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
+import type { SubtaskDraftStore } from '@/shared/goal/subtask-draft'
 
 export function TaskSubtasks({
   goal,
+  draft,
+  returnFocus,
 }: {
   goal: Pick<Goal, 'id' | 'status' | 'archivedAt'>
+  draft?: SubtaskDraftStore
+  returnFocus?: HTMLElement | null
 }): ReactElement {
+  const content = useRef<HTMLElement>(null)
+  const sheet = useBottomSheetController()
+  useTaskSheetFocus(content, sheet.dismiss, returnFocus)
+  const [localDraft] = useState(createSubtaskDraft)
+  const store = draft ?? localDraft
+  const state = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot,
+  )
+  const title = state.title
   const { query, create, update } = useGoalSubtasks(goal.id)
-  const [title, setTitle] = useState('')
   const [editing, setEditing] = useState<GoalSubtask | null>(null)
   const [editTitle, setEditTitle] = useState('')
   const [removed, setRemoved] = useState<GoalSubtask | null>(null)
-  const retryRequest = useRef<{ id: string; title: string } | null>(null)
   const items = query.data ?? []
   const completed = items.filter((item) => item.completedAt).length
   const editable = goal.status === 'ACTIVE' && !goal.archivedAt
-  const busy = create.isPending || update.isPending
+  const busy = state.pending || create.isPending || update.isPending
 
-  function add(event: FormEvent): void {
+  async function add(event: FormEvent): Promise<void> {
     event.preventDefault()
     const trimmed = title.trim()
-    if (!trimmed || busy || !editable) return
+    if (!trimmed || busy || store.getSnapshot().pending || !editable) return
     const request =
-      retryRequest.current?.title === trimmed
-        ? retryRequest.current
+      state.request?.title === trimmed
+        ? state.request
         : { id: crypto.randomUUID(), title: trimmed }
-    retryRequest.current = request
-    create.mutate(request, {
-      onSuccess: () => {
-        retryRequest.current = null
-        setTitle('')
-      },
-    })
+    store.update({ request, pending: true, error: null })
+    try {
+      await create.mutateAsync(request)
+      store.update({ title: '', request: null })
+    } catch (error: unknown) {
+      store.update({
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Could not save this subtask. Try again.',
+      })
+    } finally {
+      store.update({ pending: false })
+    }
   }
 
   return (
-    <section aria-label="Subtasks" className="space-y-3">
+    <section ref={content} aria-label="Subtasks" className="space-y-3 pt-3">
       <div className="flex items-center justify-between gap-3">
-        <h3 className="text-base font-bold">Subtasks</h3>
+        <h3 className="sr-only">Subtasks</h3>
         <span
           aria-live="polite"
           className="text-xs tabular-nums text-card-lighter-2"
@@ -82,6 +106,7 @@ export function TaskSubtasks({
           >
             <Pressable
               accessibilityLabel={`${item.completedAt ? 'Reopen' : 'Complete'} ${item.title}`}
+              type="button"
               aria-pressed={Boolean(item.completedAt)}
               disabled={!editable || busy}
               className="size-11 shrink-0 items-center justify-center"
@@ -108,7 +133,7 @@ export function TaskSubtasks({
                 className="flex min-w-0 flex-1 items-center"
                 onSubmit={(event) => {
                   event.preventDefault()
-                  if (editTitle.trim())
+                  if (editTitle.trim() && !busy)
                     update.mutate(
                       {
                         id: item.id,
@@ -137,6 +162,7 @@ export function TaskSubtasks({
                 </Pressable>
                 <Pressable
                   accessibilityLabel="Cancel editing subtask"
+                  type="button"
                   className="size-11 items-center justify-center"
                   onPress={() => setEditing(null)}
                 >
@@ -154,6 +180,7 @@ export function TaskSubtasks({
                   <>
                     <Pressable
                       accessibilityLabel={`Edit ${item.title}`}
+                      type="button"
                       disabled={busy}
                       className="size-11 shrink-0 items-center justify-center text-card-lighter-2"
                       onPress={() => {
@@ -165,6 +192,7 @@ export function TaskSubtasks({
                     </Pressable>
                     <Pressable
                       accessibilityLabel={`Remove ${item.title}`}
+                      type="button"
                       disabled={busy}
                       className="size-11 shrink-0 items-center justify-center text-card-lighter-2"
                       onPress={() =>
@@ -194,6 +222,7 @@ export function TaskSubtasks({
         >
           <span>Subtask removed</span>
           <Pressable
+            type="button"
             className="min-h-11 items-center px-3 font-bold text-white"
             disabled={busy}
             onPress={() =>
@@ -208,21 +237,27 @@ export function TaskSubtasks({
         </div>
       ) : null}
       {editable && !query.isPending && !query.isError && items.length < 100 ? (
-        <form className="flex items-center gap-2" onSubmit={add}>
+        <form
+          className="flex items-center gap-2"
+          onSubmit={(event) => void add(event)}
+        >
           <input
             aria-label="New subtask"
             placeholder="Add a subtask"
             maxLength={500}
-            className="min-h-12 min-w-0 flex-1 rounded-xl bg-card-light px-3 text-sm text-white placeholder:text-card-lighter-3"
+            autoFocus={!items.length}
+            className="min-h-12 min-w-0 flex-1 rounded-xl bg-card-light px-3 text-base text-white placeholder:text-card-lighter-3"
             value={title}
-            onChange={(event) => setTitle(event.target.value)}
+            onChange={(event) =>
+              store.update({ title: event.target.value, error: null })
+            }
             disabled={busy}
           />
           <Pressable
             type="submit"
             accessibilityLabel="Add subtask"
             disabled={busy || !title.trim()}
-            className="size-12 shrink-0 items-center justify-center rounded-full bg-white text-black"
+            className="size-12 shrink-0 items-center justify-center rounded-full bg-white text-black active:scale-95 motion-reduce:transform-none"
           >
             <RiAddLine size={23} />
           </Pressable>
@@ -231,6 +266,11 @@ export function TaskSubtasks({
       {items.length ? (
         <p className="text-xs text-card-lighter-3">
           Subtasks help you plan. Record the task’s progress separately.
+        </p>
+      ) : null}
+      {state.error ? (
+        <p role="alert" className="text-sm text-danger-400">
+          {state.error}
         </p>
       ) : null}
     </section>

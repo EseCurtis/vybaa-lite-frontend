@@ -368,7 +368,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = RewindNotificationService/RewindNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 94;
+				CURRENT_PROJECT_VERSION = 95;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RewindNotificationService/Info.plist;
@@ -378,7 +378,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.29.89;
+				MARKETING_VERSION = 1.29.90;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app.RewindNotificationService;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -398,7 +398,7 @@
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = RewindNotificationService/RewindNotificationService.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 94;
+				CURRENT_PROJECT_VERSION = 95;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = RewindNotificationService/Info.plist;
@@ -408,7 +408,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.29.89;
+				MARKETING_VERSION = 1.29.90;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app.RewindNotificationService;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -540,7 +540,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vybaa;
@@ -550,7 +550,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.29.91;
+				MARKETING_VERSION = 1.29.92;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -574,7 +574,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 100;
+				CURRENT_PROJECT_VERSION = 101;
 				DEVELOPMENT_TEAM = P5W72DY92P;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Vybaa;
@@ -584,7 +584,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.29.91;
+				MARKETING_VERSION = 1.29.92;
 				PRODUCT_BUNDLE_IDENTIFIER = com.vybaa.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

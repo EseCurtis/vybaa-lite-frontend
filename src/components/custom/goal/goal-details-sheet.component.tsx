@@ -20,6 +20,7 @@ import {
   useUndoGoalProgress,
 } from '@/hooks/use-goals.hook'
 import type { Goal, GoalOccurrence } from '@/shared/api/goal.api'
+import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
 import { cn, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiCalendarLine,
@@ -32,7 +33,7 @@ import {
 } from '@remixicon/react'
 import moment from 'moment'
 import { useState } from 'react'
-import { TaskSubtasks } from './task-subtasks.component'
+import { TaskSubtasksTrigger } from './task-subtasks-trigger.component'
 import {
   AttachmentPicker,
   type Attachment,
@@ -340,6 +341,7 @@ export function GoalActionsSheet({
 
 export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
   const [activeTab, setActiveTab] = useState<GoalDetailsTab>('overview')
+  const [subtaskDraft] = useState(createSubtaskDraft)
   const occurrences = useGoalOccurrences(goal.id, activeTab === 'timeline')
   const recordProgress = useRecordGoalProgress()
   const correctProgress = useCorrectGoalProgress()
@@ -603,7 +605,9 @@ export function GoalDetailsSheet({ goal, onDismiss }: GoalDetailsSheetProps) {
         </View>
       </View>
 
-      {activeTab === 'overview' ? <TaskSubtasks goal={goal} /> : null}
+      {activeTab === 'overview' ? (
+        <TaskSubtasksTrigger goal={goal} draft={subtaskDraft} />
+      ) : null}
 
       {activeTab === 'rewards' ? (
         <View className="space-y-2">
