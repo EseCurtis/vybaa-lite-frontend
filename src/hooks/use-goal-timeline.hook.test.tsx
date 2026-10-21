@@ -2,15 +2,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { goalTimelineAPI } from '@/shared/api/goal-timeline.api'
 import type { GoalTimelineResponse } from '@/shared/api/goal-timeline.api'
 import { useGoalTimeline } from './use-goal-timeline.hook'
 
+const getRandomValues = globalThis.crypto.getRandomValues.bind(
+  globalThis.crypto,
+)
+beforeEach(() => vi.stubGlobal('crypto', { getRandomValues }))
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 function page(
   id: string,
@@ -70,14 +75,17 @@ it('loads only while active, pages both ways, pins the anchor, retains pages acr
   await act(async () => {
     await hook.result.current.fetchPreviousPage()
   })
+  await waitFor(() => expect(hook.result.current.items).toHaveLength(2))
   await act(async () => {
     await hook.result.current.fetchNextPage()
   })
-  expect(hook.result.current.items.map((item) => item.id)).toEqual([
-    'yesterday',
-    'today',
-    'tomorrow',
-  ])
+  await waitFor(() =>
+    expect(hook.result.current.items.map((item) => item.id)).toEqual([
+      'yesterday',
+      'today',
+      'tomorrow',
+    ]),
+  )
   expect(list.mock.calls[1]?.[2]).toBe('2026-10-21')
   hook.rerender({ active: false })
   hook.rerender({ active: true })

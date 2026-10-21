@@ -18,6 +18,7 @@ import type { GoalSubtask } from '@/shared/api/goal-subtask.api'
 import type { Goal } from '@/shared/api/goal.api'
 import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
 import type { SubtaskDraftStore } from '@/shared/goal/subtask-draft'
+import { createUUID } from '@/shared/utils/uuid.util'
 
 export function TaskSubtasks({
   goal,
@@ -55,7 +56,7 @@ export function TaskSubtasks({
     const request =
       state.request?.title === trimmed
         ? state.request
-        : { id: crypto.randomUUID(), title: trimmed }
+        : { id: createUUID(), title: trimmed }
     store.update({ request, pending: true, error: null })
     try {
       await create.mutateAsync(request)

@@ -7,11 +7,12 @@ import type {
   TimelinePageRequest,
 } from '@/shared/api/goal-timeline.api'
 import { goalQueryKeys } from '@/shared/api/goal.query-keys'
+import { createUUID } from '@/shared/utils/uuid.util'
 
 const initialPage: TimelinePageRequest = {}
 
 export function useGoalTimeline(goalId: string, active: boolean) {
-  const [session, setSession] = useState(() => crypto.randomUUID())
+  const [session, setSession] = useState(createUUID)
   const client = useQueryClient()
   const anchor = useRef<{ session: string; date?: string }>({ session })
   useEffect(() => {
@@ -52,7 +53,7 @@ export function useGoalTimeline(goalId: string, active: boolean) {
     refetchOnWindowFocus: false,
   })
   function refresh(): void {
-    const next = crypto.randomUUID()
+    const next = createUUID()
     anchor.current = { session: next }
     setSession(next)
   }

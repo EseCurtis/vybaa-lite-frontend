@@ -7,13 +7,17 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react'
-import { afterEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import { goalSubtaskAPI } from '@/shared/api/goal-subtask.api'
 import type { GoalSubtask } from '@/shared/api/goal-subtask.api'
 import { TaskSubtasks } from './task-subtasks.component'
 import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
 
+const getRandomValues = globalThis.crypto.getRandomValues.bind(
+  globalThis.crypto,
+)
+beforeEach(() => vi.stubGlobal('crypto', { getRandomValues }))
 vi.mock('@/providers/toast.provider', () => ({
   useToast: () => ({ error: vi.fn() }),
 }))
@@ -23,6 +27,7 @@ vi.mock('@/providers/bottom-sheet.provider', () => ({
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+  vi.unstubAllGlobals()
 })
 
 it('prevents native submission, retains failed drafts across reopening and reuses the retry ID', async () => {
@@ -63,6 +68,9 @@ it('prevents native submission, retains failed drafts across reopening and reuse
   expect(submission.defaultPrevented).toBe(true)
   await screen.findByRole('alert')
   const firstRequest = create.mock.calls[0]?.[1]
+  expect(firstRequest?.id).toMatch(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  )
   view.unmount()
   render(ui())
   expect(screen.getByLabelText('New subtask').getAttribute('value')).toBe(
