@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
 
+import { AudioTranscription } from '@/components/common/audio-transcription.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { JournalComposer } from '@/components/custom/journal/journal-composer.component'
@@ -15,13 +16,6 @@ import {
   useJournalByDate,
   useUpdateJournal,
 } from '@/hooks/use-journal.hook'
-import {
-  getVoiceRecordingStatus,
-  startVoiceRecording,
-  stopVoiceRecording,
-  type VoiceRecordingResult,
-} from '@/plugins/capacitor/plugins/voice-recorder.plugin'
-import { useToast } from '@/providers/toast.provider'
 import { getDailyPrompt } from '@/shared/data/journal-prompts'
 
 export default function JournalEditorScreen({
@@ -30,7 +24,6 @@ export default function JournalEditorScreen({
   date: string
 }): ReactElement {
   const navigate = useNavigate()
-  const toast = useToast()
 
   const { data: journalData, isLoading } = useJournalByDate(date)
   const { mutateAsync: createJournal, isPending: isCreating } =
@@ -43,9 +36,7 @@ export default function JournalEditorScreen({
   const [content, setContent] = useState('')
   const [mood, setMood] = useState<string | null>(null)
   const [hasChanges, setHasChanges] = useState(false)
-  const [isRecording, setIsRecording] = useState(false)
-  const [isProcessingVoice, setIsProcessingVoice] = useState(false)
-  const [voiceNote, setVoiceNote] = useState<VoiceRecordingResult | null>(null)
+  const [voiceBusy, setVoiceBusy] = useState(false)
 
   const journal = journalData?.data?.journal
   const prompt = getDailyPrompt(new Date(date))
@@ -62,34 +53,17 @@ export default function JournalEditorScreen({
   useEffect(() => {
     if (!journal) {
       // For new entries, any content means there are changes
-      setHasChanges(
-        content.trim().length > 0 || mood !== null || voiceNote !== null,
-      )
+      setHasChanges(content.trim().length > 0 || mood !== null)
     } else {
       // For existing entries, check if different from saved
       const changed =
         content !== (journal?.entry || '') || mood !== (journal.mood || null)
-      setHasChanges(changed || voiceNote !== null)
+      setHasChanges(changed)
     }
-  }, [content, mood, journal, voiceNote])
-
-  useEffect(() => {
-    let isMounted = true
-
-    void getVoiceRecordingStatus()
-      .then((result) => {
-        if (isMounted) {
-          setIsRecording(result.status === 'RECORDING')
-        }
-      })
-      .catch(() => {})
-
-    return () => {
-      isMounted = false
-    }
-  }, [])
+  }, [content, mood, journal])
 
   const handleSave = async () => {
+    if (voiceBusy || isCreating || isUpdating || isDeleting) return
     if (!content.trim()) {
       alert('Please write something before saving')
       return
@@ -137,40 +111,6 @@ export default function JournalEditorScreen({
     }
   }
 
-  const handleVoiceRecord = async () => {
-    if (isProcessingVoice) return
-
-    setIsProcessingVoice(true)
-
-    try {
-      if (isRecording) {
-        const recordedAudio = await stopVoiceRecording()
-        setVoiceNote(recordedAudio)
-        setIsRecording(false)
-        toast.success('Voice note recorded')
-        return
-      }
-
-      await startVoiceRecording()
-      setVoiceNote(null)
-      setIsRecording(true)
-      toast.info('Recording started')
-    } catch (error) {
-      console.error('Voice recording error:', error)
-      toast.error(
-        error instanceof Error ? error.message : 'Unable to record voice note',
-      )
-      setIsRecording(false)
-    } finally {
-      setIsProcessingVoice(false)
-    }
-  }
-
-  const discardVoiceNote = () => {
-    setVoiceNote(null)
-    toast.info('Voice note discarded')
-  }
-
   return (
     <View className="relative min-h-0 flex-1 bg-cardd">
       <NoiseComponent>
@@ -179,7 +119,7 @@ export default function JournalEditorScreen({
             <Pressable
               type="button"
               onPress={handleDelete}
-              disabled={isDeleting || isCreating || isUpdating}
+              disabled={isDeleting || isCreating || isUpdating || voiceBusy}
               accessibilityLabel="Delete journal entry"
               className="size-11 items-center justify-center rounded-full bg-card-light-100 text-card-lighter-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
             >
@@ -197,11 +137,16 @@ export default function JournalEditorScreen({
             disabled={isCreating || isUpdating || isDeleting}
             onContentChange={setContent}
             onMoodChange={setMood}
-            isRecording={isRecording}
-            isProcessingVoice={isProcessingVoice}
-            voiceNote={voiceNote}
-            onVoiceRecord={handleVoiceRecord}
-            onDiscardVoiceNote={discardVoiceNote}
+            audioControls={
+              <AudioTranscription
+                key={date}
+                value={content}
+                onChange={setContent}
+                maxLength={5000}
+                disabled={isCreating || isUpdating || isDeleting}
+                onBusyChange={setVoiceBusy}
+              />
+            }
           />
         </View>
         {!isLoading ? (
@@ -217,7 +162,7 @@ export default function JournalEditorScreen({
                   />
                 }
                 onClick={handleSave}
-                disabled={!hasChanges || isDeleting}
+                disabled={!hasChanges || isDeleting || voiceBusy}
                 loading={isCreating || isUpdating}
                 fullWidth
                 buttonClassName="w-full"

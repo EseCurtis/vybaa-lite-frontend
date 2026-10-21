@@ -10,7 +10,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReactNode } from 'react'
 
 import { getDailyPrompt } from '@/shared/data/journal-prompts'
+import { transcriptionAPI } from '@/shared/api/transcription.api'
 import type { Journal } from '@/shared/types/auth.types'
+import { JournalInsightSheet } from '@/components/journal/journal-insight.sheet'
 
 import JournalEditorScreen from './$date.screen'
 
@@ -77,6 +79,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   cleanup()
+  vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -197,5 +200,70 @@ describe('journal composer', () => {
         .getByRole('button', { name: /Save journal/ })
         .hasAttribute('disabled'),
     ).toBe(true)
+  })
+
+  it('saves reviewed audio as journal text through the unchanged create contract', async () => {
+    vi.stubGlobal(
+      'URL',
+      class extends URL {
+        static createObjectURL = () => 'blob:test'
+        static revokeObjectURL = vi.fn()
+      },
+    )
+    vi.spyOn(transcriptionAPI, 'create').mockResolvedValue({
+      text: 'Spoken reflection.',
+      language: 'eng',
+    })
+    render(<JournalEditorScreen date="2026-10-21" />)
+    fireEvent.change(screen.getByLabelText('Your thoughts'), {
+      target: { value: 'Written first.' },
+    })
+    fireEvent.change(screen.getByLabelText('Choose audio recording'), {
+      target: {
+        files: [new File(['audio'], 'note.m4a', { type: 'audio/mp4' })],
+      },
+    })
+    await screen.findByLabelText('Review transcript')
+    expect(mocks.create).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Add to text' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save journal' }))
+    await waitFor(() =>
+      expect(mocks.create).toHaveBeenCalledWith({
+        date: '2026-10-21',
+        entry: 'Written first.\n\nSpoken reflection.',
+        mood: undefined,
+      }),
+    )
+  })
+
+  it('the older check-in sheet saves edited transcripts instead of only closing', async () => {
+    vi.stubGlobal(
+      'URL',
+      class extends URL {
+        static createObjectURL = () => 'blob:test'
+        static revokeObjectURL = vi.fn()
+      },
+    )
+    vi.spyOn(transcriptionAPI, 'create').mockResolvedValue({
+      text: 'A spoken check-in.',
+      language: null,
+    })
+    const close = vi.fn()
+    render(<JournalInsightSheet onClose={close} />)
+    fireEvent.change(screen.getByLabelText('Choose audio recording'), {
+      target: {
+        files: [new File(['audio'], 'note.wav', { type: 'audio/wav' })],
+      },
+    })
+    await screen.findByLabelText('Review transcript')
+    fireEvent.click(screen.getByRole('button', { name: 'Add to text' }))
+    fireEvent.click(screen.getByRole('button', { name: /^Save$/ }))
+    await waitFor(() =>
+      expect(mocks.create).toHaveBeenCalledWith({
+        date: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        entry: 'A spoken check-in.',
+      }),
+    )
+    expect(close).toHaveBeenCalledOnce()
   })
 })

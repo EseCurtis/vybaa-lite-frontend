@@ -1,4 +1,5 @@
 import { NoiseComponent } from '@/components/common/noise.component'
+import { AudioTranscription } from '@/components/common/audio-transcription.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { TextArea } from '@/components/common/textarea.component'
 import { Button } from '@/components/layout/button.component'
@@ -6,7 +7,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useCreateChillSession } from '@/hooks/use-chill.hook'
 import type { ChillSuggestion } from '@/shared/api/chill.api'
-import { RiHistoryLine, RiMicLine, RiVoiceprintLine } from '@remixicon/react'
+import { RiHistoryLine, RiVoiceprintLine } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useState } from 'react'
@@ -18,10 +19,10 @@ export default function ChillEmotionScreen() {
   const [emotion, setEmotion] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<ChillSuggestion[]>([])
-  const [isRecording, setIsRecording] = useState(false)
+  const [voiceBusy, setVoiceBusy] = useState(false)
 
   const handleSubmit = async () => {
-    if (!emotion.trim()) return
+    if (!emotion.trim() || voiceBusy || isPending) return
 
     try {
       const response = await createSession(emotion)
@@ -42,11 +43,6 @@ export default function ChillEmotionScreen() {
     })
   }
 
-  const handleVoiceRecord = async () => {
-    // TODO: Implement voice recording with speech-to-text
-    setIsRecording(!isRecording)
-  }
-
   const getDurationLabel = (duration: number): string => {
     const labels: Record<number, string> = {
       5: 'Quick reset',
@@ -58,8 +54,6 @@ export default function ChillEmotionScreen() {
 
   return (
     <View className="flex-1 bg-cardd">
-     
-
       <NoiseComponent>
         <TabHeader title="Chill">
           <button
@@ -157,23 +151,22 @@ export default function ChillEmotionScreen() {
                   disabled={!!sessionId}
                 />
 
-                <View className="flex flex-row gap-3 ">
-                  <Button
-                    label=""
-                    leftIcon={<RiMicLine size={20} />}
-                    variant="secondary"
-                    onClick={handleVoiceRecord}
-                    className="flex-shrink-0"
-                    disabled={!!sessionId || isPending}
-                  />
+                <AudioTranscription
+                  value={emotion}
+                  onChange={setEmotion}
+                  maxLength={500}
+                  disabled={!!sessionId || isPending}
+                  onBusyChange={setVoiceBusy}
+                />
 
+                <View className="mt-4 flex flex-row gap-3 ">
                   {!sessionId && (
                     <Button
                       label="Continue"
                       variant="default"
                       fullWidth
                       onClick={handleSubmit}
-                      disabled={!emotion.trim() || isPending}
+                      disabled={!emotion.trim() || isPending || voiceBusy}
                       loading={isPending}
                       style={{
                         width: '100%',

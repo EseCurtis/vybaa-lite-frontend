@@ -1,13 +1,10 @@
-import { RiDeleteBin6Line, RiMicFill } from '@remixicon/react'
 import moment from 'moment'
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 
 import { Skeleton } from '@/components/common/skeleton.component'
 import { TextArea } from '@/components/common/textarea.component'
-import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import type { VoiceRecordingResult } from '@/plugins/capacitor/plugins/voice-recorder.plugin'
 
 import { MoodSelector } from './mood-selector.component'
 
@@ -16,15 +13,11 @@ interface JournalComposerProps {
   date: string
   disabled: boolean
   isLoading: boolean
-  isProcessingVoice: boolean
-  isRecording: boolean
+  audioControls: ReactNode
   mood: string | null
   onContentChange: (content: string) => void
-  onDiscardVoiceNote: () => void
   onMoodChange: (mood: string) => void
-  onVoiceRecord: () => void
   prompt: string
-  voiceNote: VoiceRecordingResult | null
 }
 
 export function JournalComposer({
@@ -32,15 +25,11 @@ export function JournalComposer({
   date,
   disabled,
   isLoading,
-  isProcessingVoice,
-  isRecording,
+  audioControls,
   mood,
   onContentChange,
-  onDiscardVoiceNote,
   onMoodChange,
-  onVoiceRecord,
   prompt,
-  voiceNote,
 }: JournalComposerProps): ReactElement {
   const entryDate = moment(date)
   const title = entryDate.isSame(moment(), 'day')
@@ -120,57 +109,7 @@ export function JournalComposer({
               {content.length.toLocaleString()} / 5,000
             </Text>
           </View>
-          {isRecording ? (
-            <View className="flex-row flex-wrap items-center justify-between gap-3 rounded-2xl bg-card-light-100 p-4">
-              <Text
-                role="status"
-                className="flex items-center gap-2 font-bbh text-sm text-white"
-              >
-                <RiMicFill size={18} aria-hidden="true" />
-                Recording voice note…
-              </Text>
-              <Pressable
-                onPress={onVoiceRecord}
-                disabled={isProcessingVoice}
-                accessibilityLabel="Stop voice recording"
-                className="min-h-11 items-center justify-center rounded-full bg-white px-4 font-bbh text-sm font-semibold text-black"
-              >
-                Stop recording
-              </Pressable>
-            </View>
-          ) : null}
-          {voiceNote ? (
-            <View className="gap-3 rounded-2xl bg-card-light-100 p-4">
-              <View className="flex-row items-center justify-between gap-3">
-                <View className="gap-1">
-                  <Text className="font-bbh text-sm font-semibold text-white">
-                    Voice note preview
-                  </Text>
-                  <Text className="font-bbh text-xs text-card-lighter-3">
-                    {Math.max(1, Math.round(voiceNote.durationMs / 1000))}s ·{' '}
-                    {voiceNote.mimeType}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={onDiscardVoiceNote}
-                  accessibilityLabel="Discard voice note"
-                  className="size-11 shrink-0 items-center justify-center rounded-full bg-card-light text-white"
-                >
-                  <RiDeleteBin6Line size={18} aria-hidden="true" />
-                </Pressable>
-              </View>
-              <audio
-                controls
-                aria-label="Voice note preview"
-                src={voiceNote.audioUrl}
-                className="w-full"
-              />
-              <Text className="font-bbh text-xs leading-relaxed text-card-lighter-3">
-                This voice note stays local for now and is not saved with the
-                journal entry yet.
-              </Text>
-            </View>
-          ) : null}
+          {audioControls}
         </>
       )}
     </View>

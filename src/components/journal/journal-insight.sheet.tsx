@@ -1,73 +1,142 @@
-import { Icons, Icon as LIcon } from '@/components/layout/icon.component'
-import { TouchableOpacity } from '@/components/layout/pressables.component'
-import { Text } from '@/components/layout/text.component'
-import { View } from '@/components/layout/view.component'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { ReactElement } from 'react'
 
-export function JournalInsightSheet({ onClose }: { onClose?: () => void }) {
+import { AudioTranscription } from '@/components/common/audio-transcription.component'
+import { Pressable } from '@/components/layout/pressables.component'
+import {
+  useCreateJournal,
+  useJournalByDate,
+  useUpdateJournal,
+} from '@/hooks/use-journal.hook'
+import { ApiError, getCurrentTimezone } from '@/shared/api/http'
+
+export function JournalInsightSheet({
+  onClose,
+}: {
+  onClose?: () => void
+}): ReactElement {
+  const [date] = useState(() =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: getCurrentTimezone(),
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date()),
+  )
   const [text, setText] = useState('')
-  const [isRecording, setIsRecording] = useState(false)
-
+  const [voiceBusy, setVoiceBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const dirty = useRef(false)
+  const saving = useRef(false)
+  const query = useJournalByDate(date)
+  const journal = query.data?.data.journal
+  const create = useCreateJournal()
+  const update = useUpdateJournal()
+  const busy = create.isPending || update.isPending
+  const loadFailed =
+    query.isError &&
+    !(query.error instanceof ApiError && query.error.status === 404)
+  useEffect(() => {
+    if (journal && !dirty.current) setText(journal.entry ?? '')
+  }, [journal])
+  function change(value: string): void {
+    dirty.current = true
+    setText(value)
+  }
+  async function save(): Promise<void> {
+    if (
+      !text.trim() ||
+      busy ||
+      voiceBusy ||
+      saving.current ||
+      query.isLoading ||
+      loadFailed
+    )
+      return
+    saving.current = true
+    setError(null)
+    try {
+      if (journal)
+        await update.mutateAsync({
+          journalId: journal.id,
+          data: { entry: text.trim() },
+        })
+      else await create.mutateAsync({ date, entry: text.trim() })
+      onClose?.()
+    } catch (failure: unknown) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : 'Could not save your entry. Your text is still here.',
+      )
+    } finally {
+      saving.current = false
+    }
+  }
   return (
-    <View className="gap-4">
-      <View className="gap-2">
-        <Text className="text-white font-bbh text-xl">Daily Check In</Text>
-        <Text className="text-white/70 font-bbh text-sm">Write a few lines about your day. You can also record a quick voice note and we’ll transcribe it.</Text>
-      </View>
-
-      <div className="rounded-xl border border-[#2a2a2a] bg-[#0f0f0f] p-3">
+    <section className="space-y-4 font-bbh">
+      <h2 className="text-xl font-semibold text-white">Daily Check In</h2>
+      <p className="text-sm text-card-lighter-3">
+        Write a few lines or transcribe an audio recording.
+      </p>
+      {loadFailed ? (
+        <p role="alert" className="text-sm text-danger-400">
+          Your existing entry could not load.{' '}
+          <button
+            type="button"
+            onClick={() => void query.refetch()}
+            className="min-h-11 px-2 font-semibold"
+          >
+            Retry
+          </button>
+        </p>
+      ) : null}
+      <label className="block space-y-2 text-sm text-card-lighter-3">
+        Your check-in
         <textarea
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(event) => change(event.target.value)}
+          maxLength={1000}
+          disabled={busy || query.isLoading || loadFailed}
           placeholder="How was your day? Any wins, challenges, or feelings to note?"
-          className="w-full bg-transparent outline-none text-white placeholder:text-white/40 min-h-[120px] resize-y"
+          className="min-h-32 w-full rounded-xl bg-card-light-50 p-3 text-base text-white placeholder:text-card-lighter-3 outline-none"
         />
-        <div className="flex items-center justify-between mt-2">
-          <Text className="text-white/50 text-xs">{text.length}/1000</Text>
-          <div className="flex items-center gap-2">
-            <TouchableOpacity
-              className={`px-3 py-2 rounded-full border ${isRecording ? 'border-red-500/50 bg-red-500/10' : 'border-[#2a2a2a] bg-[#141414]'}`}
-              onPress={() => setIsRecording((v) => !v)}
-            >
-              {isRecording ? (
-                <div className="flex items-center gap-2">
-                  <Icons.Pause size={16} className="text-red-400" />
-                  <Text className="text-red-400 text-sm">Stop</Text>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <LIcon name="Mic" size={16} className="text-white/80" />
-                  <Text className="text-white/80 text-sm">Record</Text>
-                </div>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity className="px-3 py-2 rounded-full border border-[#2a2a2a] bg-[#141414]">
-              <div className="flex items-center gap-2">
-                <Icons.Upload size={16} className="text-white/80" />
-                <Text className="text-white/80 text-sm">Attach</Text>
-              </div>
-            </TouchableOpacity>
-          </div>
-        </div>
-      </div>
-
+      </label>
+      <p className="text-right text-xs text-card-lighter-3">
+        {text.length}/1000
+      </p>
+      <AudioTranscription
+        value={text}
+        onChange={change}
+        maxLength={1000}
+        disabled={busy || query.isLoading || loadFailed}
+        onBusyChange={setVoiceBusy}
+      />
+      {error ? (
+        <p role="alert" className="text-sm text-danger-400">
+          {error}
+        </p>
+      ) : null}
       <div className="flex gap-3">
-        <TouchableOpacity
-          className="flex-1 bg-card-600 hover:bg-card-500 rounded-xl py-3 text-center"
+        <Pressable
+          type="button"
           onPress={onClose}
+          disabled={busy}
+          className="min-h-11 flex-1 items-center justify-center rounded-full bg-card-light px-4 text-sm text-white"
         >
-          <Text className="text-white font-bbh">Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="flex-1 bg-accent-600 hover:bg-accent-500 rounded-xl py-3 text-center"
-          onPress={() => onClose?.()}
+          Cancel
+        </Pressable>
+        <Pressable
+          type="button"
+          onPress={() => void save()}
+          disabled={
+            busy || voiceBusy || query.isLoading || loadFailed || !text.trim()
+          }
+          className="min-h-11 flex-1 items-center justify-center rounded-full bg-white px-4 text-sm font-semibold text-black"
         >
-          <Text className="text-white font-bbh">Save</Text>
-        </TouchableOpacity>
+          {busy ? 'Saving…' : 'Save'}
+        </Pressable>
       </div>
-    </View>
+    </section>
   )
 }
-
-
