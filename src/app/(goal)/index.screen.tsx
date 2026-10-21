@@ -1,6 +1,6 @@
+import { GoalRowSkeleton } from '@/components/common/loading-layouts.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotch } from '@/components/common/notch.component'
-import { GoalRowSkeleton } from '@/components/common/loading-layouts.component'
 import { QueryFeedback } from '@/components/common/query-feedback.component'
 import { readGoalCreationDraft } from '@/components/custom/goal/create-goal-sheet.component'
 import { TaskListRow } from '@/components/custom/goal/task-list-row.component'
@@ -157,8 +157,8 @@ function GoalEmptyState({
   title: string
 }) {
   return (
-    <View className="items-center rounded-lg bg-card-light-50 px-6 py-12 text-center">
-      <View className="mb-4 size-12 items-center justify-center rounded-2xl bg-card-light">
+    <View className="items-center rounded-lg  px-6 py-12 text-center">
+      <View className="mb-4  items-center justify-center rounded-2xl ">
         {icon}
       </View>
       <Text className="text-lg font-bold">{title}</Text>
@@ -406,10 +406,11 @@ export default function GoalsAppScreen({
                   >
                     <Text
                       className={
-                        tab === item
-                          ? 'font-bold text-sm text-black'
-                          : 'text-card-lighter-2'
+                        cn(tab === item
+                          ? 'font-bold  text-black'
+                          : 'text-card-lighter-2', "text-xs")
                       }
+                      
                     >
                       {item}
                     </Text>
@@ -447,7 +448,7 @@ export default function GoalsAppScreen({
                   <Pressable
                     aria-pressed={filter === item.value}
                     className={cn(
-                      'min-h-11 flex-row items-center gap-1.5 rounded-full px-3',
+                      'py-3 flex-row items-center gap-1.5 rounded-full  px-4',
                       filter === item.value
                         ? 'bg-white text-black'
                         : 'bg-card-light text-card-lighter-2',
