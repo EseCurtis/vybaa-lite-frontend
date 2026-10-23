@@ -1,25 +1,27 @@
-import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
+import { AuthScreenLayout } from '@/components/common/auth-screen-layout.component'
 import { Input } from '@/components/common/input.component'
 import { BottomNotch } from '@/components/common/notch.component'
 import { TermsConsent } from '@/components/common/terms-consent.component'
+import { useKeyboard } from '@/components/layout'
 import { Button } from '@/components/layout/button.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
-import {
-  getAppleAuthStatusText,
-  getGoogleAuthStatusText,
-} from '@/shared/utils/auth-status.util'
 import { useAuth } from '@/providers/auth.provider'
 import { useToast } from '@/providers/toast.provider'
 import { ApiError } from '@/shared/api/http'
+import { useAuthValidation } from '@/hooks/use-auth-validation.hook'
+import { getAuthErrorMessage } from '@/shared/utils/auth-validation.util'
 import {
   isAppleLoginAvailable,
   isGoogleLoginAvailable,
 } from '@/shared/utils/auth-platform.util'
-import { getApiErrorMessage } from '@/shared/utils/api-error.util'
+import {
+  getAppleAuthStatusText,
+  getGoogleAuthStatusText,
+} from '@/shared/utils/auth-status.util'
 import { RiAppleFill, RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
@@ -42,8 +44,11 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<LoginAction>(null)
+  const validation = useAuthValidation({ email, password })
   const canUseAppleLogin = isAppleLoginAvailable(ENV.PLATFORM)
   const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
+
+  const { isKeyboardVisible } = useKeyboard()
 
   const isEmailLoading = activeAction === 'email'
   const isAppleLoading = activeAction === 'apple'
@@ -62,11 +67,13 @@ export default function LoginScreen() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     setError(null)
+    if (!validation.validate(formRef.current)) return
     setActiveAction('email')
 
     try {
-      await loginWithEmail({ email, password })
+      await loginWithEmail({ email: email.trim(), password })
       toast.success('Welcome back')
     } catch (error: unknown) {
       if (error instanceof ApiError && error.code === 'EMAIL_NOT_CONFIRMED') {
@@ -78,7 +85,7 @@ export default function LoginScreen() {
         return
       }
 
-      const msg = getApiErrorMessage(error, 'Login failed')
+      const msg = getAuthErrorMessage(error, 'login')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -92,7 +99,7 @@ export default function LoginScreen() {
     try {
       await loginWithGoogle()
     } catch (error: unknown) {
-      const msg = getApiErrorMessage(error, 'Failed to sign in with Google')
+      const msg = getAuthErrorMessage(error, 'google')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -106,7 +113,7 @@ export default function LoginScreen() {
     try {
       await loginWithApple()
     } catch (error: unknown) {
-      const msg = getApiErrorMessage(error, 'Failed to sign in with Apple')
+      const msg = getAuthErrorMessage(error, 'apple')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -132,14 +139,14 @@ export default function LoginScreen() {
             onClick={() => formRef.current?.requestSubmit()}
           />
 
-          {(canUseGoogleLogin || canUseAppleLogin) && (
+          {!isKeyboardVisible && (canUseGoogleLogin || canUseAppleLogin) && (
             <>
               <View className="flex-row items-center gap-3 mt-3 w-full">
-                <View className="flex-1 h-px bg-card-lighter" />
+                <View className="w-full h-px bg-card-lighter" />
                 <Text className="text-card-lighter text-[10px] font-bbh uppercase tracking-[0.2em]">
                   or
                 </Text>
-                <View className="flex-1 h-px bg-card-lighter" />
+                <View className="w-full h-px bg-card-lighter" />
               </View>
               {canUseGoogleLogin && (
                 <TouchableOpacity
@@ -193,6 +200,7 @@ export default function LoginScreen() {
       }
     >
       <form
+        noValidate
         ref={formRef}
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 w-full"
@@ -200,6 +208,7 @@ export default function LoginScreen() {
         <Input
           label="Email"
           name="email"
+          {...validation.field('email')}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -209,29 +218,34 @@ export default function LoginScreen() {
           inputMode="email"
           placeholder="you@example.com"
         />
-        <View className="flex flex-col">
-          <Input
-            label="Password"
-            name="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isSubmitting}
-            autoComplete="current-password"
-            placeholder="••••••••"
-          />
-          <TouchableOpacity
-            onPress={() => navigate({ to: '/auth/forgot-password' })}
-            className="mt-3"
-          >
-            <Text className="text-white font-bold text-xs">
-              Forgot your password?
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {
+          <View className="flex flex-col">
+            <Input
+              label="Password"
+              name="password"
+              {...validation.field('password')}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
+              autoComplete="current-password"
+              placeholder="••••••••"
+            />
+            <TouchableOpacity
+              onPress={() => navigate({ to: '/auth/forgot-password' })}
+              className="mt-3"
+            >
+              <Text className="text-white font-bold text-xs">
+                Forgot your password?
+              </Text>
+            </TouchableOpacity>
+          </View>
+        }
 
         {error && (
-          <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
+          <Text role="alert" className="text-danger-500 text-sm font-bbh">
+            {error}
+          </Text>
         )}
         {loadingText && !isGoogleLoading && (
           <Text className="text-card-lighter-2 text-xs font-bbh">

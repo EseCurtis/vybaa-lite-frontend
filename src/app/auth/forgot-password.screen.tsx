@@ -4,8 +4,10 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
+import { useAuthValidation } from '@/hooks/use-auth-validation.hook'
+import { getAuthErrorMessage } from '@/shared/utils/auth-validation.util'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 type ForgotPasswordAction = 'resetting-password' | 'sending-code' | null
 
@@ -19,6 +21,11 @@ export default function ForgotPasswordScreen() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<ForgotPasswordAction>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const validation = useAuthValidation(
+    step === 'request' ? { email } : { email, code: otp, password },
+    true,
+  )
 
   const loadingText =
     activeAction === 'sending-code'
@@ -30,16 +37,18 @@ export default function ForgotPasswordScreen() {
 
   const handleRequest = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
     setError(null)
     setMessage(null)
+    if (!validation.validate(formRef.current)) return
     setActiveAction('sending-code')
     try {
-      await authAPI.requestPasswordReset({ email })
+      await authAPI.requestPasswordReset({ email: email.trim() })
       setMessage('We sent a reset code to your email.')
       toast.success('Reset code sent')
       setStep('reset')
-    } catch (err: any) {
-      const msg = err?.msg || err?.message || 'Failed to send reset code'
+    } catch (err: unknown) {
+      const msg = getAuthErrorMessage(err, 'request-reset')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -49,20 +58,22 @@ export default function ForgotPasswordScreen() {
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isLoading) return
     setError(null)
     setMessage(null)
+    if (!validation.validate(formRef.current)) return
     setActiveAction('resetting-password')
     try {
       await authAPI.resetPassword({
-        email,
-        otp: Number(otp),
+        email: email.trim(),
+        otp: Number(otp.trim()),
         newPassword: password,
       })
       setMessage('Password reset. You can log in with your new password.')
       toast.success('Password reset')
       navigate({ to: '/auth/login' })
-    } catch (err: any) {
-      const msg = err?.msg || err?.message || 'Failed to reset password'
+    } catch (err: unknown) {
+      const msg = getAuthErrorMessage(err, 'reset')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -78,9 +89,19 @@ export default function ForgotPasswordScreen() {
       }}
     >
       {step === 'request' ? (
-        <form onSubmit={handleRequest} className="flex flex-col gap-4 w-full">
+        <form
+          ref={formRef}
+          noValidate
+          onSubmit={handleRequest}
+          className="flex flex-col gap-4 w-full"
+        >
           <Input
             label="Email"
+            name="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            inputMode="email"
+            {...validation.field('email')}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -88,7 +109,9 @@ export default function ForgotPasswordScreen() {
             placeholder="you@example.com"
           />
           {error && (
-            <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
+            <Text role="alert" className="text-danger-500 text-sm font-bbh">
+              {error}
+            </Text>
           )}
           {message && (
             <Text className="text-green-400 text-sm font-bbh">{message}</Text>
@@ -108,7 +131,12 @@ export default function ForgotPasswordScreen() {
           />
         </form>
       ) : (
-        <form onSubmit={handleReset} className="flex flex-col gap-4 w-full">
+        <form
+          ref={formRef}
+          noValidate
+          onSubmit={handleReset}
+          className="flex flex-col gap-4 w-full"
+        >
           <Input
             label="Email"
             type="email"
@@ -118,6 +146,11 @@ export default function ForgotPasswordScreen() {
           />
           <Input
             label="Reset code"
+            name="code"
+            autoComplete="one-time-code"
+            inputMode="numeric"
+            maxLength={6}
+            {...validation.field('code')}
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             disabled={isLoading}
@@ -125,6 +158,10 @@ export default function ForgotPasswordScreen() {
           />
           <Input
             label="New password"
+            name="password"
+            autoComplete="new-password"
+            helperText="Use 8–100 characters."
+            {...validation.field('password')}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -132,7 +169,9 @@ export default function ForgotPasswordScreen() {
             placeholder="••••••••"
           />
           {error && (
-            <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
+            <Text role="alert" className="text-danger-500 text-sm font-bbh">
+              {error}
+            </Text>
           )}
           {message && (
             <Text className="text-green-400 text-sm font-bbh">{message}</Text>

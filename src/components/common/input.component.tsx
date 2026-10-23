@@ -3,7 +3,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { colors } from '@/shared/colors.shared'
 import { cn } from '@/shared/utils/helpers.util'
-import React, { useState } from 'react'
+import React, { useId, useState } from 'react'
 
 interface InputProps extends Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
@@ -31,20 +31,28 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
       containerClassName = '',
       inputClassName = '',
       disabled = false,
+      id,
+      'aria-describedby': describedBy,
       ...props
     },
     ref,
   ) => {
     const [showPassword, setShowPassword] = useState(false)
+    const generatedId = useId()
+    const inputId = id ?? generatedId
+    const messageId = `${inputId}-message`
     const isPassword = type === 'password'
     const inputType = isPassword && showPassword ? 'text' : type
 
     return (
       <View className={cn('w-full', containerClassName)}>
         {label && (
-          <Text className="text-white text-sm font-medium font-bbh mb-2">
+          <label
+            htmlFor={inputId}
+            className="text-white text-sm font-medium font-bbh mb-2"
+          >
             {label}
-          </Text>
+          </label>
         )}
 
         <View
@@ -61,6 +69,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           <input
+            id={inputId}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={
+              [describedBy, error || helperText ? messageId : undefined]
+                .filter(Boolean)
+                .join(' ') || undefined
+            }
             ref={ref}
             type={inputType}
             disabled={disabled}
@@ -78,8 +93,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 flex items-center justify-center p-1"
-              tabIndex={-1}
+              className="absolute right-1 flex min-h-11 min-w-11 items-center justify-center p-1"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              aria-pressed={showPassword}
             >
               <Icon
                 name={showPassword ? 'EyeOff' : 'Eye'}
@@ -97,11 +113,20 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         </View>
 
         {error && (
-          <Text className="text-danger-500 text-xs font-bbh mt-1">{error}</Text>
+          <Text
+            id={messageId}
+            role="status"
+            className="text-danger-500 text-xs font-bbh mt-1"
+          >
+            {error}
+          </Text>
         )}
 
         {helperText && !error && (
-          <Text className="text-neutral-500 text-xs font-bbh mt-1">
+          <Text
+            id={messageId}
+            className="text-card-lighter-3 text-xs font-bbh mt-1"
+          >
             {helperText}
           </Text>
         )}

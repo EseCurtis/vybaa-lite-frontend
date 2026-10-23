@@ -10,11 +10,12 @@ import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { userAPI } from '@/shared/api/user.api'
 import { CURRENT_TERMS_VERSION } from '@/shared/config/public-urls.config'
-import { getApiErrorMessage } from '@/shared/utils/api-error.util'
+import { useAuthValidation } from '@/hooks/use-auth-validation.hook'
+import { getAuthErrorMessage } from '@/shared/utils/auth-validation.util'
 import { cn } from '@/shared/utils/helpers.util'
 import { RiCheckLine, RiCloseLine, RiLoader4Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type SignupAction = 'creating-account' | 'sending-code' | null
 
@@ -68,8 +69,15 @@ export default function SignupScreen() {
   >(null)
   const [usernameError, setUsernameError] = useState<string | null>(null)
   const [hasTouchedUsername, setHasTouchedUsername] = useState(false)
+  const [checkedUsername, setCheckedUsername] = useState<string | null>(null)
+  const validation = useAuthValidation(
+    step === 1 ? { firstName, lastName, email } : { password, confirmPassword },
+    true,
+  )
 
   const debouncedUsername = useDebounce(username, 450)
+  const isCurrentUsernameChecked =
+    checkedUsername === username.trim().toLowerCase()
 
   useEffect(() => {
     const cleaned = debouncedUsername.trim().toLowerCase()
@@ -95,14 +103,16 @@ export default function SignupScreen() {
       try {
         const res = await userAPI.checkUsernameExists(cleaned)
         if (cancelled) return
+        setCheckedUsername(cleaned)
         setIsUsernameAvailable(res.data.available)
         setUsernameError(
           res.data.available
             ? null
-            : res.data.reason || 'Username is already taken',
+            : 'That username isn’t available. Try another.',
         )
       } catch {
         if (cancelled) return
+        setCheckedUsername(cleaned)
         setIsUsernameAvailable(null)
         setUsernameError('Unable to verify username right now')
       } finally {
@@ -114,21 +124,6 @@ export default function SignupScreen() {
       cancelled = true
     }
   }, [debouncedUsername, hasTouchedUsername])
-
-  const canContinue = useMemo(() => {
-    if (step !== 1) return true
-    if (!firstName || !lastName || !email) return false
-    if (isCheckingUsername) return false
-    return isUsernameAvailable === true && !usernameError
-  }, [
-    email,
-    firstName,
-    isCheckingUsername,
-    isUsernameAvailable,
-    lastName,
-    step,
-    usernameError,
-  ])
 
   const isSubmitting = activeAction !== null
   const loadingText =
@@ -142,16 +137,15 @@ export default function SignupScreen() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
     setError(null)
+    const fieldsValid = validation.validate(formRef.current)
 
     if (step === 1) {
       setHasTouchedUsername(true)
-      if (!firstName || !lastName || !email) {
-        setError('Please fill in your name and email to continue.')
-        return
-      }
+      if (!fieldsValid) return
 
-      if (isCheckingUsername) {
+      if (isCheckingUsername || username !== debouncedUsername) {
         setError('Wait a moment while we check that username.')
         return
       }
@@ -160,11 +154,13 @@ export default function SignupScreen() {
         username.trim().toLowerCase(),
       )
       if (usernameValidationError) {
-        setError(usernameValidationError)
+        formRef.current
+          ?.querySelector<HTMLInputElement>('[name="username"]')
+          ?.focus()
         return
       }
 
-      if (isUsernameAvailable !== true) {
+      if (!isCurrentUsernameChecked || isUsernameAvailable !== true) {
         const msg = usernameError || 'Please choose an available username'
         setError(msg)
         return
@@ -173,24 +169,16 @@ export default function SignupScreen() {
       return
     }
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
-      return
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.')
-      return
-    }
+    if (!fieldsValid) return
 
     try {
       setActiveAction('creating-account')
       const res = await registerWithEmail({
         acceptedTerms: true,
-        email,
+        email: email.trim(),
         password,
-        firstName,
-        lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         username: username.trim().toLowerCase(),
         termsVersion: CURRENT_TERMS_VERSION,
       })
@@ -198,11 +186,11 @@ export default function SignupScreen() {
       if ('confirmationRequired' in res.data && res.data.confirmationRequired) {
         // Trigger confirmation code email and go to confirmation screen
         setActiveAction('sending-code')
-        await authAPI.requestConfirmation(email)
+        await authAPI.requestConfirmation(email.trim())
         toast.success('We sent you a confirmation code')
         navigate({
           to: '/auth/confirm',
-          search: { email },
+          search: { email: email.trim() },
         })
         return
       }
@@ -210,11 +198,11 @@ export default function SignupScreen() {
       // Fallback: if backend ever returns an auth response directly
       navigate({
         to: '/auth/confirm',
-        search: { email },
+        search: { email: email.trim() },
       })
       toast.success('Account created. Enter your confirmation code')
     } catch (err: unknown) {
-      const message = getApiErrorMessage(err, 'Sign up failed')
+      const message = getAuthErrorMessage(err, 'signup')
       setError(message)
       toast.error(message)
     } finally {
@@ -258,8 +246,8 @@ export default function SignupScreen() {
             }
             fullWidth
             loading={isSubmitting}
-            disabled={isSubmitting || (step === 1 && !canContinue)}
-            className={cn('mt-2', step === 1 && !canContinue && 'opacity-70')}
+            disabled={isSubmitting}
+            className="mt-2"
             onClick={() => {
               formRef.current?.requestSubmit()
             }}
@@ -270,6 +258,7 @@ export default function SignupScreen() {
       }
     >
       <form
+        noValidate
         ref={formRef}
         onSubmit={handleSubmit}
         className="flex flex-col gap-4 w-full"
@@ -321,10 +310,16 @@ export default function SignupScreen() {
                 </Text>
               }
               error={
-                hasTouchedUsername ? usernameError || undefined : undefined
+                hasTouchedUsername
+                  ? validateUsername(username.trim().toLowerCase()) ||
+                    (isCurrentUsernameChecked ? usernameError : undefined) ||
+                    undefined
+                  : undefined
               }
               helperText={
-                !usernameError && isUsernameAvailable
+                isCurrentUsernameChecked &&
+                !usernameError &&
+                isUsernameAvailable
                   ? 'Nice — that username is available'
                   : 'Lowercase letters, numbers, underscores (3–20)'
               }
@@ -334,9 +329,10 @@ export default function SignupScreen() {
                     className="text-white/70 animate-spin"
                     size={18}
                   />
-                ) : isUsernameAvailable === true ? (
+                ) : isCurrentUsernameChecked && isUsernameAvailable === true ? (
                   <RiCheckLine className="text-green-400" size={18} />
-                ) : isUsernameAvailable === false ? (
+                ) : isCurrentUsernameChecked &&
+                  isUsernameAvailable === false ? (
                   <RiCloseLine className="text-danger-500" size={18} />
                 ) : null
               }
@@ -345,6 +341,7 @@ export default function SignupScreen() {
               <Input
                 label="First name"
                 name="firstName"
+                {...validation.field('firstName')}
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 disabled={isSubmitting}
@@ -354,6 +351,7 @@ export default function SignupScreen() {
               <Input
                 label="Last name"
                 name="lastName"
+                {...validation.field('lastName')}
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 disabled={isSubmitting}
@@ -364,6 +362,7 @@ export default function SignupScreen() {
             <Input
               label="Email"
               name="email"
+              {...validation.field('email')}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -379,6 +378,8 @@ export default function SignupScreen() {
             <Input
               label="Password"
               name="password"
+              {...validation.field('password')}
+              helperText="Use 8–100 characters."
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -389,6 +390,7 @@ export default function SignupScreen() {
             <Input
               label="Confirm password"
               name="confirmPassword"
+              {...validation.field('confirmPassword')}
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -400,7 +402,9 @@ export default function SignupScreen() {
         )}
 
         {error && (
-          <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
+          <Text role="alert" className="text-danger-500 text-sm font-bbh">
+            {error}
+          </Text>
         )}
         {loadingText && (
           <Text className="text-card-lighter-2 text-xs font-bbh">

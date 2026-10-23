@@ -4,9 +4,10 @@ import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
-import { getApiErrorMessage } from '@/shared/utils/api-error.util'
+import { useAuthValidation } from '@/hooks/use-auth-validation.hook'
+import { getAuthErrorMessage } from '@/shared/utils/auth-validation.util'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 type ConfirmAccountAction = 'confirming-account' | 'resending-code' | null
 
@@ -23,17 +24,21 @@ export default function ConfirmAccountScreen() {
   const isConfirming = activeAction === 'confirming-account'
   const isResending = activeAction === 'resending-code'
   const isBusy = activeAction !== null
+  const formRef = useRef<HTMLFormElement>(null)
+  const validation = useAuthValidation({ email, code })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isBusy) return
     setError(null)
     setMessage(null)
+    if (!validation.validate(formRef.current)) return
     setActiveAction('confirming-account')
 
     try {
       await authAPI.confirmAccount({
-        email,
-        otp: Number(code),
+        email: email.trim(),
+        otp: Number(code.trim()),
       })
       setMessage('Account confirmed. You can log in now.')
       toast.success('Account confirmed')
@@ -41,7 +46,7 @@ export default function ConfirmAccountScreen() {
         navigate({ to: '/auth/login' })
       }, 800)
     } catch (err: unknown) {
-      const msg = getApiErrorMessage(err, 'Confirmation failed')
+      const msg = getAuthErrorMessage(err, 'confirm')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -50,14 +55,12 @@ export default function ConfirmAccountScreen() {
   }
 
   const handleResend = async () => {
+    if (isBusy) return
     const normalizedEmail = email.trim()
     setError(null)
     setMessage(null)
 
-    if (!normalizedEmail) {
-      setError('Enter your email first')
-      return
-    }
+    if (!validation.validate(formRef.current, { email })) return
 
     setActiveAction('resending-code')
     try {
@@ -65,7 +68,7 @@ export default function ConfirmAccountScreen() {
       setMessage('A new confirmation code is on its way.')
       toast.success('New confirmation code sent')
     } catch (err: unknown) {
-      const msg = getApiErrorMessage(err, 'Could not resend the code')
+      const msg = getAuthErrorMessage(err, 'resend')
       setError(msg)
       toast.error(msg)
     } finally {
@@ -78,13 +81,23 @@ export default function ConfirmAccountScreen() {
       headerTitle="Confirm your account"
       onBack={() => navigate({ to: '/auth/login' })}
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+      <form
+        ref={formRef}
+        noValidate
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 w-full"
+      >
         <Text className="text-card-lighter-2 text-sm font-bbh leading-5">
           Confirm your email before you can log in. If the code expired, request
           a fresh one below.
         </Text>
         <Input
           label="Email"
+          name="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          inputMode="email"
+          {...validation.field('email')}
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -93,6 +106,11 @@ export default function ConfirmAccountScreen() {
         />
         <Input
           label="Confirmation code"
+          name="code"
+          autoComplete="one-time-code"
+          inputMode="numeric"
+          maxLength={6}
+          {...validation.field('code')}
           value={code}
           onChange={(e) => setCode(e.target.value)}
           disabled={isBusy}
@@ -100,7 +118,9 @@ export default function ConfirmAccountScreen() {
         />
 
         {error && (
-          <Text className="text-danger-500 text-sm font-bbh">{error}</Text>
+          <Text role="alert" className="text-danger-500 text-sm font-bbh">
+            {error}
+          </Text>
         )}
         {message && (
           <Text className="text-green-400 text-sm font-bbh">{message}</Text>
