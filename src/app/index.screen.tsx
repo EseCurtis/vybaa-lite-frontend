@@ -3,6 +3,7 @@ import { Browser } from '@capacitor/browser'
 import { TopNotch } from '@/components/common/notch.component'
 import { OnboardingBackground } from '@/components/common/onboarding-background.component'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
+import { SplashPartners } from '@/components/custom/onboarding/splash-partners.component'
 import { TouchableOpacity } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
@@ -113,7 +114,8 @@ export default function AppScreen() {
       <View className="flex-1 z-[100] max-w-3xl mx-auto flex flex-col gap-8 justify-between pt-8 pb-2">
         <View className="space-y-4 my-auto">
           <View className="items-center transit justify-end gap-1">
-            <div className="size-[120px]">
+            <div className="relative size-[120px]">
+              <SplashPartners />
               <img
                 src={'./assets/glass-icon.png'}
                 loading="eager"
@@ -225,9 +227,9 @@ export default function AppScreen() {
                   )}
                 </View>
               )}
-              <View className="flex-row z-[300000] relative p-1 gap-2 mx-auto bg-blue-300/10 rounded-full">
+              <View className="flex-row z-[300000] relative px-2 py-2 gap-2 mx-auto border border-blue-300/10 rounded-full">
                 <TouchableOpacity
-                  className="rounded-full text-center  bg-white px-8 py-4 flex-row justify-center items-center"
+                  className="rounded-full text-center bg-white px-8 py-4 flex-row justify-center items-center"
                   disabled={isLoading || isSocialLoading}
                   onPress={handleGetStarted}
                 >
