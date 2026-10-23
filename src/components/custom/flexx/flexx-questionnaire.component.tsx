@@ -16,6 +16,8 @@ import { flexxPresentation } from '@/shared/flexx/flexx-presentation'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 import { cn } from '@/shared/utils/helpers.util'
 import { FlexxPartnerExpression } from './flexx-partner-expression.component'
+import { FlexxStoryArt } from './flexx-story-art.component'
+import { flexxStorySeed } from '@/shared/flexx/flexx-story'
 
 function FlexxAnswerSheet({
   designId,
@@ -58,7 +60,7 @@ function FlexxAnswerSheet({
           />
         ) : null}
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2">
         {question.options.map((option) => (
           <Pressable
             key={option}
@@ -70,7 +72,7 @@ function FlexxAnswerSheet({
               setSelected(option)
             }}
             className={cn(
-              'min-h-12 min-w-0 items-center justify-center rounded-2xl px-3 py-3 text-center font-bbh text-sm',
+              'min-h-12 min-w-0 items-center justify-center rounded-2xl px-3 py-3 text-center font-bbh text-sm [overflow-wrap:anywhere]',
               !custom && selected === option
                 ? 'bg-white text-black'
                 : 'bg-card-light text-white',
@@ -156,6 +158,18 @@ export function FlexxQuestionnaire({
   const saved = answers.data?.answers.find(
     (entry) => entry.designId === design.id,
   )
+  let questionArt: ReactElement | null = null
+  if (flexxStorySeed(design.id) % 4 !== 0) {
+    questionArt = <FlexxStoryArt design={design} className="w-[30cqw]" />
+  } else if (partnerId && presentation.expression) {
+    questionArt = (
+      <FlexxPartnerExpression
+        partnerId={partnerId}
+        expression={saved ? 'calm' : presentation.expression}
+        className="w-[30cqw]"
+      />
+    )
+  }
   if (!question) throw new Error('Questionnaire content is required')
   function openAnswer(): void {
     if (!answers.data || saved || !question) return
@@ -189,15 +203,9 @@ export function FlexxQuestionnaire({
           aria-hidden="true"
           style={{ color: theme.accent }}
         />
-        {partnerId && presentation.expression ? (
-          <FlexxPartnerExpression
-            partnerId={partnerId}
-            expression={saved ? 'calm' : presentation.expression}
-            className="w-[38cqw]"
-          />
-        ) : null}
+        {questionArt}
       </div>
-      <div className="flex min-h-0 flex-col justify-center gap-4">
+      <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain [overflow-wrap:anywhere]">
         <h2
           className="break-words font-display font-extrabold leading-tight"
           style={{

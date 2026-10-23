@@ -13,11 +13,17 @@ import type { AvatarUser } from '@/components/user/avatar.component'
 import { Avatar } from '@/components/user/avatar.component'
 import { UserCheckmark } from '@/components/user/checkmark.component'
 import type { FlexxDesign, FlexxMetric } from '@/shared/flexx/flexx-design'
-import { FLEXX_THEMES, metricValue } from '@/shared/flexx/flexx-design'
+import {
+  FLEXX_THEMES,
+  flexxEditorialForCard,
+  metricValue,
+} from '@/shared/flexx/flexx-design'
 import { flexxPresentation } from '@/shared/flexx/flexx-presentation'
+import { flexxStory } from '@/shared/flexx/flexx-story'
 import { cn } from '@/shared/utils/helpers.util'
 import type { FlexxCardProps } from './flexx-card.component'
 import { FlexxPartnerExpression } from './flexx-partner-expression.component'
+import { FlexxPartnerPost } from './flexx-partner-post.component'
 
 const SYMBOLS = {
   bolt: RiFlashlightFill,
@@ -49,6 +55,11 @@ const GRIDS = {
   },
   emblem: { areas: '"hero hero"', rows: 'minmax(0,1fr)' },
   questionnaire: { areas: '"hero hero"', rows: 'minmax(0,1fr)' },
+} as const
+const EDITORIAL_LABELS = {
+  'micro-action': 'TRY THIS',
+  reframe: 'A GENTLER REFRAME',
+  reflection: 'A MOMENT TO NOTICE',
 } as const
 
 function MetricBlock({
@@ -151,6 +162,7 @@ export function FlexxFeedCard({
   const centered = design.align === 'center'
   const isEmblem = design.category === 'achievement'
   const presentation = flexxPresentation(design)
+  const editorial = flexxEditorialForCard(design)
   const partnerId = design.author.partnerIds[0]
   let expression = presentation.expression
   if (
@@ -169,6 +181,9 @@ export function FlexxFeedCard({
         year: 'numeric',
       })
     : null
+  const story = flexxStory(design, data, rewind)
+  if (story)
+    return <FlexxPartnerPost design={design} story={story} animate={animate} />
   return (
     <div
       data-flexx-layout={design.layout}
@@ -184,7 +199,7 @@ export function FlexxFeedCard({
       <div className="grid h-full grid-rows-[auto_minmax(0,1fr)_auto] gap-[6cqw] p-[7cqw]">
         <div
           className={cn(
-            'flex flex-col gap-[5cqw]',
+            'flex flex-col gap-[3cqw]',
             centered && 'items-center !text-center',
           )}
         >
@@ -226,6 +241,26 @@ export function FlexxFeedCard({
           >
             {design.headline}
           </h2>
+          <div
+            data-flexx-editorial
+            className={cn(
+              'flex max-w-full flex-col gap-[1.5cqw]',
+              centered && 'items-center !text-center',
+            )}
+          >
+            <span
+              className="font-bbh text-[clamp(9px,2.8cqw,12px)] font-bold tracking-[0.12em]"
+              style={{ color: theme.accent }}
+            >
+              {EDITORIAL_LABELS[editorial.kind]}
+            </span>
+            <p
+              className="line-clamp-3 max-w-[92%] break-words font-bbh text-[clamp(13px,4.2cqw,18px)] font-medium leading-[1.35]"
+              style={{ color: theme.secondary }}
+            >
+              {editorial.text}
+            </p>
+          </div>
         </div>
         {isEmblem ? (
           <div className="flex min-h-0 flex-col items-center justify-center gap-[5cqw] !text-center">

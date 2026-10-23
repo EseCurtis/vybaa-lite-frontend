@@ -48,6 +48,7 @@ it('keeps questionnaire wording still and reserves only a thinking or listening 
       id: String(index),
       layout: 'questionnaire',
       blocks: [],
+      editorial: null,
       questionnaire: {
         question: 'How did today feel?',
         options: ['Quiet', 'Busy'],

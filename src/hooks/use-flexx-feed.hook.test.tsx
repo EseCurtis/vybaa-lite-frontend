@@ -47,8 +47,16 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function Feed({ initial = 0 }: { initial?: number }) {
-  const feed = useFlexxFeed(5, initial)
+function Feed({
+  initial = 0,
+  count = 5,
+  ids,
+}: {
+  initial?: number
+  count?: number
+  ids?: readonly string[]
+}) {
+  const feed = useFlexxFeed(count, initial, undefined, undefined, ids)
   return (
     <div
       ref={feed.feedRef}
@@ -120,4 +128,22 @@ it('uses instant navigation for reduced motion and cleans up observers and pendi
   view.unmount()
   expect(disconnect).toHaveBeenCalledOnce()
   act(() => vi.advanceTimersByTime(20))
+})
+
+it('keeps the active index in range when empty posts are filtered out', () => {
+  const view = render(<Feed initial={4} />)
+  const region = screen.getByRole('region')
+  view.rerender(<Feed initial={4} count={2} />)
+  expect(screen.getByRole('status').textContent).toBe('1')
+  expect(region.scrollTop).toBe(600)
+  view.rerender(<Feed initial={4} count={0} />)
+  expect(screen.getByRole('status').textContent).toBe('0')
+  expect(region.scrollTop).toBe(0)
+})
+
+it('retains the visible post when an earlier empty post is removed', () => {
+  const view = render(<Feed initial={2} count={4} ids={['a', 'b', 'c', 'd']} />)
+  view.rerender(<Feed initial={2} count={3} ids={['a', 'c', 'd']} />)
+  expect(screen.getByRole('status').textContent).toBe('1')
+  expect(screen.getByRole('region').scrollTop).toBe(600)
 })

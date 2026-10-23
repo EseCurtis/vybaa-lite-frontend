@@ -1,6 +1,6 @@
 [data-flexx-animate] [data-flexx-loop] {
-  animation-duration: 5.6s;
-  animation-timing-function: cubic-bezier(0.45, 0, 0.55, 1);
+  animation-duration: 4.2s;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
   animation-iteration-count: infinite;
   animation-play-state: paused;
 }
@@ -11,41 +11,54 @@
 
 [data-flexx-animate] [data-flexx-loop='symbol'] {
   animation-name: flexx-symbol-drift;
+  animation-duration: 3.8s;
+  animation-delay: -0.45s;
   transform-origin: center;
 }
 
 [data-flexx-animate] [data-flexx-loop='headline'] {
   animation-name: flexx-type-drift;
+  animation-duration: 4.4s;
+  animation-delay: -1.2s;
 }
 
 [data-flexx-animate] [data-flexx-loop='metric'] {
   animation-name: flexx-number-breathe;
+  animation-duration: 3.6s;
+  animation-delay: -0.8s;
   transform-origin: center;
 }
 
 [data-flexx-animate] [data-flexx-loop='partner'] {
   animation-name: flexx-partner-breathe;
-  animation-duration: 6.4s;
+  animation-duration: 4.8s;
+  animation-delay: -1.65s;
   transform-origin: bottom center;
 }
 
 @keyframes flexx-symbol-drift {
   0%,
   100% {
-    transform: translateY(0) rotate(-2deg);
+    transform: translateY(0) rotate(-4deg) scale(0.96);
   }
-  50% {
-    transform: translateY(-4px) rotate(3deg);
+  42% {
+    transform: translateY(-12px) rotate(7deg) scale(1.12);
+  }
+  68% {
+    transform: translateY(-5px) rotate(1deg) scale(1.04);
   }
 }
 
 @keyframes flexx-type-drift {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translate(0, 0) rotate(0deg) scale(1);
   }
-  50% {
-    transform: translateY(-3px);
+  38% {
+    transform: translate(7px, -8px) rotate(-0.7deg) scale(1.025);
+  }
+  66% {
+    transform: translate(-2px, -3px) rotate(0.2deg) scale(1.01);
   }
 }
 
@@ -54,18 +67,24 @@
   100% {
     transform: scale(1);
   }
-  50% {
-    transform: scale(1.018);
+  36% {
+    transform: translateY(-8px) scale(1.07);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.025);
   }
 }
 
 @keyframes flexx-partner-breathe {
   0%,
   100% {
-    transform: translateY(0) rotate(-0.7deg);
+    transform: translateY(0) rotate(-1.5deg) scale(0.98);
   }
-  50% {
-    transform: translateY(-3px) rotate(0.7deg);
+  42% {
+    transform: translateY(-12px) rotate(2.4deg) scale(1.05);
+  }
+  68% {
+    transform: translateY(-6px) rotate(1deg) scale(1.02);
   }
 }
 

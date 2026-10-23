@@ -14,6 +14,7 @@ export function useFlexxFeed(
   initialIndex: number,
   resetKey?: string,
   reducedMotionOverride?: boolean,
+  postIds?: readonly string[],
 ): {
   activeIndex: number
   feedRef: RefObject<HTMLDivElement | null>
@@ -25,6 +26,7 @@ export function useFlexxFeed(
   const [activeIndex, setActiveIndex] = useState(initialIndex)
   const activeRef = useRef(initialIndex)
   const frameRef = useRef<number | null>(null)
+  const previousIds = useRef(postIds)
   const systemReducedMotion = useReducedMotion()
   const reduceMotion = reducedMotionOverride ?? systemReducedMotion
   useLayoutEffect(() => {
@@ -44,6 +46,20 @@ export function useFlexxFeed(
       frameRef.current = null
     }
   }, [initialIndex, resetKey])
+  useLayoutEffect(() => {
+    const currentId = previousIds.current?.[activeRef.current]
+    const retainedIndex = currentId ? postIds?.indexOf(currentId) : undefined
+    previousIds.current = postIds
+    const next =
+      retainedIndex !== undefined && retainedIndex >= 0
+        ? retainedIndex
+        : Math.max(0, Math.min(count - 1, activeRef.current))
+    if (next === activeRef.current) return
+    activeRef.current = next
+    setActiveIndex(next)
+    const feed = feedRef.current
+    if (feed) feed.scrollTop = postHeight(feed) * next
+  }, [count, postIds])
   const onScroll = useCallback((): void => {
     if (frameRef.current !== null) return
     frameRef.current = requestAnimationFrame(() => {

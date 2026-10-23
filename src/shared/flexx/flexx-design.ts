@@ -42,6 +42,11 @@ export const FLEXX_METRICS = [
   'rewindConsistency',
 ] as const
 export type FlexxCategory = 'all' | CardType
+export type FlexxEditorialKind = 'micro-action' | 'reflection' | 'reframe'
+export type FlexxEditorial = {
+  kind: FlexxEditorialKind
+  text: string
+}
 export type FlexxMetric = (typeof FLEXX_METRICS)[number]
 export type FlexxSlot = 'aside' | 'bottomLeft' | 'bottomRight' | 'hero'
 export type FlexxAuthor = { partnerIds: RewindPersonaId[] }
@@ -58,6 +63,7 @@ export type FlexxDesign = {
   author: FlexxAuthor
   likedBy: RewindPersonaId[]
   questionnaire: FlexxQuestion | null
+  editorial: FlexxEditorial | null
 }
 export type FlexxDesignPage = {
   version: 1
@@ -117,6 +123,103 @@ const CATEGORY_METRICS: Record<CardType, FlexxMetric[]> = {
   streak: ['currentStreak', 'longestStreak', 'totalCheckIns', 'completionRate'],
   rewind: ['rewindSessions', 'rewindConsistency'],
   achievement: [],
+}
+
+const STARTER_EDITORIALS: Record<CardType, FlexxEditorial[]> = {
+  daily: [
+    {
+      kind: 'micro-action',
+      text: 'Choose one small task that fits the day you actually have.',
+    },
+    {
+      kind: 'reframe',
+      text: 'A check-in can be a reset, not a report card.',
+    },
+    {
+      kind: 'reflection',
+      text: 'What made it easier to show up for yourself today?',
+    },
+  ],
+  weekly: [
+    {
+      kind: 'reflection',
+      text: 'Which part of your week felt most like the direction you want?',
+    },
+    {
+      kind: 'micro-action',
+      text: 'Keep one thing that worked; let the rest stay editable.',
+    },
+    {
+      kind: 'reframe',
+      text: 'A useful week is not always a perfectly productive one.',
+    },
+  ],
+  streak: [
+    {
+      kind: 'reframe',
+      text: 'A streak is a rhythm, not a promise to be perfect.',
+    },
+    {
+      kind: 'micro-action',
+      text: 'Make the next return easy: decide on one tiny first step.',
+    },
+    {
+      kind: 'reflection',
+      text: 'What helps you come back when a routine gets interrupted?',
+    },
+  ],
+  rewind: [
+    {
+      kind: 'reflection',
+      text: 'Name one moment from today before you decide what it meant.',
+    },
+    {
+      kind: 'micro-action',
+      text: 'Take one quiet minute and write what you need next.',
+    },
+    {
+      kind: 'reframe',
+      text: 'Your reflection can be honest without being perfectly worded.',
+    },
+  ],
+  achievement: [
+    {
+      kind: 'reflection',
+      text: 'Pause long enough to notice the effort behind this milestone.',
+    },
+    {
+      kind: 'reframe',
+      text: 'Let this be a marker of effort, not pressure to do more.',
+    },
+    {
+      kind: 'micro-action',
+      text: 'Choose one small way to celebrate how far you have come.',
+    },
+  ],
+}
+
+function starterEditorial(
+  type: CardType,
+  index: number,
+  seed: number,
+): FlexxEditorial {
+  const options = STARTER_EDITORIALS[type]
+  const editorial = options[(index + seed) % options.length]
+  if (!editorial) throw new Error('Missing Flexx starter editorial copy')
+  return editorial
+}
+
+export function flexxEditorialForCard(
+  design: Pick<FlexxDesign, 'category' | 'editorial' | 'id'>,
+): FlexxEditorial {
+  if (design.editorial) return design.editorial
+  const options = STARTER_EDITORIALS[design.category]
+  let hash = 0
+  for (const character of design.id)
+    hash = (hash * 31 + character.charCodeAt(0)) >>> 0
+  const editorial = options[hash % options.length]
+  if (!editorial) throw new Error('Missing Flexx fallback editorial copy')
+  return editorial
 }
 
 export function metricValue(
@@ -221,6 +324,20 @@ function parseQuestion(value: unknown): FlexxQuestion | null {
   return { question: value.question.trim(), options }
 }
 
+function parseEditorial(value: unknown): FlexxEditorial | null {
+  if (value === undefined || value === null) return null
+  if (
+    !isRecord(value) ||
+    !member(['micro-action', 'reflection', 'reframe'] as const, value.kind) ||
+    typeof value.text !== 'string' ||
+    value.text.trim().length < 12 ||
+    value.text.trim().length > 140 ||
+    /https?:\/\/|www\.|<[^>]*>/i.test(value.text)
+  )
+    throw new Error('Invalid Flexx editorial copy')
+  return { kind: value.kind, text: value.text.trim() }
+}
+
 export function parseFlexxDesign(value: unknown): FlexxDesign {
   if (
     !isRecord(value) ||
@@ -246,6 +363,7 @@ export function parseFlexxDesign(value: unknown): FlexxDesign {
   const author = parseAuthor(value.author)
   const likedBy = parsePartnerIds(value.likedBy ?? [], 0, 6)
   const questionnaire = parseQuestion(value.questionnaire)
+  const editorial = parseEditorial(value.editorial)
   const blocks = value.blocks.map((block: unknown) => {
     if (
       !isRecord(block) ||
@@ -268,7 +386,8 @@ export function parseFlexxDesign(value: unknown): FlexxDesign {
     if (
       category !== 'rewind' ||
       value.layout !== 'questionnaire' ||
-      blocks.length
+      blocks.length ||
+      editorial
     )
       throw new Error('Invalid questionnaire layout')
   } else if (value.layout === 'questionnaire')
@@ -300,6 +419,7 @@ export function parseFlexxDesign(value: unknown): FlexxDesign {
     author,
     likedBy,
     questionnaire,
+    editorial,
   }
 }
 
@@ -355,6 +475,7 @@ export function starterFlexxDesigns(
       },
       likedBy: [],
       questionnaire: null,
+      editorial: starterEditorial(type, index, seed),
       layout:
         type === 'achievement'
           ? 'emblem'
@@ -392,6 +513,37 @@ export function compositionKey(design: FlexxDesign): string {
     design.align,
     design.symbol,
     design.blocks,
+    ...(design.editorial ? [design.editorial] : []),
     ...(design.questionnaire ? [design.questionnaire] : []),
   ])
+}
+
+export function interleaveFlexxQuestions(
+  designs: readonly FlexxDesign[],
+): FlexxDesign[] {
+  const questions = designs.filter((design) => design.questionnaire)
+  const otherDesigns = designs.filter((design) => !design.questionnaire)
+  if (!questions.length || !otherDesigns.length) return [...designs]
+
+  const ordered: FlexxDesign[] = []
+  let questionIndex = 0
+  let otherIndex = 0
+  for (let position = 0; position < designs.length; position += 1) {
+    const nextQuestionPosition = Math.floor(
+      ((questionIndex + 1) * designs.length) / (questions.length + 1),
+    )
+    const shouldPlaceQuestion =
+      questionIndex < questions.length && position >= nextQuestionPosition
+    if (shouldPlaceQuestion) {
+      const question = questions[questionIndex]
+      if (question) ordered.push(question)
+      questionIndex += 1
+      continue
+    }
+
+    const otherDesign = otherDesigns[otherIndex]
+    if (otherDesign) ordered.push(otherDesign)
+    otherIndex += 1
+  }
+  return ordered
 }

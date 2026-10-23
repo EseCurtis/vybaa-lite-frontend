@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { flexxAPI } from '@/shared/api/flexx.api'
 import {
   compositionKey,
+  interleaveFlexxQuestions,
   starterFlexxDesigns,
 } from '@/shared/flexx/flexx-design'
 import type { FlexxCategory } from '@/shared/flexx/flexx-design'
@@ -25,18 +26,19 @@ export function useFlexxDesigns(
     retry: 1,
   })
   const designs = useMemo(() => {
-    const seen = new Set<string>()
     const starters = starterFlexxDesigns(category, seed)
-    const all = [
-      ...starters,
-      ...(query.data?.pages.flatMap((page) => page.designs) ?? []),
-    ]
-    return all.filter((design) => {
-      const signature = compositionKey(design)
-      if (seen.has(signature)) return false
-      seen.add(signature)
-      return true
-    })
+    const seen = new Set<string>()
+    const generated: typeof starters = []
+    for (const page of query.data?.pages ?? []) {
+      const uniquePageDesigns = page.designs.filter((design) => {
+        const signature = compositionKey(design)
+        if (seen.has(signature)) return false
+        seen.add(signature)
+        return true
+      })
+      generated.push(...interleaveFlexxQuestions(uniquePageDesigns))
+    }
+    return generated.length ? generated : starters
   }, [category, query.data?.pages, seed])
   return { ...query, designs }
 }

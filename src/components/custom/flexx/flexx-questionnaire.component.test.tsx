@@ -30,6 +30,7 @@ const design = parseFlexxDesign({
   id: 'collection:flexx-v3-99:0',
   layout: 'questionnaire',
   blocks: [],
+  editorial: null,
   questionnaire: {
     question: 'What is taking up space in your mind today?',
     options: ['Feeling steady', 'A little overwhelmed', 'Taking it slowly'],

@@ -1,5 +1,5 @@
-import { RiPauseLine, RiPlayLine, RiShuffleLine } from '@remixicon/react'
-import { useEffect, useRef, useState } from 'react'
+import { RiCheckLine, RiFilter3Line, RiShuffleLine } from '@remixicon/react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 
 import { QueryFeedback } from '@/components/common/query-feedback.component'
@@ -20,6 +20,7 @@ import type {
 import { Pressable } from '@/components/layout/pressables.component'
 import { useAchievements } from '@/hooks/use-achievements.hook'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useFlexxBackgroundAudio } from '@/hooks/use-flexx-background-audio.hook'
 import { useFlexxDesigns } from '@/hooks/use-flexx-designs.hook'
 import { useFlexxExport } from '@/hooks/use-flexx-export.hook'
 import { useFlexxFeed } from '@/hooks/use-flexx-feed.hook'
@@ -32,6 +33,7 @@ import type { Achievement } from '@/shared/api/achievement.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { FLEXX_THEMES } from '@/shared/flexx/flexx-design'
 import type { FlexxCategory } from '@/shared/flexx/flexx-design'
+import { meaningfulFlexxDesigns } from '@/shared/flexx/flexx-feed-content'
 import { cn } from '@/shared/utils/helpers.util'
 import '@/components/custom/flexx/flexx-motion.css'
 
@@ -99,6 +101,66 @@ function CardLoading({ type }: { type: CardType }): ReactElement {
   )
 }
 
+function FlexxFilterSheet({
+  selectedCategory,
+  onSelect,
+}: {
+  selectedCategory: FlexxCategory
+  onSelect: (category: FlexxCategory) => void
+}): ReactElement {
+  return (
+    <div
+      role="group"
+      aria-label="Flexx feed categories"
+      className="grid grid-cols-2 gap-2 pb-3"
+    >
+      <Pressable
+        type="button"
+        aria-pressed={selectedCategory === 'all'}
+        accessibilityLabel="Show mixed Flexx feed"
+        onPress={() => onSelect('all')}
+        className={cn(
+          'min-h-14 flex-row items-center justify-between gap-2 rounded-2xl px-3 py-3 font-bbh text-sm font-semibold',
+          selectedCategory === 'all'
+            ? 'bg-white text-black'
+            : 'bg-card-light-50 text-white',
+        )}
+      >
+        <span className="flex items-center gap-2">
+          <RiShuffleLine size={18} aria-hidden="true" />
+          <span>Mix</span>
+        </span>
+        {selectedCategory === 'all' ? (
+          <RiCheckLine size={18} aria-hidden="true" />
+        ) : null}
+      </Pressable>
+      {FLEXX_FEED.map((entry) => {
+        const Icon = entry.icon
+        const selected = selectedCategory === entry.type
+        return (
+          <Pressable
+            key={entry.type}
+            type="button"
+            aria-pressed={selected}
+            accessibilityLabel={`Show ${entry.label} Flexx`}
+            onPress={() => onSelect(entry.type)}
+            className={cn(
+              'min-h-14 flex-row items-center justify-between gap-2 rounded-2xl px-3 py-3 font-bbh text-sm font-semibold',
+              selected ? 'bg-white text-black' : 'bg-card-light-50 text-white',
+            )}
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              <Icon size={18} aria-hidden="true" />
+              <span>{entry.label}</span>
+            </span>
+            {selected ? <RiCheckLine size={18} aria-hidden="true" /> : null}
+          </Pressable>
+        )
+      })}
+    </div>
+  )
+}
+
 export function FlexxV2AppScreen(): ReactElement {
   const [recommendedSelection] = useState(getRecommendedFlexxSelection)
   const [category, setCategory] = useState<FlexxCategory>('all')
@@ -108,22 +170,50 @@ export function FlexxV2AppScreen(): ReactElement {
   const { user } = useAuth()
   const { isLiked, toggleLike } = useFlexxLikes(user?.id)
   const flexxMotion = useFlexxMotion()
+  const insightsQuery = useInsights()
+  const rewindQuery = useRewindInsights('7d')
+  const achievementsQuery = useAchievements()
+  const achievements = achievementsQuery.data ?? []
+  const displayedAchievement = selectedAchievement ?? achievements[0] ?? null
   const designQuery = useFlexxDesigns(user?.id, category, seed)
-  const designs = designQuery.designs
+  const designs = useMemo(
+    () =>
+      meaningfulFlexxDesigns(
+        designQuery.designs,
+        insightsQuery.data?.summary,
+        rewindQuery.data,
+        achievementsQuery.data ? Boolean(displayedAchievement) : undefined,
+      ),
+    [
+      designQuery.designs,
+      insightsQuery.data?.summary,
+      rewindQuery.data,
+      achievementsQuery.data,
+      displayedAchievement,
+    ],
+  )
+  const recommendedCategory = flexxCards[recommendedSelection.cardIndex]
+  const postIds = useMemo(() => designs.map((design) => design.id), [designs])
+  const recommendedIndex =
+    recommendedSelection.cardIndex > 0
+      ? Math.max(
+          0,
+          designs.findIndex(
+            (design) => design.category === recommendedCategory,
+          ),
+        )
+      : 0
   const { activeIndex, feedRef, goTo, onKeyDown, onScroll } = useFlexxFeed(
     designs.length,
-    category === 'all' ? recommendedSelection.cardIndex : 0,
+    category === 'all' ? recommendedIndex : 0,
     category,
     flexxMotion.reducedMotion,
+    postIds,
   )
   const cardRefs = useRef(new Map<string, HTMLDivElement>())
   const lastPrefetch = useRef('')
   const { exportCardFromElement } = useFlexxExport()
   const { present, dismiss } = useBottomSheet()
-  const insightsQuery = useInsights()
-  const rewindQuery = useRewindInsights('7d')
-  const achievementsQuery = useAchievements()
-  const achievements = achievementsQuery.data ?? []
   const cardQueries = {
     daily: insightsQuery,
     weekly: insightsQuery,
@@ -132,6 +222,11 @@ export function FlexxV2AppScreen(): ReactElement {
     achievement: achievementsQuery,
   }
   const activeDesign = designs[activeIndex]
+  const flexxAudio = useFlexxBackgroundAudio(activeDesign?.id)
+  const selectedFilterLabel =
+    category === 'all'
+      ? 'Mix'
+      : (FLEXX_FEED.find((entry) => entry.type === category)?.label ?? 'Mix')
 
   useEffect(() => {
     if (!recommendedSelection.achievementId || selectedAchievement) return
@@ -144,6 +239,7 @@ export function FlexxV2AppScreen(): ReactElement {
   useEffect(() => {
     const key = `${category}:${designs.length}`
     if (
+      !designs.length ||
       activeIndex < designs.length - 4 ||
       !designQuery.hasNextPage ||
       designQuery.isFetching ||
@@ -182,6 +278,18 @@ export function FlexxV2AppScreen(): ReactElement {
         selectedId={selectedAchievement?.id}
       />,
       { title: 'Choose Your Achievement' },
+    )
+  }
+  function openFilters(): void {
+    present(
+      <FlexxFilterSheet
+        selectedCategory={category}
+        onSelect={(selected) => {
+          setCategory(selected)
+          dismiss()
+        }}
+      />,
+      { title: 'Choose your feed' },
     )
   }
   function openShare(index: number): void {
@@ -230,46 +338,22 @@ export function FlexxV2AppScreen(): ReactElement {
   return (
     <div className="grid h-full min-h-0 w-full min-w-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden bg-cardd">
       <TabHeader
+        canGoBack={false}
         title={
           <span className="font-display text-2xl font-extrabold tracking-tight">
             Flexx<span className="text-accent-400">.</span>
           </span>
         }
         className="!py-3"
-        closeToBack={
-          <Pressable
-            type="button"
-            onPress={flexxMotion.toggle}
-            disabled={flexxMotion.reducedMotion}
-            aria-pressed={flexxMotion.paused || flexxMotion.reducedMotion}
-            accessibilityLabel={
-              flexxMotion.reducedMotion
-                ? 'Flexx animations off: reduced motion enabled'
-                : `${flexxMotion.paused ? 'Resume' : 'Pause'} Flexx animations`
-            }
-            className="ml-1 min-h-11 min-w-11 items-center justify-center rounded-full bg-card-light-50 text-white disabled:text-card-lighter-3"
-          >
-            {flexxMotion.paused || flexxMotion.reducedMotion ? (
-              <RiPlayLine size={18} aria-hidden="true" />
-            ) : (
-              <RiPauseLine size={18} aria-hidden="true" />
-            )}
-          </Pressable>
-        }
       >
         <Pressable
-          onPress={() => setCategory('all')}
-          aria-pressed={category === 'all'}
-          accessibilityLabel="Show mixed Flexx feed"
-          className={cn(
-            'min-h-11 flex-row items-center gap-2 rounded-full px-3 font-bbh text-xs font-bold',
-            category === 'all'
-              ? 'bg-white text-black'
-              : 'bg-card-light-50 text-white',
-          )}
+          type="button"
+          onPress={openFilters}
+          accessibilityLabel={`Choose Flexx filter. Current selection: ${selectedFilterLabel}`}
+          className="min-h-11 max-w-36 flex-row items-center gap-2 rounded-full bg-card-light-50 px-3 font-bbh text-xs font-semibold text-white"
         >
-          <RiShuffleLine size={16} aria-hidden="true" />
-          <span>Mix</span>
+          <RiFilter3Line size={17} aria-hidden="true" />
+          <span className="truncate">{selectedFilterLabel}</span>
         </Pressable>
       </TabHeader>
       <div
@@ -282,6 +366,38 @@ export function FlexxV2AppScreen(): ReactElement {
         className="min-h-0 w-full snap-y snap-mandatory overflow-y-auto overscroll-y-contain outline-none no-scrollbar focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-card-lighter [@media(max-height:500px)]:snap-proximity"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
+        {!designs.length ? (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+            <p className="font-bbh text-card-lighter-3">
+              {category === 'all'
+                ? 'Fresh posts will appear here as you go.'
+                : 'Nothing to share in this view yet.'}
+            </p>
+            {category !== 'all' ? (
+              <Pressable
+                type="button"
+                onPress={() => setCategory('all')}
+                className="min-h-11 rounded-full bg-white px-5 text-black"
+              >
+                Explore Mix
+              </Pressable>
+            ) : null}
+            {designQuery.hasNextPage || designQuery.isError ? (
+              <Pressable
+                type="button"
+                disabled={designQuery.isFetching}
+                onPress={() => {
+                  if (designQuery.isError && !designQuery.data)
+                    void designQuery.refetch()
+                  else void designQuery.fetchNextPage({ cancelRefetch: false })
+                }}
+                className="min-h-11 rounded-full bg-card-light-50 px-5 text-white"
+              >
+                {designQuery.isFetching ? 'Loading posts…' : 'Load more posts'}
+              </Pressable>
+            ) : null}
+          </div>
+        ) : null}
         {designs.map((design, index) => {
           const query = cardQueries[design.category]
           const theme = FLEXX_THEMES[design.palette]
@@ -357,7 +473,7 @@ export function FlexxV2AppScreen(): ReactElement {
                             userAvatarUrl={user?.avatarUrl}
                             achievement={
                               design.category === 'achievement'
-                                ? selectedAchievement
+                                ? displayedAchievement
                                 : undefined
                             }
                             rewind={
@@ -375,15 +491,17 @@ export function FlexxV2AppScreen(): ReactElement {
                     foreground={theme.foreground}
                     author={design.author}
                     likedBy={design.likedBy}
+                    soundEnabled={flexxAudio.enabled}
                     ready={Boolean(query.data) || Boolean(design.questionnaire)}
                     likeEnabled={Boolean(user?.id)}
                     liked={isLiked(design)}
                     onLike={() => toggleLike(design)}
                     onShare={() => openShare(index)}
+                    onToggleSound={flexxAudio.toggle}
                     achievement={
                       design.category === 'achievement'
                         ? {
-                            label: selectedAchievement
+                            label: displayedAchievement
                               ? 'Change achievement to Flexx'
                               : 'Choose an achievement to Flexx',
                             ready: Boolean(achievementsQuery.data),
@@ -414,34 +532,13 @@ export function FlexxV2AppScreen(): ReactElement {
           )
         })}
       </div>
-      <nav
-        aria-label="Flexx categories"
-        className="grid grid-cols-5 gap-1 bg-cardd px-3 pt-3"
+      <div
+        aria-hidden="true"
+        data-testid="flexx-tab-bar-space"
         style={{
-          paddingBottom: 'max(12px, var(--safe-area-inset-bottom, 0px))',
+          paddingBottom: 'calc(var(--safe-area-inset-bottom, 0px) + 100px)',
         }}
-      >
-        {FLEXX_FEED.map((entry) => {
-          const Icon = entry.icon
-          return (
-            <Pressable
-              key={entry.type}
-              onPress={() => setCategory(entry.type)}
-              aria-pressed={category === entry.type}
-              accessibilityLabel={`Show ${entry.label} Flexx`}
-              className={cn(
-                'min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-full px-1 font-bbh text-[10px] font-semibold !transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
-                category === entry.type
-                  ? 'bg-white text-black'
-                  : 'text-card-lighter-3 hover:bg-card-light-50',
-              )}
-            >
-              <Icon size={17} aria-hidden="true" />
-              <span>{entry.label}</span>
-            </Pressable>
-          )
-        })}
-      </nav>
+      />
     </div>
   )
 }

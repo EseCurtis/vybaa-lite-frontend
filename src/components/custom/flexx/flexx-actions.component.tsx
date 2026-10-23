@@ -4,12 +4,14 @@ import {
   RiRefreshLine,
   RiShareForwardFill,
   RiTrophyLine,
+  RiVolumeMuteLine,
+  RiVolumeUpLine,
 } from '@remixicon/react'
 import type { ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
-import type { FlexxDesign } from '@/shared/flexx/flexx-design'
 import { Avatar } from '@/components/user/avatar.component'
+import type { FlexxDesign } from '@/shared/flexx/flexx-design'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import { FlexxAuthorIdentity } from './flexx-author.component'
 
@@ -17,10 +19,12 @@ export function FlexxActions({
   label,
   foreground,
   liked,
+  soundEnabled,
   ready,
   likeEnabled,
   onLike,
   onShare,
+  onToggleSound,
   achievement,
   more,
   author,
@@ -29,10 +33,12 @@ export function FlexxActions({
   label: string
   foreground: string
   liked: boolean
+  soundEnabled: boolean
   ready: boolean
   likeEnabled: boolean
   onLike: () => void
   onShare: () => void
+  onToggleSound: () => void
   achievement?: { label: string; ready: boolean; onPress: () => void }
   more?: { loading: boolean; onPress: () => void }
   author: FlexxDesign['author']
@@ -47,11 +53,9 @@ export function FlexxActions({
     <div
       role="group"
       aria-label={`${label} Flexx actions`}
-      className="flex w-16 shrink-0 flex-col items-center justify-end gap-2 px-2"
+      className="flex max-h-full w-16 shrink-0 flex-col items-center justify-end gap-1 overflow-y-auto overscroll-contain px-2 py-4 no-scrollbar"
       style={{
         color: foreground,
-        paddingBottom:
-          'max(24px, calc(var(--safe-area-inset-bottom, 0px) + 16px))',
       }}
     >
       {achievement ? (
@@ -100,7 +104,7 @@ export function FlexxActions({
               />
             ))}
           </div>
-          <span className="font-bbh text-[9px] leading-tight">Liked by</span>
+          <span className="sr-only">Liked by</span>
         </div>
       ) : null}
       <Pressable
@@ -112,6 +116,24 @@ export function FlexxActions({
       >
         <RiShareForwardFill size={28} aria-hidden="true" />
         <span className="font-bbh text-[10px] font-semibold">Share</span>
+      </Pressable>
+      <Pressable
+        type="button"
+        aria-pressed={soundEnabled}
+        accessibilityLabel={
+          soundEnabled ? 'Mute Flexx music' : 'Turn on Flexx music'
+        }
+        onPress={onToggleSound}
+        className={actionClass}
+      >
+        {soundEnabled ? (
+          <RiVolumeUpLine size={26} aria-hidden="true" />
+        ) : (
+          <RiVolumeMuteLine size={26} aria-hidden="true" />
+        )}
+        <span className="font-bbh text-[10px] font-semibold">
+          {soundEnabled ? 'On' : 'Off'}
+        </span>
       </Pressable>
       {more ? (
         <Pressable

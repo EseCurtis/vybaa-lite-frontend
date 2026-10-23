@@ -21,6 +21,7 @@ import type { Achievement } from '@/shared/api/achievement.api'
 import { http } from '@/shared/api/http'
 import {
   FLEXX_CATEGORIES,
+  parseFlexxDesign,
   starterFlexxDesigns,
 } from '@/shared/flexx/flexx-design'
 import { FlexxV2AppScreen } from './flexx.v2.screen'
@@ -34,14 +35,17 @@ vi.mock('@/components/common/tab-header.component', () => ({
   TabHeader: ({
     title,
     children,
+    canGoBack = true,
     closeToBack,
   }: {
     title: ReactNode
     children: ReactNode
+    canGoBack?: boolean
     closeToBack?: ReactNode
   }) => (
     <header>
-      {closeToBack}
+      {canGoBack ? <button data-testid="tab-header-back" /> : null}
+      {canGoBack ? closeToBack : null}
       {title}
       {children}
     </header>
@@ -70,6 +74,25 @@ const badge: Achievement = {
   badgeIcon: '🔥',
   earnedAt: '2026-10-19T08:00:00Z',
 }
+const scheduledQuestionTexts = [
+  'What felt most present today?',
+  'What small moment do you want to remember?',
+  'What would make tomorrow feel kinder?',
+  'What did you need more of today?',
+]
+const scheduledQuestionIndices: readonly number[] = [3, 4, 7, 8]
+const generatedHeadlines = [
+  'A fresh start.',
+  'A quiet win.',
+  'In your rhythm.',
+  'A moment kept.',
+  'Small steps count.',
+  'A little further.',
+  'Still becoming.',
+  'Room to reflect.',
+  'Keep going softly.',
+  'Your week, held.',
+]
 const originalScrollTo = Object.getOwnPropertyDescriptor(
   Element.prototype,
   'scrollTo',
@@ -108,11 +131,40 @@ beforeEach(() => {
             version: 1,
             source: 'ai',
             designs: starterFlexxDesigns(category, cursor ? 13 : 7).map(
-              (design, index) => ({
-                ...design,
-                likedBy: index % 2 ? [] : ['ella', 'tobi'],
-                id: `generated:${category}:${String(cursor ?? 'first')}:${index}`,
-              }),
+              (design, index) => {
+                let questionIndex = -1
+                if (category === 'all')
+                  questionIndex = scheduledQuestionIndices.indexOf(index)
+                else if (category === 'rewind' && index < 4)
+                  questionIndex = index
+                const generated = generatedHeadlines[index]
+                const question = scheduledQuestionTexts[questionIndex]
+                const id = `generated:${category}:${String(cursor ?? 'first')}:${index}`
+                const generatedDesign = question
+                  ? parseFlexxDesign({
+                      ...design,
+                      id,
+                      headline: generated ?? design.headline,
+                      category: 'rewind',
+                      layout: 'questionnaire',
+                      symbol: 'rewind',
+                      blocks: [],
+                      editorial: null,
+                      questionnaire: {
+                        question,
+                        options: [
+                          'I felt grounded',
+                          'I need a little space',
+                          'Not sure yet',
+                        ],
+                      },
+                    })
+                  : { ...design, headline: generated ?? design.headline, id }
+                return {
+                  ...generatedDesign,
+                  likedBy: index % 2 ? [] : ['ella', 'tobi'],
+                }
+              },
             ),
             nextCursor: cursor ? null : 'page-two',
           },
@@ -165,6 +217,23 @@ function showFeed(): void {
   )
 }
 
+function openFlexxFilters(): HTMLElement {
+  fireEvent.click(screen.getByRole('button', { name: /Choose Flexx filter/ }))
+  const lastCall = controls.present.mock.calls.at(-1)
+  const sheetContent = lastCall?.[0]
+  if (!isValidElement(sheetContent))
+    throw new Error('Missing Flexx filter sheet')
+  render(sheetContent)
+  return screen.getByRole('group', { name: 'Flexx feed categories' })
+}
+
+function selectFlexxCategory(label: string): void {
+  const options = openFlexxFilters()
+  const accessibleName =
+    label === 'Mix' ? 'Show mixed Flexx feed' : `Show ${label} Flexx`
+  fireEvent.click(within(options).getByRole('button', { name: accessibleName }))
+}
+
 function activePost(): HTMLElement {
   const post = screen
     .getAllByRole('article')
@@ -173,21 +242,21 @@ function activePost(): HTMLElement {
   return post
 }
 
-it('renders many borderless posters, icon filters and real stats without counter or captions', async () => {
+it('renders the feed with real stats and useful editorial copy instead of a counter', async () => {
   showFeed()
+  expect(screen.queryByTestId('tab-header-back')).toBeNull()
   const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
   expect(feed.classList.contains('snap-y')).toBe(true)
-  const categories = screen.getByRole('navigation', {
-    name: 'Flexx categories',
+  const filterCta = screen.getByRole('button', {
+    name: 'Choose Flexx filter. Current selection: Mix',
   })
-  expect(feed.nextElementSibling).toBe(categories)
-  expect(categories.classList.contains('bg-cardd')).toBe(true)
+  expect(filterCta.closest('header')).not.toBeNull()
+  expect(screen.queryByRole('group', { name: 'Flexx feed filters' })).toBeNull()
+  const tabBarSpace = screen.getByTestId('flexx-tab-bar-space')
+  expect(feed.nextElementSibling).toBe(tabBarSpace)
+  expect(tabBarSpace.getAttribute('aria-hidden')).toBe('true')
+  expect(tabBarSpace.getAttribute('style')).toContain('100px')
   expect(screen.getAllByRole('article').length).toBeGreaterThanOrEqual(10)
-  expect(
-    screen
-      .getByRole('navigation', { name: 'Flexx categories' })
-      .querySelectorAll('svg'),
-  ).toHaveLength(5)
   expect(screen.queryByText(/\/ 05/)).toBeNull()
   expect(screen.queryByText('Scroll to explore')).toBeNull()
   expect(screen.queryByText('The little things add up.')).toBeNull()
@@ -198,18 +267,37 @@ it('renders many borderless posters, icon filters and real stats without counter
         .hasAttribute('disabled'),
     ).toBe(false),
   )
-  expect(within(activePost()).getByText('42')).toBeDefined()
+  expect(
+    within(activePost()).getByText(/42 check-ins|14 days|21 days|8 tasks/),
+  ).toBeDefined()
+  expect(
+    activePost().querySelector('[data-flexx-post-kind="partner-note"]'),
+  ).not.toBeNull()
+  expect(activePost().querySelector('[data-flexx-editorial]')).not.toBeNull()
+  expect(
+    within(activePost()).getByText(
+      'A check-in can be a reset, not a report card.',
+    ),
+  ).toBeDefined()
   expect(screen.queryByRole('button', { name: 'Next Flexx' })).toBeNull()
   expect(screen.queryByRole('button', { name: 'Previous Flexx' })).toBeNull()
   fireEvent.keyDown(feed, { key: 'ArrowDown' })
   await waitFor(() => expect(feed.scrollTop).toBe(600))
-  fireEvent.click(screen.getByRole('button', { name: 'Show Weekly Flexx' }))
+  const filterOptions = openFlexxFilters()
+  expect(filterOptions.querySelectorAll('button')).toHaveLength(6)
+  expect(
+    within(filterOptions).getByRole('button', { name: 'Show Daily Flexx' }),
+  ).toBeDefined()
+  fireEvent.click(
+    within(filterOptions).getByRole('button', { name: 'Show Weekly Flexx' }),
+  )
+  expect(controls.dismiss).toHaveBeenCalledOnce()
   await waitFor(() =>
     expect(
-      screen
-        .getByRole('button', { name: 'Show Weekly Flexx' })
-        .getAttribute('aria-pressed'),
-    ).toBe('true'),
+      screen.getByRole('button', {
+        name: 'Choose Flexx filter. Current selection: Weekly',
+      }),
+    ).toBeDefined(),
   )
   expect(feed.scrollTop).toBe(0)
   expect(activePost().dataset.flexxPost).toBe('weekly')
@@ -218,8 +306,67 @@ it('renders many borderless posters, icon filters and real stats without counter
   ).not.toContain('rounded')
 })
 
-it('uses a vertical Like/Share rail outside the exported poster and remembers a like after remount', async () => {
+it('starts quiet and crossfades to a different soundtrack for the next slide after opt-in', async () => {
+  const playedSources: string[] = []
+  const players: HTMLMediaElement[] = []
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (
+    this: HTMLMediaElement,
+  ): Promise<void> {
+    playedSources.push(this.src)
+    players.push(this)
+    return Promise.resolve()
+  })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
   showFeed()
+  expect(playedSources).toHaveLength(0)
+  await waitFor(() =>
+    expect(activePost().dataset.designId).toBe('generated:all:first:0'),
+  )
+
+  const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
+  const soundButton = within(activePost()).getByRole('button', {
+    name: 'Turn on Flexx music',
+  })
+  fireEvent.click(soundButton)
+  await waitFor(() => expect(playedSources).toHaveLength(1))
+  expect(soundButton.getAttribute('aria-pressed')).toBe('true')
+
+  fireEvent.keyDown(feed, { key: 'ArrowDown' })
+  await waitFor(() => expect(playedSources).toHaveLength(2))
+  expect(playedSources[0]).toContain('/audio/flexx/')
+  expect(playedSources[1]).not.toBe(playedSources[0])
+  await waitFor(() => expect(players[1]?.volume).toBe(0.12))
+  expect(players[0]?.volume).toBe(0)
+  expect(
+    within(activePost()).getByRole('button', { name: 'Mute Flexx music' }),
+  ).toBeDefined()
+})
+
+it('mixes persisted questions into the first published page without a wall of starters', async () => {
+  showFeed()
+  const posts = await waitFor(() => {
+    const currentPosts = screen.getAllByRole('article')
+    if (!currentPosts[0]?.dataset.designId?.startsWith('generated:'))
+      throw new Error('Scheduled swipe batch has not loaded')
+    return currentPosts
+  })
+  expect(
+    posts.some((post) => post.dataset.designId?.startsWith('starter:')),
+  ).toBe(false)
+  expect(
+    [3, 4, 7, 8].map((index) =>
+      posts.findIndex(
+        (post) => post.dataset.designId === `generated:all:first:${index}`,
+      ),
+    ),
+  ).toEqual([2, 4, 6, 8])
+})
+
+it('uses a vertical Like/Share/Sound rail outside the poster and remembers a like after remount', async () => {
+  showFeed()
+  await waitFor(() =>
+    expect(activePost().dataset.designId).toBe('generated:all:first:0'),
+  )
   const post = activePost()
   const like = await within(post).findByRole('button', {
     name: 'Like Daily Flexx',
@@ -229,7 +376,7 @@ it('uses a vertical Like/Share rail outside the exported poster and remembers a 
     name: 'Daily Flexx actions',
   })
   expect(actions.classList.contains('flex-col')).toBe(true)
-  expect(actions.querySelectorAll('button')).toHaveLength(2)
+  expect(actions.querySelectorAll('button')).toHaveLength(3)
   expect(post.querySelector('[data-flexx-layout]')?.contains(actions)).toBe(
     false,
   )
@@ -257,14 +404,20 @@ it('places only partner authors and overlapping partner groups above Like', asyn
   showFeed()
   const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
   const modes = [
-    'Flexx by Ella, Vybaa AI partner',
     'Flexx by Lyra, Vybaa AI partner',
+    'Flexx by Jake, Vybaa AI partner',
     'Flexx by Ella & Lyra, Vybaa AI partners',
   ]
   for (const [index, name] of modes.entries()) {
+    await waitFor(() =>
+      expect(screen.getAllByRole('article')[0]?.dataset.designId).toBe(
+        'generated:all:first:0',
+      ),
+    )
+    const position = index === 2 ? 3 : index
     fireEvent.keyDown(feed, { key: 'Home' })
     act(() => {
-      feed.scrollTop = index * 600
+      feed.scrollTop = position * 600
       fireEvent.scroll(feed)
     })
     await waitFor(() =>
@@ -283,13 +436,15 @@ it('places only partner authors and overlapping partner groups above Like', asyn
 it('shows AI partner reactions without popularity numbers and does not regenerate on liking', async () => {
   showFeed()
   await waitFor(() =>
-    expect(screen.getAllByRole('article').length).toBeGreaterThan(10),
+    expect(screen.getAllByRole('article')[0]?.dataset.designId).toBe(
+      'generated:all:first:0',
+    ),
   )
   const posts = screen.getAllByRole('article')
   const index = posts.findIndex((post) =>
     post.dataset.designId?.startsWith('generated:'),
   )
-  expect(index).toBeGreaterThanOrEqual(10)
+  expect(index).toBe(0)
   const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
   act(() => {
     feed.scrollTop = index * 600
@@ -328,7 +483,7 @@ it('loads Daily independently of a stalled Rewind request', async () => {
         .hasAttribute('disabled'),
     ).toBe(false),
   )
-  fireEvent.click(screen.getByRole('button', { name: 'Show Rewind Flexx' }))
+  selectFlexxCategory('Rewind')
   expect(
     within(activePost()).getByRole('status', { name: 'Loading rewind card' }),
   ).toBeDefined()
@@ -346,9 +501,12 @@ it('preserves the recommended card and achievement selection', async () => {
   )
   showFeed()
   await screen.findByText('Two weeks strong')
+  await waitFor(() =>
+    expect(activePost().dataset.designId).toBe('generated:all:first:9'),
+  )
   expect(
     screen.getByRole('region', { name: 'Your Flexx feed' }).scrollTop,
-  ).toBe(2400)
+  ).toBe(5400)
   expect(sessionStorage.getItem('rewind:flexx-recommendation')).toBeNull()
   fireEvent.click(
     within(activePost()).getByRole('button', {
@@ -391,7 +549,7 @@ it('keeps other cards usable while a failed Rewind section retries independently
       .getByRole('button', { name: 'Share Daily Flexx' })
       .hasAttribute('disabled'),
   ).toBe(false)
-  fireEvent.click(screen.getByRole('button', { name: 'Show Rewind Flexx' }))
+  selectFlexxCategory('Rewind')
   const rewind = activePost()
   await within(rewind).findByText("This design couldn't load.")
   fail = false
@@ -410,8 +568,9 @@ it('keeps other cards usable while a failed Rewind section retries independently
 it('ignores malformed recommendations without changing the default card', () => {
   sessionStorage.setItem('rewind:flexx-recommendation', '{not json')
   showFeed()
+  const filters = openFlexxFilters()
   expect(
-    screen
+    within(filters)
       .getByRole('button', { name: 'Show mixed Flexx feed' })
       .getAttribute('aria-pressed'),
   ).toBe('true')
@@ -451,7 +610,9 @@ it('appends cached batches near the end without refetching per swipe or mounting
   showFeed()
   const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
   await waitFor(() =>
-    expect(screen.getAllByRole('article').length).toBeGreaterThan(10),
+    expect(screen.getAllByRole('article')[0]?.dataset.designId).toBe(
+      'generated:all:first:0',
+    ),
   )
   const before = screen.getAllByRole('article').length
   const requests = (): number =>
@@ -476,7 +637,7 @@ it('appends cached batches near the end without refetching per swipe or mounting
   expect(requests()).toBe(2)
 })
 
-it('animates only the active poster and offers pause/resume without requesting another design batch', async () => {
+it('animates only the active poster without a manual playback button', async () => {
   vi.spyOn(document, 'hidden', 'get').mockReturnValue(false)
   showFeed()
   await waitFor(() =>
@@ -484,20 +645,88 @@ it('animates only the active poster and offers pause/resume without requesting a
   )
   const feed = screen.getByRole('region', { name: 'Your Flexx feed' })
   expect(feed.querySelectorAll('[data-flexx-animate="true"]')).toHaveLength(1)
-  const requests = vi
-    .mocked(http.get)
-    .mock.calls.filter(([path]) => path === '/api/v1/flexx/designs').length
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Pause Flexx animations' }),
+  expect(screen.queryByRole('button', { name: /Flexx animations/ })).toBeNull()
+})
+
+it('keeps saved questions usable for a new user without displaying zero stats or empty badges', async () => {
+  const original = vi.mocked(http.get).getMockImplementation()
+  vi.mocked(http.get).mockImplementation((path, options) => {
+    if (String(path).includes('/rewind/insights'))
+      return Promise.resolve({
+        data: { data: { coverage: { completedSessions: 0 }, progress: null } },
+      })
+    if (path === '/api/v1/achievements')
+      return Promise.resolve({ data: { data: [] } })
+    if (path !== '/api/v1/flexx/designs')
+      return Promise.resolve({
+        data: {
+          data: {
+            summary: {
+              totalGoals: 0,
+              totalCheckIns: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+              completionRate: 0,
+              averageProgress: 0,
+            },
+          },
+        },
+      })
+    if (!original) throw new Error('Missing HTTP fixture')
+    return original(path, options)
+  })
+  showFeed()
+  await waitFor(() =>
+    expect(activePost().dataset.designId).toContain('generated:'),
   )
-  expect(feed.querySelectorAll('[data-flexx-animate="true"]')).toHaveLength(0)
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Resume Flexx animations' }),
-  )
-  expect(feed.querySelectorAll('[data-flexx-animate="true"]')).toHaveLength(1)
   expect(
-    vi
-      .mocked(http.get)
-      .mock.calls.filter(([path]) => path === '/api/v1/flexx/designs'),
-  ).toHaveLength(requests)
+    screen
+      .getAllByRole('article')
+      .every((post) => post.dataset.flexxPost === 'rewind'),
+  ).toBe(true)
+  expect(screen.queryByText('0%')).toBeNull()
+  expect(screen.queryByText('Choose an achievement')).toBeNull()
+  expect(screen.getByText('What felt most present today?')).toBeTruthy()
+})
+
+it('shows an honest empty category and does not automatically scan every saved page', async () => {
+  const original = vi.mocked(http.get).getMockImplementation()
+  vi.mocked(http.get).mockImplementation((path, options) => {
+    if (
+      String(path).includes('/insights') &&
+      !String(path).includes('/rewind/')
+    )
+      return Promise.resolve({
+        data: {
+          data: {
+            summary: {
+              totalGoals: 0,
+              totalCheckIns: 0,
+              currentStreak: 0,
+              longestStreak: 0,
+              completionRate: 0,
+              averageProgress: 0,
+            },
+          },
+        },
+      })
+    if (!original) throw new Error('Missing HTTP fixture')
+    return original(path, options)
+  })
+  showFeed()
+  selectFlexxCategory('Daily')
+  await screen.findByText('Nothing to share in this view yet.')
+  expect(screen.queryAllByRole('article')).toHaveLength(0)
+  expect(screen.getByRole('button', { name: 'Explore Mix' })).toBeTruthy()
+  await waitFor(() =>
+    expect(
+      vi
+        .mocked(http.get)
+        .mock.calls.filter(
+          ([path, options]) =>
+            path === '/api/v1/flexx/designs' &&
+            options?.params?.category === 'daily',
+        ),
+    ).toHaveLength(1),
+  )
 })

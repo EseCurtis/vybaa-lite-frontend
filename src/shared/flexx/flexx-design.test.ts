@@ -3,6 +3,7 @@ import {
   compositionKey,
   FLEXX_CATEGORIES,
   FLEXX_THEMES,
+  interleaveFlexxQuestions,
   metricValue,
   parseFlexxDesign,
   parseFlexxPage,
@@ -20,6 +21,11 @@ it('creates varied starter maps with stable seeds and correct category bindings'
     if (category !== 'all')
       expect(designs.every((design) => design.category === category)).toBe(true)
     expect(designs.every((design) => parseFlexxDesign(design))).toBe(true)
+    expect(
+      designs.every(
+        (design) => design.questionnaire || design.editorial?.text.length,
+      ),
+    ).toBe(true)
   }
   expect(
     starterFlexxDesigns('all', 0)
@@ -29,6 +35,47 @@ it('creates varied starter maps with stable seeds and correct category bindings'
   expect(starterFlexxDesigns('all', 0)).not.toEqual(
     starterFlexxDesigns('all', 1),
   )
+})
+
+it('spreads persisted question posts through each batch without mutating it', () => {
+  const questionTexts = [
+    'What felt most present today?',
+    'What small moment do you want to remember?',
+    'What would make tomorrow feel kinder?',
+    'What did you need more of today?',
+  ]
+  const questions = starterFlexxDesigns('rewind', 0)
+    .slice(0, 4)
+    .map((design, index) => {
+      const question = questionTexts[index]
+      if (!question) throw new Error('Missing Flexx question fixture')
+      return parseFlexxDesign({
+        ...design,
+        id: `question:${index}`,
+        layout: 'questionnaire',
+        blocks: [],
+        editorial: null,
+        questionnaire: {
+          question,
+          options: ['I felt grounded', 'I need a little space', 'Not sure yet'],
+        },
+      })
+    })
+  const otherDesigns = starterFlexxDesigns('all', 7)
+    .filter((design) => !design.questionnaire)
+    .slice(0, 6)
+  const batch = [...questions, ...otherDesigns]
+  const original = [...batch]
+  const ordered = interleaveFlexxQuestions(batch)
+
+  expect(ordered).toHaveLength(batch.length)
+  expect(
+    ordered.filter((design) => design.questionnaire).map((design) => design.id),
+  ).toEqual(questions.map((design) => design.id))
+  expect(
+    ordered.flatMap((design, index) => (design.questionnaire ? [index] : [])),
+  ).toEqual([2, 4, 6, 8])
+  expect(batch).toEqual(original)
 })
 
 it('does not accept arbitrary CSS, HTML, metrics or numeric claims from the model', () => {
@@ -87,6 +134,26 @@ it('validates page versions, IDs, counts and cursor shape', () => {
   ).toThrow()
 })
 
+it('keeps old saved slides readable while validating new editorial copy', () => {
+  const base = starterFlexxDesigns('daily', 0)[0]
+  if (!base) throw new Error('Missing Flexx design fixture')
+  const { editorial: _editorial, ...oldDesign } = base
+
+  expect(parseFlexxDesign(oldDesign).editorial).toBeNull()
+  expect(() =>
+    parseFlexxDesign({
+      ...base,
+      editorial: { kind: 'micro-action', text: 'https://example.com' },
+    }),
+  ).toThrow()
+  expect(() =>
+    parseFlexxDesign({
+      ...base,
+      editorial: { kind: 'unknown', text: 'Take a small step today.' },
+    }),
+  ).toThrow()
+})
+
 it('normalizes old self authors and near-white palettes to partner-only dark posters', () => {
   const base = starterFlexxDesigns('daily', 0)[0]
   const parsed = parseFlexxDesign({
@@ -118,6 +185,12 @@ it('binds real values at render time and deduplicates maps rather than server ID
   if (!original) throw new Error('Missing design')
   expect(compositionKey(original)).toBe(
     compositionKey({ ...original, id: 'different-id' }),
+  )
+  expect(compositionKey(original)).not.toBe(
+    compositionKey({
+      ...original,
+      editorial: { kind: 'reflection', text: 'Notice what helped today.' },
+    }),
   )
 })
 
