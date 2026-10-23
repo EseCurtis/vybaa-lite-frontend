@@ -1,6 +1,7 @@
 import { Icon } from '@iconify/react'
 import { RiChatSmile3Line } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
+import { useReducedMotion } from 'framer-motion'
 import type { ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
@@ -9,28 +10,33 @@ import { View } from '@/components/layout/view.component'
 import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useRewindChats, useRewindHomeGreeting } from '@/hooks/use-rewind.hook'
 import { Moti } from '@/shared/constants.shared'
+import { homeGreetingEmotion } from '@/shared/home/home-greeting-emotion'
 import {
   randomGreetings,
   randomRewindGreetings,
   resolveRewindHomePersona,
 } from '@/shared/home/home.util.shared'
+import type { PartnerEmotion } from '@/shared/rewind/partner-emojis'
 import {
   getRewindPersona,
   type RewindPersona,
   type RewindPersonaId,
 } from '@/shared/rewind/rewind-personas'
 import { getEmojiIcon } from '@/shared/utils/emoji-icons.util'
+import { PartnerEmoji } from '../rewind/partner-emoji.component'
 
 function HomeGreetingSheet({
   greetingMessage,
   greetingTitle,
   onOpenChat,
   persona,
+  emotion,
 }: {
   greetingMessage: string
   greetingTitle: string
   onOpenChat: () => void
   persona: RewindPersona
+  emotion: PartnerEmotion
 }): ReactElement {
   return (
     <View className="gap-5 pb-2 pt-3">
@@ -52,10 +58,18 @@ function HomeGreetingSheet({
         </View>
       </View>
 
-      <View className="rounded-[24px] bg-cardx  py-4 ">
-        <Text className="font-mona-sans-x text-base text-card-lighter-2 font-bold leading-6 text-card-lighter-1">
-          {greetingMessage}
-        </Text>
+      <View className="flex-row items-start gap-3">
+        <PartnerEmoji
+          partnerId={persona.id}
+          emotion={emotion}
+          decorative
+          className="size-16"
+        />
+        <View className="min-w-0 flex-1 rounded-[24px] bg-cardx px-4 py-4">
+          <Text className="font-mona-sans-x text-base text-card-lighter-2 font-bold leading-6 text-card-lighter-1">
+            {greetingMessage}
+          </Text>
+        </View>
       </View>
 
       <Pressable
@@ -79,6 +93,7 @@ export function HomeGreetings({
 }): ReactElement {
   const navigate = useNavigate()
   const bottomSheet = useBottomSheet()
+  const reducedMotion = useReducedMotion()
   const contextualGreetingQuery = useRewindHomeGreeting(rewindPersona)
   const matchingGreeting =
     contextualGreetingQuery.data?.personaId === rewindPersona
@@ -108,6 +123,9 @@ export function HomeGreetings({
     ? (contextualGreeting?.title ?? greetings[0])
     : greetings[0]
   const greetingMessage = contextualMessage ?? greetings[1]
+  const emotion = contextualMessage
+    ? homeGreetingEmotion(contextualMessage)
+    : homeGreetingEmotion(greetingMessage, greetingTitle, emoji)
   const partnerChat = chatsQuery.data?.find(
     (chat) => chat.type === 'PARTNER' && chat.personaId === activePersonaId,
   )
@@ -139,6 +157,7 @@ export function HomeGreetings({
         greetingTitle={greetingTitle}
         onOpenChat={openPartnerChatFromSheet}
         persona={persona}
+        emotion={emotion}
       />,
       { title: `@${persona.name} Says.` },
     )
@@ -148,29 +167,37 @@ export function HomeGreetings({
     <View className="[&_*]:!break-words px-mg text-left py-5 relative ">
       <View className="flex-row-reverse gap-3 items-center">
         <Pressable
-          className="size-10 border-[0.5px] border-white/20  scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative overflow-hidden rounded-full "
+          className="size-11 scale-[1.3] translate-y-10 z-10 rotate-12 -translate-x-2 relative rounded-full motion-reduce:rotate-0 active:!scale-[1.2] motion-reduce:active:!scale-[1.3] motion-reduce:!transition-none"
           accessibilityLabel={`Open Rewind with ${persona.name}`}
           onPress={expandGreeting}
         >
           <img
             src={persona.avatar}
             alt={`${persona.name} avatar`}
-            className="size-full  object-cover"
+            className="size-full hidden object-cover"
           />
-          <Moti.div
-            initial={{
-              backgroundPosition: '-200% 0%',
-            }}
-            animate={{
-              backgroundPosition: ['-200% 0%', '200% 0%'],
-            }}
-            transition={{
-              duration: 3,
-              ease: 'easeInOut',
-              repeat: Infinity,
-              repeatDelay: 3.1,
-            }}
-            className="
+
+          <PartnerEmoji
+            partnerId={persona.id}
+            emotion={emotion}
+            decorative
+            className="size-full  scale-[1.3] shrink-0"
+          />
+          {!reducedMotion ? (
+            <Moti.div
+              initial={{
+                backgroundPosition: '-200% 0%',
+              }}
+              animate={{
+                backgroundPosition: ['-200% 0%', '200% 0%'],
+              }}
+              transition={{
+                duration: 3,
+                ease: 'easeInOut',
+                repeat: Infinity,
+                repeatDelay: 3.1,
+              }}
+              className="
     pointer-events-none
     absolute
     inset-0
@@ -178,7 +205,8 @@ export function HomeGreetings({
     bg-[length:250%_100%]
     bg-no-repeat
   "
-          ></Moti.div>
+            ></Moti.div>
+          ) : null}
         </Pressable>
         <Pressable
           accessibilityLabel={
