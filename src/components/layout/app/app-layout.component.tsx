@@ -12,7 +12,7 @@ export function AppLayout() {
   const location = useLocation()
   const { isAuthenticated, stale, error, refreshSession } = useAuth()
   const tabBarHideMatches = location.pathname.match(
-    /\/app\/(home|goal|communities|journal|profile)(\/.*)?$/,
+    /\/app\/(home|communities|journal|profile|actions\/flexx|rewind-chats)(\/.*)?$/,
   )
 
   // Only show tab bar on app routes
@@ -21,9 +21,10 @@ export function AppLayout() {
     isAuthenticated &&
     location.pathname.startsWith('/app/') &&
     tabBarHideMatches
-  const onATab = /^\/app\/(home|goal|communities|journal|profile)\/?$/.test(
-    location.pathname,
-  )
+  const onATab =
+    /^\/app\/(home|communities|journal|profile|actions\/flexx|rewind-chats)\/?$/.test(
+      location.pathname,
+    )
   const routeContent = (
     <View className="app-route-content flex-1 min-h-0 min-w-0 relative">
       <Outlet />

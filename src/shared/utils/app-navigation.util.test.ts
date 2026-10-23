@@ -35,12 +35,37 @@ describe('app navigation hierarchy', () => {
     )
   })
 
+  it('places Journal inside the Profile tab stack', () => {
+    expect(getAppTabRoot('/app/journal')).toBe('/app/profile')
+    expect(getAppTabRoot('/app/journal/2026-10-21')).toBe('/app/profile')
+    expect(getAppParentPath('/app/journal')).toBe('/app/profile')
+    expect(getAppParentPath('/app/journal/2026-10-21')).toBe('/app/journal')
+    expect(getAppNavigationTransition('/app/profile', '/app/journal')).toBe(
+      'vybaa-push',
+    )
+  })
+
   it('does not treat one root tab as a child of another tab', () => {
     expect(getAppParentPath('/app/goal')).toBeNull()
     expect(getAppTabRoot('/app/goal')).toBe('/app/goal')
   })
 
   it('classifies tabs by their visual order instead of treating them as pushes', () => {
+    expect(getAppTabRoot('/app/rewind')).toBeNull()
+    expect(getAppTabRoot('/app/rewind-chats')).toBe('/app/rewind-chats')
+    expect(getAppTabRoot('/app/actions/flexx')).toBe('/app/actions/flexx')
+    expect(getAppNavigationTransition('/app/home', '/app/rewind-chats')).toBe(
+      'vybaa-tab-forward',
+    )
+    expect(
+      getAppNavigationTransition('/app/rewind-chats', '/app/actions/flexx'),
+    ).toBe('vybaa-tab-back')
+    expect(
+      getAppNavigationTransition('/app/actions/flexx', '/app/rewind-chats'),
+    ).toBe('vybaa-tab-forward')
+    expect(getAppNavigationTransition('/app/home', '/app/actions/flexx')).toBe(
+      'vybaa-tab-forward',
+    )
     expect(getAppNavigationTransition('/app/home', '/app/journal')).toBe(
       'vybaa-tab-forward',
     )

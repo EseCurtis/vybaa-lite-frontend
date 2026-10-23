@@ -150,8 +150,8 @@ export default function RewindChatsScreen(): ReactElement {
   return (
     <View className="flex-1 bg-cardd">
       <NoiseComponent>
-        <TabHeader title="Discussions" />
-        <View className="flex-1 overflow-y-auto pb-[calc(var(--safe-area-inset-bottom,0px)+24px)]">
+        <TabHeader canGoBack={false} title="Discussions" />
+        <View className="flex-1 overflow-y-auto pb-[calc(var(--safe-area-inset-bottom,0px)+100px)]">
           <View className="mx-auto w-full max-w-3xl gap-6 ">
             <View
               className="gap-2 px-mg pt-2"

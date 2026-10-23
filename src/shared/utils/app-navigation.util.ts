@@ -3,8 +3,9 @@ import type { AnyRouter } from '@tanstack/react-router'
 export const APP_TAB_ROOTS = [
   '/app/home',
   '/app/goal',
+  '/app/actions/flexx',
+  '/app/rewind-chats',
   '/app/communities',
-  '/app/journal',
   '/app/wellness',
   '/app/profile',
 ] as const
@@ -38,6 +39,14 @@ function getCommunityParent(pathname: string): string | null {
 }
 
 export function getAppTabRoot(pathname: string): AppTabRoot | null {
+  if (
+    pathname === '/app/journal' ||
+    pathname.startsWith('/app/journal/') ||
+    pathname.startsWith('/app/journal-preview/')
+  ) {
+    return '/app/profile'
+  }
+
   for (const tabRoot of APP_TAB_ROOTS) {
     if (pathname === tabRoot || pathname.startsWith(`${tabRoot}/`)) {
       return tabRoot
@@ -79,6 +88,7 @@ export function getAppParentPath(pathname: string): string | null {
   if (pathname === '/app/rewind') return '/app/home'
   if (pathname === '/app/rewards') return '/app/profile'
   if (pathname.startsWith('/app/goal/')) return '/app/goal'
+  if (pathname === '/app/journal') return '/app/profile'
   if (pathname.startsWith('/app/journal/')) return '/app/journal'
   if (pathname.startsWith('/app/journal-preview/')) return '/app/journal'
   if (pathname === '/app/actions/flexx') return '/app/home'
