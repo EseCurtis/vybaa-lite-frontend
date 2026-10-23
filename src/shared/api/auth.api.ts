@@ -150,6 +150,7 @@ class AuthAPI {
     const { data: res } = await http.post<OnboardingResponse>(
       `${API_V1}/auth/onboarding`,
       data,
+      { timeout: 15_000 },
     )
     return res
   }

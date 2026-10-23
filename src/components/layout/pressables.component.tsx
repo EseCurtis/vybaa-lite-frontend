@@ -3,6 +3,7 @@ import React from 'react'
 
 // Base pressable interface
 interface BasePressableProps {
+  'aria-checked'?: boolean
   'aria-expanded'?: boolean
   'aria-pressed'?: boolean
   children?: React.ReactNode
@@ -15,6 +16,7 @@ interface BasePressableProps {
   style?: React.CSSProperties
   testID?: string
   type?: 'button' | 'reset' | 'submit'
+  tabIndex?: number
   accessibilityLabel?: string
   accessibilityRole?: string
   accessibilityHint?: string

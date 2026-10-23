@@ -1,4 +1,5 @@
 // Auth API Request/Response Types
+import type { OnboardingProfile } from '@/shared/api/onboarding.api'
 export interface LoginRequest {
   email: string
   password: string
@@ -156,6 +157,7 @@ export interface GoalSuggestion {
 }
 
 export interface OnboardingRequest {
+  profile?: OnboardingProfile
   answers: Array<OnboardingAnswer>
   username?: string
   selectedGoals?: Array<GoalSuggestion>

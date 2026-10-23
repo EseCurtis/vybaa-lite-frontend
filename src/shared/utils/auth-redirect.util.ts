@@ -15,6 +15,7 @@ import {
 import type { AuthUser } from '@/shared/types/auth.types'
 import type { DeepLinkTarget } from '@/shared/utils/deep-link.util'
 import { consumePendingDeepLink } from '@/shared/utils/deep-link.util'
+import { hasSeenQuestionnaire } from '@/shared/onboarding/questionnaire.util'
 
 export interface DeepLinkNavigationOptions {
   replace?: boolean
@@ -93,12 +94,16 @@ export async function navigateToDeepLinkTarget(
 }
 
 export type RequiredOnboardingRoute =
+  | '/app/onboarding/about-you'
   | '/app/onboarding/rewind-partner'
   | '/app/permissions'
 
 export async function getRequiredOnboardingRoute(
-  user: Pick<AuthUser, 'id' | 'rewindPersona'>,
+  user: Pick<AuthUser, 'id' | 'rewindPersona'> &
+    Partial<Pick<AuthUser, 'isFirstTime'>>,
 ): Promise<RequiredOnboardingRoute | null> {
+  if (user.isFirstTime && !hasSeenQuestionnaire(user.id))
+    return '/app/onboarding/about-you'
   if (Capacitor.isNativePlatform() && !hasSeenPermissionOnboarding(user.id)) {
     const permissionStates = await readOnboardingPermissionStates()
     const grantedPermissionCount =
@@ -124,7 +129,8 @@ export async function getRequiredOnboardingRoute(
 
 export async function navigateAfterAuth(
   router: AnyRouter,
-  user: Pick<AuthUser, 'id' | 'rewindPersona'>,
+  user: Pick<AuthUser, 'id' | 'rewindPersona'> &
+    Partial<Pick<AuthUser, 'isFirstTime'>>,
 ): Promise<void> {
   const onboardingRoute = await getRequiredOnboardingRoute(user)
   if (onboardingRoute) {
