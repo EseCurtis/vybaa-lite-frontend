@@ -2,6 +2,7 @@ import ENV from '@/env'
 import { joinApiUrl } from '@/shared/api/api-url.util'
 import { ApiError, getCurrentTimezone, http } from '@/shared/api/http'
 import type { GoalSchedule, GoalTarget } from '@/shared/api/goal.api'
+import type { RewindChatAccentId } from '@/shared/rewind/rewind-chat-accent'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 const API_V1 = '/api/v1'
@@ -409,6 +410,7 @@ export type RewindChatStreamEvent =
   | { code: string; message: string; type: 'error' }
 
 export type RewindChat = {
+  accentColor?: RewindChatAccentId
   activeParticipants?: RewindPersonaId[]
   archivedAt: string | null
   contextRevision?: number

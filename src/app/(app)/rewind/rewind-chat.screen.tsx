@@ -1,4 +1,5 @@
 import {
+  RiAddLine,
   RiArrowDownLine,
   RiAtLine,
   RiCheckDoubleLine,
@@ -53,6 +54,7 @@ import type {
   RewindChatReactionKind,
 } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
+import { getRewindChatAccent } from '@/shared/rewind/rewind-chat-accent'
 import {
   parsePartnerEmoji,
   partnerEmojiToken,
@@ -287,6 +289,7 @@ function MentionText({
 }
 
 function ChatMessageBubble({
+  accentColor,
   deliveryStatus,
   isReactionOverlayOpen,
   isReactionPickerOpen,
@@ -299,6 +302,7 @@ function ChatMessageBubble({
   showIdentity,
   showTime,
 }: {
+  accentColor: string
   deliveryStatus?: MessageDeliveryStatus
   isReactionOverlayOpen: boolean
   isReactionPickerOpen: boolean
@@ -393,6 +397,7 @@ function ChatMessageBubble({
               )}
               {...gesture.handlers}
               style={{
+                backgroundColor: isUser && !emoji ? accentColor : undefined,
                 transform: `translateX(${gesture.offset}px)`,
                 transition:
                   gesture.offset || reduceMotion || !shouldAnimate
@@ -721,8 +726,9 @@ export default function RewindChatScreen({
   const { isKeyboardVisible } = useKeyboard()
   const navigate = useNavigate()
   const [composerValue, setComposerValue] = useState('')
-  const [mentionsOpen, setMentionsOpen] = useState(false)
-  const [emojisOpen, setEmojisOpen] = useState(false)
+  const [composerPanel, setComposerPanel] = useState<
+    'closed' | 'actions' | 'stickers' | 'mentions'
+  >('closed')
   const [pendingMessages, setPendingMessages] = useState<PendingMessageState[]>(
     [],
   )
@@ -781,6 +787,7 @@ export default function RewindChatScreen({
   const shouldReduceMotion = reducedMotionPreference || !shouldAnimate
   const { isConnected, subscribeRewindChat } = useNotificationContext()
   const chat = chatsQuery.data?.find((item) => item.id === chatId)
+  const chatAccentColor = getRewindChatAccent(chat?.accentColor).value
   const firstPage = messagesQuery.data?.pages[0]
   const fetchedMessages: RewindChatMessage[] = []
   const pages = messagesQuery.data?.pages ?? []
@@ -1168,8 +1175,7 @@ export default function RewindChatScreen({
     setIsAtBottom(true)
     setUnreadArrivalCount(0)
     if (!emojiContent) setComposerValue('')
-    setEmojisOpen(false)
-    setMentionsOpen(false)
+    setComposerPanel('closed')
     setReplyingToMessage(null)
     composerInputRef.current?.focus({ preventScroll: true })
     setPendingMessages((current) => [
@@ -1206,7 +1212,7 @@ export default function RewindChatScreen({
     setReactionDetailsMessageId(null)
     setReactionPickerState(null)
     setReplyingToMessage(message)
-    setMentionsOpen(false)
+    setComposerPanel('closed')
     composerInputRef.current?.focus({ preventScroll: true })
   }
 
@@ -1308,6 +1314,8 @@ export default function RewindChatScreen({
       const separator = current && !current.endsWith(' ') ? ' ' : ''
       return `${current}${separator}@${personaId} `
     })
+    setComposerPanel('closed')
+    composerInputRef.current?.focus({ preventScroll: true })
   }
 
   let composerPlaceholder = `Message ${chat?.title ?? 'your partner'}…`
@@ -1372,8 +1380,11 @@ export default function RewindChatScreen({
               chat ? (
                 <View className="flex-row items-center gap-2">
                   <RewindChatAvatar chat={chat} className="size-8" />
-                  <View className="items-start">
-                    <Text className="font-bbh text-base font-bold leading-5 text-white">
+                  <View className="min-w-0 items-start">
+                    <Text
+                      lines={1}
+                      className="font-bbh text-base font-bold leading-5 text-white"
+                    >
                       {chat.title}
                     </Text>
                     <Text className="font-bbh text-[10px] font-bold text-card-lighter-3">
@@ -1477,6 +1488,7 @@ export default function RewindChatScreen({
                       ) : null}
                       <View className={showIdentity && index ? 'mt-3' : ''}>
                         <ChatMessageBubble
+                          accentColor={chatAccentColor}
                           deliveryStatus={
                             pendingIds.has(message.id)
                               ? 'SENT'
@@ -1575,25 +1587,78 @@ export default function RewindChatScreen({
 
           <View
             className={cn(
-              'shrink-0 gap-2 bg-cardx px-mg pt-3',
+              'shrink-0 gap-2 bg-cardd px-3 pt-2',
               isKeyboardVisible
                 ? 'pb-3'
                 : 'pb-[calc(var(--safe-area-inset-bottom,0px)+12px)]',
             )}
           >
-            {emojisOpen ? (
-              <PartnerEmojiPicker
-                initialPartnerId={chat?.personaId ?? 'ella'}
-                onSelect={(emoji) => sendMessage(partnerEmojiToken(emoji))}
-              />
-            ) : null}
             <AnimatePresence initial={false}>
-              {chat?.type === 'GROUP' && mentionsOpen ? (
+              {composerPanel === 'stickers' ? (
                 <motion.div
                   animate={{ height: 'auto', opacity: 1, y: 0 }}
                   className="overflow-hidden"
                   exit={{ height: 0, opacity: 0, y: 6 }}
                   initial={{ height: 0, opacity: 0, y: 6 }}
+                  key="partner-stickers"
+                  transition={{
+                    type: 'spring',
+                    bounce: 0,
+                    duration: shouldReduceMotion ? 0 : 0.24,
+                  }}
+                >
+                  <PartnerEmojiPicker
+                    onSelect={(emoji) => sendMessage(partnerEmojiToken(emoji))}
+                  />
+                </motion.div>
+              ) : null}
+              {composerPanel === 'actions' ? (
+                <motion.div
+                  animate={{ height: 'auto', opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 overflow-hidden"
+                  exit={{ height: 0, opacity: 0, y: 6 }}
+                  initial={{ height: 0, opacity: 0, y: 6 }}
+                  key="composer-actions"
+                  transition={{
+                    type: 'spring',
+                    bounce: 0,
+                    duration: shouldReduceMotion ? 0 : 0.24,
+                  }}
+                >
+                  <Pressable
+                    accessibilityLabel="Open partner stickers"
+                    className="min-h-11 flex-1 flex-row items-center gap-2 rounded-xl bg-card-light px-3"
+                    onPress={() => setComposerPanel('stickers')}
+                  >
+                    <RiEmotionHappyLine className="text-accent-300" size={18} />
+                    <Text className="text-sm font-bold text-white">
+                      Stickers
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityLabel="Mention a Rewind partner"
+                    className="min-h-11 flex-1 flex-row items-center gap-2 rounded-xl bg-card-light px-3"
+                    onPress={() => setComposerPanel('mentions')}
+                  >
+                    <RiAtLine className="text-accent-300" size={18} />
+                    <Text className="text-sm font-bold text-white">
+                      Mention
+                    </Text>
+                  </Pressable>
+                </motion.div>
+              ) : null}
+              {chat?.type === 'GROUP' && composerPanel === 'mentions' ? (
+                <motion.div
+                  animate={{ height: 'auto', opacity: 1, y: 0 }}
+                  className="overflow-hidden"
+                  exit={{ height: 0, opacity: 0, y: 6 }}
+                  initial={{ height: 0, opacity: 0, y: 6 }}
+                  key="composer-mentions"
+                  transition={{
+                    type: 'spring',
+                    bounce: 0,
+                    duration: shouldReduceMotion ? 0 : 0.24,
+                  }}
                 >
                   <View className="no-scrollbar flex-row gap-2 overflow-x-auto">
                     {REWIND_PERSONAS.map((persona) => {
@@ -1605,7 +1670,7 @@ export default function RewindChatScreen({
                         <Pressable
                           accessibilityLabel={`Mention ${persona.name}`}
                           aria-pressed={isMentioned}
-                          className={`min-h-9 shrink-0 flex-row items-center gap-1.5 rounded-full px-3 ${
+                          className={`min-h-11 shrink-0 flex-row items-center gap-1.5 rounded-full px-3 ${
                             isMentioned ? 'bg-white' : 'bg-card-light'
                           }`}
                           key={persona.id}
@@ -1638,34 +1703,27 @@ export default function RewindChatScreen({
             ) : null}
             <View className="flex-row items-end gap-2">
               <Pressable
-                accessibilityLabel="Partner emojis"
-                aria-expanded={emojisOpen}
-                aria-pressed={emojisOpen}
-                className={`size-11 shrink-0 items-center justify-center rounded-full ${emojisOpen ? 'bg-white text-black' : 'bg-card-light text-card-lighter-2'}`}
+                accessibilityLabel={
+                  composerPanel === 'closed'
+                    ? 'Open composer actions'
+                    : 'Close composer actions'
+                }
+                aria-expanded={composerPanel !== 'closed'}
+                aria-pressed={composerPanel !== 'closed'}
+                className={`size-12 shrink-0 items-center justify-center rounded-full ${composerPanel !== 'closed' ? 'bg-white text-black' : 'bg-card-light text-card-lighter-2'}`}
                 onPress={() => {
-                  setEmojisOpen((current) => !current)
-                  setMentionsOpen(false)
+                  setComposerPanel((current) => {
+                    if (current !== 'closed') return 'closed'
+                    return chat?.type === 'GROUP' ? 'actions' : 'stickers'
+                  })
                 }}
               >
-                <RiEmotionHappyLine size={21} />
+                {composerPanel === 'closed' ? (
+                  <RiAddLine size={21} />
+                ) : (
+                  <RiCloseLine size={19} />
+                )}
               </Pressable>
-              {chat?.type === 'GROUP' ? (
-                <Pressable
-                  accessibilityLabel="Mention a Rewind partner"
-                  aria-expanded={mentionsOpen}
-                  className={`size-12 shrink-0 items-center justify-center rounded-full ${
-                    mentionsOpen ? 'bg-white' : 'bg-card-light'
-                  }`}
-                  onPress={() => setMentionsOpen((current) => !current)}
-                >
-                  <RiAtLine
-                    className={
-                      mentionsOpen ? 'text-cardd' : 'text-card-lighter-2'
-                    }
-                    size={19}
-                  />
-                </Pressable>
-              ) : null}
               <MentionComposer
                 inputRef={composerInputRef}
                 onChange={setComposerValue}
@@ -1674,14 +1732,19 @@ export default function RewindChatScreen({
               />
               <Pressable
                 accessibilityLabel="Send message"
-                className="size-12 shrink-0 items-center justify-center rounded-full bg-white"
+                className="size-12 shrink-0 items-center justify-center rounded-full bg-white disabled:bg-card-light"
                 disabled={!composerValue.trim()}
                 onPressIn={() => {
                   composerInputRef.current?.focus({ preventScroll: true })
                 }}
                 onPress={() => sendMessage()}
               >
-                <RiSendPlane2Fill size={20} className="text-cardd" />
+                <RiSendPlane2Fill
+                  size={20}
+                  className={
+                    composerValue.trim() ? 'text-cardd' : 'text-card-lighter-3'
+                  }
+                />
               </Pressable>
             </View>
           </View>

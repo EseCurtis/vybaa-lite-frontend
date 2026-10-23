@@ -2,52 +2,51 @@ import { useState } from 'react'
 import type { ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
-import { PARTNER_EMOTIONS } from '@/shared/rewind/partner-emojis'
 import type { PartnerEmoji as PartnerEmojiValue } from '@/shared/rewind/partner-emojis'
-import { REWIND_PERSONAS } from '@/shared/rewind/rewind-personas'
-import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
+import {
+  recordRecentPartnerEmoji,
+  sortPartnerEmojisByRecentUse,
+} from '@/shared/rewind/recent-partner-emojis'
+import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import { PartnerEmoji } from './partner-emoji.component'
 
 export function PartnerEmojiPicker({
-  initialPartnerId,
   onSelect,
 }: {
-  initialPartnerId: RewindPersonaId
   onSelect: (emoji: PartnerEmojiValue) => void
 }): ReactElement {
-  const [partnerId, setPartnerId] = useState(initialPartnerId)
+  const [emojis, setEmojis] = useState(sortPartnerEmojisByRecentUse)
   return (
-    <div aria-label="Partner emojis" className="max-h-64 overflow-y-auto pb-2">
-      <div className="no-scrollbar flex gap-1 overflow-x-auto pb-2">
-        {REWIND_PERSONAS.map((partner) => (
-          <Pressable
-            key={partner.id}
-            accessibilityLabel={`${partner.name} emojis`}
-            aria-pressed={partnerId === partner.id}
-            className={`min-h-11 shrink-0 items-center rounded-full px-3 text-xs ${partnerId === partner.id ? 'bg-white text-black' : 'bg-card-light text-card-lighter-2'}`}
-            onPress={() => setPartnerId(partner.id)}
-          >
-            {partner.name}
-          </Pressable>
-        ))}
+    <section
+      aria-label="Partner stickers"
+      className="max-h-[min(36dvh,300px)] overflow-y-auto overscroll-contain rounded-2xl bg-card-light-50 p-2"
+    >
+      <h2 className="px-2 py-2 font-bbh text-xs font-bold text-card-lighter-2">
+        Stickers
+      </h2>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(52px,1fr))] gap-1">
+        {emojis.map((emoji) => {
+          const partner = getRewindPersona(emoji.partnerId)
+          return (
+            <Pressable
+              key={`${emoji.partnerId}-${emoji.emotion}`}
+              accessibilityLabel={`Send ${partner.name} ${emoji.emotion} sticker`}
+              className="min-h-14 min-w-11 items-center justify-center rounded-xl hover:bg-card-light focus-visible:bg-card-light focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+              onPress={() => {
+                setEmojis(recordRecentPartnerEmoji(emoji))
+                onSelect(emoji)
+              }}
+            >
+              <PartnerEmoji
+                partnerId={emoji.partnerId}
+                emotion={emoji.emotion}
+                className="size-14"
+                decorative
+              />
+            </Pressable>
+          )
+        })}
       </div>
-      <div className="grid grid-cols-4 gap-1">
-        {PARTNER_EMOTIONS.map((emotion) => (
-          <Pressable
-            key={emotion}
-            accessibilityLabel={`Send ${partnerId} ${emotion} emoji`}
-            className="min-h-16 items-center justify-center rounded-xl bg-card-light"
-            onPress={() => onSelect({ partnerId, emotion })}
-          >
-            <PartnerEmoji
-              partnerId={partnerId}
-              emotion={emotion}
-              className="size-16"
-              decorative
-            />
-          </Pressable>
-        ))}
-      </div>
-    </div>
+    </section>
   )
 }
