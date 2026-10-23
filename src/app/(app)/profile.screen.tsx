@@ -1,12 +1,12 @@
 import { ProfileActionButtons } from '@/app/(app)/components/profile/profile-action-buttons.component'
 import { ProfileHeader } from '@/app/(app)/components/profile/profile-header.component'
 import { ProfileInfoSection } from '@/app/(app)/components/profile/profile-info-section.component'
-import { PublicProfileLink } from '@/app/(app)/components/profile/public-profile-link.component'
 import { ProfileQuickActions } from '@/app/(app)/components/profile/profile-quick-actions.component'
 import type {
   ProfileFormData,
   ProfileQuickAction,
 } from '@/app/(app)/components/profile/profile.types'
+import { PublicProfileLink } from '@/app/(app)/components/profile/public-profile-link.component'
 import { NoiseComponent } from '@/components/common/noise.component'
 import { TopNotchPadd } from '@/components/common/notch.component'
 import { TabHeader } from '@/components/common/tab-header.component'
@@ -17,6 +17,7 @@ import { useToast } from '@/providers/toast.provider'
 import { authAPI } from '@/shared/api/auth.api'
 import { uploadAPI } from '@/shared/api/upload.api'
 import {
+  RiBookOpenLine,
   RiCoinsLine,
   RiHeart3Fill,
   RiSettings3Fill,
@@ -80,13 +81,29 @@ function validateProfileFormData(formData: ProfileFormData): string | null {
 
 const profileQuickActions: ProfileQuickAction[] = [
   {
+    title: 'About you',
+    group: 'personal',
+    description: 'Your rhythm, preferences and support style',
+    to: '/app/onboarding/about-you',
+    icon: <RiHeart3Fill size={20} className="text-accent-200" />,
+  },
+  {
+    title: 'Journal',
+    group: 'personal',
+    description: 'Write or revisit your entries',
+    to: '/app/journal',
+    icon: <RiBookOpenLine size={20} className="text-studio-action-ink" />,
+  },
+  {
     title: 'Social Studio',
+    group: 'preferences',
     description: 'Connect X and create drafts for review',
     to: '/app/social',
     icon: <RiTwitterXLine size={20} className="text-white" />,
   },
   {
     title: 'Play rewards',
+    group: 'progress',
     description: 'View your Play Points wallet',
     to: '/app/rewards',
     icon: <RiCoinsLine size={20} className="text-white" />,
@@ -97,6 +114,7 @@ const profileQuickActions: ProfileQuickAction[] = [
   },
   {
     title: 'Achievements',
+    group: 'progress',
     description: 'View your earned badges',
     to: '/achievements',
     icon: <RiTrophyFill size={20} className="text-white" />,
@@ -107,6 +125,7 @@ const profileQuickActions: ProfileQuickAction[] = [
   },
   {
     title: 'Wellbeing',
+    group: 'progress',
     description: 'View progress stats',
     to: '/app/sub-profile/insights',
     icon: <RiHeart3Fill size={20} className="text-white" />,
@@ -117,9 +136,10 @@ const profileQuickActions: ProfileQuickAction[] = [
   },
   {
     title: 'Settings',
+    group: 'preferences',
     description: 'App preferences',
     to: '/app/sub-profile/settings',
-    icon: <RiSettings3Fill size={20} className="text-white" />,
+    icon: <RiSettings3Fill size={20} className="text-card-lighter-3" />,
   },
 ]
 
@@ -246,7 +266,7 @@ export default function ProfileScreen() {
   }, [hide, isEditing, show])
 
   return (
-    <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar">
+    <View className="flex-1 bg-cardd overflow-y-auto no-scrollbar ">
       <NoiseComponent>
         {isEditing ? (
           <TabHeader

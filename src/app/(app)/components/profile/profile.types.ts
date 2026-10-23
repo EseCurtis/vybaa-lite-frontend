@@ -9,6 +9,7 @@ export interface ProfileFormData {
 }
 
 export interface ProfileQuickAction {
+  group?: 'personal' | 'preferences' | 'progress'
   description: string
   icon: ReactNode
   iconContainerClassName?: string
@@ -19,6 +20,8 @@ export interface ProfileQuickAction {
   title: string
   to:
     | '/achievements'
+    | '/app/journal'
+    | '/app/onboarding/about-you'
     | '/app/rewards'
     | '/app/social'
     | '/app/sub-profile/insights'

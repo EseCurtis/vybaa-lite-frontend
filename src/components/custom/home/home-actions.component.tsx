@@ -1,45 +1,53 @@
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
+import { useHomeActionPreferences } from '@/hooks/use-home-actions.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { featureFlags } from '@/shared/config/feature-flags.config'
 import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
+import { saveHomeActionPreferences } from '@/shared/home/home-action-preferences'
+import type { HomeActionId } from '@/shared/home/home-action-preferences'
+import { useCallback, useRef } from 'react'
+import type { CSSProperties } from 'react'
 import {
+  RiArrowRightUpLine,
+  RiCheckDoubleLine,
   RiEmotionLaughLine,
-  RiFireLine,
   RiHeart2Line,
   RiRewindLine,
   RiTempColdLine,
+  RiEqualizerLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
 import { HomeRewindTimer } from './home-rewind-timer.component'
+import { HomeActionsSheet } from './home-actions-sheet.component'
 
-export const homeActions = (
-  navigate?: (...params: any) => void,
+export type HomeAction = {
+  id: HomeActionId
+  name: string
+  description: string
+  icon: RemixiconComponentType
+  enabled?: boolean
+  onAction: () => void
+}
+type HomeDestination =
+  | '/app/actions/flexx'
+  | '/app/goal'
+  | '/app/rewind'
+  | '/app/rewind-history'
+  | '/chill'
+
+export function homeActions(
+  navigate?: (destination: { to: HomeDestination }) => unknown,
   handleCreateGoal?: () => void,
-) =>
-  [
+  rewindPersona?: string,
+): HomeAction[] {
+  const actions: HomeAction[] = [
     {
-      name: 'New Task',
-      description: 'Commit to a new cause',
-      icon: RiFireLine,
-      onAction() {
-        handleCreateGoal?.()
-      },
-    },
-    {
-      name: 'Rewind',
-      description: 'Chat with your Rewind partner',
-      icon: RiRewindLine,
-      onAction() {
-        navigate?.({
-          to: '/app/rewind',
-        })
-      },
-    },
-    {
-      name: 'Flexx',
+      id: 'flexx',
+      name: ' Flexx',
       description: 'Share stats to flexx on socials',
       icon: RiEmotionLaughLine,
       onAction() {
@@ -49,6 +57,28 @@ export const homeActions = (
       },
     },
     {
+      id: 'tasks',
+      name: 'My Tasks',
+      description: 'Commit to a new cause',
+      icon: RiCheckDoubleLine,
+      onAction() {
+        handleCreateGoal?.()
+      },
+    },
+    {
+      id: 'rewind',
+      name: `Rewind w/ ${rewindPersona || 'partner'}`,
+      description: 'Chat with your Rewind partner',
+      icon: RiRewindLine,
+      onAction() {
+        navigate?.({
+          to: '/app/rewind',
+        })
+      },
+    },
+
+    {
+      id: 'wellbeing',
       name: 'Wellbeing',
       description: 'See your progress patterns',
       icon: RiHeart2Line,
@@ -73,6 +103,7 @@ export const homeActions = (
     //   },
     // },
     {
+      id: 'chill',
       name: 'Chill',
       description: 'Calm down and regulate your emotions',
       icon: RiTempColdLine,
@@ -83,9 +114,12 @@ export const homeActions = (
         })
       },
     },
-  ].filter((action) => action.enabled !== false) // Filter out disabled features
+  ]
+  return actions.filter((action) => action.enabled !== false)
+}
 
 function HomeActionCard({
+  id,
   name,
   description,
   icon,
@@ -93,6 +127,7 @@ function HomeActionCard({
   filled = false,
   testID,
 }: {
+  id: HomeActionId
   name: string
   description: string
   icon: RemixiconComponentType
@@ -109,48 +144,69 @@ function HomeActionCard({
   )
   const darkColor = adjustColor(color, { lightness: -5 })
 
+  const roundedness = 'rounded-full'
+  const actionStyle: CSSProperties & {
+    '--color': string
+    '--darkColor': string
+  } = {
+    '--color': color,
+    '--darkColor': darkColor,
+  }
+
   return (
     <View
-      style={
-        {
-          '--color': color,
-          '--darkColor': darkColor,
-        } as any
-      }
+      style={actionStyle}
       className={cn(
-        ' text-center  rounded-[40px] overflow-hidden',
+        ' text-center snap-center  shrink-0 rounded-[40px] overflow-hidden',
         filled ? 'col-span-2' : 'col-span-1',
       )}
     >
       <Pressable
+        type="button"
         testID={testID}
         onPress={onAction}
         className={cn(
-          !filled && 'aspect-square ',
-          'w-full overflow-hidden flex-col  relative items-center justify-center h-[140%] bg-cardx rounded-[40px] p-mg',
+          !filled && ' ',
+          'min-h-12 w-full overflow-hidden flex-row relative items-center justify-center bg-cardx p-mg py-[10px] active:!scale-[0.97] motion-reduce:!transform-none ' +
+            roundedness,
         )}
       >
         <View
-          className="border-2 size-full absolute z-[99] rounded-[42px]  border-[var(--color)]"
+          aria-hidden="true"
+          className={`pointer-events-none border-2 size-full absolute z-[99] border-[var(--color)] ${roundedness}`}
           style={{
-            maskImage: `linear-gradient(to bottom, transparent 0%, transparent 10%, black 130%)`,
+            maskImage:
+              'linear-gradient(to left, transparent 0%, transparent 10%, black 130%)',
           }}
-        ></View>
+        />
         <View
+          aria-hidden="true"
           style={{
             background: 'radial-gradient( transparent 30%, var(--color))',
-            maskImage: `linear-gradient(to top, transparent 0%, transparent 50%, black 130%)`,
+            maskImage:
+              'linear-gradient(to bottom, transparent 0%, transparent 50%, black 130%)',
           }}
-          className="bg-[var(--color)]  w-full h-full absolute bottom-0 rounded-[40px]  "
+          className={`pointer-events-none bg-[var(--color)] w-full h-full absolute bottom-0 rounded-[40px] ${roundedness}`}
         />
-        <Icon color={darkColor} size={70} className="text-white z-10" />
+        <Icon
+          color={darkColor}
+          size={20}
+          className="text-white z-10 -translate-x-2"
+        />
         <View className="mt-1 flex-col items-center justify-center z-10">
-          <Text className="font-bold  text-card-lighter-3">{name}</Text>
-          {name === 'Rewind' ? <HomeRewindTimer /> : null}
-          <Text className="text-sm hidden leading-tight text-card-lighter-3/60">
+          <Text className="font-bold capitalize text-card-lighter-3">
+            {name}
+          </Text>
+          {id === 'rewind' ? <HomeRewindTimer /> : null}
+          <Text className="text-sm hidden leading-tight text-card-lighter-3">
             {description}
           </Text>
         </View>
+        <RiArrowRightUpLine
+          color={darkColor}
+          size={20}
+          className="text-white z-10 ml-auto translate-x-1"
+        />
       </Pressable>
     </View>
   )
@@ -159,30 +215,76 @@ function HomeActionCard({
 export function HomeActions() {
   const navigate = useNavigate()
   const handleCreateGoal = () => {
-    navigate({ to: '/app/goal/create' })
+    navigate({ to: '/app/goal' })
   }
+  const { user } = useAuth()
+  const bottomSheet = useBottomSheet()
+  const preferences = useHomeActionPreferences(user?.id)
+  const customizeRef = useRef<HTMLButtonElement>(null)
+  const restoreFocus = useCallback(() => {
+    customizeRef.current?.focus()
+  }, [])
 
-  const actions = homeActions(navigate, handleCreateGoal)
+  const available = homeActions(
+    navigate,
+    handleCreateGoal,
+    user?.rewindPersona ?? undefined,
+  )
+  const actions = preferences.order.flatMap((id) =>
+    available.filter(
+      (action) => action.id === id && !preferences.hidden.includes(id),
+    ),
+  )
 
   return (
-    <View className="grid grid-cols-2 px-mg py-mg mt-2 gap-4 ">
-      {actions.map((item, index) => {
-        return (
-          <HomeActionCard
-            key={index}
-            name={item.name}
-            description={item.description}
-            onAction={item?.onAction}
-            icon={item.icon}
-            filled={actions.length % 2 !== 0 && index === actions.length - 1}
-            testID={
-              item.name === 'New Task'
-                ? 'home-action-new-goal'
-                : `home-action-${item.name.toLowerCase().replaceAll(' ', '-')}`
-            }
-          />
-        )
-      })}
+    <View className="px-mg py-mg mt-2 gap-2">
+      <View className="flex-row justify-end">
+        <Pressable
+          ref={customizeRef}
+          type="button"
+          accessibilityLabel="Customize Home shortcuts"
+          onPress={() =>
+            bottomSheet.present(
+              <HomeActionsSheet
+                actions={available}
+                initial={preferences}
+                onClosed={restoreFocus}
+                onSave={(next) => {
+                  if (!user?.id)
+                    throw new Error('Sign in before saving shortcuts')
+                  saveHomeActionPreferences(user.id, next)
+                  bottomSheet.dismiss()
+                }}
+              />,
+              { title: 'Home shortcuts' },
+            )
+          }
+          className="min-h-11 flex-row items-center justify-center gap-2 px-2 text-xs font-semibold text-card-lighter-3 active:!scale-95 motion-reduce:!transform-none"
+        >
+          <RiEqualizerLine size={16} />
+          Customize
+        </Pressable>
+      </View>
+      <View className="flex-row snap-x snap-mandatory gap-4 w-full flex-wrap">
+        {actions.map((item, index) => {
+          return (
+            <HomeActionCard
+              key={item.id}
+              id={item.id}
+              name={item.name}
+              description={item.description}
+              onAction={item?.onAction}
+              icon={item.icon}
+              filled={actions.length % 2 !== 0 && index === actions.length - 1}
+              testID={
+                item.id === 'tasks'
+                  ? 'home-action-my-tasks'
+                  : `home-action-${item.id}`
+              }
+            />
+          )
+        })}
+      </View>
     </View>
   )
 }

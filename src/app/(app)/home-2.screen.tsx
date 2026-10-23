@@ -1,5 +1,5 @@
-import { NoiseComponent } from '@/components/common/noise.component'
 import { AppLoadingState } from '@/components/common/app-loading-state.component'
+import { NoiseComponent } from '@/components/common/noise.component'
 import {
   BottomNotchWithTab,
   TopNotch,
@@ -34,7 +34,9 @@ export function Home2Screen() {
         </View>
         <HomeGreetings rewindPersona={user.rewindPersona} userName={userName} />
 
-        <View className="bg-cardd flex flex-col rounded-t-[40px]">
+        <View className="bg-cardd h-full flex flex-col rounded-[40px]">
+          {/* <HomePerspective personaId={user.rewindPersona} /> */}
+
           <HomeActions />
           <BottomNotchWithTab />
         </View>

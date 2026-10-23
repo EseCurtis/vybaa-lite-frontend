@@ -10,51 +10,78 @@ interface ProfileQuickActionsProps {
   actions: ProfileQuickAction[]
 }
 
+const ACTION_GROUPS = [
+  { id: 'personal', title: 'Your space' },
+  { id: 'progress', title: 'Progress & rewards' },
+  { id: 'preferences', title: 'App & connections' },
+] as const
+
 export function ProfileQuickActions({ actions }: ProfileQuickActionsProps) {
   const navigate = useNavigate()
 
   return (
-    <View className="space-y-3 pb-[200px] pt-3">
-      <Text className="text-white/70 text-sm font-bbh font-semibold px-1">
-        Quick Access
-      </Text>
-
-      <View
-        className="grid grid-cols-2 gap-3"
-        data-walkthrough="profile-quick-actions"
-      >
-        {actions.map((action) => (
-          <Pressable
-            key={action.to}
-            onPress={() => navigate({ to: action.to })}
-            className={cn(
-              action.colorScheme?.bg1 || "bg-cardx",
-              ' col-span-2 rounded-[50px] px-5 py-4 flex-row items-center justify-between',
-            )}
+    <View
+      className="gap-7 pt-5 pb-[120px]"
+      data-walkthrough="profile-quick-actions"
+    >
+      {ACTION_GROUPS.map((group) => {
+        const grouped = actions.filter(
+          (action) => (action.group ?? 'personal') === group.id,
+        )
+        if (!grouped.length) return null
+        return (
+          <section
+            key={group.id}
+            aria-labelledby={`profile-actions-${group.id}`}
+            className="space-y-3"
           >
-            <View className="flex-row items-center text-left gap-4">
-              <View
-                className={cn(
-                  action.colorScheme?.bg2 || "bg-card-light/60",
-                  'w-10 h-10 rounded-xl  flex items-center justify-center',
-                  action.iconContainerClassName,
-                )}
-              >
-                {action.icon}
-              </View>
-              <View>
-                <Text className="text-white text-sm font-bbh font-semibold">
-                  {action.title}
-                </Text>
-                <Text className="text-white/70 text-xs font-bbh">
-                  {action.description}
-                </Text>
-              </View>
+            <h2
+              id={`profile-actions-${group.id}`}
+              className="px-1 font-bbh text-base font-semibold text-white"
+            >
+              {group.title}
+            </h2>
+            <View className="gap-3">
+              {grouped.map((action) => (
+                <Pressable
+                  key={action.to}
+                  type="button"
+                  onPress={() => navigate({ to: action.to })}
+                  className={cn(
+                    action.colorScheme?.bg1 ?? 'bg-cardx',
+                    'min-h-20 w-full flex-row items-center justify-between gap-3 rounded-[50px] px-5 py-4 text-left active:!scale-[0.98] motion-reduce:!transform-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-white',
+                  )}
+                >
+                  <View className="min-w-0 flex-1 flex-row items-center text-left gap-3">
+                    <View
+                      className={cn(
+                        action.colorScheme?.bg2 ?? 'bg-card-light/60',
+                        'size-10 shrink-0 rounded-xl flex items-center justify-center',
+                        action.iconContainerClassName,
+                      )}
+                    >
+                      {action.icon}
+                    </View>
+                    <View className="min-w-0 flex-1 gap-1">
+                      <Text className="text-white text-sm font-bbh font-semibold">
+                        {action.title}
+                      </Text>
+                      <Text className="text-white/70 text-xs leading-5 font-bbh">
+                        {action.description}
+                      </Text>
+                    </View>
+                  </View>
+                  <RiArrowRightCircleFill
+                    aria-hidden="true"
+                    size={20}
+                    className="shrink-0 text-white/90"
+                  />
+                </Pressable>
+              ))}
             </View>
-            <RiArrowRightCircleFill size={20} className="text-white/90" />
-          </Pressable>
-        ))}
-      </View>
+          </section>
+        )
+      })}
     </View>
   )
 }
