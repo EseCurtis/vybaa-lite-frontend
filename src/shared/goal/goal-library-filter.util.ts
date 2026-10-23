@@ -1,6 +1,6 @@
 import type { GoalListFilter } from '@/shared/api/goal.api'
 
-export type GoalLibraryTab = 'Active' | 'Ended' | 'Paused'
+export type GoalLibraryTab = 'Active' | 'Archived' | 'History' | 'Paused'
 
 export function parseGoalListFilter(
   value: unknown,
@@ -20,7 +20,8 @@ export function parseGoalListFilter(
 
 export function getGoalLibraryTab(filter: GoalListFilter): GoalLibraryTab {
   if (filter === 'PAUSED') return 'Paused'
-  if (filter === 'ENDED' || filter === 'ARCHIVED') return 'Ended'
+  if (filter === 'ARCHIVED') return 'Archived'
+  if (filter === 'ENDED') return 'History'
   return 'Active'
 }
 

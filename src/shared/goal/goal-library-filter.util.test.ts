@@ -11,8 +11,8 @@ describe('goal library filter navigation', () => {
     expect(getGoalLibraryTab('DUE')).toBe('Active')
     expect(getGoalLibraryTab('OVERDUE')).toBe('Active')
     expect(getGoalLibraryTab('PAUSED')).toBe('Paused')
-    expect(getGoalLibraryTab('ENDED')).toBe('Ended')
-    expect(getGoalLibraryTab('ARCHIVED')).toBe('Ended')
+    expect(getGoalLibraryTab('ENDED')).toBe('History')
+    expect(getGoalLibraryTab('ARCHIVED')).toBe('Archived')
   })
 
   it('accepts only supported URL filters', () => {

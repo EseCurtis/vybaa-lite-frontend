@@ -6,11 +6,9 @@ import {
 import { useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 
-import { Button } from '@/components/layout/button.component'
 import { Pressable } from '@/components/layout/pressables.component'
-import { useSaveGoalReview } from '@/hooks/use-goals.hook'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
-import type { Attachment, Goal } from '@/shared/api/goal.api'
+import type { Goal } from '@/shared/api/goal.api'
 import { createSubtaskDraft } from '@/shared/goal/subtask-draft'
 import {
   taskDateLabel,
@@ -19,7 +17,6 @@ import {
   taskStatus,
 } from '@/shared/goal/task-presentation'
 import { seededColor } from '@/shared/utils/helpers.util'
-import { AttachmentPicker } from './attachment-picker.component'
 import {
   createTaskProgressDraft,
   TaskProgressSheet,
@@ -28,7 +25,7 @@ import { TaskRewards } from './task-rewards.component'
 import { TaskSubtasksTrigger } from './task-subtasks-trigger.component'
 import { TaskTimeline } from './task-timeline.component'
 
-type DetailTab = 'overview' | 'rewards' | 'review' | 'timeline'
+type DetailTab = 'overview' | 'rewards' | 'timeline'
 
 export function TaskDetailsContent({
   goal,
@@ -42,30 +39,7 @@ export function TaskDetailsContent({
   const [progressDraft] = useState(createTaskProgressDraft)
   const sheet = useBottomSheetController()
   const progressTrigger = useRef<HTMLButtonElement>(null)
-  const saveReview = useSaveGoalReview()
   const [showCelebration, setShowCelebration] = useState(false)
-  const [reviewAttachments, setReviewAttachments] = useState<Attachment[]>(
-    goal.conclusion?.attachments ?? [],
-  )
-  const [rating, setRating] = useState(goal.conclusion?.rating ?? 0)
-  const [reflection, setReflection] = useState(
-    goal.conclusion?.reflection ?? '',
-  )
-  const [nextStep, setNextStep] = useState(goal.conclusion?.nextStep ?? '')
-  const [reviewError, setReviewError] = useState<string | null>(null)
-  const [reviewUploading, setReviewUploading] = useState(false)
-  const reviewSubmitting = useRef(false)
-  const [reviewSaved, setReviewSaved] = useState(
-    Boolean(
-      goal.conclusion?.rating ||
-      goal.conclusion?.reflection ||
-      goal.conclusion?.nextStep ||
-      goal.conclusion?.attachments?.length,
-    ),
-  )
-  const ended = ['ABANDONED', 'AUTO_ABANDONED', 'COMPLETED'].includes(
-    goal.status,
-  )
   const status = taskStatus(goal)
   const percentage = Math.max(0, Math.min(100, goal.progress.percentage))
   const color = seededColor(goal.title)
@@ -83,29 +57,6 @@ export function TaskDetailsContent({
       />,
       { title: goal.target.type === 'QUANTITY' ? 'Add progress' : 'Check in' },
     )
-  }
-
-  async function saveConclusionReview(): Promise<void> {
-    if (saveReview.isPending || reviewUploading || reviewSubmitting.current)
-      return
-    reviewSubmitting.current = true
-    try {
-      await saveReview.mutateAsync({
-        goalId: goal.id,
-        attachments: reviewAttachments,
-        nextStep: nextStep.trim() || null,
-        rating: rating || null,
-        reflection: reflection.trim() || null,
-      })
-      setReviewSaved(true)
-      setReviewError(null)
-    } catch (error: unknown) {
-      setReviewError(
-        error instanceof Error ? error.message : 'Could not save this review.',
-      )
-    } finally {
-      reviewSubmitting.current = false
-    }
   }
 
   return (
@@ -126,13 +77,16 @@ export function TaskDetailsContent({
         </h1>
       </header>
       <div className="sticky top-0 z-20 bg-cardd py-2">
-        <div className="flex gap-1 rounded-2xl bg-card-light-50 p-1">
+        <div
+          role="group"
+          aria-label="Task details sections"
+          className="flex gap-1 rounded-2xl bg-card-light-50 p-1"
+        >
           {(
             [
               ['overview', 'Overview'],
               ['timeline', 'Timeline'],
               ['rewards', 'Rewards'],
-              ['review', 'Review'],
             ] as const
           ).map(([value, label]) => (
             <Pressable
@@ -230,85 +184,6 @@ export function TaskDetailsContent({
       ) : null}
       <TaskTimeline goal={goal} active={activeTab === 'timeline'} />
       {activeTab === 'rewards' ? <TaskRewards goal={goal} /> : null}
-      {activeTab === 'review' && ended && goal.conclusion ? (
-        <section aria-label="Task review" className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="font-bold">Conclusion</h2>
-            {reviewSaved ? (
-              <span className="text-xs font-semibold text-success-400">
-                Review saved
-              </span>
-            ) : null}
-          </div>
-          <p className="text-sm text-card-lighter-3">
-            {goal.conclusion.completedOccurrences} completed ·{' '}
-            {goal.conclusion.missedOccurrences} missed ·{' '}
-            {goal.conclusion.durationDays} days
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 3, 4, 5].map((value) => (
-              <Pressable
-                type="button"
-                key={value}
-                aria-pressed={rating === value}
-                accessibilityLabel={`Rate this task ${value} out of 5`}
-                onPress={() => setRating(value)}
-                className={`size-11 items-center justify-center rounded-full text-sm ${rating === value ? 'bg-white text-black' : 'bg-card-light text-white'}`}
-              >
-                {value}
-              </Pressable>
-            ))}
-          </div>
-          <textarea
-            aria-label="Task review reflection"
-            placeholder="What happened? What did you learn?"
-            maxLength={5000}
-            rows={4}
-            value={reflection}
-            onChange={(event) => setReflection(event.target.value)}
-            className="w-full resize-none rounded-xl bg-card-light p-3 text-base text-white placeholder:text-card-lighter-3"
-          />
-          <textarea
-            aria-label="Task review next step"
-            placeholder="What comes next?"
-            maxLength={2000}
-            rows={2}
-            value={nextStep}
-            onChange={(event) => setNextStep(event.target.value)}
-            className="w-full resize-none rounded-xl bg-card-light p-3 text-base text-white placeholder:text-card-lighter-3"
-          />
-          <AttachmentPicker
-            attachments={reviewAttachments}
-            onAttachmentsChange={setReviewAttachments}
-            onUploadingChange={setReviewUploading}
-            maxAttachments={5}
-          />
-          {reviewSaved ? (
-            <p className="text-xs text-card-lighter-3">
-              Saved to this task’s history. You can still edit it.
-            </p>
-          ) : null}
-          {reviewError ? (
-            <p role="alert" className="text-sm text-danger-400">
-              {reviewError}
-            </p>
-          ) : null}
-          <Button
-            fullWidth
-            label={reviewSaved ? 'Update review' : 'Save review'}
-            loading={saveReview.isPending}
-            disabled={reviewUploading}
-            onClick={() => void saveConclusionReview()}
-          />
-        </section>
-      ) : activeTab === 'review' ? (
-        <section className="py-4">
-          <h2 className="font-bold">Review after you finish</h2>
-          <p className="mt-2 text-sm text-card-lighter-3">
-            Your reflection, rating and next step will be saved here.
-          </p>
-        </section>
-      ) : null}
     </div>
   )
 }

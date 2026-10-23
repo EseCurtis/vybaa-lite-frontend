@@ -1,12 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { isValidElement } from 'react'
 import type { ReactElement } from 'react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
@@ -59,10 +53,10 @@ function ui(goal = taskFixture): ReactElement {
   )
 }
 
-it('keeps only the heading above four tabs and opens an entry form instead of recording automatically', () => {
+it('keeps only the heading above three tabs and opens an entry form instead of recording automatically', () => {
   const record = vi.spyOn(goalAPI, 'recordProgress')
   render(ui())
-  for (const tab of ['Overview', 'Timeline', 'Rewards', 'Review'])
+  for (const tab of ['Overview', 'Timeline', 'Rewards'])
     expect(screen.getByRole('button', { name: tab })).toBeTruthy()
   expect(screen.queryByText('Adherence')).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Check in' }))
@@ -90,7 +84,7 @@ it('hides action/progress from secondary tabs and keeps reward details progressi
   expect(JSON.stringify(taskFixture.reward)).toBe(rewards)
 })
 
-it('preserves conclusion review fields, rating, attachments and the save contract', async () => {
+it('removes Review without mutating an existing saved conclusion', () => {
   const ended: Goal = {
     ...taskFixture,
     status: 'COMPLETED',
@@ -123,27 +117,11 @@ it('preserves conclusion review fields, rating, attachments and the save contrac
       targetValue: 10,
     },
   }
-  const save = vi
-    .spyOn(goalAPI, 'saveReview')
-    .mockResolvedValue({ msg: 'ok', data: ended })
+  const original = JSON.stringify(ended.conclusion)
+  const save = vi.spyOn(goalAPI, 'saveReview')
   render(ui(ended))
-  fireEvent.click(screen.getByRole('button', { name: 'Review' }))
-  expect(screen.getByLabelText('Task review reflection').textContent).toBe(
-    'I found a rhythm',
-  )
-  fireEvent.click(
-    screen.getByRole('button', { name: 'Rate this task 4 out of 5' }),
-  )
-  fireEvent.change(screen.getByLabelText('Task review next step'), {
-    target: { value: 'Try another book' },
-  })
-  fireEvent.click(screen.getByRole('button', { name: 'Update review' }))
-  await waitFor(() => expect(save).toHaveBeenCalledOnce())
-  expect(save).toHaveBeenCalledWith('task-one', {
-    goalId: 'task-one',
-    rating: 4,
-    reflection: 'I found a rhythm',
-    nextStep: 'Try another book',
-    attachments: ended.conclusion?.attachments,
-  })
+  expect(screen.queryByRole('button', { name: 'Review' })).toBeNull()
+  expect(screen.queryByLabelText('Task review reflection')).toBeNull()
+  expect(JSON.stringify(ended.conclusion)).toBe(original)
+  expect(save).not.toHaveBeenCalled()
 })
