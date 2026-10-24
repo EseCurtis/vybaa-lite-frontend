@@ -12,6 +12,11 @@ import {
   markWalkthroughCompleted,
 } from '@/shared/onboarding/walkthrough.util'
 import {
+  intersectWalkthroughRects,
+  walkthroughLayout,
+} from '@/shared/onboarding/walkthrough-layout'
+import type { WalkthroughRect } from '@/shared/onboarding/walkthrough-layout'
+import {
   RiArrowLeftLine,
   RiArrowRightLine,
   RiCheckLine,
@@ -20,29 +25,15 @@ import { useLocation } from '@tanstack/react-router'
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
   type ReactElement,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react'
 import { createPortal } from 'react-dom'
 
-type TargetRect = {
-  bottom: number
-  height: number
-  left: number
-  right: number
-  top: number
-  width: number
-}
-
-const TARGET_PADDING = 8
-const TOOLTIP_EDGE_GAP = 16
-const TOOLTIP_TARGET_GAP = 16
-const TOOLTIP_WIDTH = 336
-const TOOLTIP_HEIGHT_ESTIMATE = 230
 const TARGET_WAIT_MS = 3_000
 
 function getVisibleTarget(selector: string): HTMLElement | null {
@@ -64,16 +55,68 @@ function getVisibleTarget(selector: string): HTMLElement | null {
   return null
 }
 
-function getTargetRect(target: HTMLElement): TargetRect {
-  const rect = target.getBoundingClientRect()
+function safeAreaInset(style: CSSStyleDeclaration, edge: string): number {
+  const value = Number(
+    style
+      .getPropertyValue(`--safe-area-inset-${edge}`)
+      .trim()
+      .replace(/px$/, ''),
+  )
+  return Number.isFinite(value) ? Math.max(0, value) : 0
+}
+
+function getViewportRect(): WalkthroughRect {
+  const viewport = window.visualViewport
+  const style = window.getComputedStyle(document.documentElement)
+  const left = (viewport?.offsetLeft ?? 0) + safeAreaInset(style, 'left')
+  const top = (viewport?.offsetTop ?? 0) + safeAreaInset(style, 'top')
+  const right =
+    (viewport?.offsetLeft ?? 0) +
+    (viewport?.width ?? window.innerWidth) -
+    safeAreaInset(style, 'right')
+  const bottom =
+    (viewport?.offsetTop ?? 0) +
+    (viewport?.height ?? window.innerHeight) -
+    safeAreaInset(style, 'bottom')
   return {
-    bottom: rect.bottom,
-    height: rect.height,
-    left: rect.left,
-    right: rect.right,
-    top: rect.top,
-    width: rect.width,
+    bottom,
+    height: Math.max(0, bottom - top),
+    left,
+    right,
+    top,
+    width: Math.max(0, right - left),
   }
+}
+
+function getClippedTargetRect(
+  target: HTMLElement,
+  viewport: WalkthroughRect,
+): WalkthroughRect | null {
+  let rect = intersectWalkthroughRects(target.getBoundingClientRect(), viewport)
+  for (
+    let parent = target.parentElement;
+    parent && rect;
+    parent = parent.parentElement
+  ) {
+    const style = window.getComputedStyle(parent)
+    const clipX = /auto|scroll|hidden|clip|overlay/.test(
+      style.overflowX || style.overflow,
+    )
+    const clipY = /auto|scroll|hidden|clip|overlay/.test(
+      style.overflowY || style.overflow,
+    )
+    if (!clipX && !clipY) continue
+    const bounds = parent.getBoundingClientRect()
+    rect = intersectWalkthroughRects(rect, {
+      bottom: clipY ? bounds.bottom : rect.bottom,
+      height: clipY ? bounds.height : rect.height,
+      left: clipX ? bounds.left : rect.left,
+      right: clipX ? bounds.right : rect.right,
+      top: clipY ? bounds.top : rect.top,
+      width: clipX ? bounds.width : rect.width,
+    })
+  }
+  return rect
 }
 
 function targetsAreReady(steps: WalkthroughStep[]): boolean {
@@ -90,7 +133,11 @@ function SpotlightWalkthrough({
   const [activeStepIndex, setActiveStepIndex] = useState(0)
   const [steps, setSteps] = useState(definition.steps)
   const [isOpen, setIsOpen] = useState(false)
-  const [targetRect, setTargetRect] = useState<TargetRect | null>(null)
+  const [geometry, setGeometry] = useState<{
+    target: WalkthroughRect | null
+    viewport: WalkthroughRect
+  } | null>(null)
+  const [tooltipHeight, setTooltipHeight] = useState(0)
   const actionButtonRef = useRef<HTMLButtonElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -99,23 +146,23 @@ function SpotlightWalkthrough({
   const closeWalkthrough = useCallback((): void => {
     markWalkthroughCompleted(definition.id, userId)
     setIsOpen(false)
-    previousFocusRef.current?.focus()
+    previousFocusRef.current?.focus({ preventScroll: true })
   }, [definition.id, userId])
 
   const updateTargetRect = useCallback((): void => {
     const target = getVisibleTarget(activeStep.selector)
-    if (!target) {
-      setTargetRect(null)
-      return
-    }
-
-    setTargetRect(getTargetRect(target))
+    const viewport = getViewportRect()
+    setGeometry({
+      target: target ? getClippedTargetRect(target, viewport) : null,
+      viewport,
+    })
   }, [activeStep.selector])
 
   useEffect(() => {
     setActiveStepIndex(0)
     setIsOpen(false)
-    setTargetRect(null)
+    setGeometry(null)
+    setSteps(definition.steps)
 
     if (hasCompletedWalkthrough(definition.id, userId)) return
 
@@ -140,7 +187,10 @@ function SpotlightWalkthrough({
       }
 
       window.clearInterval(interval)
-      previousFocusRef.current = document.activeElement as HTMLElement | null
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
       // Record the walkthrough as seen when it opens. If the user navigates
       // away before pressing Skip or Done, it should not surprise them again.
       markWalkthroughCompleted(definition.id, userId)
@@ -169,25 +219,58 @@ function SpotlightWalkthrough({
     })
 
     updateTargetRect()
-    const settleTimer = window.setTimeout(
-      updateTargetRect,
-      reduceMotion ? 0 : 260,
-    )
-    const handleViewportChange = (): void => updateTargetRect()
+    let frame: number | null = null
+    const handleViewportChange = (): void => {
+      if (frame !== null) return
+      frame = window.requestAnimationFrame(() => {
+        frame = null
+        updateTargetRect()
+      })
+    }
+    const observer =
+      typeof ResizeObserver === 'undefined'
+        ? null
+        : new ResizeObserver(handleViewportChange)
+    for (
+      let element: HTMLElement | null = target;
+      element;
+      element = element.parentElement
+    ) {
+      observer?.observe(element)
+    }
     window.addEventListener('resize', handleViewportChange)
     window.addEventListener('scroll', handleViewportChange, true)
+    window.visualViewport?.addEventListener('resize', handleViewportChange)
+    window.visualViewport?.addEventListener('scroll', handleViewportChange)
 
     return () => {
-      window.clearTimeout(settleTimer)
+      if (frame !== null) window.cancelAnimationFrame(frame)
+      observer?.disconnect()
       window.removeEventListener('resize', handleViewportChange)
       window.removeEventListener('scroll', handleViewportChange, true)
+      window.visualViewport?.removeEventListener('resize', handleViewportChange)
+      window.visualViewport?.removeEventListener('scroll', handleViewportChange)
     }
   }, [activeStep.selector, isOpen, updateTargetRect])
 
+  const positioned = geometry !== null
+  useLayoutEffect(() => {
+    if (!isOpen || !positioned) return
+    const tooltip = tooltipRef.current
+    if (!tooltip) return
+    const measure = (): void =>
+      setTooltipHeight(tooltip.getBoundingClientRect().height)
+    measure()
+    const observer =
+      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure)
+    observer?.observe(tooltip)
+    return () => observer?.disconnect()
+  }, [activeStepIndex, isOpen, positioned])
+
   useEffect(() => {
-    if (!isOpen || !targetRect) return
-    actionButtonRef.current?.focus()
-  }, [activeStepIndex, isOpen, targetRect])
+    if (!isOpen || !positioned) return
+    actionButtonRef.current?.focus({ preventScroll: true })
+  }, [activeStepIndex, isOpen, positioned])
 
   const goForward = useCallback((): void => {
     if (activeStepIndex === steps.length - 1) {
@@ -236,33 +319,13 @@ function SpotlightWalkthrough({
     [activeStepIndex, closeWalkthrough, goBack, goForward],
   )
 
-  if (!isOpen || !targetRect || typeof document === 'undefined') return null
+  if (!isOpen || !geometry || typeof document === 'undefined') return null
 
-  const spotlightStyle: CSSProperties = {
-    height: targetRect.height + TARGET_PADDING * 2,
-    left: targetRect.left - TARGET_PADDING,
-    top: targetRect.top - TARGET_PADDING,
-    width: targetRect.width + TARGET_PADDING * 2,
-  }
-  const tooltipWidth = Math.min(
-    TOOLTIP_WIDTH,
-    window.innerWidth - TOOLTIP_EDGE_GAP * 2,
+  const { spotlight, tooltip } = walkthroughLayout(
+    geometry.target,
+    geometry.viewport,
+    tooltipHeight,
   )
-  const centeredLeft = targetRect.left + targetRect.width / 2 - tooltipWidth / 2
-  const tooltipLeft = Math.min(
-    Math.max(TOOLTIP_EDGE_GAP, centeredLeft),
-    window.innerWidth - tooltipWidth - TOOLTIP_EDGE_GAP,
-  )
-  const hasRoomBelow =
-    targetRect.bottom + TOOLTIP_TARGET_GAP + TOOLTIP_HEIGHT_ESTIMATE <
-    window.innerHeight
-  const tooltipStyle: CSSProperties = {
-    left: tooltipLeft,
-    width: tooltipWidth,
-    ...(hasRoomBelow
-      ? { top: targetRect.bottom + TOOLTIP_TARGET_GAP }
-      : { bottom: window.innerHeight - targetRect.top + TOOLTIP_TARGET_GAP }),
-  }
   const isLastStep = activeStepIndex === steps.length - 1
 
   return createPortal(
@@ -271,51 +334,61 @@ function SpotlightWalkthrough({
       onKeyDown={handleKeyDown}
       role="presentation"
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none fixed rounded-3xl ring-2 ring-white transition-[top,left,width,height] duration-200 motion-reduce:transition-none"
-        style={{
-          ...spotlightStyle,
-          boxShadow: '0 0 0 9999px rgb(0 0 0 / 72%)',
-        }}
-      />
+      {!spotlight ? (
+        <div aria-hidden="true" className="fixed inset-0 bg-black/70" />
+      ) : (
+        <div
+          aria-hidden="true"
+          data-walkthrough-spotlight
+          className="pointer-events-none fixed rounded-3xl ring-2 ring-white transition-[top,left,width,height] duration-200 motion-reduce:transition-none"
+          style={{
+            height: spotlight.height,
+            left: spotlight.left,
+            top: spotlight.top,
+            width: spotlight.width,
+            boxShadow: '0 0 0 9999px rgb(0 0 0 / 72%)',
+          }}
+        />
+      )}
 
       <div
         ref={tooltipRef}
         aria-describedby="walkthrough-description"
         aria-labelledby="walkthrough-title"
         aria-modal="true"
-        className="fixed max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-3xl bg-card-light p-5 shadow-2xl transition-[top,bottom,left] duration-200 motion-reduce:transition-none"
+        className="fixed flex min-h-0 flex-col overflow-hidden rounded-3xl bg-card-light p-[20px] shadow-2xl"
         role="dialog"
-        style={tooltipStyle}
+        style={tooltip}
       >
-        <View className="mb-4 flex-row items-center justify-between gap-4">
+        <View className="mb-[16px] shrink-0 flex-row items-center justify-between gap-4">
           <Text className="text-xs font-bold uppercase tracking-[0.16em] text-card-lighter-3">
             {activeStepIndex + 1} of {steps.length}
           </Text>
           <Pressable
             accessibilityLabel="Skip walkthrough"
-            className="min-h-11 rounded-full px-3 items-center justify-center"
+            className="min-h-[44px] rounded-full px-[12px] items-center justify-center"
             onPress={closeWalkthrough}
           >
             <Text className="text-sm font-bold text-card-lighter-2">Skip</Text>
           </Pressable>
         </View>
 
-        <Text
-          id="walkthrough-title"
-          className="text-xl pr-1 font-bold text-white"
-        >
-          {activeStep.title}
-        </Text>
-        <Text
-          id="walkthrough-description"
-          className="mt-2 text-sm leading-6 text-card-lighter-2"
-        >
-          {activeStep.description}
-        </Text>
+        <div className="min-h-0 overflow-y-auto overscroll-contain [overflow-wrap:anywhere]">
+          <Text
+            id="walkthrough-title"
+            className="block text-xl pr-1 font-bold text-white"
+          >
+            {activeStep.title}
+          </Text>
+          <Text
+            id="walkthrough-description"
+            className="mt-2 block text-sm leading-6 text-card-lighter-2"
+          >
+            {activeStep.description}
+          </Text>
+        </div>
 
-        <View className="mt-5 flex-row items-center justify-between gap-3">
+        <View className="mt-[20px] shrink-0 flex-row flex-wrap items-center justify-between gap-[12px]">
           <View aria-hidden="true" className="flex-row items-center gap-1.5">
             {steps.map((step, index) => (
               <View
@@ -328,11 +401,11 @@ function SpotlightWalkthrough({
               />
             ))}
           </View>
-          <View className="flex-row items-center gap-2">
+          <View className="min-w-0 flex-row flex-wrap items-center gap-[8px]">
             {activeStepIndex > 0 ? (
               <Pressable
                 accessibilityLabel="Previous walkthrough step"
-                className="min-h-11 flex-row items-center gap-1 rounded-full bg-card-light-50 px-4"
+                className="min-h-[44px] flex-row items-center gap-[4px] rounded-full bg-card-light-50 px-[16px]"
                 onPress={goBack}
               >
                 <RiArrowLeftLine className="text-white" size={17} />
@@ -344,7 +417,7 @@ function SpotlightWalkthrough({
               accessibilityLabel={
                 isLastStep ? 'Finish walkthrough' : 'Next walkthrough step'
               }
-              className="min-h-11 flex-row items-center gap-1 rounded-full bg-white px-5"
+              className="min-h-[44px] flex-row items-center gap-[4px] rounded-full bg-white px-[20px]"
               onPress={goForward}
             >
               <Text className="font-bold text-black">

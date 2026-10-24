@@ -100,6 +100,18 @@ it('keeps sign-in immediately usable and preserves Apple, Google, email and lega
   expect(controls.legal).toHaveBeenCalledOnce()
 })
 
+it('caps the splash action tiles even as the customizable Home catalog grows', () => {
+  const view = render(<AppScreen />)
+  expect(
+    [...view.container.querySelectorAll('[data-splash-action]')].map((tile) =>
+      tile.getAttribute('data-splash-action'),
+    ),
+  ).toEqual(['flexx', 'tasks', 'rewind', 'wellbeing'])
+  expect(
+    view.container.querySelector('[data-splash-action="journal"]'),
+  ).toBeNull()
+})
+
 it('retains retryable sign-in errors and never replays onboarding for a signed-in user', async () => {
   controls.google.mockRejectedValueOnce(new Error('Network unavailable'))
   const view = render(<AppScreen />)

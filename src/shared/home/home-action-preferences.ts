@@ -4,6 +4,14 @@ export const HOME_ACTION_IDS = [
   'rewind',
   'wellbeing',
   'chill',
+  'journal',
+  'chats',
+  'rewind-schedule',
+  'rewards',
+  'achievements',
+  'about-you',
+  'social-studio',
+  'settings',
 ] as const
 export type HomeActionId = (typeof HOME_ACTION_IDS)[number]
 export type HomeActionPreferences = {

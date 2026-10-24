@@ -1,7 +1,7 @@
 import { GoalRowSkeleton } from '@/components/common/loading-layouts.component'
 import { NoiseComponent } from '@/components/common/noise.component'
-import { TabHeader } from '@/components/common/tab-header.component'
 import { QueryFeedback } from '@/components/common/query-feedback.component'
+import { TabHeader } from '@/components/common/tab-header.component'
 import { readGoalCreationDraft } from '@/components/custom/goal/create-goal-sheet.component'
 import { TaskListRow } from '@/components/custom/goal/task-list-row.component'
 import { Pressable } from '@/components/layout/pressables.component'
@@ -286,7 +286,7 @@ export default function GoalsAppScreen({
                 maxLength={200}
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="min-h-12 min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-card-lighter-3"
+                className="min-h-12 min-w-0 flex-1 bg-transparent text-md text-white outline-none placeholder:text-card-lighter-3"
               />
             </label>
 

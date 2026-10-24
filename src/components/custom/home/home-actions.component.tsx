@@ -5,24 +5,32 @@ import { useBottomSheet } from '@/hooks/use-bottom-sheet.hook'
 import { useHomeActionPreferences } from '@/hooks/use-home-actions.hook'
 import { useAuth } from '@/providers/auth.provider'
 import { featureFlags } from '@/shared/config/feature-flags.config'
-import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
-import { saveHomeActionPreferences } from '@/shared/home/home-action-preferences'
 import type { HomeActionId } from '@/shared/home/home-action-preferences'
-import { useCallback, useRef } from 'react'
-import type { CSSProperties } from 'react'
+import { saveHomeActionPreferences } from '@/shared/home/home-action-preferences'
+import { adjustColor, cn, seededColor } from '@/shared/utils/helpers.util'
 import {
   RiArrowRightUpLine,
+  RiBookOpenLine,
+  RiCalendarScheduleLine,
   RiCheckDoubleLine,
+  RiCoinsLine,
+  RiDiscussLine,
   RiEmotionLaughLine,
+  RiEqualizerLine,
   RiHeart2Line,
   RiRewindLine,
+  RiSettings3Line,
   RiTempColdLine,
-  RiEqualizerLine,
+  RiTrophyLine,
+  RiTwitterXLine,
+  RiUserHeartLine,
   type RemixiconComponentType,
 } from '@remixicon/react'
 import { useNavigate } from '@tanstack/react-router'
-import { HomeRewindTimer } from './home-rewind-timer.component'
+import type { CSSProperties } from 'react'
+import { useCallback, useRef } from 'react'
 import { HomeActionsSheet } from './home-actions-sheet.component'
+import { HomeRewindTimer } from './home-rewind-timer.component'
 
 export type HomeAction = {
   id: HomeActionId
@@ -33,14 +41,24 @@ export type HomeAction = {
   onAction: () => void
 }
 type HomeDestination =
+  | '/achievements'
   | '/app/actions/flexx'
   | '/app/goal'
+  | '/app/journal'
+  | '/app/onboarding/about-you'
+  | '/app/rewards'
   | '/app/rewind'
   | '/app/rewind-history'
+  | '/app/rewind-chats'
+  | '/app/social'
+  | '/app/sub-profile/settings'
   | '/chill'
+type HomeNavigation =
+  | { to: HomeDestination }
+  | { to: '/app/rewind-routine'; search: { from: 'rewind' } }
 
 export function homeActions(
-  navigate?: (destination: { to: HomeDestination }) => unknown,
+  navigate?: (destination: HomeNavigation) => unknown,
   handleCreateGoal?: () => void,
   rewindPersona?: string,
 ): HomeAction[] {
@@ -112,6 +130,79 @@ export function homeActions(
         navigate?.({
           to: '/chill',
         })
+      },
+    },
+    {
+      id: 'journal',
+      name: 'Journal',
+      description: 'Write or revisit your entries',
+      icon: RiBookOpenLine,
+      enabled: featureFlags.journal,
+      onAction() {
+        navigate?.({ to: '/app/journal' })
+      },
+    },
+    {
+      id: 'chats',
+      name: 'Chats',
+      description: 'Catch up with your Rewind partners',
+      icon: RiDiscussLine,
+      onAction() {
+        navigate?.({ to: '/app/rewind-chats' })
+      },
+    },
+    {
+      id: 'rewind-schedule',
+      name: 'Rewind schedule',
+      description: 'Choose when to reflect',
+      icon: RiCalendarScheduleLine,
+      onAction() {
+        navigate?.({ to: '/app/rewind-routine', search: { from: 'rewind' } })
+      },
+    },
+    {
+      id: 'rewards',
+      name: 'Play rewards',
+      description: 'Your Play Points wallet',
+      icon: RiCoinsLine,
+      onAction() {
+        navigate?.({ to: '/app/rewards' })
+      },
+    },
+    {
+      id: 'achievements',
+      name: 'Achievements',
+      description: 'Revisit your earned badges',
+      icon: RiTrophyLine,
+      onAction() {
+        navigate?.({ to: '/achievements' })
+      },
+    },
+    {
+      id: 'about-you',
+      name: 'About you',
+      description: 'Your rhythm and support preferences',
+      icon: RiUserHeartLine,
+      onAction() {
+        navigate?.({ to: '/app/onboarding/about-you' })
+      },
+    },
+    {
+      id: 'social-studio',
+      name: 'Social Studio',
+      description: 'Prepare social drafts for review',
+      icon: RiTwitterXLine,
+      onAction() {
+        navigate?.({ to: '/app/social' })
+      },
+    },
+    {
+      id: 'settings',
+      name: 'Settings',
+      description: 'Your app preferences',
+      icon: RiSettings3Line,
+      onAction() {
+        navigate?.({ to: '/app/sub-profile/settings' })
       },
     },
   ]
@@ -238,7 +329,10 @@ export function HomeActions() {
 
   return (
     <View className="px-mg py-mg mt-2 gap-2">
-      <View className="flex-row justify-end">
+      <View className="flex-row mb-4 mt-1 items-center justify-between">
+        <Text className=" flex-row items-center justify-center gap-2 px-2 text-md font-bold text-white active:!scale-95 motion-reduce:!transform-none">
+          Quick access
+        </Text>
         <Pressable
           ref={customizeRef}
           type="button"
@@ -259,7 +353,7 @@ export function HomeActions() {
               { title: 'Home shortcuts' },
             )
           }
-          className="min-h-11 flex-row items-center justify-center gap-2 px-2 text-xs font-semibold text-card-lighter-3 active:!scale-95 motion-reduce:!transform-none"
+          className=" flex-row items-center justify-center gap-2 px-2 text-xs font-semibold text-card-lighter-3 active:!scale-95 motion-reduce:!transform-none"
         >
           <RiEqualizerLine size={16} />
           Customize

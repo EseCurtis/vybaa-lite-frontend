@@ -106,6 +106,8 @@ export default function AppScreen() {
     )
   }
 
+  const splashActions = homeActions().slice(0, 4)
+
   return (
     <View className="flex-1 [&_*]:!text-center bg-black p-4 relative overflow-hidden">
       <OnboardingBackground />
@@ -132,7 +134,7 @@ export default function AppScreen() {
         </View>
 
         <View className="relative">
-          {homeActions().map((action, index) => {
+          {splashActions.map((action, index) => {
             const size = 80
             const gap = -10
             const roundness = 16
@@ -159,6 +161,7 @@ export default function AppScreen() {
                   delay: index / 10,
                 }}
                 key={index + 'sdssss'}
+                data-splash-action={action.id}
                 className="relative"
               >
                 <View

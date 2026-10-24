@@ -12,6 +12,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 
 import {
   defaultHomeActionPreferences,
+  HOME_ACTION_IDS,
   saveHomeActionPreferences,
 } from '@/shared/home/home-action-preferences'
 import { featureFlags } from '@/shared/config/feature-flags.config'
@@ -69,6 +70,7 @@ it('preserves default actions, partner naming, routes and disabled feature flags
     'tasks',
     'rewind',
     'wellbeing',
+    ...HOME_ACTION_IDS.slice(5),
   ])
   expect(featureFlags.chill).toBe(false)
   expect(actions.find((action) => action.id === 'rewind')?.name).toBe(
@@ -109,6 +111,7 @@ it('lets users hide and reorder shortcuts, persists them and keeps Customize ava
     'home-action-rewind',
     'home-action-my-tasks',
     'home-action-wellbeing',
+    ...HOME_ACTION_IDS.slice(5).map((id) => `home-action-${id}`),
   ])
   expect(controls.dismiss).toHaveBeenCalledOnce()
   sheet.unmount()
@@ -142,7 +145,7 @@ it('keeps failed drafts editable for retry and does not expose raw storage error
 it('handles account changes and all-hidden preferences without trapping the user', () => {
   saveHomeActionPreferences('owner', {
     ...defaultHomeActionPreferences(),
-    hidden: ['flexx', 'tasks', 'rewind', 'wellbeing', 'chill'],
+    hidden: [...HOME_ACTION_IDS],
   })
   const view = render(<HomeActions />)
   expect(screen.queryAllByTestId(/^home-action-/)).toHaveLength(0)
@@ -151,7 +154,7 @@ it('handles account changes and all-hidden preferences without trapping the user
   ).toBeTruthy()
   controls.owner = 'another-owner'
   view.rerender(<HomeActions />)
-  expect(screen.getAllByTestId(/^home-action-/)).toHaveLength(4)
+  expect(screen.getAllByTestId(/^home-action-/)).toHaveLength(12)
   act(() =>
     saveHomeActionPreferences('another-owner', {
       ...defaultHomeActionPreferences(),
@@ -165,5 +168,55 @@ it('handles account changes and all-hidden preferences without trapping the user
   ).toBeNull()
   fireEvent.click(screen.getByRole('button', { name: 'Restore defaults' }))
   fireEvent.click(screen.getByRole('button', { name: 'Save shortcuts' }))
-  expect(screen.getAllByTestId(/^home-action-/)).toHaveLength(4)
+  expect(screen.getAllByTestId(/^home-action-/)).toHaveLength(12)
+})
+
+it('routes every new shortcut to its existing screen and retains the Journal feature flag', () => {
+  const actions = homeActions(controls.navigate)
+  const routes = [
+    ['journal', '/app/journal'],
+    ['chats', '/app/rewind-chats'],
+    ['rewards', '/app/rewards'],
+    ['achievements', '/achievements'],
+    ['about-you', '/app/onboarding/about-you'],
+    ['social-studio', '/app/social'],
+    ['settings', '/app/sub-profile/settings'],
+  ] as const
+  for (const [id, to] of routes) {
+    actions.find((action) => action.id === id)?.onAction()
+    expect(controls.navigate).toHaveBeenLastCalledWith({ to })
+  }
+  actions.find((action) => action.id === 'rewind-schedule')?.onAction()
+  expect(controls.navigate).toHaveBeenLastCalledWith({
+    to: '/app/rewind-routine',
+    search: { from: 'rewind' },
+  })
+  const enabled = featureFlags.journal
+  try {
+    featureFlags.journal = false
+    expect(homeActions().some((action) => action.id === 'journal')).toBe(false)
+  } finally {
+    featureFlags.journal = enabled
+  }
+})
+
+it('lets users hide and reorder the new shortcuts with the same saved preferences', () => {
+  render(<HomeActions />)
+  openEditor()
+  fireEvent.click(screen.getByRole('checkbox', { name: 'Show Social Studio' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Move Journal earlier' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Save shortcuts' }))
+  expect(screen.queryByTestId('home-action-social-studio')).toBeNull()
+  expect(
+    screen
+      .getAllByTestId(/^home-action-/)
+      .map((item) => item.dataset.testid)
+      .slice(0, 5),
+  ).toEqual([
+    'home-action-flexx',
+    'home-action-my-tasks',
+    'home-action-rewind',
+    'home-action-journal',
+    'home-action-wellbeing',
+  ])
 })

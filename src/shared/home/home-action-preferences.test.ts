@@ -40,7 +40,7 @@ it('deduplicates known IDs and appends missing actions without trusting arbitrar
     ),
   ).toEqual({
     version: 1,
-    order: ['rewind', 'flexx', 'tasks', 'wellbeing', 'chill'],
+    order: ['rewind', ...HOME_ACTION_IDS.filter((id) => id !== 'rewind')],
     hidden: ['tasks'],
   })
 })
@@ -73,9 +73,29 @@ it('moves available rows without dropping disabled features or mutating the orig
     'rewind',
     'tasks',
     'chill',
+    ...HOME_ACTION_IDS.slice(5),
   ])
   expect(initial.order).toEqual(HOME_ACTION_IDS)
   expect(moveHomeAction(initial, 'flexx', -1, HOME_ACTION_IDS)).toBe(initial)
+})
+
+it('appends new shortcuts without losing a previous installation’s hidden choices or order', () => {
+  const restored = parseHomeActionPreferences(
+    JSON.stringify({
+      version: 1,
+      order: ['wellbeing', 'rewind', 'flexx', 'tasks', 'chill'],
+      hidden: ['rewind', 'tasks'],
+    }),
+  )
+  expect(restored.order.slice(0, 5)).toEqual([
+    'wellbeing',
+    'rewind',
+    'flexx',
+    'tasks',
+    'chill',
+  ])
+  expect(restored.order.slice(5)).toEqual(HOME_ACTION_IDS.slice(5))
+  expect(restored.hidden).toEqual(['rewind', 'tasks'])
 })
 
 it('keeps Home readable if storage is blocked but exposes save failures for retry', () => {
