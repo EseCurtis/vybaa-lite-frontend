@@ -7,12 +7,10 @@ import { TabHeader } from '@/components/common/tab-header.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
-import { usePaginatedRewindSessions } from '@/hooks/use-rewind.hook'
+import { useReflectionDays } from '@/hooks/use-reflection-days.hook'
 import { useAuth } from '@/providers/auth.provider'
-import type { RewindSession } from '@/shared/api/rewind.api'
 import { colors } from '@/shared/colors.shared'
 import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
-import { normalizePages } from '@/shared/utils/helpers.util'
 
 import {
   RewindDaySection,
@@ -20,7 +18,8 @@ import {
   RewindErrorState,
   RewindSkeletonRow,
 } from './history/rewind-history-primitives.component'
-import { groupSessionsByDay } from './history/rewind-history.utils'
+import { formatDayLabel } from './history/rewind-history.utils'
+import { DailyReflectionRow } from './history/daily-reflection-row.component'
 import { RewindSessionRow } from './history/rewind-session-row.component'
 
 export default function RewindSessionArchiveScreen(): ReactElement {
@@ -36,15 +35,14 @@ export default function RewindSessionArchiveScreen(): ReactElement {
     isFetchingNextPage,
     isLoading,
     refetch,
-  } = usePaginatedRewindSessions()
-  const sessions = useMemo(
-    () => normalizePages<RewindSession>(data?.pages),
-    [data?.pages],
-  )
-  const groupedSessions = useMemo(
-    () => groupSessionsByDay(sessions),
-    [sessions],
-  )
+  } = useReflectionDays()
+  const days = useMemo(() => {
+    const loaded = data?.pages.flatMap((page) => page.days) ?? []
+    return loaded.filter(
+      (day, index) =>
+        loaded.findIndex((other) => other.dayKey === day.dayKey) === index,
+    )
+  }, [data?.pages])
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.cardd }}>
@@ -69,37 +67,69 @@ export default function RewindSessionArchiveScreen(): ReactElement {
                   <RewindSkeletonRow key={index} />
                 ))}
               </View>
-            ) : isError ? (
+            ) : isError && !data ? (
               <RewindErrorState
                 onRetry={() => {
                   void refetch()
                 }}
               />
-            ) : groupedSessions.length ? (
+            ) : days.length ? (
               <View className="gap-3">
-                {groupedSessions.map((group) => (
+                {data?.pages[0]?.upcomingSessions.length ? (
                   <RewindDaySection
-                    key={group.dayKey}
-                    label={group.label}
-                    total={group.sessions.length}
+                    label="Scheduled"
+                    total={data.pages[0].upcomingSessions.length}
                   >
-                    {group.sessions.map((session, index) => (
+                    {data.pages[0].upcomingSessions.map((session, index) => (
                       <RewindSessionRow
                         key={session.id}
                         index={index}
-                        onPress={() => {
-                          void navigate({
-                            params: { sessionId: session.id },
-                            search: { from: 'history' },
-                            to: '/app/r/$sessionId',
-                          })
-                        }}
                         session={session}
                         user={user ?? undefined}
                       />
                     ))}
                   </RewindDaySection>
+                ) : null}
+                {days.map((group) => (
+                  <RewindDaySection
+                    key={group.dayKey}
+                    hasDailyReflection
+                    label={formatDayLabel(group.dayKey, data?.pages[0]?.today)}
+                    total={group.sessions.length}
+                  >
+                    <DailyReflectionRow
+                      reflection={group.reflection}
+                      user={user ?? undefined}
+                    />
+                    <>
+                      {group.sessions.map((session, index) => (
+                        <RewindSessionRow
+                          key={session.id}
+                          index={index}
+                          onPress={() => {
+                            void navigate({
+                              params: { sessionId: session.id },
+                              search: { from: 'history' },
+                              to: '/app/r/$sessionId',
+                            })
+                          }}
+                          session={session}
+                          user={user ?? undefined}
+                        />
+                      ))}
+                    </>
+                  </RewindDaySection>
                 ))}
+
+                {isError ? (
+                  <Button
+                    label="Retry loading reflections"
+                    variant="secondary"
+                    onClick={() => {
+                      void refetch()
+                    }}
+                  />
+                ) : null}
 
                 {hasNextPage ? (
                   <View className="flex-row justify-center px-1 py-2">

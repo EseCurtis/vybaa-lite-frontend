@@ -49,6 +49,12 @@ export function useInfiniteGoals({
     queryKey: query
       ? [...goalQueryKeys.list(filter, limit), { query }]
       : goalQueryKeys.list(filter, limit),
+    refetchInterval: (state) =>
+      state.state.data?.pages.some((page) =>
+        page.data.some((goal) => goal.linkedRewind && goal.status === 'ACTIVE'),
+      )
+        ? 30_000
+        : false,
   })
 }
 
@@ -60,6 +66,16 @@ export function useGoal(goalId?: string) {
       return (await goalAPI.get(goalId, signal)).data
     },
     queryKey: goalQueryKeys.detail(goalId ?? 'none'),
+    refetchInterval: (query) => {
+      const linked = query.state.data?.linkedRewind
+      if (
+        !linked ||
+        linked.status === 'COMPLETED' ||
+        linked.status === 'MISSED'
+      )
+        return false
+      return linked.status === 'FINALIZING' ? 1_500 : 30_000
+    },
   })
 }
 

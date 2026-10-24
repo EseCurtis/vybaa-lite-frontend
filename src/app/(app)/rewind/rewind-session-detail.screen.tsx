@@ -1,16 +1,23 @@
-import { RiRefreshLine } from '@remixicon/react'
+import { RiLockLine, RiRefreshLine } from '@remixicon/react'
 import { useParams, useRouter } from '@tanstack/react-router'
 import type { ReactElement } from 'react'
 
 import { NoiseComponent } from '@/components/common/noise.component'
-import { Skeleton } from '@/components/common/skeleton.component'
+import {
+  MissedRewindStatus,
+  ReflectionProcessingStatus,
+} from '@/components/custom/rewind/reflection-status.component'
 import { TabHeader } from '@/components/common/tab-header.component'
 import { Button } from '@/components/layout/button.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useRewindSession } from '@/hooks/use-rewind.hook'
+import { useAuth } from '@/providers/auth.provider'
 import { colors } from '@/shared/colors.shared'
-import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import {
+  getRewindPersona,
+  REWIND_PERSONAS,
+} from '@/shared/rewind/rewind-personas'
 import { navigateBackWithinApp } from '@/shared/utils/app-navigation.util'
 
 import { RewindSessionDetail } from './history/rewind-session-detail-sheet.component'
@@ -23,6 +30,7 @@ export default function RewindSessionDetailScreen({
   origin: RewindSessionDetailOrigin
 }): ReactElement {
   const router = useRouter()
+  const { user } = useAuth()
   const { sessionId } = useParams({ from: '/app/r/$sessionId' })
   const {
     data: session,
@@ -32,6 +40,10 @@ export default function RewindSessionDetailScreen({
     refetch,
   } = useRewindSession(sessionId)
   const persona = session ? getRewindPersona(session.personaId) : null
+  const loadingPersona =
+    persona ??
+    REWIND_PERSONAS.find((partner) => partner.id === user?.rewindPersona) ??
+    getRewindPersona('ella')
   const returnPath =
     origin === 'history'
       ? '/app/rewind-history-sessions'
@@ -57,11 +69,10 @@ export default function RewindSessionDetailScreen({
         <View className="flex-1 overflow-y-auto px-mg pb-[120px]">
           <View className="mx-auto w-full max-w-3xl">
             {isLoading ? (
-              <View className="gap-4 py-4">
-                <Skeleton className="h-36 w-full" rounded="xl" />
-                <Skeleton className="h-28 w-full" rounded="xl" />
-                <Skeleton className="h-24 w-full" rounded="xl" />
-              </View>
+              <ReflectionProcessingStatus
+                partnerId={loadingPersona.id}
+                message="Opening your reflection…"
+              />
             ) : isError && !session ? (
               <View
                 className="gap-4 rounded-[24px] px-4 py-5"
@@ -90,6 +101,20 @@ export default function RewindSessionDetailScreen({
                   variant="secondary"
                 />
               </View>
+            ) : session?.status === 'SCHEDULED' ? (
+              <View className="items-center gap-3 px-4 py-10" role="status">
+                <RiLockLine size={24} className="text-card-lighter-2" />
+                <Text className="font-bbh text-base font-semibold text-white">
+                  Scheduled Rewind
+                </Text>
+                <Text className="text-center font-bbh text-sm text-card-lighter-2">
+                  Your reflection will be available after this Rewind starts.
+                </Text>
+              </View>
+            ) : session?.status === 'MISSED' ? (
+              <MissedRewindStatus partnerId={session.personaId} />
+            ) : session?.status === 'FINALIZING' ? (
+              <ReflectionProcessingStatus partnerId={session.personaId} />
             ) : session ? (
               <RewindSessionDetail session={session} />
             ) : null}

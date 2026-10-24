@@ -71,6 +71,30 @@ it('opens the entry sheet from a list checkbox without recording progress automa
   expect(screen.getByText('Due today').className).toContain('text-warning-400')
 })
 
+it('blocks tapping Save and native submission for Rewind-bound tasks even when the form is opened directly', () => {
+  const record = vi.spyOn(goalAPI, 'recordProgress')
+  const goal: Goal = {
+    ...taskFixture,
+    linkedRewind: {
+      sessionId: 'rewind-slot',
+      status: 'IN_PROGRESS',
+      scheduledFor: null,
+      windowEndsAt: null,
+    },
+  }
+  const view = render(ui(goal))
+  const save = screen.getByRole('button', { name: 'Save progress' })
+  expect(save.hasAttribute('disabled')).toBe(true)
+  expect(screen.getByRole('status').textContent).toContain(
+    'Complete this task in Rewind',
+  )
+  fireEvent.click(save)
+  const form = view.container.querySelector('form')
+  if (!form) throw new Error('Expected the guarded progress form')
+  fireEvent.submit(form)
+  expect(record).not.toHaveBeenCalled()
+})
+
 it('preserves an unsuccessful draft across sheet reopening, and clears it only after a successful save', async () => {
   const record = vi
     .spyOn(goalAPI, 'recordProgress')

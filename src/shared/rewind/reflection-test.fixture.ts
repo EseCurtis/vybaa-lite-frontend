@@ -1,0 +1,26 @@
+import type { RewindSession } from '@/shared/api/rewind.api'
+
+export const reflectionFixture: RewindSession = {
+  id: 'session',
+  userId: 'owner',
+  personaId: 'ella',
+  sessionDateKey: '2026-10-24',
+  createdAt: '2026-10-24T08:00:00Z',
+  updatedAt: '2026-10-24T09:00:00Z',
+  scheduledFor: null,
+  windowEndsAt: null,
+  startedAt: null,
+  status: 'COMPLETED',
+  completed: true,
+  completedAt: '2026-10-24T09:00:00Z',
+  checkInAt: null,
+  summary: 'A short walk helped me reset.',
+  emotionalInsight: null,
+  emotionalTags: [],
+  comparisonInsight: null,
+  nextStepNote: null,
+  journalDraft: null,
+  wellbeingSignals: null,
+  journalId: null,
+  journalSavedAt: null,
+}

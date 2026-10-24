@@ -35,9 +35,11 @@ export function formatDayKey(value: string): string {
   return `${year}-${month}-${day}`
 }
 
-export function formatDayLabel(dayKey: string): string {
-  const todayKey = formatDayKey(new Date().toISOString())
-  const yesterday = new Date()
+export function formatDayLabel(
+  dayKey: string,
+  todayKey = formatDayKey(new Date().toISOString()),
+): string {
+  const yesterday = parseHistoryDate(todayKey)
   yesterday.setDate(yesterday.getDate() - 1)
   const yesterdayKey = formatDayKey(yesterday.toISOString())
 
@@ -56,7 +58,9 @@ export function formatRelativeDayLabel(total: number): string {
   return total === 1 ? '1 session' : `${total} sessions`
 }
 
-export function getDayKey(session: RewindSession): string {
+export function getDayKey(
+  session: Pick<RewindSession, 'createdAt' | 'sessionDateKey'>,
+): string {
   return session.sessionDateKey ?? formatDayKey(session.createdAt)
 }
 

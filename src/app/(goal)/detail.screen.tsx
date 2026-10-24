@@ -10,6 +10,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useGoal } from '@/hooks/use-goals.hook'
+import { RewindTaskContent } from '@/components/custom/goal/rewind-task-content.component'
 import { useBottomSheetController } from '@/providers/bottom-sheet.provider'
 import type { GoalListFilter } from '@/shared/api/goal.api'
 import { colors } from '@/shared/colors.shared'
@@ -37,7 +38,7 @@ export default function GoalDetailScreen({
   }
 
   function openGoalActions(): void {
-    if (!goal.data) return
+    if (!goal.data || goal.data.linkedRewind) return
     bottomSheet.present(
       <GoalActionsSheet
         goal={goal.data}
@@ -68,7 +69,7 @@ export default function GoalDetailScreen({
           }}
           title="Task details"
         >
-          {goal.data ? (
+          {goal.data && !goal.data.linkedRewind ? (
             <Pressable
               accessibilityLabel="Open task settings"
               className="size-11 items-center justify-center rounded-full bg-card-light-50"
@@ -104,6 +105,8 @@ export default function GoalDetailScreen({
                   variant="secondary"
                 />
               </View>
+            ) : goal.data?.linkedRewind ? (
+              <RewindTaskContent goal={goal.data} />
             ) : goal.data ? (
               <GoalDetailsSheet
                 key={goal.data.id}

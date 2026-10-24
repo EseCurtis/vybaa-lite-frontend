@@ -50,6 +50,50 @@ const USER: User = {
 afterEach(cleanup)
 
 describe('reflection history cards', () => {
+  it('disables scheduled entries for pointer and keyboard activation', () => {
+    const onPress = vi.fn()
+    render(
+      <RewindSessionRow
+        index={0}
+        session={{
+          ...SESSION,
+          completed: false,
+          status: 'SCHEDULED',
+          origin: 'SCHEDULED',
+        }}
+        onPress={onPress}
+      />,
+    )
+    const button = screen.getByRole('button', { name: /Scheduled reflection/ })
+    expect(button.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(button)
+    fireEvent.keyDown(button, { key: 'Enter' })
+    fireEvent.keyUp(button, { key: ' ' })
+    expect(onPress).not.toHaveBeenCalled()
+    expect(screen.getByLabelText('Automatic Rewind')).toBeTruthy()
+  })
+
+  it('keeps the original scheduling attribution after switching to Flexible', () => {
+    render(
+      <RewindSessionRow
+        index={0}
+        session={{ ...SESSION, origin: 'SCHEDULED', scheduledFor: null }}
+        onPress={vi.fn()}
+      />,
+    )
+    expect(screen.getByLabelText('Automatic Rewind')).toBeTruthy()
+  })
+
+  it('marks on-demand reflections as manual', () => {
+    render(
+      <RewindSessionRow
+        index={0}
+        session={{ ...SESSION, origin: 'MANUAL' }}
+        onPress={vi.fn()}
+      />,
+    )
+    expect(screen.getByLabelText('Manual Rewind')).toBeTruthy()
+  })
   it.each(REWIND_PERSONAS)(
     'uses the $id handle and its readable partner color',
     (persona) => {

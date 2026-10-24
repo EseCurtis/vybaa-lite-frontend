@@ -62,7 +62,10 @@ export function TaskProgressSheet({
     !quantity ||
     (Number.isFinite(Number(state.amount)) && Number(state.amount) > 0)
   const editable =
-    goal.status === 'ACTIVE' && goal.isDue && Boolean(goal.nextOccurrence)
+    !goal.linkedRewind &&
+    goal.status === 'ACTIVE' &&
+    goal.isDue &&
+    Boolean(goal.nextOccurrence)
   async function save(event: FormEvent): Promise<void> {
     event.preventDefault()
     if (
@@ -103,7 +106,9 @@ export function TaskProgressSheet({
       <p className="break-words text-sm text-card-lighter-3">{goal.title}</p>
       {!editable ? (
         <p role="status" className="text-sm text-card-lighter-3">
-          This task isn’t accepting progress right now.
+          {goal.linkedRewind
+            ? 'Complete this task in Rewind. It updates automatically.'
+            : 'This task isn’t accepting progress right now.'}
         </p>
       ) : null}
       <form onSubmit={(event) => void save(event)} className="space-y-4">

@@ -10,6 +10,10 @@ export const rewindQueryKeys = {
     [...rewindQueryKeys.chats(), chatId, 'messages'] as const,
   homeGreeting: () => [...rewindQueryKeys.all, 'home-greeting'] as const,
   observations: () => [...rewindQueryKeys.all, 'observations'] as const,
+  reflections: (userId: string | undefined) =>
+    [...rewindQueryKeys.all, 'reflections', userId] as const,
+  dailyReflection: (userId: string | undefined, dayKey: string) =>
+    [...rewindQueryKeys.reflections(userId), 'day', dayKey] as const,
   routine: () => [...rewindQueryKeys.all, 'routine'] as const,
   sessions: () => [...rewindQueryKeys.all, 'sessions'] as const,
   session: (sessionId: string) =>

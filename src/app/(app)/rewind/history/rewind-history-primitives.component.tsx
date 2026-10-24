@@ -161,10 +161,12 @@ export function RewindErrorState({
 
 export function RewindDaySection({
   children,
+  hasDailyReflection = false,
   label,
   total,
 }: {
   children: ReactElement | ReactElement[]
+  hasDailyReflection?: boolean
   label: string
   total: number
 }): ReactElement {
@@ -173,7 +175,7 @@ export function RewindDaySection({
       <View
         className="flex-row items-end justify-between px-1"
         role="group"
-        aria-label={`${label}, ${formatRelativeDayLabel(total)}`}
+        aria-label={`${label}, ${hasDailyReflection ? 'daily summary, ' : ''}${formatRelativeDayLabel(total)}`}
       >
         <Text
           className="font-bbh text-sm font-bold"

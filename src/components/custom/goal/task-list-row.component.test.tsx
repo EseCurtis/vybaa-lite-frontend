@@ -23,3 +23,20 @@ it('preserves the manual check-in sheet for normal tasks', () => {
   )
   expect(present).toHaveBeenCalledTimes(1)
 })
+
+it('opens linked Rewind tasks without presenting a manual progress form', () => {
+  const onOpen = vi.fn()
+  const linked = {
+    ...taskFixture,
+    linkedRewind: {
+      sessionId: 'slot',
+      status: 'SCHEDULED' as const,
+      scheduledFor: '2031-10-24T08:00:00Z',
+      windowEndsAt: '2031-10-24T12:00:00Z',
+    },
+  }
+  render(<TaskListRow goal={linked} onOpen={onOpen} />)
+  fireEvent.click(screen.getByRole('button', { name: `Open ${linked.title}` }))
+  expect(present).not.toHaveBeenCalled()
+  expect(onOpen).toHaveBeenCalledWith(linked)
+})

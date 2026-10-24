@@ -118,6 +118,12 @@ describe('reflection chronology', () => {
   it('handles empty history without creating a date group', () => {
     expect(groupSessionsByDay([])).toEqual([])
   })
+
+  it('uses the account-local today when the device is in another timezone', () => {
+    expect(formatDayLabel('2026-10-19', '2026-10-19')).toBe('Today')
+    expect(formatDayLabel('2026-10-18', '2026-10-19')).toBe('Yesterday')
+    expect(formatDayLabel('2026-10-17', '2026-10-19')).toBe('Oct 17, 2026')
+  })
 })
 
 describe('getRewindSessionStatusPresentation', () => {

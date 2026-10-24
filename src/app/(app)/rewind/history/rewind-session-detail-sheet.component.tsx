@@ -6,6 +6,9 @@ import {
   RiSearchEyeLine,
   RiSparklingLine,
   RiTimeLine,
+  RiHeartLine,
+  RiPulseLine,
+  RiChat3Line,
 } from '@remixicon/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
@@ -13,6 +16,10 @@ import { useReducedMotion } from 'framer-motion'
 import { useRef, useState, type ReactElement } from 'react'
 
 import { Pressable } from '@/components/layout/pressables.component'
+import {
+  MissedRewindStatus,
+  ReflectionProcessingStatus,
+} from '@/components/custom/rewind/reflection-status.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import { useToast } from '@/providers/toast.provider'
@@ -25,6 +32,11 @@ import {
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
+import {
+  availableReflectionSections,
+  hasReflectionSummary,
+} from '@/shared/rewind/reflection-sections'
+import type { ReflectionDetailSection } from '@/shared/rewind/reflection-sections'
 import { cn } from '@/shared/utils/helpers.util'
 
 import { NoiseComponent } from '@/components/common/noise.component'
@@ -36,7 +48,7 @@ import {
   getSessionAccent,
 } from './rewind-history.utils'
 
-type DetailSection = 'conversation' | 'journal' | 'observation' | 'reflection'
+type DetailSection = ReflectionDetailSection
 
 const DETAIL_SECTIONS: Array<{ label: string; value: DetailSection }> = [
   { label: 'Conversation', value: 'conversation' },
@@ -44,6 +56,13 @@ const DETAIL_SECTIONS: Array<{ label: string; value: DetailSection }> = [
   { label: 'Observation', value: 'observation' },
   { label: 'Journal', value: 'journal' },
 ]
+
+const SECTION_ICONS = {
+  conversation: { Icon: RiChat3Line, tone: 'text-accent-300' },
+  reflection: { Icon: RiSparklingLine, tone: 'text-success-400' },
+  observation: { Icon: RiSearchEyeLine, tone: 'text-accent-300' },
+  journal: { Icon: RiBookOpenLine, tone: 'text-warning-400' },
+} satisfies Record<DetailSection, { Icon: typeof RiChat3Line; tone: string }>
 
 function scrollDetailTabIntoView(
   container: HTMLDivElement | null,
@@ -122,10 +141,12 @@ function TranscriptTurn({
 
 function DetailSectionTabs({
   activeSection,
+  sections,
   hasJournal,
   onChange,
 }: {
   activeSection: DetailSection
+  sections: DetailSection[]
   hasJournal: boolean
   onChange: (section: DetailSection) => void
 }): ReactElement {
@@ -144,8 +165,11 @@ function DetailSectionTabs({
       ref={containerRef}
       style={{ backgroundColor: colors.cardx }}
     >
-      {DETAIL_SECTIONS.map((section) => {
+      {DETAIL_SECTIONS.filter((section) =>
+        sections.includes(section.value),
+      ).map((section) => {
         const selected = section.value === activeSection
+        const { Icon, tone } = SECTION_ICONS[section.value]
         return (
           <Pressable
             key={section.value}
@@ -167,6 +191,11 @@ function DetailSectionTabs({
               tabRefs.current[section.value] = element
             }}
           >
+            <Icon
+              size={15}
+              aria-hidden="true"
+              className={selected ? 'text-cardd' : tone}
+            />
             <Text
               className={cn(
                 'font-bbh text-[11px] font-bold',
@@ -196,31 +225,29 @@ function ReflectionSection({
   session: RewindSession
 }): ReactElement {
   if (session.status === 'FINALIZING') {
-    return (
-      <View
-        className="items-center gap-3 rounded-2xl px-5 py-10"
-        style={{ backgroundColor: colors.cardx }}
-      >
-        <RiLoader4Line size={22} className="animate-spin text-success-green" />
-        <Text className="font-bbh text-sm font-bold text-white">
-          Building your reflection
-        </Text>
-        <Text className="muted max-w-[280px] text-center font-bbh text-xs leading-5">
-          Saving the conversation and noticing the patterns that matter.
-        </Text>
-      </View>
-    )
+    return <ReflectionProcessingStatus partnerId={session.personaId} />
   }
 
   return (
     <View className="gap-4">
-      <View
-        className="gap-3 rounded-2xl px-4 py-5"
-        style={{ backgroundColor: colors.cardx }}
-      >
-        <Text className="font-bbh text-sm font-bold text-white">Summary</Text>
-        <DetailText value={session.summary} />
-      </View>
+      {hasReflectionSummary(session) ? (
+        <View
+          className="gap-3 rounded-2xl px-4 py-5"
+          style={{ backgroundColor: colors.cardx }}
+        >
+          <View className="flex-row items-center gap-2">
+            <RiSparklingLine
+              size={17}
+              className="text-accent-300"
+              aria-hidden="true"
+            />
+            <Text className="font-bbh text-sm font-bold text-white">
+              Summary
+            </Text>
+          </View>
+          <DetailText value={session.summary} />
+        </View>
+      ) : null}
 
       {session.emotionalInsight ? (
         <View
@@ -228,7 +255,11 @@ function ReflectionSection({
           style={{ backgroundColor: colors.cardx }}
         >
           <View className="flex-row items-center gap-2">
-            <View className="h-1.5 w-5 rounded-full bg-accent-700" />
+            <RiHeartLine
+              size={17}
+              className="text-accent-300"
+              aria-hidden="true"
+            />
             <Text className="font-bbh text-xs font-bold text-white">
               Emotional insight
             </Text>
@@ -243,7 +274,11 @@ function ReflectionSection({
           style={{ backgroundColor: colors.cardx }}
         >
           <View className="flex-row items-center gap-2">
-            <View className="h-1.5 w-5 rounded-full bg-success-green" />
+            <RiPulseLine
+              size={17}
+              className="text-success-400"
+              aria-hidden="true"
+            />
             <Text className="font-bbh text-xs font-bold text-white">
               In context
             </Text>
@@ -359,7 +394,7 @@ function RecommendationCard({
   return (
     <View className="gap-3 rounded-2xl bg-cardx px-4 py-4">
       <View className="flex-row items-start gap-3">
-        <View className="size-9 items-center justify-center rounded-full bg-accent-700/20">
+        <View className="size-9 items-center justify-center rounded-full bg-card-light-100">
           <RiSparklingLine size={17} className="text-accent-400" />
         </View>
         <View className="min-w-0 flex-1 gap-1">
@@ -370,7 +405,7 @@ function RecommendationCard({
             {recommendation.rationale}
           </Text>
           {!available ? (
-            <Text className="font-bbh text-[10px] font-bold uppercase text-white/40">
+            <Text className="font-bbh text-[10px] font-bold uppercase text-card-lighter-3">
               {recommendation.status.toLowerCase()}
             </Text>
           ) : null}
@@ -390,11 +425,13 @@ function RecommendationCard({
           </Pressable>
           <Pressable
             accessibilityLabel={`Dismiss ${recommendation.title}`}
-            className="min-h-11 items-center justify-center rounded-full bg-white/10 px-4"
+            className="min-h-11 items-center justify-center rounded-full bg-card-light px-4"
             disabled={isPending}
             onPress={() => onDismiss(recommendation)}
           >
-            <Text className="font-bbh text-xs text-white/70">Dismiss</Text>
+            <Text className="font-bbh text-xs text-card-lighter-3">
+              Dismiss
+            </Text>
           </Pressable>
         </View>
       ) : null}
@@ -468,12 +505,20 @@ export function RewindSessionDetail({
     },
   })
   const turns = session.turns ?? []
+  const sections = availableReflectionSections(session)
+  const selectedSection = sections.includes(activeSection)
+    ? activeSection
+    : (sections[0] ?? null)
   const canAddToJournal = Boolean(session.completed && session.journalDraft)
   const isJournalSaved = Boolean(session.journalId || session.journalSavedAt)
   const journalActionLabel = getJournalActionLabel(
     isJournalSaved,
     addToJournalMutation.isPending,
   )
+  if (session.status === 'MISSED')
+    return <MissedRewindStatus partnerId={session.personaId} />
+  if (session.status === 'FINALIZING')
+    return <ReflectionProcessingStatus partnerId={session.personaId} />
 
   return (
     <View className="gap-5 pb-4" style={createAccentStyle(accent, accentSoft)}>
@@ -496,17 +541,14 @@ export function RewindSessionDetail({
             <View className="flex-row items-center gap-1.5">
               <RiCalendar2Line
                 size={12}
-                style={{ color: colors['card-lighter-3'] }}
+                style={{ color: colors.warning[400] }}
               />
               <Text className="muted font-bbh text-[11px]">
                 {formatSessionDate(session.createdAt)}
               </Text>
             </View>
             <View className="flex-row items-center gap-1.5">
-              <RiTimeLine
-                size={12}
-                style={{ color: colors['card-lighter-3'] }}
-              />
+              <RiTimeLine size={12} style={{ color: colors.accent[300] }} />
               <Text className="muted font-bbh text-[11px]">
                 {formatSessionTime(session.createdAt)}
               </Text>
@@ -515,17 +557,20 @@ export function RewindSessionDetail({
         </View>
       </View>
 
-      <View className="py-2 sticky top-0 z-20 bg-cardd">
-        <NoiseComponent>
-          <DetailSectionTabs
-            activeSection={activeSection}
-            hasJournal={Boolean(session.journalDraft)}
-            onChange={setActiveSection}
-          />
-        </NoiseComponent>
-      </View>
+      {sections.length > 1 && selectedSection ? (
+        <View className="py-2 sticky top-0 z-20 bg-cardd">
+          <NoiseComponent>
+            <DetailSectionTabs
+              activeSection={selectedSection}
+              sections={sections}
+              hasJournal={Boolean(session.journalDraft)}
+              onChange={setActiveSection}
+            />
+          </NoiseComponent>
+        </View>
+      ) : null}
 
-      {activeSection === 'conversation' ? (
+      {selectedSection === 'conversation' ? (
         <View className="gap-4">
           {turns.length ? (
             turns.map((turn) => (
@@ -550,18 +595,18 @@ export function RewindSessionDetail({
         </View>
       ) : null}
 
-      {activeSection === 'reflection' ? (
+      {selectedSection === 'reflection' ? (
         <ReflectionSection session={session} />
       ) : null}
 
-      {activeSection === 'observation' ? (
+      {selectedSection === 'observation' ? (
         <DailyObservationSection
           localDateKey={session.sessionDateKey}
           observation={session.dailyObservation}
         />
       ) : null}
 
-      {activeSection === 'journal' ? (
+      {selectedSection === 'journal' ? (
         <View className="gap-4">
           <View
             className="gap-3 rounded-2xl px-4 py-5"
@@ -608,6 +653,12 @@ export function RewindSessionDetail({
             </Pressable>
           ) : null}
         </View>
+      ) : null}
+
+      {!sections.length ? (
+        <Text className="py-4 font-bbh text-sm text-card-lighter-2">
+          No reflection content was saved for this session.
+        </Text>
       ) : null}
 
       {session.recommendations?.length ? (

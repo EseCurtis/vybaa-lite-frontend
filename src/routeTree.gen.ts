@@ -43,6 +43,7 @@ import { Route as AppUUsernameRouteImport } from './routes/app/u/$username'
 import { Route as AppSubProfileSettingsRouteImport } from './routes/app/sub-profile/settings'
 import { Route as AppSubProfileInsightsRouteImport } from './routes/app/sub-profile/insights'
 import { Route as AppRewindChatChatIdRouteImport } from './routes/app/rewind-chat.$chatId'
+import { Route as AppReflectionsDayKeyRouteImport } from './routes/app/reflections.$dayKey'
 import { Route as AppRSessionIdRouteImport } from './routes/app/r/$sessionId'
 import { Route as AppOnboardingRewindPartnerRouteImport } from './routes/app/onboarding/rewind-partner'
 import { Route as AppOnboardingAboutYouRouteImport } from './routes/app/onboarding/about-you'
@@ -233,6 +234,11 @@ const AppRewindChatChatIdRoute = AppRewindChatChatIdRouteImport.update({
   path: '/app/rewind-chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppReflectionsDayKeyRoute = AppReflectionsDayKeyRouteImport.update({
+  id: '/app/reflections/$dayKey',
+  path: '/app/reflections/$dayKey',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRSessionIdRoute = AppRSessionIdRouteImport.update({
   id: '/app/r/$sessionId',
   path: '/app/r/$sessionId',
@@ -372,6 +378,7 @@ export interface FileRoutesByFullPath {
   '/app/onboarding/about-you': typeof AppOnboardingAboutYouRoute
   '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/reflections/$dayKey': typeof AppReflectionsDayKeyRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -424,6 +431,7 @@ export interface FileRoutesByTo {
   '/app/onboarding/about-you': typeof AppOnboardingAboutYouRoute
   '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/reflections/$dayKey': typeof AppReflectionsDayKeyRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/app/onboarding/about-you': typeof AppOnboardingAboutYouRoute
   '/app/onboarding/rewind-partner': typeof AppOnboardingRewindPartnerRoute
   '/app/r/$sessionId': typeof AppRSessionIdRoute
+  '/app/reflections/$dayKey': typeof AppReflectionsDayKeyRoute
   '/app/rewind-chat/$chatId': typeof AppRewindChatChatIdRoute
   '/app/sub-profile/insights': typeof AppSubProfileInsightsRoute
   '/app/sub-profile/settings': typeof AppSubProfileSettingsRoute
@@ -535,6 +544,7 @@ export interface FileRouteTypes {
     | '/app/onboarding/about-you'
     | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
+    | '/app/reflections/$dayKey'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -587,6 +597,7 @@ export interface FileRouteTypes {
     | '/app/onboarding/about-you'
     | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
+    | '/app/reflections/$dayKey'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -641,6 +652,7 @@ export interface FileRouteTypes {
     | '/app/onboarding/about-you'
     | '/app/onboarding/rewind-partner'
     | '/app/r/$sessionId'
+    | '/app/reflections/$dayKey'
     | '/app/rewind-chat/$chatId'
     | '/app/sub-profile/insights'
     | '/app/sub-profile/settings'
@@ -692,6 +704,7 @@ export interface RootRouteChildren {
   AppOnboardingAboutYouRoute: typeof AppOnboardingAboutYouRoute
   AppOnboardingRewindPartnerRoute: typeof AppOnboardingRewindPartnerRoute
   AppRSessionIdRoute: typeof AppRSessionIdRoute
+  AppReflectionsDayKeyRoute: typeof AppReflectionsDayKeyRoute
   AppRewindChatChatIdRoute: typeof AppRewindChatChatIdRoute
   AppSubProfileInsightsRoute: typeof AppSubProfileInsightsRoute
   AppSubProfileSettingsRoute: typeof AppSubProfileSettingsRoute
@@ -944,6 +957,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRewindChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/reflections/$dayKey': {
+      id: '/app/reflections/$dayKey'
+      path: '/app/reflections/$dayKey'
+      fullPath: '/app/reflections/$dayKey'
+      preLoaderRoute: typeof AppReflectionsDayKeyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/r/$sessionId': {
       id: '/app/r/$sessionId'
       path: '/app/r/$sessionId'
@@ -1151,6 +1171,7 @@ const rootRouteChildren: RootRouteChildren = {
   AppOnboardingAboutYouRoute: AppOnboardingAboutYouRoute,
   AppOnboardingRewindPartnerRoute: AppOnboardingRewindPartnerRoute,
   AppRSessionIdRoute: AppRSessionIdRoute,
+  AppReflectionsDayKeyRoute: AppReflectionsDayKeyRoute,
   AppRewindChatChatIdRoute: AppRewindChatChatIdRoute,
   AppSubProfileInsightsRoute: AppSubProfileInsightsRoute,
   AppSubProfileSettingsRoute: AppSubProfileSettingsRoute,

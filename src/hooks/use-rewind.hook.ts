@@ -19,6 +19,7 @@ import type {
 } from '@/shared/api/rewind.api'
 import { rewindAPI } from '@/shared/api/rewind.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
+import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 import type { RewindPersonaId } from '@/shared/rewind/rewind-personas'
 
 export function usePaginatedRewindSessions(
@@ -423,9 +424,10 @@ export function useUpdateRewindRoutine() {
     },
     onSuccess: async (overview) => {
       queryClient.setQueryData(rewindQueryKeys.routine(), overview)
-      await queryClient.invalidateQueries({
-        queryKey: rewindQueryKeys.all,
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: goalQueryKeys.all }),
+      ])
     },
   })
 }

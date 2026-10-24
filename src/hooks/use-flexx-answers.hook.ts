@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { flexxAPI } from '@/shared/api/flexx.api'
+import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
 import type {
   FlexxAnswers,
   FlexxAnswerInput,
@@ -21,6 +22,9 @@ export function useSaveFlexxAnswer(userId: string | undefined) {
   return useMutation({
     mutationFn: (input: FlexxAnswerInput) => flexxAPI.saveAnswer(input),
     onSuccess: (answer, input) => {
+      void client.invalidateQueries({
+        queryKey: rewindQueryKeys.reflections(userId),
+      })
       client.setQueryData<FlexxAnswers>(
         ['flexx', 'answers', userId],
         (previous) => {

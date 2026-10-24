@@ -8,6 +8,7 @@ import type {
   RewindQuestionnaireAnswer,
 } from '@/shared/api/rewind-questionnaire.api'
 import { rewindQueryKeys } from '@/shared/api/rewind.query-keys'
+import { goalQueryKeys } from '@/shared/api/goal.query-keys'
 
 export function getQuestionnaireError(error: unknown): string {
   if (isAxiosError<{ msg?: string }>(error))
@@ -61,7 +62,10 @@ export function useRewindQuestionnaire(userId: string | undefined) {
       return result
     },
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: rewindQueryKeys.all })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: rewindQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: goalQueryKeys.all }),
+      ])
     },
   })
   return { answer, deck, finish, start }

@@ -3,8 +3,11 @@ import {
   RiArrowRightSLine,
   RiCalendarLine,
   RiCheckboxCircleLine,
+  RiHandHeartLine,
   RiLoader4Line,
+  RiLockLine,
   RiMessage3Line,
+  RiRepeatLine,
   RiTimeLine,
 } from '@remixicon/react'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -13,7 +16,9 @@ import type { ReactElement } from 'react'
 import { Pressable } from '@/components/layout/pressables.component'
 import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
+import type { ReflectionSession } from '@/shared/api/reflections.api'
 import type { RewindSession } from '@/shared/api/rewind.api'
+import { colors } from '@/shared/colors.shared'
 import { getRewindPersona } from '@/shared/rewind/rewind-personas'
 import type { User } from '@/shared/types/auth.types'
 import { adjustColor } from '@/shared/utils/helpers.util'
@@ -42,8 +47,8 @@ export function RewindSessionRow({
   user,
 }: {
   index: number
-  onPress: () => void
-  session: RewindSession
+  onPress?: () => void
+  session: ReflectionSession
   user?: User
 }): ReactElement {
   const persona = getRewindPersona(session.personaId)
@@ -55,18 +60,32 @@ export function RewindSessionRow({
     : STATUS_ICONS[session.status]
   const summary = session.summary.trim()
   const hasPreview =
+    session.status !== 'MISSED' &&
     Boolean(summary) &&
     summary !== 'This scheduled Rewind has not started yet.' &&
     summary !==
       `This Rewind with ${persona.name} was started, but no reflection was captured yet.`
-  const time = formatSessionTime(session.createdAt)
+  const disabled = session.status === 'SCHEDULED'
+  const timestamp = disabled
+    ? (session.scheduledFor ?? session.createdAt)
+    : session.createdAt
+  const time = formatSessionTime(timestamp)
   const day = formatSessionDate(getDayKey(session))
+  const automatic =
+    session.origin === 'SCHEDULED' ||
+    (!session.origin && Boolean(session.scheduledFor))
+  const OriginIcon = automatic ? RiRepeatLine : RiHandHeartLine
+  const originLabel = automatic ? 'Automatic Rewind' : 'Manual Rewind'
 
   return (
     <Pressable
-      onPress={onPress}
+      disabled={disabled}
+      type="button"
+      onPress={() => {
+        if (!disabled) onPress?.()
+      }}
       className="min-h-11 w-full rounded-2xl text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-      accessibilityLabel={`Open reflection with ${persona.name}. ${status.label}, ${day} at ${time}${hasPreview ? '. ' + summary : ''}`}
+      accessibilityLabel={`${disabled ? 'Scheduled reflection' : 'Open reflection'} with ${persona.name}. ${originLabel}. ${status.label}, ${day} at ${time}${hasPreview ? '. ' + summary : ''}`}
     >
       <motion.div
         initial={reduceMotion ? false : { opacity: 0, y: 10 }}
@@ -79,16 +98,29 @@ export function RewindSessionRow({
       >
         <RewindSessionAvatars persona={persona} user={user} />
         <View className="min-w-0 flex-1 gap-1.5">
-          <Text className="font-bbh text-sm font-semibold leading-5 text-white">
+          <Text
+            className={`font-bbh text-sm font-semibold leading-5 ${disabled ? 'text-card-lighter-3' : 'text-white'}`}
+          >
             Rewind Sesh w/{' '}
             <span
               className="whitespace-nowrap"
-              style={{ color: adjustColor(persona.color, { lightness: 18 }) }}
+              style={{
+                color: disabled
+                  ? colors['card-lighter-3']
+                  : adjustColor(persona.color, { lightness: 18 }),
+              }}
             >
               @{persona.id}
             </span>
           </Text>
           <View className="flex-row flex-wrap items-center gap-x-2 gap-y-1">
+            <span
+              title={originLabel}
+              aria-label={originLabel}
+              className={automatic ? 'text-accent-300' : 'text-warning-400'}
+            >
+              <OriginIcon size={15} aria-hidden="true" />
+            </span>
             <View
               className="flex-row items-center gap-1.5"
               style={{ color: status.color }}
@@ -104,10 +136,10 @@ export function RewindSessionRow({
             </Text>
 
             <time
-              dateTime={session.createdAt}
+              dateTime={timestamp}
               className="font-bbh text-xs tabular-nums text-card-lighter-3"
             >
-              {time}
+              {disabled ? `${day} · ${time}` : time}
             </time>
           </View>
           {hasPreview ? (
@@ -117,13 +149,21 @@ export function RewindSessionRow({
           ) : null}
         </View>
         <View className="shrink-0 mr-mg self-center items-center justify-center">
-          <Text className="p-0.5 bg-white rounded-full">
-            <RiArrowRightSLine
-              size={17}
+          {disabled ? (
+            <RiLockLine
+              size={18}
+              className="text-card-lighter-3"
               aria-hidden="true"
-              className=" shrink-0 text-black"
             />
-          </Text>
+          ) : (
+            <Text className="p-0.5 bg-white rounded-full">
+              <RiArrowRightSLine
+                size={17}
+                aria-hidden="true"
+                className=" shrink-0 text-black"
+              />
+            </Text>
+          )}
         </View>
       </motion.div>
     </Pressable>

@@ -1,4 +1,9 @@
-import { RiArrowRightSLine, RiCheckLine, RiRepeatLine } from '@remixicon/react'
+import {
+  RiArrowRightSLine,
+  RiCheckLine,
+  RiRepeatLine,
+  RiChatSmile2Line,
+} from '@remixicon/react'
 import type { ReactElement } from 'react'
 import { useRef, useState } from 'react'
 
@@ -38,6 +43,7 @@ export function TaskListRow({
   const needsAttention = goalNeedsAttention(goal)
   const status = taskStatus(goal)
   const canComplete =
+    !goal.linkedRewind &&
     goal.status === 'ACTIVE' &&
     goal.isDue &&
     Boolean(goal.nextOccurrence) &&
@@ -48,6 +54,9 @@ export function TaskListRow({
     progressText = `${goal.progress.completedOccurrences}/${goal.target.count}`
   if (goal.target.type === 'QUANTITY')
     progressText = `${goal.progress.value.toLocaleString()}/${goal.target.amount.toLocaleString()} ${goal.target.unit ?? ''}`
+  let indicator = <span className="size-4 rounded-full bg-cardd" />
+  if (goal.linkedRewind) indicator = <RiChatSmile2Line size={18} />
+  if (complete) indicator = <RiCheckLine size={19} />
   return (
     <div className="flex min-h-20 items-center gap-1 py-2">
       <Pressable
@@ -80,11 +89,7 @@ export function TaskListRow({
           className="flex size-7 items-center justify-center rounded-full"
           style={{ backgroundColor: color, color: contrastingTextColor(color) }}
         >
-          {complete ? (
-            <RiCheckLine size={19} />
-          ) : (
-            <span className="size-4 rounded-full bg-cardd" />
-          )}
+          {indicator}
         </span>
       </Pressable>
       <Pressable

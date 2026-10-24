@@ -89,6 +89,18 @@ export interface Goal {
   id: string
   isDue: boolean
   isOverdue: boolean
+  linkedRewind?: {
+    sessionId: string
+    status:
+      | 'COMPLETED'
+      | 'FINALIZING'
+      | 'IN_PROGRESS'
+      | 'LEGACY'
+      | 'MISSED'
+      | 'SCHEDULED'
+    scheduledFor: string | null
+    windowEndsAt: string | null
+  } | null
   missPolicy: Required<Omit<GoalMissPolicy, 'maxConsecutiveMisses'>> & {
     maxConsecutiveMisses: number | null
   }
