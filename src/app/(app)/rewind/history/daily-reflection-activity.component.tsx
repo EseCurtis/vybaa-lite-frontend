@@ -65,7 +65,7 @@ export function DailyReflectionActivity({
     return segment
   })
   return (
-    <section aria-label="Included activity" className="space-y-5">
+    <section role="region" aria-label="Included activity" className="space-y-5">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold tracking-tight text-white">
           Your day’s mix

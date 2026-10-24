@@ -89,6 +89,7 @@ export function DailyReflectionContent({
   return (
     <DailyReflectionStory
       reflection={reflection}
+      firstName={user?.firstName}
       avatars={
         <DailyReflectionAvatars
           participantIds={reflection.participantIds}
