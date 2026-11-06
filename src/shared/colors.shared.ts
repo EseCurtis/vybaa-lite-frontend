@@ -15,6 +15,16 @@ export const colors = {
   'studio-action-ink': '#AFC7DC',
   'studio-info-ink': '#D7CB98',
   'studio-warning-ink': '#D5AA90',
+  'reflection-activity': {
+    achievements: '#B9A1EF',
+    conversations: '#60C7C9',
+    feed: '#F285A6',
+    answers: '#7CB9ED',
+    journal: '#E6C16A',
+    rewards: '#F09A6C',
+    rewind: '#9DAEEB',
+    tasks: '#7CD3A5',
+  },
   border: '#242424',
   card: {
     50: '#7D7D7D',

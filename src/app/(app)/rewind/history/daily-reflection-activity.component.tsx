@@ -20,17 +20,12 @@ export const REFLECTION_TONE_CLASS: Readonly<Record<ReflectionTone, string>> = {
   muted: 'text-card-lighter-3',
   pink: 'text-accent-300',
 }
-const TONE_COLOR: Readonly<Record<ReflectionTone, string>> = {
-  amber: colors.warning[400],
-  green: colors.success[400],
-  muted: colors['card-lighter-3'],
-  pink: colors.accent[300],
-}
 
 export function ReflectionActivityIcon({
   symbol,
   tone,
-}: Pick<ReflectionActivity, 'symbol' | 'tone'>): ReactElement {
+  color,
+}: Pick<ReflectionActivity, 'color' | 'symbol' | 'tone'>): ReactElement {
   const icons: Record<ReflectionSourceSymbol, typeof RiAwardLine> = {
     award: RiAwardLine,
     book: RiBookOpenLine,
@@ -44,6 +39,7 @@ export function ReflectionActivityIcon({
       size={19}
       aria-hidden="true"
       className={REFLECTION_TONE_CLASS[tone]}
+      style={{ color }}
     />
   )
 }
@@ -102,7 +98,7 @@ export function DailyReflectionActivity({
                 cy="60"
                 r="50"
                 fill="none"
-                stroke={TONE_COLOR[segment.tone]}
+                stroke={segment.color}
                 strokeWidth="8"
                 pathLength="100"
                 strokeDasharray={`${segment.arc} ${100 - segment.arc}`}
@@ -118,7 +114,7 @@ export function DailyReflectionActivity({
               {total}
             </span>
             <span className="mt-1 text-[11px] text-card-lighter-3">
-              moments included
+              moments <br /> included
             </span>
           </div>
         </div>
@@ -129,6 +125,7 @@ export function DailyReflectionActivity({
                 <ReflectionActivityIcon
                   symbol={activity.symbol}
                   tone={activity.tone}
+                  color={activity.color}
                 />
                 <span className="min-w-0 flex-1 break-words text-card-lighter-3">
                   {activity.label}
@@ -145,7 +142,7 @@ export function DailyReflectionActivity({
                   className="h-full rounded-full"
                   style={{
                     width: `${activity.share}%`,
-                    backgroundColor: TONE_COLOR[activity.tone],
+                    backgroundColor: activity.color,
                   }}
                 />
               </div>

@@ -9,6 +9,7 @@ import { Text } from '@/components/layout/text.component'
 import { View } from '@/components/layout/view.component'
 import ENV from '@/env'
 import { useAuth } from '@/providers/auth.provider'
+import { useToast } from '@/providers/toast.provider'
 import {
   getAppleAuthStatusText,
   getGoogleAuthStatusText,
@@ -18,10 +19,12 @@ import {
   isGoogleLoginAvailable,
 } from '@/shared/utils/auth-platform.util'
 import { navigateAfterAuth } from '@/shared/utils/auth-redirect.util'
+import { getAuthErrorMessage } from '@/shared/utils/auth-validation.util'
+import type { AuthAction } from '@/shared/utils/auth-validation.util'
 import { publicUrls } from '@/shared/config/public-urls.config'
 import { RiAppleFill, RiGoogleFill, RiLoader4Line } from '@remixicon/react'
 import { useNavigate, useRouter } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { homeActions } from '@/components/custom/home/home-actions.component'
 import { Moti } from '@/shared/constants.shared'
@@ -37,6 +40,7 @@ function openLegalDocument(url: string): void {
 export default function AppScreen() {
   const navigate = useNavigate()
   const router = useRouter()
+  const { error: showErrorToast } = useToast()
   const {
     appleAuthStatus,
     googleAuthStatus,
@@ -49,6 +53,12 @@ export default function AppScreen() {
     user,
   } = useAuth()
   const [loginError, setLoginError] = useState<string | null>(null)
+  const [authAction, setAuthAction] = useState<AuthAction>('login')
+  const [isAuthAttemptPending, setIsAuthAttemptPending] = useState(false)
+  const lastShownError = useRef<string | null>(null)
+  const authError =
+    loginError ??
+    (error ? getAuthErrorMessage(new Error(error), authAction) : null)
   const canUseAppleLogin = isAppleLoginAvailable(ENV.PLATFORM)
   const canUseGoogleLogin = isGoogleLoginAvailable(ENV.PLATFORM)
   const isAppleLoading = appleAuthStatus !== 'idle'
@@ -59,6 +69,32 @@ export default function AppScreen() {
     : getGoogleAuthStatusText(googleAuthStatus)
   const loadingText =
     authLoadingText ?? (isLoading ? 'Checking your session...' : null)
+
+  useEffect(() => {
+    if (!authError) {
+      lastShownError.current = null
+      return
+    }
+    if (
+      stale ||
+      isLoading ||
+      isSocialLoading ||
+      isAuthAttemptPending ||
+      isAuthenticated
+    )
+      return
+    if (lastShownError.current === authError) return
+    lastShownError.current = authError
+    showErrorToast(authError)
+  }, [
+    authError,
+    isAuthenticated,
+    isAuthAttemptPending,
+    isLoading,
+    isSocialLoading,
+    showErrorToast,
+    stale,
+  ])
 
   // Navigate to home when authentication succeeds
   useEffect(() => {
@@ -74,23 +110,29 @@ export default function AppScreen() {
 
   const handleGoogle = async () => {
     try {
+      setAuthAction('google')
+      setIsAuthAttemptPending(true)
+      lastShownError.current = null
       setLoginError(null)
       await loginWithGoogle()
     } catch (err: unknown) {
-      setLoginError(
-        err instanceof Error ? err.message : 'Failed to sign in with Google',
-      )
+      setLoginError(getAuthErrorMessage(err, 'google'))
+    } finally {
+      setIsAuthAttemptPending(false)
     }
   }
 
   const handleApple = async () => {
     try {
+      setAuthAction('apple')
+      setIsAuthAttemptPending(true)
+      lastShownError.current = null
       setLoginError(null)
       await loginWithApple()
     } catch (err: unknown) {
-      setLoginError(
-        err instanceof Error ? err.message : 'Failed to sign in with Apple',
-      )
+      setLoginError(getAuthErrorMessage(err, 'apple'))
+    } finally {
+      setIsAuthAttemptPending(false)
     }
   }
 
@@ -215,11 +257,6 @@ export default function AppScreen() {
               <View className="size-full  rounded-[20px] border-2 border-dashed border-card-light/30" />
             </View>
 
-            {(loginError || error) && (
-              <Text className="text-pink-700 bg-pink-500/10 mx-auto px-3 py-1 rounded-full text-sm font-bbh text-center mt-2">
-                {loginError || error}
-              </Text>
-            )}
             <View className="z-10 gap-3">
               {isLoading && (
                 <View className="items-center gap-2">

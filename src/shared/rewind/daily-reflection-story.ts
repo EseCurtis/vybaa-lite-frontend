@@ -1,4 +1,5 @@
 import type { DailyReflection } from '@/shared/api/reflections.api'
+import { colors } from '@/shared/colors.shared'
 import type { PartnerEmotion } from '@/shared/rewind/partner-emojis'
 
 export type ReflectionTone = 'amber' | 'green' | 'muted' | 'pink'
@@ -8,18 +9,64 @@ export interface ReflectionActivity {
   count: number
   tone: ReflectionTone
   symbol: ReflectionSourceSymbol
+  color: string
 }
 
 const SOURCES: Readonly<Record<string, Omit<ReflectionActivity, 'count'>>> = {
-  ACHIEVEMENT: { label: 'Achievements', tone: 'amber', symbol: 'award' },
-  FLEXX: { label: 'Feed', tone: 'pink', symbol: 'feed' },
-  FLEXX_ANSWER: { label: 'Feed answers', tone: 'pink', symbol: 'feed' },
-  GOAL: { label: 'Tasks', tone: 'green', symbol: 'task' },
-  JOURNAL: { label: 'Journal', tone: 'amber', symbol: 'book' },
-  REWARD: { label: 'Rewards', tone: 'amber', symbol: 'award' },
-  REWIND_CHAT: { label: 'Conversations', tone: 'pink', symbol: 'chat' },
-  REWIND_ROUTINE: { label: 'Rewind', tone: 'green', symbol: 'chat' },
-  REWIND_VOICE: { label: 'Rewind', tone: 'green', symbol: 'chat' },
+  ACHIEVEMENT: {
+    label: 'Achievements',
+    tone: 'amber',
+    symbol: 'award',
+    color: colors['reflection-activity'].achievements,
+  },
+  FLEXX: {
+    label: 'Feed',
+    tone: 'pink',
+    symbol: 'feed',
+    color: colors['reflection-activity'].feed,
+  },
+  FLEXX_ANSWER: {
+    label: 'Feed answers',
+    tone: 'pink',
+    symbol: 'feed',
+    color: colors['reflection-activity'].answers,
+  },
+  GOAL: {
+    label: 'Tasks',
+    tone: 'green',
+    symbol: 'task',
+    color: colors['reflection-activity'].tasks,
+  },
+  JOURNAL: {
+    label: 'Journal',
+    tone: 'amber',
+    symbol: 'book',
+    color: colors['reflection-activity'].journal,
+  },
+  REWARD: {
+    label: 'Rewards',
+    tone: 'amber',
+    symbol: 'award',
+    color: colors['reflection-activity'].rewards,
+  },
+  REWIND_CHAT: {
+    label: 'Conversations',
+    tone: 'pink',
+    symbol: 'chat',
+    color: colors['reflection-activity'].conversations,
+  },
+  REWIND_ROUTINE: {
+    label: 'Rewind',
+    tone: 'green',
+    symbol: 'chat',
+    color: colors['reflection-activity'].rewind,
+  },
+  REWIND_VOICE: {
+    label: 'Rewind',
+    tone: 'green',
+    symbol: 'chat',
+    color: colors['reflection-activity'].rewind,
+  },
 }
 
 export function reflectionActivities(
@@ -44,6 +91,7 @@ export function reflectionActivities(
       count,
       tone: presentation?.tone ?? 'muted',
       symbol: presentation?.symbol ?? 'feed',
+      color: presentation?.color ?? colors['card-lighter-3'],
     }
   })
 }
@@ -95,4 +143,19 @@ export function reflectionSummaryPassages(summary: string): string[] {
   }
   if (passage.trim()) passages.push(passage.trim())
   return passages
+}
+
+export function reflectionDirectAddress(text: string, name: string): string {
+  const addressed = name.trim()
+  if (addressed) return text.replace(/\bthe user\b/giu, () => addressed)
+  return text
+    .replace(/\bthe user['’]s\b/giu, 'your')
+    .replace(/\bthe user is\b/giu, 'you are')
+    .replace(/\bthe user was\b/giu, 'you were')
+    .replace(/\bthe user has\b/giu, 'you have')
+    .replace(
+      /\bthe user (feels|mentions|reports|seems|appears|needs|wants|finds)\b/giu,
+      (_, verb: string) => `you ${verb.slice(0, -1)}`,
+    )
+    .replace(/\bthe user\b/giu, 'you')
 }

@@ -46,6 +46,7 @@ describe('daily reflection summaries', () => {
     cleanup()
     render(<DailyReflectionContent reflection={reflection} />)
     expect(screen.getByText(reflection.summary)).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'A little more' }))
     expect(screen.getAllByRole('listitem')).toHaveLength(2)
     expect(screen.getByText('Feed')).toBeTruthy()
     expect(screen.getByText('Journal')).toBeTruthy()

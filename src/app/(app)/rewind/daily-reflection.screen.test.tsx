@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 
 import type { DailyReflection } from '@/shared/api/reflections.api'
@@ -44,6 +44,7 @@ it('opens daily analysis as a page with back navigation, not a sheet', () => {
   expect(screen.getByRole('button', { name: 'Go back' })).toBeTruthy()
   expect(screen.queryByRole('dialog')).toBeNull()
   expect(screen.getByText('Your saved daily summary.')).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: 'A little more' }))
   expect(screen.getAllByRole('listitem')).toHaveLength(1)
 })
 it('shows active processing with the selected partner and preserves the previous saved summary', () => {

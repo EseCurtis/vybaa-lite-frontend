@@ -10,6 +10,7 @@ import { Pressable } from '@/components/layout/pressables.component'
 import { Avatar } from '@/components/user/avatar.component'
 import type { DailyReflection } from '@/shared/api/reflections.api'
 import { reflectionClusterPosition } from '@/shared/rewind/daily-reflection-cluster'
+import { reflectionDirectAddress } from '@/shared/rewind/daily-reflection-story'
 import { REWIND_PERSONAS } from '@/shared/rewind/rewind-personas'
 import type { User } from '@/shared/types/auth.types'
 
@@ -88,8 +89,10 @@ export function DailyReflectionContent({
 }): ReactElement {
   return (
     <DailyReflectionStory
+      key={reflection.id}
       reflection={reflection}
       firstName={user?.firstName}
+      username={user?.username}
       avatars={
         <DailyReflectionAvatars
           participantIds={reflection.participantIds}
@@ -132,23 +135,23 @@ export function DailyReflectionRow({
         <p className="text-sm font-semibold leading-5 text-white">
           Reflections n’ summary
         </p>
-
-                <span className="mt-2 flex items-center gap-1.5 text-xs text-card-lighter-2">
-            <StatusIcon
-              size={15}
-              aria-hidden="true"
-              className={
-                reflection.state === 'READY'
-                  ? 'text-success-400'
-                  : 'text-warning-400'
-              }
-            />
-            {STATE_LABELS[reflection.state]}
-          </span>{' '}
-
+        <span className="mt-2 flex items-center gap-1.5 text-xs text-card-lighter-2">
+          <StatusIcon
+            size={15}
+            aria-hidden="true"
+            className={
+              reflection.state === 'READY'
+                ? 'text-success-400'
+                : 'text-warning-400'
+            }
+          />
+          {STATE_LABELS[reflection.state]}
+        </span>{' '}
         <p className="mt-2 line-clamp-2 break-words text-xs text-card-lighter-2">
-  
-          {reflection.summary}
+          {reflectionDirectAddress(
+            reflection.summary,
+            user?.username ?? user?.firstName ?? '',
+          )}
         </p>
       </div>
       <RiArrowRightSLine
